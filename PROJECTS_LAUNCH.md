@@ -5,6 +5,18 @@ Dernière vérification : **10 juillet 2026**
 Ce document donne les points d’entrée courts du workspace consolidé. Les détails
 propres à chaque composant restent dans leurs guides respectifs.
 
+## Lanceur global sous Windows
+
+- **Démarrage** : double-cliquer sur
+  [`START_IC_LAB_NEXT.bat`](START_IC_LAB_NEXT.bat) depuis n’importe quel dossier.
+- **Comportement** : démarre ou réutilise Hub (`8790`), Agent vocal (`8788`) et
+  Dico-IC / Seven Sieves (`3000`), puis ouvre le portail Hub.
+- **Statut** : [`check-status.bat`](scripts/windows/check-status.bat) vérifie
+  Docker et les ports sans démarrer de service.
+- **Sécurité** : aucun `npm install`, migration, script SQL, initialisation ou
+  suppression de volume n’est exécuté. Le lanceur Dico utilise seulement
+  `docker compose up -d` dans sa stack existante.
+
 ## IC-Lab Hub
 
 - **Finalité** : portail de démonstration des prototypes IC-Lab-Next, avec les

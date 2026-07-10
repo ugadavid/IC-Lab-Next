@@ -70,6 +70,13 @@ Boost Hyper Engine (BHE) reste volontairement en dehors de ce dépôt. Les ancie
 prototypes racine 01 à 04 ne font plus partie du périmètre actif ; Seven Sieves
 reste toutefois présent à l’intérieur du composant Dico-IC.
 
+## Démarrage rapide sous Windows
+
+Double-cliquer sur [`START_IC_LAB_NEXT.bat`](START_IC_LAB_NEXT.bat) pour lancer
+les services locaux disponibles et ouvrir le portail Hub. Les lanceurs ne font
+ni installation npm, ni migration, ni initialisation de base. Les instructions
+d’arrêt sûr sont dans le [guide Windows](scripts/windows/README.md).
+
 ## Provenance
 
 La consolidation et ses limites sont résumées dans
