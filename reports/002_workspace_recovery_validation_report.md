@@ -26,7 +26,7 @@ migration et ne réinitialise aucune base.
 | Vidéo augmentée | Validation partielle | HTML, script et ressources présents ; validation visuelle bloquée par la politique `file://` du navigateur intégré |
 | Agent vocal IC | Lancement réussi | Backend, bibliothèque, runtime V1.2.3, images et garde-fous IA validés |
 | Informaticaire | Validation partielle | Scripts, ressources et parcours de démo présents ; validation visuelle bloquée par la politique `file://` |
-| Dico-IC / Seven Sieves | Lancement partiel, API bloquée | Serveur et pages statiques accessibles ; MariaDB absente, endpoints métier en erreur 500 |
+| Dico-IC / Seven Sieves | Validation réussie | Stack Docker IC-Lab-Next active ; API, administration et parcours Seven Sieves validés |
 
 ## IC-Lab Hub
 
@@ -116,18 +116,27 @@ recette.
 - tests Node : **101 réussis, 0 échec**.
 
 Le serveur Node démarre et les ressources statiques des deux interfaces sont
-accessibles sans chemin cassé. L’administration et Seven Sieves affichent
-correctement l’indisponibilité de l’API.
+accessibles sans chemin cassé. La validation finale a été rejouée avec la stack
+Docker actuelle d’IC-Lab-Next, définie par
+`prototypes/08-dico-seven-sieves/docker-compose.yml` : projet Compose
+`08-dico-seven-sieves`, MariaDB `ic_dico_mariadb_next`, phpMyAdmin
+`ic_lab_next_phpmyadmin` et volume externe `ic_lab_next_mariadb_data` monté sur
+`/var/lib/mysql`. MariaDB écoute sur `3306`.
 
-Docker Desktop n’était pas actif et aucun service n’écoutait sur `3306`. En
-conséquence :
+Dans cet environnement existant, `GET /languages` répond `200` (cinq langues)
+et un `POST /analysis` stateless non destructif répond `200` (14 tokens,
+9 enrichissements et 3 avertissements). L’administration et Seven Sieves sont
+accessibles en HTTP. La validation humaine finale du parcours Seven Sieves a
+confirmé le clic réel « Analyser avec Dico-IC », l’appel à l’API, puis
+l’affichage correct des résultats et des enrichissements, sans blocage constaté.
 
-- `GET /languages` : `500` ;
-- `POST /analysis` avec une requête stateless non destructive : `500` ;
-- aucun test réel de connexion ou de lecture MariaDB n’a pu réussir.
-
-Docker n’a pas été démarré, aucune base fraîche n’a été initialisée et aucune
-migration n’a été lancée. La canonicalisation SQL reste hors périmètre.
+Le premier contrôle reste historique : Docker Desktop n’était alors pas actif,
+aucun service n’écoutait sur `3306` et les endpoints métier répondaient `500`.
+L’environnement Docker a depuis été déplacé vers la nouvelle racine
+IC-Lab-Next avec un volume distinct cloné pour préserver les données. Aucune
+migration, initialisation, réinitialisation, exécution SQL ou modification de
+données n’a été effectuée lors de la validation finale. La canonicalisation SQL
+reste hors périmètre.
 
 ## Intégrité des données et arrêt
 
@@ -152,12 +161,10 @@ Aucun rapport historique n’a été modifié.
 
 ## Suites recommandées
 
-1. Refaire la validation Dico-IC avec Docker/MariaDB existante disponible, sans
-   initialisation ni migration.
-2. Effectuer une recette visuelle manuelle des deux pages statiques dans un
+1. Effectuer une recette visuelle manuelle des deux pages statiques dans un
    navigateur autorisant `file://`, notamment timeline vidéo et parcours gelé
    Informaticaire.
-3. Décider humainement si le Hub doit connecter les quatre composants encore
+2. Décider humainement si le Hub doit connecter les quatre composants encore
    marqués `planned`.
-4. Traiter séparément la canonicalisation SQL et l’initialisation d’une base
+3. Traiter séparément la canonicalisation SQL et l’initialisation d’une base
    Dico-IC fraîche.

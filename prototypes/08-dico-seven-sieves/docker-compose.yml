@@ -1,7 +1,7 @@
 services:
   mariadb:
     image: mariadb:11
-    container_name: ic_dico_mariadb
+    container_name: ic_dico_mariadb_next
     restart: unless-stopped
 
     environment:
@@ -14,12 +14,12 @@ services:
       - "3306:3306"
 
     volumes:
-      - mariadb_data:/var/lib/mysql
+      - ic_lab_next_mariadb_data:/var/lib/mysql
       - ./db:/docker-entrypoint-initdb.d
 
   phpmyadmin:
     image: phpmyadmin:latest
-    container_name: ic_dico_phpmyadmin
+    container_name: ic_lab_next_phpmyadmin
     restart: unless-stopped
 
     environment:
@@ -34,4 +34,6 @@ services:
       - mariadb
 
 volumes:
-  mariadb_data:
+  ic_lab_next_mariadb_data:
+    external: true
+    name: ic_lab_next_mariadb_data

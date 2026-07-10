@@ -92,16 +92,22 @@ propres à chaque composant restent dans leurs guides respectifs.
   interface de lecture guidée Seven Sieves.
 - **Dossier serveur** : `prototypes/08-dico-seven-sieves/Node`
 - **Version courante probable** : API/administration V0, contrat d’analyse `0.1`.
-- **État** : en développement ; serveur et pages statiques accessibles, API
-  bloquée lorsque MariaDB est indisponible.
-- **Prérequis** : Node.js, dépendances installées et MariaDB locale existante sur
-  `3306`. Ne pas initialiser une base fraîche dans le cadre d’une reprise.
+- **État** : en développement ; validation de reprise réussie avec l’API et les
+  deux interfaces connectées à la stack Docker actuelle d’IC-Lab-Next.
+- **Prérequis** : Node.js, dépendances installées et stack Docker existante dans
+  `prototypes/08-dico-seven-sieves`. Le projet Compose `08-dico-seven-sieves`
+  utilise MariaDB `ic_dico_mariadb_next`, phpMyAdmin
+  `ic_lab_next_phpmyadmin` et le volume externe
+  `ic_lab_next_mariadb_data` sur `/var/lib/mysql`; MariaDB écoute sur `3306`.
+  Ne pas initialiser une base fraîche dans le cadre d’une reprise.
 - **Lancement** : `npm start` depuis le dossier `Node`, après vérification de la
   base existante.
 - **Port** : `3000` par défaut.
 - **Entrées** : <http://127.0.0.1:3000/admin-app/index-admin-0.1.html> et
   <http://127.0.0.1:3000/prototypes/01-seven-sieves/index-api-live-0.1.html>.
-- **Contrôles API** : `GET /languages` et `POST /analysis`.
+- **Contrôles API** : `GET /languages` et `POST /analysis` validés sans écriture
+  de données ; validation humaine du clic « Analyser avec Dico-IC », résultats
+  et enrichissements affichés dans Seven Sieves.
 - **Arrêt** : `Ctrl+C` dans le terminal du serveur.
 - **Limites connues** : MariaDB/Docker doit déjà être disponible. La
   canonicalisation SQL et l’initialisation d’une base fraîche restent hors
