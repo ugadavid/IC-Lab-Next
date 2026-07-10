@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub V0.9</title>
+    <link rel="stylesheet" href="hub-0.9.css">
+  </head>
+  <body>
+    <main class="hub-app">
+      <header class="topbar">
+        <div>
+          <p class="kicker">IC-Lab Hub V0.9</p>
+          <h1>Hub experimental</h1>
+          <p id="userLine">Chargement...</p>
+        </div>
+        <nav>
+          <a href="teacher-0.7.1.html">Teacher</a>
+          <a href="student-0.7.1.html">Student</a>
+          <a href="admin-0.9.html">Admin</a>
+          <button id="logoutButton" type="button">Deconnexion</button>
+        </nav>
+      </header>
+      <section class="grid">
+        <section>
+          <h2>Prototypes disponibles</h2>
+          <div id="prototypeList" class="card-grid"></div>
+        </section>
+        <aside>
+          <h2>Mes cours</h2>
+          <div id="courseList" class="stack"></div>
+        </aside>
+      </section>
+      <p id="message" class="message" role="status"></p>
+    </main>
+    <script src="hub-0.9.js"></script>
+  </body>
+</html>

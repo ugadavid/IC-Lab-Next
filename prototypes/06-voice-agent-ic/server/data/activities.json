@@ -1,0 +1,47 @@
+{
+  "version": "1.1",
+  "updatedAt": "2026-07-02T09:05:22.287Z",
+  "activities": [
+    {
+      "id": "climateObservations001",
+      "title": "Tester que le créateur d'activité fonctionne",
+      "shortTitle": "Test créa",
+      "author": "David",
+      "version": "0.1",
+      "status": "prototype",
+      "pedagogicalGoal": "Reconstruire les phénomènes climatiques évoqués dans plusieurs témoignages romans.",
+      "scenarioId": "globalUnderstanding",
+      "characterIds": [
+        "clara",
+        "marco",
+        "ana"
+      ],
+      "estimatedDuration": "10 min",
+      "targetUsers": [
+        "Codex",
+        "GPT",
+        "David"
+      ],
+      "languages": [
+        "es",
+        "it",
+        "ptBr"
+      ],
+      "climateThemes": [
+        "informatique"
+      ],
+      "instructions": "Écoutez les témoignages et repérez les phénomènes climatiques évoqués par chaque participant.",
+      "commonQuestion": "Quels changements avez-vous compris et quels points communs reliez-vous entre les participants ?",
+      "teacherNotes": "Activité d'entrée pour observer la reconstruction globale à partir de trois langues romanes.",
+      "whyThisActivity": "Montrer que l'intercompréhension peut construire un thème commun à partir d'indices partiels.",
+      "createdAt": "2026-07-01",
+      "updatedAt": "2026-07-02T09:05:22.283Z",
+      "tags": [
+        "REPLI4C",
+        "compréhension globale",
+        "climat"
+      ],
+      "source": "server"
+    }
+  ]
+}

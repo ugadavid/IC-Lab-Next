@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dico-IC Admin - Assistant texte V0</title>
+  <link rel="stylesheet" href="./css/admin-ai-text-0.1.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <a class="back-link" href="./index-admin-0.1.html">← Administration générale</a>
+      <h1>Assistant lexical par texte</h1>
+      <p>Le texte révèle les manques, l’IA prépare des brouillons, l’humain décide.</p>
+    </div>
+    <div class="header-meta">
+      <span class="experimental-label">Expérimental</span>
+      <span id="apiStatus" class="api-status" data-state="loading">Connexion…</span>
+    </div>
+  </header>
+
+  <nav class="admin-page-nav" aria-label="Pages d’administration">
+    <a href="./index-admin-0.1.html">Admin principal</a>
+    <a href="./index-admin-ai-domain-0.1.html">IA Domaine</a>
+    <a href="./index-admin-ai-text-0.1.html" aria-current="page">IA Texte</a>
+    <a href="./index-admin-ai-relations-0.1.html">IA Relations</a>
+    <a href="../prototypes/01-seven-sieves/index-api-live-0.1.html">Seven Sieves</a>
+  </nav>
+
+  <main class="workspace">
+    <section aria-labelledby="textTitle">
+      <div class="section-heading"><div><p class="eyebrow">Étape 1</p><h2 id="textTitle">Analyser la couverture du texte</h2></div></div>
+      <form id="coverageForm" class="text-form">
+        <label for="sourceLanguage">Langue source *</label>
+        <select id="sourceLanguage" required aria-label="Langue source">
+          <option value="">Chargement des langues…</option>
+        </select>
+        <label for="textInput">Texte à analyser *</label>
+        <textarea id="textInput" required maxlength="20000" placeholder="Collez ici le texte qui servira à préparer le lexique…"></textarea>
+        <div id="coverageMessage" class="message" role="status" aria-live="polite"></div>
+        <button id="analyzeButton" class="button primary" type="submit">Analyser le texte</button>
+      </form>
+      <div id="coverageResults" class="coverage-results" hidden>
+        <div class="coverage-stats" aria-label="Résumé de la couverture">
+          <span><strong id="totalWords">0</strong> mots</span><span><strong id="uniqueForms">0</strong> formes uniques</span>
+          <span><strong id="knownLemmas">0</strong> lemmes connus</span>
+          <span><strong id="knownInflectedForms">0</strong> flexions connues</span>
+          <span><strong id="reviewForms">0</strong> à examiner</span>
+          <span><strong id="absentConcepts">0</strong> concepts absents</span>
+        </div>
+        <div class="coverage-columns">
+          <div><h3>Lemmes connus</h3><div id="knownList" class="word-list"></div></div>
+          <div><h3>Formes fléchies connues</h3><div id="knownInflectedList" class="word-list"></div></div>
+          <div><h3>Formes à examiner</h3><div id="unknownList" class="word-list"></div></div>
+          <div><h3>Concepts absents</h3><div id="conceptAbsentList" class="word-list">Déterminés après la proposition morphologique.</div></div>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="inflectedGenerationTitle">
+      <div class="section-heading">
+        <div><p class="eyebrow">Étape 2</p><h2 id="inflectedGenerationTitle">Assistant IA Formes Fléchies</h2></div>
+      </div>
+      <div class="generation-controls">
+        <p class="lemma-note">Périmètre V0 : pluriels de noms et d’adjectifs en français, espagnol, italien et portugais.</p>
+        <div id="inflectedGenerationMessage" class="message" role="status" aria-live="polite"></div>
+        <button id="generateInflectedButton" class="button primary" type="button" disabled>Proposer les mappings de pluriel</button>
+      </div>
+      <div class="draft-summary">
+        <span><strong id="inflectedCandidateTotal">0</strong> proposition(s)</span>
+        <span><strong id="inflectedReadyTotal">0</strong> prête(s)</span>
+        <span id="inflectedGenerationMeta">Aucune génération.</span>
+      </div>
+      <div class="table-wrap">
+        <table class="candidate-table inflected-table">
+          <thead>
+            <tr>
+              <th>Valider</th><th>Surface</th><th>Langue</th><th>Contexte</th>
+              <th>Lemme proposé</th><th>Cible Dico-IC</th><th>POS</th><th>Nombre</th>
+              <th>Confiance</th><th>État</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="inflectedCandidateTableBody">
+            <tr><td colspan="11" class="empty-cell">Analysez un texte pour commencer.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="create-bar">
+        <p>Aucune proposition IA n’est écrite automatiquement. Seules les lignes READY explicitement cochées seront créées.</p>
+        <button id="createInflectedButton" class="button primary" type="button" disabled>Créer les mappings validés</button>
+      </div>
+      <div id="inflectedCreationReport" class="creation-report" aria-live="polite"></div>
+    </section>
+
+    <section id="lexicalGenerationSection" aria-labelledby="generationTitle">
+      <div class="section-heading"><div><p class="eyebrow">Étape 3</p><h2 id="generationTitle">Générer les concepts réellement manquants</h2></div></div>
+      <div class="generation-controls">
+        <fieldset><legend>Langues cibles actives</legend><div id="languageChoices" class="choice-list" aria-live="polite">Chargement des langues…</div></fieldset>
+        <div id="generationMessage" class="message" role="status" aria-live="polite"></div>
+        <button id="generateButton" class="button primary" type="button" disabled>Générer les concepts manquants</button>
+      </div>
+    </section>
+
+    <section class="drafts" aria-labelledby="draftsTitle">
+      <div class="section-heading drafts-heading">
+        <div><p class="eyebrow">Étape 4</p><h2 id="draftsTitle">Réviser les brouillons lexicaux</h2></div>
+        <div class="selection-actions"><button id="selectAllButton" class="button secondary" type="button">Tout sélectionner</button><button id="selectNoneButton" class="button secondary" type="button">Tout désélectionner</button></div>
+      </div>
+      <div class="draft-summary"><span><strong id="candidateTotal">0</strong> proposition(s)</span><span><strong id="selectedTotal">0</strong> sélectionnée(s)</span><span id="generationMeta">Aucune génération.</span></div>
+      <p class="lemma-note">Les formes proposées ici sont des lemmes dictionnaires. Les pluriels reliés à un lemme existant sont traités dans l’assistant précédent.</p>
+      <div class="table-wrap"><table class="candidate-table">
+        <thead><tr><th>Garder</th><th>Concept</th><th>Gloses et domaine</th><th>Formes multilingues</th><th>Statut</th><th><span class="sr-only">Supprimer</span></th></tr></thead>
+        <tbody id="candidateTableBody"><tr><td colspan="6" class="empty-cell">Analysez un texte pour commencer.</td></tr></tbody>
+      </table></div>
+      <div class="create-bar"><p>Rien n’est écrit automatiquement. Seules les lignes cochées et complètes seront envoyées à l’API d’administration.</p><button id="createSelectedButton" class="button primary" type="button" disabled>Créer les entrées sélectionnées</button></div>
+      <div id="creationReport" class="creation-report" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="./js/admin-ai-text-0.1.js"></script>
+</body>
+</html>

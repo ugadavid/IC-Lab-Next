@@ -1,0 +1,23 @@
+{
+  "version": "0.5",
+  "spaces": [
+    {
+      "id": "space_repli4c",
+      "name": "REPLI4C",
+      "type": "project",
+      "institutionId": "inst_repli4c",
+      "visibility": "shared",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    },
+    {
+      "id": "space_uga",
+      "name": "UGA",
+      "type": "institution",
+      "institutionId": "inst_uga",
+      "visibility": "institution",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    }
+  ]
+}

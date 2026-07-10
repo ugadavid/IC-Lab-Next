@@ -1,0 +1,14 @@
+{
+  "name": "proto06-connected-local-backend",
+  "version": "1.1.0",
+  "private": true,
+  "description": "Backend local minimal pour le Prototype 06 V1.1.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prototype 06 - Agent vocal IC</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="exchange-panel" aria-labelledby="page-title">
+        <div class="intro">
+          <p class="kicker">IC-Lab - Prototype 06</p>
+          <h1 id="page-title">Agent vocal REPLI4C pour intercompréhension orale</h1>
+          <p class="lead">
+            Un étudiant francophone répond à une étudiante espagnole dans une
+            rencontre plurilingue sur le changement climatique.
+          </p>
+        </div>
+
+        <div class="controls" aria-label="Contrôles de l'échange">
+          <button id="startButton" class="primary-button" type="button">
+            Démarrer l'échange
+          </button>
+          <button id="speakButton" class="secondary-button" type="button" disabled>
+            Parler
+          </button>
+          <button id="replayButton" class="ghost-button" type="button" disabled>
+            Réécouter
+          </button>
+        </div>
+
+        <div class="instruction-box" aria-live="polite">
+          <span class="label">Consigne</span>
+          <p id="instructionText">
+            Cliquez sur "Démarrer l'échange" pour lancer une mini-rencontre REPLI4C.
+          </p>
+        </div>
+
+        <div class="speech-area">
+          <label for="fallbackInput">Transcription ou saisie de secours</label>
+          <textarea
+            id="fallbackInput"
+            rows="4"
+            placeholder="La transcription apparaîtra ici. Si le micro n'est pas disponible, écrivez une réponse courte puis cliquez sur Parler."
+            disabled
+          ></textarea>
+          <p id="speechStatus" class="status" role="status">
+            En attente de démarrage.
+          </p>
+        </div>
+
+        <section class="agent-response" aria-labelledby="agent-title">
+          <span class="label">Réponse de l'agent</span>
+          <h2 id="agent-title">Espagnol</h2>
+          <p id="agentText">La réponse vocale de l'agent apparaîtra ici.</p>
+        </section>
+      </section>
+
+      <aside class="observation-panel" aria-labelledby="observation-title">
+        <div>
+          <p class="kicker">Observation IC</p>
+          <h2 id="observation-title">Indices visibles</h2>
+        </div>
+
+        <div class="observation-grid" id="observationGrid"></div>
+
+        <section class="history-section" aria-labelledby="history-title">
+          <h2 id="history-title">Historique</h2>
+          <ol id="historyList" class="history-list"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

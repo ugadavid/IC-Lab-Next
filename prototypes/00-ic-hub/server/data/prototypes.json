@@ -1,0 +1,41 @@
+{
+  "prototypes": [
+    {
+      "id": "proto06",
+      "title": "Rencontre plurilingue REPLI4C",
+      "description": "Composer et lancer des activites d'intercomprehension orale incarnee.",
+      "status": "connected-local",
+      "entryUrl": "../../06-voice-agent-ic/library-1.1.html",
+      "baseUrl": "http://127.0.0.1:8788",
+      "libraryUrl": "http://127.0.0.1:8788/library-1.1.html",
+      "activityApiUrl": "http://127.0.0.1:8788/api/activities",
+      "launchUrl": "http://127.0.0.1:8788/index-1.2.3.html",
+      "supportsActivities": true,
+      "tags": ["REPLI4C", "oral", "rencontre", "activite"]
+    },
+    {
+      "id": "seven-sieves",
+      "title": "Seven Sieves",
+      "description": "Explorer la comprehension ecrite par tamis d'intercomprehension.",
+      "status": "planned",
+      "entryUrl": "",
+      "tags": ["lecture", "IC", "tamis"]
+    },
+    {
+      "id": "dico-ic",
+      "title": "Dico-IC",
+      "description": "Base de connaissances lexicale et intercomprehension.",
+      "status": "planned",
+      "entryUrl": "",
+      "tags": ["lexique", "API", "ressources"]
+    },
+    {
+      "id": "augmented-video",
+      "title": "Video augmentee IC",
+      "description": "Observer des strategies d'intercomprehension dans une video annotee.",
+      "status": "planned",
+      "entryUrl": "",
+      "tags": ["video", "observation", "strategies"]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Administration enseignante - Activités REPLI4C</title>
+    <link rel="stylesheet" href="admin-1.0.css">
+  </head>
+  <body>
+    <main class="admin-app">
+      <header class="admin-header">
+        <div>
+          <p class="kicker">IC-Lab - Prototype 06 V1.0</p>
+          <h1>Créer une activité REPLI4C</h1>
+          <p>Modifiez une copie locale d'une activité, sauvegardez-la dans ce navigateur, puis lancez-la.</p>
+        </div>
+        <nav>
+          <a href="library-1.0.html">Bibliothèque</a>
+          <a href="composer-1.0.html">Compositeur</a>
+          <a href="index-1.0.html">Rencontre</a>
+        </nav>
+      </header>
+
+      <section class="admin-layout">
+        <aside class="activity-bank">
+          <h2>Activités existantes</h2>
+          <div id="activityCards" class="activity-cards"></div>
+        </aside>
+
+        <form id="activityForm" class="activity-form">
+          <h2>Formulaire d'activité</h2>
+          <div id="validationBox" class="validation-box" hidden></div>
+
+          <label>Titre <input id="titleInput" name="title" required></label>
+          <label>Titre court <input id="shortTitleInput" name="shortTitle"></label>
+          <label>Auteur <input id="authorInput" name="author"></label>
+          <label>Statut <input id="statusInput" name="status"></label>
+          <label>Durée estimée <input id="durationInput" name="estimatedDuration"></label>
+          <label>Objectif pédagogique <textarea id="goalInput" name="pedagogicalGoal" required></textarea></label>
+          <label>Scénario pédagogique <select id="scenarioSelect" name="scenarioId"></select></label>
+
+          <fieldset>
+            <legend>Personnages</legend>
+            <div id="characterChoices" class="choice-grid"></div>
+          </fieldset>
+
+          <label>Publics cibles <input id="targetUsersInput" name="targetUsers" placeholder="étudiants, tuteurs"></label>
+          <label>Thèmes climatiques <input id="themesInput" name="climateThemes" placeholder="chaleur, eau"></label>
+          <label>Consigne <textarea id="instructionsInput" name="instructions"></textarea></label>
+          <label>Question commune <textarea id="questionInput" name="commonQuestion" required></textarea></label>
+          <label>Notes enseignantes <textarea id="notesInput" name="teacherNotes"></textarea></label>
+          <label>Pourquoi cette activité ? <textarea id="whyInput" name="whyThisActivity"></textarea></label>
+          <label>Tags <input id="tagsInput" name="tags" placeholder="REPLI4C, climat"></label>
+
+          <div class="form-actions">
+            <button type="submit">Enregistrer localement</button>
+            <button id="launchButton" type="button">Lancer l'activité</button>
+            <button id="exportButton" type="button">Exporter l'activité JSON</button>
+          </div>
+        </form>
+
+        <aside class="preview-panel">
+          <h2>Aperçu</h2>
+          <div id="previewBox" class="preview-box"></div>
+
+          <section class="import-box">
+            <h2>Importer JSON</h2>
+            <textarea id="importInput" placeholder="Collez ici une activité JSON"></textarea>
+            <button id="importButton" type="button">Importer depuis JSON</button>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script src="data-1.0.js"></script>
+    <script src="admin-1.0.js"></script>
+  </body>
+</html>

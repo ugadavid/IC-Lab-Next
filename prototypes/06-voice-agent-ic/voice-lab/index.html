@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Voice Lab - Synthèse vocale navigateur</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app">
+      <header class="page-header">
+        <div>
+          <p class="kicker">IC-Lab - Prototype 06</p>
+          <h1>Voice Lab</h1>
+          <p class="lead">
+            Exploration autonome des voix disponibles dans le navigateur pour tester
+            la synthèse vocale en langues romanes.
+          </p>
+        </div>
+        <div class="voice-count" aria-live="polite">
+          <strong id="visibleCount">0</strong>
+          <span>voix affichées</span>
+        </div>
+      </header>
+
+      <section class="toolbar" aria-label="Filtres par langue">
+        <button class="filter-button active" type="button" data-family="all">Toutes</button>
+        <button class="filter-button" type="button" data-family="fr">Français</button>
+        <button class="filter-button" type="button" data-family="es">Espagnol</button>
+        <button class="filter-button" type="button" data-family="it">Italien</button>
+        <button class="filter-button" type="button" data-family="pt">Portugais</button>
+        <button class="filter-button" type="button" data-family="ca">Catalan</button>
+        <button class="filter-button" type="button" data-family="ro">Roumain</button>
+      </section>
+
+      <section class="workspace">
+        <aside class="voice-panel" aria-labelledby="voices-title">
+          <div class="panel-heading">
+            <div>
+              <p class="kicker">Voix système</p>
+              <h2 id="voices-title">Voix disponibles</h2>
+            </div>
+            <button id="refreshButton" class="small-button" type="button">Actualiser</button>
+          </div>
+          <p id="voiceStatus" class="status" role="status">
+            Chargement des voix...
+          </p>
+          <div id="voiceList" class="voice-list" aria-live="polite"></div>
+        </aside>
+
+        <section class="test-panel" aria-labelledby="test-title">
+          <div class="panel-heading">
+            <div>
+              <p class="kicker">Texte et lecture</p>
+              <h2 id="test-title">Tester une voix</h2>
+            </div>
+          </div>
+
+          <label for="testText">Texte à lire</label>
+          <textarea id="testText" rows="7"></textarea>
+
+          <div class="preset-grid" aria-label="Textes de test prédéfinis">
+            <button type="button" data-preset="fr">Français</button>
+            <button type="button" data-preset="es">Espagnol</button>
+            <button type="button" data-preset="it">Italien</button>
+            <button type="button" data-preset="pt">Portugais</button>
+            <button type="button" data-preset="ca">Catalan</button>
+            <button type="button" data-preset="ro">Roumain</button>
+          </div>
+
+          <div class="sliders">
+            <label>
+              <span>Vitesse / rate <strong id="rateValue">1.00</strong></span>
+              <input id="rateInput" type="range" min="0.5" max="1.8" step="0.05" value="1">
+            </label>
+            <label>
+              <span>Hauteur / pitch <strong id="pitchValue">1.00</strong></span>
+              <input id="pitchInput" type="range" min="0.5" max="1.8" step="0.05" value="1">
+            </label>
+            <label>
+              <span>Volume <strong id="volumeValue">1.00</strong></span>
+              <input id="volumeInput" type="range" min="0" max="1" step="0.05" value="1">
+            </label>
+          </div>
+
+          <div class="playback-controls" aria-label="Contrôles de lecture">
+            <button id="speakButton" class="primary-button" type="button">Lire avec la voix choisie</button>
+            <button id="testFilteredButton" class="secondary-button" type="button">Tester toutes les voix filtrées</button>
+            <button id="pauseButton" type="button">Pause</button>
+            <button id="resumeButton" type="button">Reprendre</button>
+            <button id="stopButton" class="danger-button" type="button">Stop</button>
+          </div>
+
+          <p id="playbackStatus" class="status" role="status">
+            Sélectionnez une voix, puis lancez une lecture.
+          </p>
+        </section>
+      </section>
+    </main>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,153 @@
+{
+  "version": "0.5",
+  "records": [
+    {
+      "id": "own_proto06_climateObservations001_server",
+      "prototypeId": "proto06",
+      "activityId": "climateObservations001",
+      "activitySource": "server",
+      "title": "Comprendre des constats climatiques",
+      "ownerId": "user_teacher_demo",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "institutionId": "inst_uga",
+      "visibility": "course",
+      "provenance": {
+        "kind": "external-prototype",
+        "sourcePrototype": "proto06",
+        "sourceActivityId": "climateObservations001",
+        "importedAt": "2026-07-02T00:00:00.000Z",
+        "registeredBy": "user_teacher_demo"
+      },
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    },
+    {
+      "id": "own_proto06_climateObservations001_catalog",
+      "prototypeId": "proto06",
+      "activityId": "climateObservations001",
+      "activitySource": "catalog",
+      "title": "climateObservations001",
+      "ownerId": "user_teacher_demo",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "institutionId": "inst_uga",
+      "visibility": "course",
+      "provenance": {
+        "kind": "external-prototype",
+        "sourcePrototype": "proto06",
+        "sourceActivityId": "climateObservations001",
+        "importedAt": "2026-07-02T15:45:36.600Z",
+        "registeredBy": "user_teacher_demo"
+      },
+      "createdAt": "2026-07-02T15:45:36.600Z",
+      "updatedAt": "2026-07-02T15:45:36.600Z"
+    },
+    {
+      "id": "own_proto06_climateObservations001_hub_manifest",
+      "prototypeId": "proto06",
+      "activityId": "climateObservations001",
+      "activitySource": "hub-manifest",
+      "title": "Comprendre des constats climatiques",
+      "ownerId": "user_teacher_demo",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "institutionId": "inst_uga",
+      "visibility": "course",
+      "provenance": {
+        "kind": "hub-manifest",
+        "sourcePrototype": "proto06",
+        "sourceActivityId": "climateObservations001",
+        "manifestId": "climate-roundtable-demo",
+        "importedAt": "2026-07-03T00:00:00.000Z",
+        "registeredBy": "user_teacher_demo"
+      },
+      "createdAt": "2026-07-03T00:00:00.000Z",
+      "updatedAt": "2026-07-03T00:00:00.000Z"
+    },
+    {
+      "id": "own_demo_private_teacher",
+      "prototypeId": "proto06",
+      "activityId": "demoPrivateTeacher",
+      "activitySource": "registry",
+      "title": "Activite privee enseignant demo",
+      "ownerId": "user_teacher_demo",
+      "institutionId": "inst_uga",
+      "visibility": "private",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "provenance": {
+        "kind": "visibility-demo",
+        "sourcePrototype": "proto06",
+        "sourceActivityId": "demoPrivateTeacher",
+        "importedAt": "2026-07-02T16:30:16.787Z",
+        "registeredBy": "user_teacher_demo"
+      },
+      "createdAt": "2026-07-02T16:30:16.787Z",
+      "updatedAt": "2026-07-02T16:30:16.787Z"
+    },
+    {
+      "id": "own_demo_institution_uga",
+      "prototypeId": "proto06",
+      "activityId": "demoInstitutionUga",
+      "activitySource": "registry",
+      "title": "Activite institutionnelle UGA",
+      "ownerId": "user_admin_demo",
+      "institutionId": "inst_uga",
+      "visibility": "institution",
+      "createdBy": "user_admin_demo",
+      "updatedBy": "user_admin_demo",
+      "provenance": {
+        "kind": "visibility-demo",
+        "sourcePrototype": "proto06",
+        "sourceActivityId": "demoInstitutionUga",
+        "importedAt": "2026-07-02T16:30:16.787Z",
+        "registeredBy": "user_teacher_demo"
+      },
+      "createdAt": "2026-07-02T16:30:16.787Z",
+      "updatedAt": "2026-07-02T16:30:16.787Z"
+    },
+    {
+      "id": "own_demo_shared_repli4c",
+      "prototypeId": "proto06",
+      "activityId": "demoSharedRepli4c",
+      "activitySource": "registry",
+      "title": "Activite partagee REPLI4C",
+      "ownerId": "user_teacher_demo",
+      "institutionId": "inst_repli4c",
+      "visibility": "shared",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "provenance": {
+        "kind": "visibility-demo",
+        "sourcePrototype": "proto06",
+        "sourceActivityId": "demoSharedRepli4c",
+        "importedAt": "2026-07-02T16:30:16.787Z",
+        "registeredBy": "user_teacher_demo"
+      },
+      "createdAt": "2026-07-02T16:30:16.787Z",
+      "updatedAt": "2026-07-02T16:30:16.787Z"
+    },
+    {
+      "id": "own_demo_public",
+      "prototypeId": "proto06",
+      "activityId": "demoPublic",
+      "activitySource": "registry",
+      "title": "Activite publique demo",
+      "ownerId": "user_teacher_demo",
+      "institutionId": null,
+      "visibility": "public",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "provenance": {
+        "kind": "visibility-demo",
+        "sourcePrototype": "proto06",
+        "sourceActivityId": "demoPublic",
+        "importedAt": "2026-07-02T16:30:16.787Z",
+        "registeredBy": "user_teacher_demo"
+      },
+      "createdAt": "2026-07-02T16:30:16.787Z",
+      "updatedAt": "2026-07-02T16:33:24.209Z"
+    }
+  ]
+}

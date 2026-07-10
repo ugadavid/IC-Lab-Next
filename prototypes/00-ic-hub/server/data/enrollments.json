@@ -1,0 +1,14 @@
+{
+  "enrollments": [
+    {
+      "userId": "user_student_demo",
+      "courseId": "course_demo_repli4c",
+      "joinedAt": "2026-07-02T09:28:26.622Z"
+    },
+    {
+      "userId": "user_student_demo",
+      "courseId": "course_463ad673-191d-4c27-ab8f-04ca82e9ae96",
+      "joinedAt": "2026-07-02T09:29:09.058Z"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "users": [
+    {
+      "id": "user_admin_demo",
+      "displayName": "Admin demo",
+      "email": "admin@demo.local",
+      "role": "admin",
+      "passwordHash": "f12414a9918b3c7500e03623f7623f8d0c491364eed11f0eefc42887fcff25d7a9e8949dfabb7938b2984462137e31304b300f75922b25baed094db729e5ffe2",
+      "passwordSalt": "9b8a8d3e8e9f46baa84febd41369deff",
+      "createdAt": "2026-07-02T09:28:26.498Z",
+      "updatedAt": "2026-07-02T09:28:26.498Z",
+      "institutionId": null,
+      "createdBy": "user_admin_demo",
+      "updatedBy": "user_admin_demo"
+    },
+    {
+      "id": "user_teacher_demo",
+      "displayName": "Enseignant demo",
+      "email": "teacher@demo.local",
+      "role": "teacher",
+      "passwordHash": "f323708558ac711300edf4f56abecc4358213c0b3d5acf3f4afd7e77dbe62f7a4b8dc10effc0e047b16e7fb01d6bfb818eda92543b8eb40f2ff367a6792b524b",
+      "passwordSalt": "6626ce0a3b352ec71e7a73acb74e294e",
+      "createdAt": "2026-07-02T09:28:26.498Z",
+      "updatedAt": "2026-07-02T09:28:26.498Z",
+      "institutionId": "inst_uga",
+      "createdBy": "user_admin_demo",
+      "updatedBy": "user_admin_demo"
+    },
+    {
+      "id": "user_student_demo",
+      "displayName": "Etudiant demo",
+      "email": "student@demo.local",
+      "role": "student",
+      "passwordHash": "18288ca9f18bcad7faaadfb1070b5f8dbf9491f5ed38550f6cfa7b48c40ad6ae3de29f7cc48bbf883de4783c3d9f8a713a9f3555cd1567091001e5b697d0072a",
+      "passwordSalt": "7814a5633b46575ff024effcdd3a002b",
+      "createdAt": "2026-07-02T09:28:26.498Z",
+      "updatedAt": "2026-07-02T09:28:26.498Z",
+      "institutionId": "inst_uga",
+      "createdBy": "user_admin_demo",
+      "updatedBy": "user_admin_demo"
+    },
+    {
+      "id": "user_observer_demo",
+      "displayName": "Observateur demo",
+      "email": "observer@demo.local",
+      "role": "observer",
+      "passwordHash": "af20523c83a9d25dd8fbbfe7d6842096d087ec42850a769135b040d3a1184797fe9fd3544a34e008f5ba03914a066b57cf24435bb00575ab7c737ebe50dcb47b",
+      "passwordSalt": "de134b666bf1cd562d50424d0d91f343",
+      "createdAt": "2026-07-02T09:28:26.498Z",
+      "updatedAt": "2026-07-02T09:28:26.498Z",
+      "institutionId": null,
+      "createdBy": "user_admin_demo",
+      "updatedBy": "user_admin_demo"
+    },
+    {
+      "id": "user_teacher_repli4c_demo",
+      "displayName": "Enseignant REPLI4C demo",
+      "email": "teacher2@demo.local",
+      "role": "teacher",
+      "institutionId": "inst_repli4c",
+      "createdBy": "user_admin_demo",
+      "updatedBy": "user_admin_demo",
+      "passwordHash": "86f20d12cd01c2c085afc09df1de8edcbdb7f647daabdba1111f351096be9d5e0b8609d81df009123fff9e390c1d42363a60b3d61ba9af9c0f7d19e43a08f2de",
+      "passwordSalt": "839415f5eef19f2690ca99b4003b9495",
+      "createdAt": "2026-07-02T16:30:16.751Z",
+      "updatedAt": "2026-07-02T16:30:16.751Z"
+    }
+  ]
+}

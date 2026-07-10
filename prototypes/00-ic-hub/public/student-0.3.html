@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub V0.3 - Etudiant</title>
+    <link rel="stylesheet" href="student-0.3.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div><p class="kicker">IC-Lab Hub V0.3</p><h1>Espace etudiant</h1><p id="userLine">Chargement...</p></div>
+        <nav><a href="hub-0.3.html">Hub</a></nav>
+      </header>
+      <section class="layout">
+        <section>
+          <h2>Mes cours et activites</h2>
+          <div id="courseList" class="stack"></div>
+        </section>
+        <aside class="panel">
+          <h2>Rejoindre un cours</h2>
+          <form id="joinForm">
+            <label>Code d'acces <input id="accessCode" value="REPLI4C-DEMO" required></label>
+            <button type="submit">Rejoindre</button>
+          </form>
+          <p id="message" class="message"></p>
+        </aside>
+      </section>
+    </main>
+    <script src="student-0.3.js"></script>
+  </body>
+</html>

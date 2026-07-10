@@ -1,0 +1,110 @@
+{
+  "version": "0.8.1",
+  "metadata": [
+    {
+      "providerId": "openai",
+      "providerModelId": "gpt-5.4-mini",
+      "title": "GPT-5.4 mini",
+      "shortDescription": "Modele general rapide et moins couteux, adapte aux premiers tests de generation texte controlee.",
+      "family": "gpt-5.4",
+      "modality": "text",
+      "capabilities": ["text", "reasoning", "structured_outputs"],
+      "recommendedUse": "Brouillons courts d'agents participants pour Prototype 06.",
+      "icLabRecommendation": "recommended",
+      "costLevel": "medium",
+      "pricing": {
+        "unit": "1M_tokens",
+        "inputUsd": null,
+        "cachedInputUsd": null,
+        "outputUsd": null,
+        "source": "manual_review_required",
+        "lastCheckedAt": null
+      },
+      "adminNotes": "Bon candidat pour les premiers tests controles apres validation des couts."
+    },
+    {
+      "providerId": "openai",
+      "providerModelId": "gpt-5.4-nano",
+      "title": "GPT-5.4 nano",
+      "shortDescription": "Modele texte tres leger, utile pour tests rapides ou taches simples.",
+      "family": "gpt-5.4",
+      "modality": "text",
+      "capabilities": ["text", "structured_outputs"],
+      "recommendedUse": "Tests techniques courts, classification simple, brouillons non critiques.",
+      "icLabRecommendation": "experimental",
+      "costLevel": "low",
+      "pricing": {
+        "unit": "1M_tokens",
+        "inputUsd": null,
+        "cachedInputUsd": null,
+        "outputUsd": null,
+        "source": "manual_review_required",
+        "lastCheckedAt": null
+      },
+      "adminNotes": "A evaluer pedagogiquement avant usage runtime."
+    },
+    {
+      "providerId": "openai",
+      "providerModelId": "gpt-5.4-pro",
+      "title": "GPT-5.4 pro",
+      "shortDescription": "Modele texte avance potentiellement couteux, a reserver aux tests experts.",
+      "family": "gpt-5.4",
+      "modality": "text",
+      "capabilities": ["text", "reasoning", "structured_outputs"],
+      "recommendedUse": "Analyse experte hors parcours apprenant.",
+      "icLabRecommendation": "restricted",
+      "costLevel": "very-high",
+      "pricing": {
+        "unit": "1M_tokens",
+        "inputUsd": null,
+        "cachedInputUsd": null,
+        "outputUsd": null,
+        "source": "manual_review_required",
+        "lastCheckedAt": null
+      },
+      "adminNotes": "Desactive par defaut pour Prototype 06."
+    },
+    {
+      "providerId": "openai",
+      "providerModelId": "gpt-realtime",
+      "title": "GPT Realtime",
+      "shortDescription": "Modele temps reel texte/audio, pertinent pour recherches futures mais trop sensible pour V0.8.1.",
+      "family": "gpt-realtime",
+      "modality": "realtime",
+      "capabilities": ["text", "audio", "realtime"],
+      "recommendedUse": "Prototype vocal futur, uniquement en environnement controle.",
+      "icLabRecommendation": "restricted",
+      "costLevel": "high",
+      "pricing": {
+        "unit": "mixed",
+        "inputUsd": null,
+        "cachedInputUsd": null,
+        "outputUsd": null,
+        "source": "manual_review_required",
+        "lastCheckedAt": null
+      },
+      "adminNotes": "Ne pas activer dans le parcours apprenant actuel."
+    },
+    {
+      "providerId": "openai",
+      "providerModelId": "text-embedding-3-small",
+      "title": "Text embedding 3 small",
+      "shortDescription": "Modele d'embeddings pour indexation et recherche semantique, non generatif.",
+      "family": "embedding",
+      "modality": "embedding",
+      "capabilities": ["embeddings"],
+      "recommendedUse": "Recherche documentaire future, pas pour un agent participant Proto06.",
+      "icLabRecommendation": "not_for_proto06",
+      "costLevel": "low",
+      "pricing": {
+        "unit": "1M_tokens",
+        "inputUsd": null,
+        "cachedInputUsd": null,
+        "outputUsd": null,
+        "source": "manual_review_required",
+        "lastCheckedAt": null
+      },
+      "adminNotes": "Non pertinent pour generation de tours de parole."
+    }
+  ]
+}

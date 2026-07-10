@@ -1,0 +1,20 @@
+.manifest-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.manifest-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.45rem;
+  border: 1px solid rgba(28, 61, 52, 0.18);
+  border-radius: 999px;
+  padding: 0.15rem 0.55rem;
+  background: rgba(236, 249, 244, 0.86);
+  color: #174439;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+}

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub V0.2 - Admin</title>
+    <link rel="stylesheet" href="admin-0.2.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div><p class="kicker">IC-Lab Hub V0.2</p><h1>Administration locale</h1><p id="userLine">Chargement...</p></div>
+        <nav><a href="hub-0.2.html">Hub</a><a href="teacher-0.2.html">Teacher test</a><a href="student-0.2.html">Student test</a></nav>
+      </header>
+      <section class="grid">
+        <section class="panel"><h2>Etat serveur</h2><pre id="healthBox"></pre></section>
+        <section class="panel"><h2>Utilisateurs</h2><div id="usersBox" class="stack"></div></section>
+        <section class="panel"><h2>Cours</h2><div id="coursesBox" class="stack"></div></section>
+        <section class="panel"><h2>Prototypes</h2><div id="prototypesBox" class="stack"></div></section>
+        <section class="panel"><h2>Connecteurs</h2><div id="connectorsBox" class="stack"></div></section>
+        <section class="panel"><h2>Sessions actives</h2><pre id="sessionsBox"></pre></section>
+      </section>
+      <p id="message" class="message"></p>
+    </main>
+    <script src="admin-0.2.js"></script>
+  </body>
+</html>

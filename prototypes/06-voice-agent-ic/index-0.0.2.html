@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prototype 06 V0.2 - Table ronde plurilingue</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="exchange-panel" aria-labelledby="page-title">
+        <div class="intro">
+          <p class="kicker">IC-Lab - Prototype 06 V0.2</p>
+          <h1 id="page-title">Table ronde plurilingue REPLI4C</h1>
+          <p class="lead">
+            Un étudiant francophone écoute trois témoignages courts en langues
+            romanes, puis reconstruit le sens global à partir d'indices partiels.
+          </p>
+        </div>
+
+        <div class="controls" aria-label="Contrôles de la table ronde">
+          <button id="startButton" class="primary-button" type="button">
+            Écouter la table ronde
+          </button>
+          <button id="speakButton" class="secondary-button" type="button" disabled>
+            Répondre
+          </button>
+          <button id="replayButton" class="ghost-button" type="button" disabled>
+            Réécouter le dernier témoignage
+          </button>
+        </div>
+
+        <div class="instruction-box" aria-live="polite">
+          <span class="label">Consigne</span>
+          <p id="instructionText">
+            Cliquez sur "Écouter la table ronde" pour lancer trois témoignages courts.
+          </p>
+        </div>
+
+        <section class="roundtable" aria-labelledby="roundtable-title">
+          <span class="label">Témoignages affichés</span>
+          <h2 id="roundtable-title">Climat et expériences vécues</h2>
+          <div id="testimonyList" class="testimony-list"></div>
+        </section>
+
+        <div class="speech-area">
+          <label for="fallbackInput">Transcription ou saisie de secours</label>
+          <textarea
+            id="fallbackInput"
+            rows="4"
+            placeholder="Après l'écoute, dites en français les changements compris ou les points communs repérés."
+            disabled
+          ></textarea>
+          <p id="speechStatus" class="status" role="status">
+            En attente de démarrage.
+          </p>
+        </div>
+
+        <section class="agent-response" aria-labelledby="agent-title">
+          <span class="label">Témoignage ou relance</span>
+          <h2 id="agent-title">Table ronde</h2>
+          <p id="agentText">Les témoignages de la table ronde apparaîtront ici.</p>
+        </section>
+      </section>
+
+      <aside class="observation-panel" aria-labelledby="observation-title">
+        <div>
+          <p class="kicker">Observation IC</p>
+          <h2 id="observation-title">Indices visibles</h2>
+        </div>
+
+        <div class="observation-grid" id="observationGrid"></div>
+
+        <section class="history-section" aria-labelledby="history-title">
+          <h2 id="history-title">Historique</h2>
+          <ol id="historyList" class="history-list"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <script src="script-0.0.2.js"></script>
+  </body>
+</html>

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub - Connexion</title>
+    <link rel="stylesheet" href="login.css">
+  </head>
+  <body>
+    <main class="auth-shell">
+      <section class="auth-panel">
+        <p class="kicker">IC-Lab Hub V0.1</p>
+        <h1>Connexion locale</h1>
+        <form id="loginForm">
+          <label>Email <input id="emailInput" type="email" autocomplete="username" required></label>
+          <label>Mot de passe <input id="passwordInput" type="password" autocomplete="current-password" required></label>
+          <button type="submit">Se connecter</button>
+        </form>
+        <p id="message" class="message" role="status"></p>
+      </section>
+      <aside class="demo-panel">
+        <h2>Comptes demo</h2>
+        <button data-demo-email="admin@demo.local" data-demo-password="admin">admin@demo.local / admin</button>
+        <button data-demo-email="teacher@demo.local" data-demo-password="teacher">teacher@demo.local / teacher</button>
+        <button data-demo-email="student@demo.local" data-demo-password="student">student@demo.local / student</button>
+        <p>Authentification experimentale locale, non destinee a un deploiement public.</p>
+      </aside>
+    </main>
+    <script src="login.js"></script>
+  </body>
+</html>

@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype 05 — Vidéo augmentée IC</title>
+  <style>
+    :root {
+      --ink: #20242c;
+      --muted: #667085;
+      --line: #d9e0e8;
+      --paper: #f7f9fc;
+      --panel: #ffffff;
+      --blue: #325f8f;
+      --green: #3d7a5c;
+      --amber: #a46816;
+      --red: #9a3d3d;
+      --violet: #6d4e8a;
+      --shadow: rgba(25, 35, 48, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(135deg, #eef3f7, #faf7ef);
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: clamp(24px, 4vw, 38px);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .status-pill {
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: #edf4ff;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .focus-button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .focus-button:hover,
+    .focus-button.active {
+      border-color: var(--blue);
+      background: #edf4ff;
+      color: var(--blue);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 10px 30px var(--shadow);
+      overflow: hidden;
+    }
+
+    .video-panel {
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      min-height: 0;
+    }
+
+    .video-wrap {
+      background: #14171d;
+      padding: 12px;
+      position: relative;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      max-height: 58vh;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .video-overlay {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      width: min(390px, calc(100% - 48px));
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 10px;
+      background: rgba(16, 20, 28, 0.78);
+      color: white;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(8px);
+      display: grid;
+      gap: 8px;
+      opacity: 1;
+      transform: translateY(0);
+      visibility: visible;
+      transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+      z-index: 3;
+    }
+
+    .video-overlay.hidden {
+      opacity: 0;
+      transform: translateY(8px);
+      visibility: hidden;
+    }
+
+    .overlay-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #d8e6ff;
+      padding-right: 32px;
+    }
+
+    .overlay-close {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .overlay-close:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .overlay-text {
+      margin: 0;
+      line-height: 1.45;
+      font-size: 15px;
+    }
+
+    .video-overlay .tag {
+      background: rgba(255, 255, 255, 0.14);
+      color: white;
+    }
+
+    .video-note {
+      margin: 0;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .annotation {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .annotation h2,
+    .transcript h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .active-time {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .annotation-text {
+      margin: 0;
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    .pedagogical-question {
+      margin: 0;
+      padding: 11px 12px;
+      border-radius: 10px;
+      background: #f7fafc;
+      border: 1px solid var(--line);
+      line-height: 1.45;
+    }
+
+    .copy-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .copy-button {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: var(--blue);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .copy-button:hover {
+      background: #244a72;
+    }
+
+    .copy-status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #edf2f7;
+      color: #394150;
+    }
+
+    .tag.presentation { background: #e9f1ff; color: var(--blue); }
+    .tag.langue { background: #f1edff; color: var(--violet); }
+    .tag.collective { background: #eaf7ef; color: var(--green); }
+    .tag.clarification { background: #fff4df; color: var(--amber); }
+    .tag.negociation { background: #f2f5ff; color: #465d99; }
+    .tag.piege { background: #ffecec; color: var(--red); }
+    .tag.repertoire { background: #edf7f7; color: #237070; }
+
+    .transcript {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+    }
+
+    .transcript-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .layers {
+      position: absolute;
+      left: 24px;
+      top: 24px;
+      width: min(280px, calc(100% - 48px));
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      background: rgba(16, 20, 28, 0.68);
+      color: white;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(8px);
+      display: grid;
+      gap: 10px;
+      z-index: 2;
+    }
+
+    .layers-toggle {
+      border: none;
+      padding: 0;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 800;
+      color: #d8e6ff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .layers.collapsed {
+      width: auto;
+      min-width: 138px;
+      padding: 10px 12px;
+      gap: 0;
+    }
+
+    .layers.collapsed .layer-list {
+      display: none;
+    }
+
+    .layer-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .layer-toggle {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      user-select: none;
+    }
+
+    .layer-toggle:hover,
+    .layer-toggle.active {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.16);
+      color: white;
+    }
+
+    .layer-toggle input {
+      accent-color: #d8e6ff;
+    }
+
+    .transcript-list {
+      overflow: auto;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .segment {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 11px;
+      background: #f8fafc;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .segment:hover {
+      border-color: #bed0e5;
+      background: #f2f7ff;
+    }
+
+    .segment.active {
+      border-color: var(--blue);
+      background: #edf4ff;
+      box-shadow: inset 4px 0 0 var(--blue);
+    }
+
+    .segment-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .speaker {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .segment-text {
+      margin: 0;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .mini-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .mini-tags .tag {
+      padding: 4px 7px;
+      font-size: 11px;
+    }
+
+    a {
+      color: var(--blue);
+    }
+
+    .app.focus-mode .layout {
+      grid-template-columns: 1fr;
+    }
+
+    .app.focus-mode .transcript,
+    .app.focus-mode .annotation,
+    .app.focus-mode .video-note {
+      display: none;
+    }
+
+    .app.focus-mode .video-panel {
+      min-height: 0;
+    }
+
+    .app.focus-mode video {
+      max-height: calc(100vh - 150px);
+    }
+
+    .app.focus-mode .video-wrap {
+      padding: 14px;
+    }
+
+    @media (max-width: 700px) {
+      .layers {
+        position: static;
+        width: auto;
+        margin-bottom: 10px;
+      }
+
+      .video-overlay {
+        left: 18px;
+        bottom: 18px;
+        width: calc(100% - 36px);
+      }
+    }
+
+    @media (max-width: 900px) {
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      video {
+        max-height: 44vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <header>
+      <div>
+        <h1>Vidéo augmentée d’intercompréhension</h1>
+        <p class="subtitle">Prototype 05 — lecture synchronisée de moments plurilingues, avec annotations pédagogiques IC.</p>
+      </div>
+      <div class="header-actions">
+        <button id="focusToggle" class="focus-button" type="button" aria-pressed="false">Mode Focus</button>
+        <div class="status-pill">V0.0.4 · immersion vidéo</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel video-panel">
+        <div class="video-wrap">
+          <video id="video" controls preload="metadata"></video>
+          <div id="layersPanel" class="layers" aria-label="Couches actives">
+            <button id="layersToggle" class="layers-toggle" type="button" aria-expanded="true">▼ Couches actives</button>
+            <div id="layerList" class="layer-list"></div>
+          </div>
+          <div id="videoOverlay" class="video-overlay hidden" aria-live="polite">
+            <button id="overlayClose" class="overlay-close" type="button" aria-label="Fermer l’observation">×</button>
+            <div id="overlayTitle" class="overlay-title">Moment pédagogiquement riche</div>
+            <p id="overlayText" class="overlay-text"></p>
+            <div id="overlayTags" class="tags"></div>
+          </div>
+        </div>
+        <p id="videoNote" class="video-note">
+          Chargement du flux HLS… Si votre navigateur ne lit pas directement ce format,
+          ouvrez le flux dans un lecteur compatible : <a id="streamLink" href="#" target="_blank" rel="noreferrer">livestream.m3u8</a>.
+        </p>
+        <div class="annotation" aria-live="polite">
+          <div>
+            <h2>Annotation IC</h2>
+            <div id="activeTime" class="active-time">Sélectionnez un segment pour commencer.</div>
+          </div>
+          <p id="annotationText" class="annotation-text">
+            Cette zone indique ce qui semble intéressant pour l’intercompréhension : changement de langue,
+            clarification, négociation du sens, répertoire plurilingue, etc.
+          </p>
+          <p id="pedagogicalQuestion" class="pedagogical-question">
+            Question pédagogique : que peut-on observer dans ce segment ?
+          </p>
+          <div id="activeTags" class="tags"></div>
+          <div class="copy-row">
+            <button id="copyObservation" class="copy-button" type="button">Copier l’observation</button>
+            <span id="copyStatus" class="copy-status"></span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="panel transcript">
+        <div class="transcript-head">
+          <h2>Transcription synchronisée</h2>
+          <p class="subtitle">Cliquez un segment pour déplacer la vidéo. Les segments V0 sont volontairement limités.</p>
+        </div>
+        <div id="transcriptList" class="transcript-list"></div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    const hlsUrl = "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8";
+
+    const tagClasses = {
+      "présentation": "presentation",
+      "changement de langue": "langue",
+      "compréhension collective": "collective",
+      "clarification": "clarification",
+      "négociation du sens": "negociation",
+      "mot-piège": "piege",
+      "répertoire plurilingue": "repertoire"
+    };
+
+    const allTags = Object.keys(tagClasses);
+    const tagLabels = {
+      "présentation": "Présentation",
+      "changement de langue": "Changement de langue",
+      "compréhension collective": "Compréhension collective",
+      "clarification": "Clarification",
+      "négociation du sens": "Négociation du sens",
+      "mot-piège": "Mot-piège",
+      "répertoire plurilingue": "Répertoire plurilingue"
+    };
+
+    const segments = [
+      {
+        start: 2,
+        end: 23,
+        speaker: "Présentateur 1",
+        text: "On va faire un essai, donc chacun va pouvoir se présenter dans sa langue, donc son nom, son université, les langues connues, les études, activités préférées, projets...",
+        tags: ["présentation", "répertoire plurilingue"],
+        note: "Le dispositif est posé comme un tour de présentation plurilingue : chacun peut mobiliser sa langue et son répertoire.",
+        question: "Comment le cadre autorise-t-il chaque personne à utiliser son propre répertoire linguistique ?",
+        overlay: {
+          title: "Cadre plurilingue",
+          text: "Chacun peut se présenter dans sa langue et rendre son répertoire visible.",
+          tags: ["présentation", "répertoire plurilingue"]
+        }
+      },
+      {
+        start: 32,
+        end: 58,
+        speaker: "Présentateur 2",
+        text: "Bonjour, moi c’est Marie... J’étudie à l’Université Grenoble-Alpes en master en didactique des langues, en particulier le français langue étrangère.",
+        tags: ["présentation", "répertoire plurilingue"],
+        note: "Présentation de soi et ancrage institutionnel. Moment utile pour observer la mise en place d’un contexte partagé.",
+        question: "Quels éléments de présentation créent un contexte partagé pour le groupe ?"
+      },
+      {
+        start: 58,
+        end: 84,
+        speaker: "Présentateur 2",
+        text: "Je parle le français, l’anglais, l’italien couramment. J’apprends l’espagnol cette année... j’ai habité un an en République tchèque...",
+        tags: ["répertoire plurilingue", "présentation"],
+        note: "Le répertoire linguistique est explicité : langues maîtrisées, langues en cours d’apprentissage, expérience de mobilité.",
+        question: "Que nous apprend ce segment sur la diversité des compétences dans un même répertoire ?"
+      },
+      {
+        start: 91,
+        end: 102,
+        speaker: "Présentateur 1",
+        text: "Vous avez bien compris ? Oui, je crois que tout le monde comprend bien le français, donc pas de problème.",
+        tags: ["compréhension collective", "clarification"],
+        note: "Premier contrôle collectif de compréhension. La compréhension devient un objet partagé, pas seulement individuel.",
+        question: "Qu’est-ce que le groupe vérifie collectivement à ce moment ?",
+        overlay: {
+          title: "Compréhension collective",
+          text: "Le groupe vérifie si la compréhension est suffisamment partagée pour continuer.",
+          tags: ["compréhension collective", "clarification"]
+        }
+      },
+      {
+        start: 100,
+        end: 118,
+        speaker: "Présentateur 1",
+        text: "On change de langue. Allez, on change de langue. Nicoli, Andréa, Évelyne, Julien, qui veut commencer ?",
+        tags: ["changement de langue", "présentation"],
+        note: "Le changement de langue est annoncé et ritualisé. C’est un marqueur fort pour une vidéo augmentée IC.",
+        question: "Comment le changement de langue est-il préparé pour ne pas devenir une rupture ?",
+        overlay: {
+          title: "Changement de langue",
+          text: "Le passage à une autre langue est annoncé comme une étape normale de l’échange.",
+          tags: ["changement de langue", "présentation"]
+        }
+      },
+      {
+        start: 118,
+        end: 136,
+        speaker: "Présentateur 4",
+        text: "Io sono di Espaa, studio en la Universidad de Salamanca. Sto facendo la carrera de Estudios franceses...",
+        tags: ["changement de langue", "répertoire plurilingue", "mot-piège"],
+        note: "Segment hybride : italien, espagnol et français se croisent. Le mot carrera apparaît dans un contexte d’études.",
+        question: "Quel indice permet déjà d’interpréter le mot carrera avant la clarification ?"
+      },
+      {
+        start: 143,
+        end: 172,
+        speaker: "Présentateur 4",
+        text: "Entiendo la mayoría del francés... l’italiano un poco... portugués nunca lo he estudiado, pero alguna parola sí que la entiendo...",
+        tags: ["répertoire plurilingue", "compréhension collective"],
+        note: "La participante décrit une compréhension partielle mais opératoire : comprendre certaines langues sans les avoir toutes étudiées.",
+        question: "Comment ce segment montre-t-il une compréhension partielle mais utile ?",
+        overlay: {
+          title: "Répertoire plurilingue",
+          text: "La compréhension partielle devient une ressource : quelques langues, quelques mots, assez pour avancer.",
+          tags: ["répertoire plurilingue", "compréhension collective"]
+        }
+      },
+      {
+        start: 176,
+        end: 185,
+        speaker: "Présentateur 1",
+        text: "Alors, ça va ? Tout compris ? Un mot difficile, une expression plus difficile ?",
+        tags: ["clarification", "compréhension collective"],
+        note: "Invitation à signaler une difficulté. Ce type de relance ouvre la négociation du sens.",
+        question: "Où voit-on l’ouverture d’un espace de clarification ?"
+      },
+      {
+        start: 186,
+        end: 225,
+        speaker: "Présentateur 1 et groupe",
+        text: "La carrera... comment on dit ça en français, Marie ? La filière... Carrière, non ? Littéralement, oui... mais en français on dirait plutôt un cursus, un diplôme, une filière.",
+        tags: ["mot-piège", "négociation du sens", "clarification"],
+        note: "Moment central : le groupe répare collectivement un faux ami partiel entre carrera et carrière.",
+        question: "Où voit-on une négociation du sens autour de carrera ?",
+        overlay: {
+          title: "Moment pédagogiquement riche",
+          text: "La carrera... comment on dit ça en français ?",
+          tags: ["mot-piège", "négociation du sens", "clarification"]
+        }
+      },
+      {
+        start: 241,
+        end: 273,
+        speaker: "Présentateur 6",
+        text: "Bueno, hola a todos. Mi chiamo Yassin, soy de Espagna... Vivo in Francia, in Lyon... estudio la carrera de el CEO espagnol...",
+        tags: ["changement de langue", "répertoire plurilingue", "mot-piège"],
+        note: "Nouveau segment plurilingue spontané : le participant mobilise plusieurs langues dans une même présentation.",
+        question: "Comment le participant combine-t-il plusieurs langues pour rester compréhensible ?"
+      },
+      {
+        start: 273,
+        end: 302,
+        speaker: "Présentateur 1 et Présentateur 6",
+        text: "Mucho gusto, Yassine. Alors, bien compris ? Une question, une précision ? Oui, je hablo espagnol, français, anglais, un peu de catalan...",
+        tags: ["clarification", "compréhension collective", "répertoire plurilingue"],
+        note: "Le groupe revient à la compréhension et au répertoire linguistique. On observe la circulation entre présentation, clarification et pluralité des langues.",
+        question: "Qu’est-ce que le groupe comprend collectivement du répertoire de Yassine ?",
+        overlay: {
+          title: "Répertoire partagé",
+          text: "Le groupe rassemble des indices sur les langues disponibles et sur ce qui a été compris.",
+          tags: ["clarification", "compréhension collective", "répertoire plurilingue"]
+        }
+      }
+    ];
+
+    const video = document.getElementById("video");
+    const app = document.getElementById("app");
+    const focusToggle = document.getElementById("focusToggle");
+    const videoNote = document.getElementById("videoNote");
+    const streamLink = document.getElementById("streamLink");
+    const transcriptList = document.getElementById("transcriptList");
+    const annotationText = document.getElementById("annotationText");
+    const pedagogicalQuestion = document.getElementById("pedagogicalQuestion");
+    const activeTime = document.getElementById("activeTime");
+    const activeTags = document.getElementById("activeTags");
+    const layersPanel = document.getElementById("layersPanel");
+    const layersToggle = document.getElementById("layersToggle");
+    const layerList = document.getElementById("layerList");
+    const videoOverlay = document.getElementById("videoOverlay");
+    const overlayClose = document.getElementById("overlayClose");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const overlayTags = document.getElementById("overlayTags");
+    const copyObservation = document.getElementById("copyObservation");
+    const copyStatus = document.getElementById("copyStatus");
+    let activeSegmentIndex = 0;
+    let collapsedLayers = false;
+    let dismissedOverlayKey = null;
+    const activeLayers = new Set(allTags);
+
+    streamLink.href = hlsUrl;
+
+    if (video.canPlayType("application/vnd.apple.mpegurl")) {
+      video.src = hlsUrl;
+      videoNote.textContent = "Flux HLS chargé en lecture native. Les segments V0 restent à vérifier contre une transcription fine.";
+    } else {
+      video.src = hlsUrl;
+      videoNote.innerHTML = `Ce navigateur peut ne pas lire le HLS nativement. Le prototype conserve le flux :
+        <a href="${hlsUrl}" target="_blank" rel="noreferrer">ouvrir livestream.m3u8</a>.
+        Pour une V1, on pourra ajouter un lecteur HLS dédié si nécessaire.`;
+    }
+
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const rest = Math.floor(seconds % 60).toString().padStart(2, "0");
+      return `${minutes}:${rest}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderTag(tag) {
+      const className = tagClasses[tag] || "";
+      return `<span class="tag ${className}">${escapeHtml(tag)}</span>`;
+    }
+
+    function getVisibleTags(segment) {
+      return segment.tags.filter(tag => activeLayers.has(tag));
+    }
+
+    function segmentHasActiveLayer(segment) {
+      return getVisibleTags(segment).length > 0;
+    }
+
+    function getSegmentOverlayKey(segment) {
+      return segment.overlay ? `${segment.start}-${segment.end}-${segment.overlay.title}` : null;
+    }
+
+    function renderLayerToggle() {
+      const activeCount = activeLayers.size;
+      layersToggle.textContent = collapsedLayers
+        ? `▶ Couches (${activeCount}/${allTags.length})`
+        : "▼ Couches actives";
+      layersToggle.setAttribute("aria-expanded", String(!collapsedLayers));
+      layersPanel.classList.toggle("collapsed", collapsedLayers);
+    }
+
+    function renderLayers() {
+      renderLayerToggle();
+      layerList.innerHTML = allTags.map(tag => {
+        const checked = activeLayers.has(tag);
+        return `
+          <label class="layer-toggle ${checked ? "active" : ""}">
+            <input type="checkbox" data-tag="${escapeHtml(tag)}" ${checked ? "checked" : ""}>
+            ${escapeHtml(tagLabels[tag] || tag)}
+          </label>
+        `;
+      }).join("");
+    }
+
+    function renderTranscript() {
+      const visibleSegments = segments
+        .map((segment, index) => ({ segment, index }))
+        .filter(item => segmentHasActiveLayer(item.segment));
+
+      if (!visibleSegments.length) {
+        transcriptList.innerHTML = `<p class="subtitle">Aucune couche active. Cochez au moins une couche pour faire réapparaître des segments.</p>`;
+        return;
+      }
+
+      transcriptList.innerHTML = visibleSegments.map(({ segment, index }) => `
+        <button class="segment" type="button" data-index="${index}">
+          <div class="segment-meta">
+            <span class="speaker">${escapeHtml(segment.speaker)}</span>
+            <span>${formatTime(segment.start)} — ${formatTime(segment.end)}</span>
+          </div>
+          <p class="segment-text">${escapeHtml(segment.text)}</p>
+          <div class="mini-tags">${getVisibleTags(segment).map(renderTag).join("")}</div>
+        </button>
+      `).join("");
+    }
+
+    function buildLayeredNote(segment, visibleTags) {
+      if (!visibleTags.length) {
+        return "Ce segment continue d’exister dans la vidéo, mais aucune de ses couches d’observation n’est actuellement active.";
+      }
+
+      const layerText = visibleTags
+        .map(tag => tagLabels[tag] || tag)
+        .join(", ");
+
+      return `${segment.note}\n\nCouches observées ici : ${layerText}.`;
+    }
+
+    function updateOverlay(segment) {
+      if (!segment.overlay) {
+        videoOverlay.classList.add("hidden");
+        return;
+      }
+
+      const overlayKey = getSegmentOverlayKey(segment);
+      if (overlayKey && dismissedOverlayKey === overlayKey) {
+        videoOverlay.classList.add("hidden");
+        return;
+      }
+
+      const visibleOverlayTags = segment.overlay.tags.filter(tag => activeLayers.has(tag));
+      if (!visibleOverlayTags.length) {
+        videoOverlay.classList.add("hidden");
+        return;
+      }
+
+      overlayTitle.textContent = segment.overlay.title;
+      overlayText.textContent = segment.overlay.text;
+      overlayTags.innerHTML = visibleOverlayTags.map(renderTag).join("");
+      videoOverlay.classList.remove("hidden");
+    }
+
+    function toggleLayer(tag, checked) {
+      if (checked) {
+        activeLayers.add(tag);
+      } else {
+        activeLayers.delete(tag);
+      }
+
+      renderLayers();
+      renderTranscript();
+      activateSegment(activeSegmentIndex, false);
+    }
+
+    function toggleLayersPanel() {
+      collapsedLayers = !collapsedLayers;
+      renderLayerToggle();
+    }
+
+    function activateSegment(index, seek = false) {
+      const segment = segments[index];
+      if (!segment) return;
+      const previousSegmentIndex = activeSegmentIndex;
+      activeSegmentIndex = index;
+      if (previousSegmentIndex !== index) dismissedOverlayKey = null;
+      const visibleTags = getVisibleTags(segment);
+
+      document.querySelectorAll(".segment").forEach((item, itemIndex) => {
+        item.classList.toggle("active", Number(item.dataset.index) === index);
+      });
+
+      activeTime.textContent = `${formatTime(segment.start)} — ${formatTime(segment.end)} · ${segment.speaker}`;
+      annotationText.textContent = buildLayeredNote(segment, visibleTags);
+      pedagogicalQuestion.textContent = visibleTags.length
+        ? `Question pédagogique : ${segment.question}`
+        : "Question pédagogique : quelle couche faudrait-il réactiver pour observer ce segment ?";
+      activeTags.innerHTML = visibleTags.length
+        ? visibleTags.map(renderTag).join("")
+        : `<span class="tag">aucune couche active ici</span>`;
+      copyStatus.textContent = "";
+      updateOverlay(segment);
+
+      if (seek) {
+        video.currentTime = segment.start;
+        video.play().catch(() => {
+          videoNote.textContent = "Segment sélectionné. La lecture automatique peut être bloquée par le navigateur.";
+        });
+      }
+    }
+
+    function findActiveSegment(time) {
+      return segments.findIndex(segment => time >= segment.start && time < segment.end);
+    }
+
+    function buildObservationText(segment) {
+      return [
+        `Timestamp : ${formatTime(segment.start)} — ${formatTime(segment.end)}`,
+        `Locuteur : ${segment.speaker}`,
+        `Texte : ${segment.text}`,
+        `Tags : ${segment.tags.join(", ")}`,
+        `Note IC : ${segment.note}`,
+        `Question pédagogique : ${segment.question}`
+      ].join("\n");
+    }
+
+    async function copyActiveObservation() {
+      const segment = segments[activeSegmentIndex];
+      if (!segment) return;
+      const text = buildObservationText(segment);
+
+      try {
+        await navigator.clipboard.writeText(text);
+        copyStatus.textContent = "Observation copiée.";
+      } catch (error) {
+        copyStatus.textContent = "Copie automatique indisponible. Sélectionnez le texte depuis la console ou le code.";
+        console.info(text);
+      }
+    }
+
+    transcriptList.addEventListener("click", event => {
+      const button = event.target.closest(".segment");
+      if (!button) return;
+      activateSegment(Number(button.dataset.index), true);
+    });
+
+    layerList.addEventListener("change", event => {
+      const checkbox = event.target.closest("input[type='checkbox']");
+      if (!checkbox) return;
+      toggleLayer(checkbox.dataset.tag, checkbox.checked);
+    });
+
+    layersToggle.addEventListener("click", toggleLayersPanel);
+
+    overlayClose.addEventListener("click", () => {
+      const segment = segments[activeSegmentIndex];
+      dismissedOverlayKey = segment ? getSegmentOverlayKey(segment) : null;
+      videoOverlay.classList.add("hidden");
+    });
+
+    focusToggle.addEventListener("click", () => {
+      const isFocus = app.classList.toggle("focus-mode");
+      focusToggle.classList.toggle("active", isFocus);
+      focusToggle.setAttribute("aria-pressed", String(isFocus));
+      focusToggle.textContent = isFocus ? "Quitter le focus" : "Mode Focus";
+    });
+
+    copyObservation.addEventListener("click", copyActiveObservation);
+
+    video.addEventListener("timeupdate", () => {
+      const index = findActiveSegment(video.currentTime);
+      if (index >= 0) activateSegment(index, false);
+      if (index < 0) videoOverlay.classList.add("hidden");
+    });
+
+    renderLayers();
+    renderTranscript();
+    activateSegment(0, false);
+  </script>
+</body>
+</html>

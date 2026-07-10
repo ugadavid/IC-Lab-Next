@@ -1,0 +1,1081 @@
+{
+  "contract_version": "0.1",
+  "status": "complete",
+  "text": "La organización internacional promueve la educación científica y la cooperación cultural entre universidades.\nMuchos estudiantes observan que la comunicación académica en lenguas románicas resulta más accesible de lo que imaginaban.\nLa información circula rápidamente cuando existe una base común de comprensión, especialmente en contextos de formación, investigación e innovación.\nEn esta experiencia, el objetivo no es traducir cada palabra, sino identificar elementos familiares, reconocer terminaciones útiles y construir sentido de manera progresiva.\nUna metodología basada en la observación, la comparación y la reflexión permite desarrollar estrategias duraderas para comprender mejor textos desconocidos.",
+  "languages": {
+    "source": "es",
+    "mediation": "fr",
+    "comparison": [
+      "it",
+      "pt"
+    ]
+  },
+  "sieves": [
+    {
+      "id": 1,
+      "code": "international_lexicon",
+      "label": "Lexique international",
+      "description": "Repère les formes transparentes ou quasi transparentes.",
+      "status": "available",
+      "result_count": 1
+    },
+    {
+      "id": 2,
+      "code": "pan_romance_lexicon",
+      "label": "Lexique pan-roman",
+      "description": "Compare des formes proches dans plusieurs langues romanes.",
+      "status": "available",
+      "result_count": 1
+    },
+    {
+      "id": 3,
+      "code": "phonetic_correspondences",
+      "label": "Correspondances phonétiques",
+      "description": "Repère des correspondances régulières entre formes.",
+      "status": "available",
+      "result_count": 1
+    },
+    {
+      "id": 4,
+      "code": "graphy_pronunciation",
+      "label": "Graphies / prononciations",
+      "description": "Signale des graphies utiles pour orienter la prononciation.",
+      "status": "experimental",
+      "result_count": 1
+    },
+    {
+      "id": 5,
+      "code": "pan_romance_syntax",
+      "label": "Syntaxe pan-romane",
+      "description": "Propose une lecture syntaxique très simplifiée de l’énoncé.",
+      "status": "experimental",
+      "result_count": 1
+    },
+    {
+      "id": 6,
+      "code": "morphosyntax",
+      "label": "Morphosyntaxe",
+      "description": "Repère quelques signaux grammaticaux visibles.",
+      "status": "experimental",
+      "result_count": 1
+    },
+    {
+      "id": 7,
+      "code": "affixes",
+      "label": "Préfixes / suffixes",
+      "description": "Repère des affixes donnant des indices morphologiques.",
+      "status": "available",
+      "result_count": 1
+    }
+  ],
+  "tokens": [
+    {
+      "index": 0,
+      "kind": "word",
+      "surface": "La",
+      "normalized": "la",
+      "start": 0,
+      "end": 2,
+      "enrichments": []
+    },
+    {
+      "index": 1,
+      "kind": "word",
+      "surface": "organización",
+      "normalized": "organización",
+      "start": 3,
+      "end": 15,
+      "enrichments": [
+        {
+          "id": "e-0001",
+          "sieve_id": 1,
+          "type": "lexical_transparency",
+          "label": "Mot transparent ou quasi transparent",
+          "explanation": "La forme espagnole est proche d’une forme reconnaissable en français.",
+          "caution": "Cette ressemblance est un indice et non une traduction automatique.",
+          "confidence": 0.9,
+          "level": "strong",
+          "source": {
+            "kind": "form_relation",
+            "label": "Mock Dico-IC V0"
+          },
+          "payload": {
+            "source_form": "organización",
+            "mediation_form": "organisation",
+            "mediation_language": "fr",
+            "relation_type": "COGNATE_STRONG"
+          }
+        },
+        {
+          "id": "e-0003",
+          "sieve_id": 3,
+          "type": "form_correspondence",
+          "label": "Correspondance -ción → -tion",
+          "explanation": "La finale fournit une piste fréquente entre l’espagnol et le français.",
+          "caution": "La forme proposée est confirmée ici par le lexique : organisation.",
+          "confidence": 0.88,
+          "level": "strong",
+          "source": {
+            "kind": "pattern_rule",
+            "label": "Mock Dico-IC V0"
+          },
+          "payload": {
+            "original": "organización",
+            "transformed": "organisation",
+            "source_pattern": "ción",
+            "target_pattern": "tion",
+            "source_language": "es",
+            "target_language": "fr"
+          }
+        },
+        {
+          "id": "e-0007",
+          "sieve_id": 7,
+          "type": "affix_signal",
+          "label": "Suffixe -ción repéré",
+          "explanation": "La finale peut aider à reconnaître une famille de mots.",
+          "caution": "Un suffixe isolé ne détermine pas le sens complet.",
+          "confidence": 0.85,
+          "level": "informational",
+          "source": {
+            "kind": "pattern_rule",
+            "label": "Mock Dico-IC V0"
+          },
+          "payload": {
+            "affix_type": "suffix",
+            "affix": "ción",
+            "language": "es"
+          }
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "kind": "word",
+      "surface": "internacional",
+      "normalized": "internacional",
+      "start": 16,
+      "end": 29,
+      "enrichments": []
+    },
+    {
+      "index": 3,
+      "kind": "word",
+      "surface": "promueve",
+      "normalized": "promueve",
+      "start": 30,
+      "end": 38,
+      "enrichments": [
+        {
+          "id": "e-0005",
+          "sieve_id": 5,
+          "type": "syntax_role",
+          "label": "Verbe probable",
+          "explanation": "Cette occurrence semble porter le noyau de l’action dans la première phrase.",
+          "caution": "Il s’agit d’une lecture syntaxique simplifiée et contextuelle.",
+          "confidence": 0.68,
+          "level": "informational",
+          "source": {
+            "kind": "heuristic",
+            "label": "Mock syntaxique expérimental"
+          },
+          "payload": {
+            "role": "verb",
+            "pattern": "subject_verb_complement"
+          }
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 39,
+      "end": 41,
+      "enrichments": []
+    },
+    {
+      "index": 5,
+      "kind": "word",
+      "surface": "educación",
+      "normalized": "educación",
+      "start": 42,
+      "end": 51,
+      "enrichments": []
+    },
+    {
+      "index": 6,
+      "kind": "word",
+      "surface": "científica",
+      "normalized": "científica",
+      "start": 52,
+      "end": 62,
+      "enrichments": [
+        {
+          "id": "e-0004",
+          "sieve_id": 4,
+          "type": "grapho_phonetic_signal",
+          "label": "c devant i",
+          "explanation": "Le c devant i attire l’attention sur une variation de prononciation en espagnol.",
+          "caution": "La réalisation varie selon les régions ; le signal reste ici graphique.",
+          "confidence": 0.7,
+          "level": "informational",
+          "source": {
+            "kind": "heuristic",
+            "label": "Mock expérimental V0"
+          },
+          "payload": {
+            "pattern": "ci",
+            "scope": "contains",
+            "comparison_hint": "variation graphique et phonétique"
+          }
+        }
+      ]
+    },
+    {
+      "index": 7,
+      "kind": "word",
+      "surface": "y",
+      "normalized": "y",
+      "start": 63,
+      "end": 64,
+      "enrichments": []
+    },
+    {
+      "index": 8,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 65,
+      "end": 67,
+      "enrichments": []
+    },
+    {
+      "index": 9,
+      "kind": "word",
+      "surface": "cooperación",
+      "normalized": "cooperación",
+      "start": 68,
+      "end": 79,
+      "enrichments": []
+    },
+    {
+      "index": 10,
+      "kind": "word",
+      "surface": "cultural",
+      "normalized": "cultural",
+      "start": 80,
+      "end": 88,
+      "enrichments": []
+    },
+    {
+      "index": 11,
+      "kind": "word",
+      "surface": "entre",
+      "normalized": "entre",
+      "start": 89,
+      "end": 94,
+      "enrichments": []
+    },
+    {
+      "index": 12,
+      "kind": "word",
+      "surface": "universidades",
+      "normalized": "universidades",
+      "start": 95,
+      "end": 108,
+      "enrichments": []
+    },
+    {
+      "index": 13,
+      "kind": "word",
+      "surface": "Muchos",
+      "normalized": "muchos",
+      "start": 110,
+      "end": 116,
+      "enrichments": []
+    },
+    {
+      "index": 14,
+      "kind": "word",
+      "surface": "estudiantes",
+      "normalized": "estudiantes",
+      "start": 117,
+      "end": 128,
+      "enrichments": []
+    },
+    {
+      "index": 15,
+      "kind": "word",
+      "surface": "observan",
+      "normalized": "observan",
+      "start": 129,
+      "end": 137,
+      "enrichments": []
+    },
+    {
+      "index": 16,
+      "kind": "word",
+      "surface": "que",
+      "normalized": "que",
+      "start": 138,
+      "end": 141,
+      "enrichments": []
+    },
+    {
+      "index": 17,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 142,
+      "end": 144,
+      "enrichments": []
+    },
+    {
+      "index": 18,
+      "kind": "word",
+      "surface": "comunicación",
+      "normalized": "comunicación",
+      "start": 145,
+      "end": 157,
+      "enrichments": []
+    },
+    {
+      "index": 19,
+      "kind": "word",
+      "surface": "académica",
+      "normalized": "académica",
+      "start": 158,
+      "end": 167,
+      "enrichments": []
+    },
+    {
+      "index": 20,
+      "kind": "word",
+      "surface": "en",
+      "normalized": "en",
+      "start": 168,
+      "end": 170,
+      "enrichments": []
+    },
+    {
+      "index": 21,
+      "kind": "word",
+      "surface": "lenguas",
+      "normalized": "lenguas",
+      "start": 171,
+      "end": 178,
+      "enrichments": [
+        {
+          "id": "e-0002",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes proches désignent la langue dans plusieurs langues romanes.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Mock Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "langue / lingua / língua",
+            "forms": [
+              {
+                "language": "es",
+                "form": "lenguas"
+              },
+              {
+                "language": "fr",
+                "form": "langues"
+              },
+              {
+                "language": "it",
+                "form": "lingue"
+              },
+              {
+                "language": "pt",
+                "form": "línguas"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "kind": "word",
+      "surface": "románicas",
+      "normalized": "románicas",
+      "start": 179,
+      "end": 188,
+      "enrichments": []
+    },
+    {
+      "index": 23,
+      "kind": "word",
+      "surface": "resulta",
+      "normalized": "resulta",
+      "start": 189,
+      "end": 196,
+      "enrichments": []
+    },
+    {
+      "index": 24,
+      "kind": "word",
+      "surface": "más",
+      "normalized": "más",
+      "start": 197,
+      "end": 200,
+      "enrichments": []
+    },
+    {
+      "index": 25,
+      "kind": "word",
+      "surface": "accesible",
+      "normalized": "accesible",
+      "start": 201,
+      "end": 210,
+      "enrichments": []
+    },
+    {
+      "index": 26,
+      "kind": "word",
+      "surface": "de",
+      "normalized": "de",
+      "start": 211,
+      "end": 213,
+      "enrichments": []
+    },
+    {
+      "index": 27,
+      "kind": "word",
+      "surface": "lo",
+      "normalized": "lo",
+      "start": 214,
+      "end": 216,
+      "enrichments": []
+    },
+    {
+      "index": 28,
+      "kind": "word",
+      "surface": "que",
+      "normalized": "que",
+      "start": 217,
+      "end": 220,
+      "enrichments": []
+    },
+    {
+      "index": 29,
+      "kind": "word",
+      "surface": "imaginaban",
+      "normalized": "imaginaban",
+      "start": 221,
+      "end": 231,
+      "enrichments": []
+    },
+    {
+      "index": 30,
+      "kind": "word",
+      "surface": "La",
+      "normalized": "la",
+      "start": 233,
+      "end": 235,
+      "enrichments": []
+    },
+    {
+      "index": 31,
+      "kind": "word",
+      "surface": "información",
+      "normalized": "información",
+      "start": 236,
+      "end": 247,
+      "enrichments": []
+    },
+    {
+      "index": 32,
+      "kind": "word",
+      "surface": "circula",
+      "normalized": "circula",
+      "start": 248,
+      "end": 255,
+      "enrichments": []
+    },
+    {
+      "index": 33,
+      "kind": "word",
+      "surface": "rápidamente",
+      "normalized": "rápidamente",
+      "start": 256,
+      "end": 267,
+      "enrichments": []
+    },
+    {
+      "index": 34,
+      "kind": "word",
+      "surface": "cuando",
+      "normalized": "cuando",
+      "start": 268,
+      "end": 274,
+      "enrichments": []
+    },
+    {
+      "index": 35,
+      "kind": "word",
+      "surface": "existe",
+      "normalized": "existe",
+      "start": 275,
+      "end": 281,
+      "enrichments": []
+    },
+    {
+      "index": 36,
+      "kind": "word",
+      "surface": "una",
+      "normalized": "una",
+      "start": 282,
+      "end": 285,
+      "enrichments": []
+    },
+    {
+      "index": 37,
+      "kind": "word",
+      "surface": "base",
+      "normalized": "base",
+      "start": 286,
+      "end": 290,
+      "enrichments": []
+    },
+    {
+      "index": 38,
+      "kind": "word",
+      "surface": "común",
+      "normalized": "común",
+      "start": 291,
+      "end": 296,
+      "enrichments": []
+    },
+    {
+      "index": 39,
+      "kind": "word",
+      "surface": "de",
+      "normalized": "de",
+      "start": 297,
+      "end": 299,
+      "enrichments": []
+    },
+    {
+      "index": 40,
+      "kind": "word",
+      "surface": "comprensión",
+      "normalized": "comprensión",
+      "start": 300,
+      "end": 311,
+      "enrichments": []
+    },
+    {
+      "index": 41,
+      "kind": "word",
+      "surface": "especialmente",
+      "normalized": "especialmente",
+      "start": 313,
+      "end": 326,
+      "enrichments": []
+    },
+    {
+      "index": 42,
+      "kind": "word",
+      "surface": "en",
+      "normalized": "en",
+      "start": 327,
+      "end": 329,
+      "enrichments": []
+    },
+    {
+      "index": 43,
+      "kind": "word",
+      "surface": "contextos",
+      "normalized": "contextos",
+      "start": 330,
+      "end": 339,
+      "enrichments": []
+    },
+    {
+      "index": 44,
+      "kind": "word",
+      "surface": "de",
+      "normalized": "de",
+      "start": 340,
+      "end": 342,
+      "enrichments": []
+    },
+    {
+      "index": 45,
+      "kind": "word",
+      "surface": "formación",
+      "normalized": "formación",
+      "start": 343,
+      "end": 352,
+      "enrichments": []
+    },
+    {
+      "index": 46,
+      "kind": "word",
+      "surface": "investigación",
+      "normalized": "investigación",
+      "start": 354,
+      "end": 367,
+      "enrichments": []
+    },
+    {
+      "index": 47,
+      "kind": "word",
+      "surface": "e",
+      "normalized": "e",
+      "start": 368,
+      "end": 369,
+      "enrichments": []
+    },
+    {
+      "index": 48,
+      "kind": "word",
+      "surface": "innovación",
+      "normalized": "innovación",
+      "start": 370,
+      "end": 380,
+      "enrichments": []
+    },
+    {
+      "index": 49,
+      "kind": "word",
+      "surface": "En",
+      "normalized": "en",
+      "start": 382,
+      "end": 384,
+      "enrichments": []
+    },
+    {
+      "index": 50,
+      "kind": "word",
+      "surface": "esta",
+      "normalized": "esta",
+      "start": 385,
+      "end": 389,
+      "enrichments": []
+    },
+    {
+      "index": 51,
+      "kind": "word",
+      "surface": "experiencia",
+      "normalized": "experiencia",
+      "start": 390,
+      "end": 401,
+      "enrichments": []
+    },
+    {
+      "index": 52,
+      "kind": "word",
+      "surface": "el",
+      "normalized": "el",
+      "start": 403,
+      "end": 405,
+      "enrichments": []
+    },
+    {
+      "index": 53,
+      "kind": "word",
+      "surface": "objetivo",
+      "normalized": "objetivo",
+      "start": 406,
+      "end": 414,
+      "enrichments": []
+    },
+    {
+      "index": 54,
+      "kind": "word",
+      "surface": "no",
+      "normalized": "no",
+      "start": 415,
+      "end": 417,
+      "enrichments": []
+    },
+    {
+      "index": 55,
+      "kind": "word",
+      "surface": "es",
+      "normalized": "es",
+      "start": 418,
+      "end": 420,
+      "enrichments": []
+    },
+    {
+      "index": 56,
+      "kind": "word",
+      "surface": "traducir",
+      "normalized": "traducir",
+      "start": 421,
+      "end": 429,
+      "enrichments": []
+    },
+    {
+      "index": 57,
+      "kind": "word",
+      "surface": "cada",
+      "normalized": "cada",
+      "start": 430,
+      "end": 434,
+      "enrichments": []
+    },
+    {
+      "index": 58,
+      "kind": "word",
+      "surface": "palabra",
+      "normalized": "palabra",
+      "start": 435,
+      "end": 442,
+      "enrichments": []
+    },
+    {
+      "index": 59,
+      "kind": "word",
+      "surface": "sino",
+      "normalized": "sino",
+      "start": 444,
+      "end": 448,
+      "enrichments": []
+    },
+    {
+      "index": 60,
+      "kind": "word",
+      "surface": "identificar",
+      "normalized": "identificar",
+      "start": 449,
+      "end": 460,
+      "enrichments": []
+    },
+    {
+      "index": 61,
+      "kind": "word",
+      "surface": "elementos",
+      "normalized": "elementos",
+      "start": 461,
+      "end": 470,
+      "enrichments": []
+    },
+    {
+      "index": 62,
+      "kind": "word",
+      "surface": "familiares",
+      "normalized": "familiares",
+      "start": 471,
+      "end": 481,
+      "enrichments": []
+    },
+    {
+      "index": 63,
+      "kind": "word",
+      "surface": "reconocer",
+      "normalized": "reconocer",
+      "start": 483,
+      "end": 492,
+      "enrichments": []
+    },
+    {
+      "index": 64,
+      "kind": "word",
+      "surface": "terminaciones",
+      "normalized": "terminaciones",
+      "start": 493,
+      "end": 506,
+      "enrichments": []
+    },
+    {
+      "index": 65,
+      "kind": "word",
+      "surface": "útiles",
+      "normalized": "útiles",
+      "start": 507,
+      "end": 513,
+      "enrichments": []
+    },
+    {
+      "index": 66,
+      "kind": "word",
+      "surface": "y",
+      "normalized": "y",
+      "start": 514,
+      "end": 515,
+      "enrichments": []
+    },
+    {
+      "index": 67,
+      "kind": "word",
+      "surface": "construir",
+      "normalized": "construir",
+      "start": 516,
+      "end": 525,
+      "enrichments": []
+    },
+    {
+      "index": 68,
+      "kind": "word",
+      "surface": "sentido",
+      "normalized": "sentido",
+      "start": 526,
+      "end": 533,
+      "enrichments": []
+    },
+    {
+      "index": 69,
+      "kind": "word",
+      "surface": "de",
+      "normalized": "de",
+      "start": 534,
+      "end": 536,
+      "enrichments": []
+    },
+    {
+      "index": 70,
+      "kind": "word",
+      "surface": "manera",
+      "normalized": "manera",
+      "start": 537,
+      "end": 543,
+      "enrichments": []
+    },
+    {
+      "index": 71,
+      "kind": "word",
+      "surface": "progresiva",
+      "normalized": "progresiva",
+      "start": 544,
+      "end": 554,
+      "enrichments": []
+    },
+    {
+      "index": 72,
+      "kind": "word",
+      "surface": "Una",
+      "normalized": "una",
+      "start": 556,
+      "end": 559,
+      "enrichments": []
+    },
+    {
+      "index": 73,
+      "kind": "word",
+      "surface": "metodología",
+      "normalized": "metodología",
+      "start": 560,
+      "end": 571,
+      "enrichments": []
+    },
+    {
+      "index": 74,
+      "kind": "word",
+      "surface": "basada",
+      "normalized": "basada",
+      "start": 572,
+      "end": 578,
+      "enrichments": []
+    },
+    {
+      "index": 75,
+      "kind": "word",
+      "surface": "en",
+      "normalized": "en",
+      "start": 579,
+      "end": 581,
+      "enrichments": []
+    },
+    {
+      "index": 76,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 582,
+      "end": 584,
+      "enrichments": []
+    },
+    {
+      "index": 77,
+      "kind": "word",
+      "surface": "observación",
+      "normalized": "observación",
+      "start": 585,
+      "end": 596,
+      "enrichments": []
+    },
+    {
+      "index": 78,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 598,
+      "end": 600,
+      "enrichments": []
+    },
+    {
+      "index": 79,
+      "kind": "word",
+      "surface": "comparación",
+      "normalized": "comparación",
+      "start": 601,
+      "end": 612,
+      "enrichments": []
+    },
+    {
+      "index": 80,
+      "kind": "word",
+      "surface": "y",
+      "normalized": "y",
+      "start": 613,
+      "end": 614,
+      "enrichments": []
+    },
+    {
+      "index": 81,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 615,
+      "end": 617,
+      "enrichments": []
+    },
+    {
+      "index": 82,
+      "kind": "word",
+      "surface": "reflexión",
+      "normalized": "reflexión",
+      "start": 618,
+      "end": 627,
+      "enrichments": []
+    },
+    {
+      "index": 83,
+      "kind": "word",
+      "surface": "permite",
+      "normalized": "permite",
+      "start": 628,
+      "end": 635,
+      "enrichments": []
+    },
+    {
+      "index": 84,
+      "kind": "word",
+      "surface": "desarrollar",
+      "normalized": "desarrollar",
+      "start": 636,
+      "end": 647,
+      "enrichments": []
+    },
+    {
+      "index": 85,
+      "kind": "word",
+      "surface": "estrategias",
+      "normalized": "estrategias",
+      "start": 648,
+      "end": 659,
+      "enrichments": []
+    },
+    {
+      "index": 86,
+      "kind": "word",
+      "surface": "duraderas",
+      "normalized": "duraderas",
+      "start": 660,
+      "end": 669,
+      "enrichments": []
+    },
+    {
+      "index": 87,
+      "kind": "word",
+      "surface": "para",
+      "normalized": "para",
+      "start": 670,
+      "end": 674,
+      "enrichments": []
+    },
+    {
+      "index": 88,
+      "kind": "word",
+      "surface": "comprender",
+      "normalized": "comprender",
+      "start": 675,
+      "end": 685,
+      "enrichments": [
+        {
+          "id": "e-0006",
+          "sieve_id": 6,
+          "type": "morphosyntactic_signal",
+          "label": "Infinitif probable",
+          "explanation": "La finale -er peut signaler un infinitif espagnol.",
+          "caution": "Le rôle exact doit être vérifié dans la phrase.",
+          "confidence": 0.78,
+          "level": "informational",
+          "source": {
+            "kind": "heuristic",
+            "label": "Mock morphosyntaxique V0"
+          },
+          "payload": {
+            "category": "probable_infinitive",
+            "marker": "-er",
+            "part_of_speech": "VERB"
+          }
+        }
+      ]
+    },
+    {
+      "index": 89,
+      "kind": "word",
+      "surface": "mejor",
+      "normalized": "mejor",
+      "start": 686,
+      "end": 691,
+      "enrichments": []
+    },
+    {
+      "index": 90,
+      "kind": "word",
+      "surface": "textos",
+      "normalized": "textos",
+      "start": 692,
+      "end": 698,
+      "enrichments": []
+    },
+    {
+      "index": 91,
+      "kind": "word",
+      "surface": "desconocidos",
+      "normalized": "desconocidos",
+      "start": 699,
+      "end": 711,
+      "enrichments": []
+    }
+  ],
+  "warnings": [
+    {
+      "code": "SIEVE_EXPERIMENTAL",
+      "severity": "info",
+      "scope": "sieve",
+      "message": "Le tamis 4 utilise une heuristique grapho-phonique de démonstration.",
+      "sieve_id": 4
+    },
+    {
+      "code": "SIEVE_EXPERIMENTAL",
+      "severity": "info",
+      "scope": "sieve",
+      "message": "Le tamis 5 utilise une annotation syntaxique contextuelle de démonstration.",
+      "sieve_id": 5
+    },
+    {
+      "code": "SIEVE_EXPERIMENTAL",
+      "severity": "info",
+      "scope": "sieve",
+      "message": "Le tamis 6 utilise une heuristique morphosyntaxique de démonstration.",
+      "sieve_id": 6
+    }
+  ]
+}

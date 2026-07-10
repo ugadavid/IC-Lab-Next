@@ -1,0 +1,116 @@
+{
+  "schema": "ic-lab-proto06-activity-manifest",
+  "schemaVersion": "0.1",
+  "manifestId": "climate-roundtable-demo",
+  "activityId": "climateObservations001",
+  "version": "1.0.0",
+  "status": "published",
+  "title": "Comprendre des constats climatiques",
+  "shortTitle": "Constats climatiques",
+  "description": "Rencontre plurilingue scenarisee autour de temoignages climatiques en langues romanes.",
+  "prototype": {
+    "id": "proto06",
+    "minVersion": "1.2.1"
+  },
+  "uiLanguage": "fr-FR",
+  "targetLanguages": ["es", "it", "ptBr"],
+  "climateThemes": ["chaleur", "secheresse", "pluies fortes"],
+  "characters": [
+    {
+      "id": "clara",
+      "displayName": "Clara",
+      "languageId": "es",
+      "placeId": "valencia",
+      "role": "Etudiante",
+      "image": "images/Clara.png",
+      "voice": {
+        "speechLang": "es-ES"
+      }
+    },
+    {
+      "id": "marco",
+      "displayName": "Marco",
+      "languageId": "it",
+      "placeId": "italyDryness",
+      "role": "Etudiant",
+      "image": "images/Marco.png",
+      "voice": {
+        "speechLang": "it-IT"
+      }
+    },
+    {
+      "id": "ana",
+      "displayName": "Ana",
+      "languageId": "ptBr",
+      "placeId": "brazilRain",
+      "role": "Etudiante",
+      "image": "images/Ana.png",
+      "voice": {
+        "speechLang": "pt-BR"
+      }
+    }
+  ],
+  "pedagogicalScenario": {
+    "id": "globalUnderstanding",
+    "title": "Comprehension globale",
+    "shortTitle": "Comprehension globale",
+    "taskType": "reconstruction",
+    "pedagogicalGoal": "Reconstruire les phenomenes climatiques evoques dans plusieurs temoignages romans.",
+    "instruction": "Ecoutez les temoignages et reconstruisez le theme commun a partir d'indices partiels.",
+    "commonQuestion": "Quels changements avez-vous compris et quels points communs reliez-vous entre les participants ?",
+    "observationFocus": ["mots transparents", "comprehension partielle", "theme commun"],
+    "difficulty": "moderee"
+  },
+  "meeting": {
+    "runtime": "scripted",
+    "steps": [
+      {
+        "stepId": "step-clara-001",
+        "characterId": "clara",
+        "text": "En Valencia los veranos son mas largos y mas calurosos.",
+        "languageId": "es",
+        "transparentWords": ["veranos", "largos", "calurosos"],
+        "generated": false,
+        "source": "human-reviewed"
+      },
+      {
+        "stepId": "step-marco-001",
+        "characterId": "marco",
+        "text": "Negli ultimi anni abbiamo avuto periodi di siccita piu frequenti.",
+        "languageId": "it",
+        "transparentWords": ["ultimi", "periodi", "frequenti"],
+        "generated": false,
+        "source": "human-reviewed"
+      },
+      {
+        "stepId": "step-ana-001",
+        "characterId": "ana",
+        "text": "As chuvas estao mais fortes do que antes.",
+        "languageId": "ptBr",
+        "transparentWords": ["chuvas", "fortes", "antes"],
+        "generated": false,
+        "source": "human-reviewed"
+      }
+    ],
+    "fallbackUtterance": "Je comprends plusieurs effets du changement climatique : chaleur, secheresse, manque d'eau ou pluies fortes.",
+    "initialObservation": {
+      "transparent": "Les mots proches servent de premiers appuis pour entrer dans les temoignages.",
+      "clarification": "La tache consiste a relier les temoignages plutot qu'a traduire chaque phrase.",
+      "reformulation": "Le sens global se construit en comparant les phenomenes evoques.",
+      "partial": "Une comprehension partielle peut suffire pour identifier un theme commun."
+    }
+  },
+  "teacherNotes": "Fixture local V1.2.1 pour verifier la lecture d'un manifest publie sans generation IA.",
+  "review": {
+    "reviewStatus": "human-reviewed",
+    "reviewedByLabel": "Equipe pedagogique IC-Lab",
+    "reviewedAt": "2026-07-03T00:00:00.000Z"
+  },
+  "safety": {
+    "containsLearnerText": false,
+    "containsApiKey": false,
+    "generatedLive": false,
+    "openAiInLearnerFlow": false,
+    "serverStored": false
+  }
+}

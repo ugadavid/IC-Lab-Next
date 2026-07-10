@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub V0.8.2 - Admin</title>
+    <link rel="stylesheet" href="admin-0.8.2.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div><p class="kicker">IC-Lab Hub V0.8.2</p><h1>Administration locale</h1><p id="userLine">Chargement...</p></div>
+        <nav><a href="hub-0.8.2.html">Hub</a><a href="teacher-0.7.1.html">Teacher test</a><a href="student-0.7.1.html">Student test</a></nav>
+      </header>
+      <section class="grid">
+        <section class="panel"><h2>Etat serveur</h2><pre id="healthBox"></pre></section>
+        <section class="panel"><h2>Etat stockage</h2><div id="storageBox" class="stack"></div></section>
+        <section class="panel wide ai-admin-panel">
+          <div class="section-head">
+            <div>
+              <h2>Administration des IA</h2>
+              <p>Cette page sert a gerer les fournisseurs IA, les modeles disponibles et les modeles autorises pour IC-Lab. Elle ne lance aucune IA dans les activites apprenantes.</p>
+            </div>
+            <span class="badge safe">Aucune generation activee</span>
+          </div>
+
+          <div class="learn-grid">
+            <article>
+              <h3>Provider <button class="help" type="button" title="Un provider est le service technique qui fournit des modeles IA.">?</button></h3>
+              <p>Un provider est un fournisseur technique : OpenAI, Anthropic, Google, Mistral, Ollama, etc.</p>
+            </article>
+            <article>
+              <h3>Modele <button class="help" type="button" title="Un modele est un moteur utilisable chez un provider.">?</button></h3>
+              <p>Un modele est un moteur utilisable chez un provider : modele texte, audio, image, embedding, temps reel, etc.</p>
+            </article>
+            <article>
+              <h3>Synchronisation <button class="help" type="button" title="La cle OpenAI reste cote serveur et n'est jamais affichee.">?</button></h3>
+              <p>La synchronisation OpenAI demande au serveur local quels modeles sont accessibles avec la cle configuree. La cle reste cote serveur et n'est jamais affichee.</p>
+            </article>
+          </div>
+
+          <section class="sync-card">
+            <div>
+              <h3>Catalogue OpenAI</h3>
+              <p>Met a jour la liste locale des modeles accessibles. Cette action n'envoie aucun texte apprenant a OpenAI.</p>
+            </div>
+            <button id="syncOpenAiButton" type="button">Mettre a jour la liste des modeles accessibles avec ma cle OpenAI</button>
+            <div id="syncStatusBox" class="sync-status" aria-live="polite"></div>
+          </section>
+
+          <section>
+            <h3>Providers</h3>
+            <div id="aiStatusBox" class="stack"></div>
+            <div id="aiProvidersBox" class="provider-grid"></div>
+          </section>
+
+          <section class="cost-help">
+            <h3>Comprendre les couts</h3>
+            <p>Les couts affiches ici sont indicatifs. La synchronisation OpenAI ne fournit pas automatiquement les prix detailles. Les prix doivent etre renseignes ou verifies manuellement a partir des tarifs officiels. Quand le prix n'est pas connu, le Hub affiche "Prix non renseigne".</p>
+            <div class="legend">
+              <span><strong>free</strong> aucun cout API</span>
+              <span><strong>low</strong> cout faible</span>
+              <span><strong>medium</strong> cout intermediaire</span>
+              <span><strong>high</strong> cout eleve</span>
+              <span><strong>very-high</strong> cout tres eleve</span>
+              <span><strong>unknown</strong> prix non renseigne</span>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-head compact">
+              <div>
+                <h3>Modeles</h3>
+                <p>Lecture simple par defaut. Les champs sensibles restent dans les details ou l'edition avancee.</p>
+              </div>
+              <span id="aiModelCount" class="badge"></span>
+            </div>
+            <div class="filters simple-filters">
+              <label>Provider <select id="aiProviderFilter"><option value="">Tous</option></select></label>
+              <label>Modalite <select id="aiModalityFilter"><option value="">Toutes</option></select></label>
+              <label>Recommandation IC-Lab <select id="aiRecommendationFilter"><option value="">Toutes</option></select></label>
+              <label>Utilisable Proto06 <select id="aiProto06Filter"><option value="">Tous</option><option value="usable">Utilisable</option><option value="not_for_proto06">Non pertinent</option></select></label>
+              <label>Prix connu <select id="aiPricingFilter"><option value="">Tous</option><option value="known">Renseigne</option><option value="unknown">Non renseigne</option></select></label>
+            </div>
+            <details class="advanced-filters">
+              <summary>Filtres avances</summary>
+              <div class="filters">
+                <label>Famille <select id="aiFamilyFilter"><option value="">Toutes</option></select></label>
+                <label>Statut <select id="aiStatusFilter"><option value="">Tous</option></select></label>
+                <label>Runtime <select id="aiRuntimeFilter"><option value="">Tous</option><option value="true">Autorise</option><option value="false">Non autorise</option></select></label>
+                <label>Cout <select id="aiCostFilter"><option value="">Tous</option></select></label>
+              </div>
+            </details>
+            <div id="aiModelsBox" class="model-grid"></div>
+          </section>
+        </section>
+        <section class="panel"><h2>Configurations IA</h2><div id="aiConfigsBox" class="stack"></div></section>
+        <section class="panel"><h2>Utilisateurs</h2><div id="usersBox" class="stack"></div></section>
+        <section class="panel"><h2>Institutions</h2><div id="institutionsBox" class="stack"></div></section>
+        <section class="panel">
+          <h2>Activites referencees</h2>
+          <div class="filters">
+            <label>Visibilite <select id="visibilityFilter"><option value="">Toutes</option></select></label>
+            <label>Institution <select id="institutionFilter"><option value="">Toutes</option></select></label>
+            <label>Owner <select id="ownerFilter"><option value="">Tous</option></select></label>
+            <label>Prototype <select id="prototypeFilter"><option value="">Tous</option></select></label>
+          </div>
+          <div id="ownershipBox" class="stack"></div>
+        </section>
+        <section class="panel"><h2>Cours</h2><div id="coursesBox" class="stack"></div></section>
+        <section class="panel"><h2>Prototypes</h2><div id="prototypesBox" class="stack"></div></section>
+        <section class="panel"><h2>Connecteurs</h2><div id="connectorsBox" class="stack"></div></section>
+        <section class="panel"><h2>Sessions actives</h2><pre id="sessionsBox"></pre></section>
+      </section>
+      <p id="message" class="message"></p>
+    </main>
+    <script src="admin-0.8.2.js"></script>
+  </body>
+</html>

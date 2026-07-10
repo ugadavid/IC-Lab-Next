@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dico-IC Admin - Assistant IA Relations V1</title>
+  <link rel="stylesheet" href="./css/admin-ai-relations-0.1.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <a class="back-link" href="./index-admin-0.1.html#lexicon">← Administration générale</a>
+      <h1>Assistant IA Relations</h1>
+      <p>L’IA propose des relations internes à une entrée. L’humain décide.</p>
+    </div>
+    <div class="header-meta">
+      <span class="experimental-label">Expérimental</span>
+      <span id="apiStatus" class="api-status" data-state="loading">Connexion…</span>
+    </div>
+  </header>
+
+  <nav class="admin-page-nav" aria-label="Pages d’administration">
+    <a href="./index-admin-0.1.html">Admin principal</a>
+    <a href="./index-admin-ai-domain-0.1.html">IA Domaine</a>
+    <a href="./index-admin-ai-text-0.1.html">IA Texte</a>
+    <a href="./index-admin-ai-relations-0.1.html" aria-current="page">IA Relations</a>
+    <a href="../prototypes/01-seven-sieves/index-api-live-0.1.html">Seven Sieves</a>
+  </nav>
+
+  <main class="workspace">
+    <section aria-labelledby="entryTitle">
+      <div class="section-heading">
+        <div><p class="eyebrow">Entrée ciblée</p><h2 id="entryTitle">Chargement de l’entrée…</h2></div>
+      </div>
+      <div id="entryMessage" class="message info" role="status" aria-live="polite">Lecture de Dico-IC…</div>
+      <div id="entrySummary" class="entry-summary" hidden>
+        <dl class="entry-metadata">
+          <div><dt>Glose française</dt><dd id="entryGlossFr">—</dd></div>
+          <div><dt>Glose anglaise</dt><dd id="entryGlossEn">—</dd></div>
+          <div><dt>Domaine</dt><dd id="entryDomain">—</dd></div>
+          <div><dt>Relations internes</dt><dd id="existingRelationCount">0</dd></div>
+        </dl>
+        <div id="entryForms" class="entry-forms"></div>
+      </div>
+    </section>
+
+    <section aria-labelledby="generationTitle">
+      <div class="section-heading">
+        <div><p class="eyebrow">Étape 1</p><h2 id="generationTitle">Propositions IA</h2></div>
+        <div class="generation-controls">
+          <label for="referenceLanguage">Langue de référence</label>
+          <select id="referenceLanguage">
+            <option value="fr" selected>FR</option>
+            <option value="es">ES</option>
+            <option value="it">IT</option>
+            <option value="pt">PT</option>
+            <option value="en">EN</option>
+            <option value="all">Toutes</option>
+          </select>
+          <button id="generateButton" class="button primary" type="button" disabled>✨ Proposer les relations</button>
+        </div>
+      </div>
+      <div id="generationMessage" class="message" role="status" aria-live="polite"></div>
+      <div class="draft-summary">
+        <span><strong id="candidateTotal">0</strong> proposition(s)</span>
+        <span><strong id="selectedTotal">0</strong> sélectionnée(s)</span>
+        <span id="generationMeta">Aucune génération.</span>
+      </div>
+      <div class="selection-actions">
+        <button id="selectAllButton" class="button secondary" type="button">Tout sélectionner</button>
+        <button id="selectNoneButton" class="button secondary" type="button">Tout désélectionner</button>
+      </div>
+      <div class="table-wrap relations-candidates-wrap">
+        <table class="relations-candidates-table">
+          <thead><tr><th>Garder</th><th>Forme A</th><th>Forme B</th><th>Type</th><th>Score</th><th>Justification</th><th>Statut</th><th><span class="sr-only">Supprimer</span></th></tr></thead>
+          <tbody id="candidateTableBody"><tr><td colspan="8" class="empty-cell">Chargez une entrée puis demandez des propositions.</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section aria-labelledby="validationTitle">
+      <div class="section-heading validation-heading">
+        <div><p class="eyebrow">Étape 2</p><h2 id="validationTitle">Validation humaine</h2></div>
+        <button id="createSelectedButton" class="button primary" type="button" disabled>Créer les relations sélectionnées</button>
+      </div>
+      <p class="section-note">Seules les lignes cochées et valides seront enregistrées après votre confirmation.</p>
+      <div id="creationReport" class="creation-report" aria-live="polite"></div>
+    </section>
+  </main>
+  <script src="./js/admin-ai-relations-0.1.js"></script>
+</body>
+</html>

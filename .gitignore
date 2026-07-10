@@ -1,0 +1,55 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+**/node_modules/
+
+*.log
+npm-debug.log*
+
+**/dist/
+**/build/
+**/.cache/
+**/.env
+**/.env.*
+!**/.env.example
+**/*.log
+**/.DS_Store
+**/Thumbs.db
+
+# Notes personnelles locales
+**/[Dd]avid.txt
+**/[Dd]avid.md
+
+# Fichiers système supplémentaires
+**/Desktop.ini
+
+# Journaux rotatifs
+**/*.log.*
+
+# Couverture de tests
+**/coverage/
+
+# Donnees privees d'entretiens (conservees hors du depot)
+prototypes/07-informaticaire/entretiens/
+
+# Donnees runtime locales
+prototypes/00-ic-hub/server/data/sessions.json
+prototypes/00-ic-hub/server/data/runs.json
+**/backups/
+**/*.corrupt.*
+**/*.bak
+
+# Bases locales et fichiers de travail non sources
+**/*.sqlite
+**/*.sqlite3
+**/*.db
+**/*.db-journal
+**/*.db-shm
+**/*.db-wal
+**/*.dump
+**/*.tmp
+**/*.temp
+**/*.swp
+**/*~

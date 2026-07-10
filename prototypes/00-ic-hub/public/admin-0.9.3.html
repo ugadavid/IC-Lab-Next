@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub V0.9.3 - Admin</title>
+    <link rel="stylesheet" href="admin-0.9.3.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div><p class="kicker">IC-Lab Hub V0.9.3</p><h1>Administration locale</h1><p id="userLine">Chargement...</p></div>
+        <nav><a href="hub-0.9.3.html">Hub</a><a href="teacher-0.7.1.html">Teacher test</a><a href="student-0.7.1.html">Student test</a></nav>
+      </header>
+      <section class="grid">
+        <section class="panel"><h2>Etat serveur</h2><pre id="healthBox"></pre></section>
+        <section class="panel"><h2>Etat stockage</h2><div id="storageBox" class="stack"></div></section>
+        <section class="panel wide ai-admin-panel">
+          <div class="section-head">
+            <div>
+              <h2>Administration des IA</h2>
+              <p>Cette page sert a gerer les fournisseurs IA, les modeles disponibles et les modeles autorises pour IC-Lab. Elle ne lance aucune IA dans les activites apprenantes.</p>
+            </div>
+            <span class="badge safe">Aucune generation activee</span>
+          </div>
+
+          <section class="ai-state-banner">
+            <div>
+              <h3>Etat actuel : aucune IA generative n'est active dans les parcours apprenants.</h3>
+              <p>Prototype 06 utilise encore le runtime scenarise securise. Les modeles listes ici sont seulement administres et prepares.</p>
+            </div>
+            <dl class="state-grid">
+              <div><dt>IA apprenant active</dt><dd>non</dd></div>
+              <div><dt>Proto06 runtime actuel</dt><dd>scenarise</dd></div>
+              <div><dt>Cles visibles cote navigateur</dt><dd>non</dd></div>
+              <div><dt>Appels OpenAI depuis navigateur</dt><dd>non</dd></div>
+            </dl>
+          </section>
+
+          <section class="validated-state-card">
+            <div>
+              <h3>Dernier etat valide</h3>
+              <p>Cet etat correspond a une plateforme prete pour tests administrateurs, mais sans activation IA dans les parcours apprenants.</p>
+            </div>
+            <dl class="state-grid">
+              <div><dt>Hub</dt><dd>V0.9.3</dd></div>
+              <div><dt>Prototype 06</dt><dd>V1.2</dd></div>
+              <div><dt>Mode Proto06</dt><dd>runtime scenarise securise</dd></div>
+              <div><dt>IA generative dans les activites</dt><dd>non</dd></div>
+              <div><dt>Appels OpenAI depuis navigateur</dt><dd>non</dd></div>
+              <div><dt>Texte apprenant envoye a OpenAI</dt><dd>non</dd></div>
+              <div><dt>Cles visibles cote navigateur</dt><dd>non</dd></div>
+              <div><dt>Derniere validation</dt><dd>2026-07-03</dd></div>
+            </dl>
+          </section>
+
+          <section class="decision-card emergency-card">
+            <h3>Retour arriere d'urgence</h3>
+            <p class="strong-note">En cas de doute : desactiver les modeles runtime et conserver le mode scenarise.</p>
+            <ol>
+              <li>Verifier que Prototype 06 utilise le runtime scenarise.</li>
+              <li>Desactiver `allowedForRuntime` sur les modeles douteux.</li>
+              <li>Repasser les AIConfig experimentales en `planned` ou `disabled`.</li>
+              <li>Verifier que le bandeau indique toujours "aucune IA generative active".</li>
+              <li>Relancer le hub en mode JSON si besoin.</li>
+              <li>Consulter le guide mainteneur.</li>
+            </ol>
+          </section>
+
+          <section class="decision-grid">
+            <article class="decision-card">
+              <h3>Ce qui declencherait reellement l'IA</h3>
+              <p>Synchroniser les modeles contacte OpenAI cote serveur, recupere une liste de modeles, ne genere aucun texte et n'envoie aucun texte apprenant.</p>
+              <p>Pour activer une IA generative, il faudrait explicitement associer une AIConfig a un modele autorise, creer un endpoint serveur de generation, modifier le runtime Proto06, autoriser le mode generatif, tester la securite et valider pedagogiquement.</p>
+              <p class="strong-note">Aucun de ces elements n'est actif dans cette version.</p>
+            </article>
+            <article class="decision-card">
+              <h3>Donnees apprenantes</h3>
+              <dl class="safety-list">
+                <div><dt>Reponses apprenantes stockees dans les traces</dt><dd>non, seulement longueur / presence selon le flux existant</dd></div>
+                <div><dt>Reponses apprenantes envoyees a OpenAI</dt><dd>non</dd></div>
+                <div><dt>Textes generes par IA stockes</dt><dd>non</dd></div>
+                <div><dt>Audio IA genere</dt><dd>non</dd></div>
+                <div><dt>Donnees personnelles envoyees a un provider</dt><dd>non, dans l'etat actuel du prototype</dd></div>
+              </dl>
+            </article>
+          </section>
+
+          <section class="decision-card activation-card">
+            <h3>Avant toute activation generative</h3>
+            <div class="activation-checklist">
+              <span>verifier base legale / cadre institutionnel</span>
+              <span>verifier information des apprenants</span>
+              <span>verifier minimisation des donnees</span>
+              <span>ne jamais envoyer de texte libre apprenant sans justification</span>
+              <span>tester avec prompts fictifs</span>
+              <span>limiter duree et couts</span>
+              <span>journaliser uniquement des metadonnees non sensibles</span>
+              <span>prevoir desactivation immediate</span>
+              <span>valider pedagogiquement avec enseignant responsable</span>
+            </div>
+          </section>
+
+          <section class="decision-card ai-lab-card">
+            <div class="section-head compact">
+              <div>
+                <h3>AI Lab - scenarios controles</h3>
+                <p>Ces essais generent des brouillons pedagogiques cote serveur uniquement. Ils ne modifient pas Prototype 06, ne sont pas visibles des apprenants et ne sont pas stockes dans les traces.</p>
+              </div>
+              <span class="badge safe">Admin only</span>
+            </div>
+            <dl id="aiRuntimeStatusBox" class="meta-grid">
+              <div><dt>Runtime OpenAI</dt><dd>Non verifie</dd></div>
+              <div><dt>Navigateur appelle OpenAI</dt><dd>non</dd></div>
+              <div><dt>Parcours apprenant generatif</dt><dd>non</dd></div>
+            </dl>
+            <div class="controlled-lab-form">
+              <label>Modele OpenAI autorise runtime
+                <select id="aiRuntimeModelSelect"><option value="">Choisir un modele autorise</option></select>
+              </label>
+              <label>Personnage
+                <select id="draftCharacterSelect">
+                  <option value="Clara">Clara</option>
+                  <option value="Marco">Marco</option>
+                  <option value="Ana">Ana</option>
+                  <option value="Malik">Malik</option>
+                  <option value="Lucía">Lucía</option>
+                  <option value="Andrei">Andrei</option>
+                  <option value="Laia">Laia</option>
+                </select>
+              </label>
+              <label>Langue cible
+                <select id="draftLanguageSelect">
+                  <option value="es-ES">es-ES</option>
+                  <option value="it-IT">it-IT</option>
+                  <option value="pt-BR">pt-BR</option>
+                  <option value="fr-FR">fr-FR</option>
+                  <option value="es-AR">es-AR</option>
+                  <option value="ro-RO">ro-RO</option>
+                  <option value="ca-ES">ca-ES</option>
+                </select>
+              </label>
+              <label>Scenario pedagogique
+                <select id="draftScenarioSelect">
+                  <option value="globalUnderstanding">globalUnderstanding</option>
+                  <option value="affectsFeelings">affectsFeelings</option>
+                  <option value="adaptationStrategies">adaptationStrategies</option>
+                  <option value="prospectiveStories">prospectiveStories</option>
+                  <option value="transparentWords">transparentWords</option>
+                  <option value="clarificationZones">clarificationZones</option>
+                </select>
+              </label>
+              <label>Theme climatique
+                <input id="draftClimateThemeInput" list="climateThemeOptions" maxlength="120" value="etes plus chauds">
+                <datalist id="climateThemeOptions">
+                  <option value="etes plus chauds"></option>
+                  <option value="secheresse"></option>
+                  <option value="pluies intenses"></option>
+                  <option value="ilots de chaleur urbains"></option>
+                  <option value="restrictions d'eau"></option>
+                  <option value="adaptation locale"></option>
+                  <option value="recits du futur"></option>
+                </datalist>
+              </label>
+              <label>Longueur cible
+                <select id="draftLengthSelect">
+                  <option value="35">tres court, 25-35 mots</option>
+                  <option value="45" selected>court, 35-45 mots</option>
+                  <option value="60">moyen, 45-60 mots</option>
+                </select>
+              </label>
+              <label>Prudence pedagogique
+                <select id="draftStrictnessSelect">
+                  <option value="safe">safe</option>
+                  <option value="exploratory">exploratory</option>
+                </select>
+              </label>
+              <div id="runtimeModelHint" class="model-hint">Choisissez un modele autorise pour afficher cout et prix.</div>
+            </div>
+            <div class="lab-actions">
+              <button id="checkOpenAiRuntimeButton" type="button">Verifier le runtime OpenAI</button>
+              <button id="smokeOpenAiButton" type="button">Smoke test serveur</button>
+              <button id="generateDraftButton" type="button">Generer un brouillon</button>
+              <button class="draft-button" type="button" data-character="Clara" data-language="es-ES">Generer Clara</button>
+              <button class="draft-button" type="button" data-character="Marco" data-language="it-IT">Generer Marco</button>
+              <button class="draft-button" type="button" data-character="Ana" data-language="pt-BR">Generer Ana</button>
+              <button id="generateMainDraftsButton" type="button">Generer les 3 personnages principaux</button>
+            </div>
+            <div id="aiLabResultBox" class="lab-result" aria-live="polite">Aucun appel OpenAI n'est effectue au chargement de cette page.</div>
+            <section class="draft-session-panel">
+              <div class="section-head compact">
+                <div>
+                  <h4>Brouillons de cette session</h4>
+                  <p>Memoire navigateur uniquement. Un rechargement de page vide cette liste.</p>
+                </div>
+                <button id="clearSessionDraftsButton" class="secondary" type="button">Vider les brouillons de session</button>
+              </div>
+              <section class="session-summary-card">
+                <div class="section-head compact">
+                  <div>
+                    <h5>Synthese de session</h5>
+                    <p>Ces donnees ne sont pas stockees.</p>
+                  </div>
+                  <div class="draft-actions">
+                    <button id="sortDraftsByScoreButton" class="secondary" type="button">Trier par score</button>
+                    <button id="sortDraftsByCharacterButton" class="secondary" type="button">Trier par personnage</button>
+                    <button id="exportSessionEvaluationButton" class="secondary" type="button">Exporter l'evaluation de session en JSON</button>
+                  </div>
+                </div>
+                <label>Nom ou code evaluateur
+                  <input id="evaluatorLabelInput" maxlength="60" placeholder="ex. eval-A, enseignante-1">
+                </label>
+                <dl id="sessionSummaryBox" class="meta-grid"></dl>
+                <p class="warning">Cet export contient les textes generes et vos commentaires. Relisez-le avant partage.</p>
+              </section>
+              <div id="sessionDraftsBox" class="session-drafts">Aucun brouillon genere dans cette session.</div>
+              <section class="comparison-panel">
+                <div class="section-head compact">
+                  <div>
+                    <h5>Comparaison multi-evaluateurs</h5>
+                    <p>Import local de plusieurs exports JSON. Aucun upload serveur.</p>
+                  </div>
+                  <div class="draft-actions">
+                    <button id="clearImportedEvaluationsButton" class="secondary" type="button">Vider les imports</button>
+                    <button id="exportComparisonButton" class="secondary" type="button">Exporter la comparaison en JSON</button>
+                  </div>
+                </div>
+                <label>Imports JSON, 2 Mo maximum par fichier
+                  <input id="multiEvaluatorImportInput" type="file" accept="application/json,.json" multiple>
+                </label>
+                <div id="comparisonImportStatusBox" class="sync-status" aria-live="polite"></div>
+                <dl id="comparisonSummaryBox" class="meta-grid"></dl>
+                <div id="comparisonTableBox" class="comparison-table"></div>
+                <div id="comparisonDetailBox" class="comparison-details"></div>
+              </section>
+            </section>
+            <section class="decision-card caution lab-safety">
+              <h4>Ce laboratoire ne fait pas</h4>
+              <ul>
+                <li>il ne modifie pas Prototype 06 ;</li>
+                <li>il ne remplace pas les temoignages scenarises ;</li>
+                <li>il n'envoie aucun texte apprenant ;</li>
+                <li>il n'active aucune IA pour les etudiants ;</li>
+                <li>il ne stocke pas les brouillons en base ;</li>
+                <li>il ne stocke pas les evaluations en base ;</li>
+                <li>il ne stocke rien dans run_events ;</li>
+                <li>il ne revele aucune cle API.</li>
+              </ul>
+            </section>
+          </section>
+
+          <section class="decision-grid">
+            <article class="decision-card">
+              <h3>Checklist administrateur IA</h3>
+              <div id="aiChecklistBox" class="checklist"></div>
+            </article>
+            <article class="decision-card accent">
+              <h3>Prochaine etape recommandee</h3>
+              <p id="aiNextStepBox">Chargement...</p>
+            </article>
+          </section>
+
+          <section class="decision-card">
+            <div class="section-head compact">
+              <div>
+                <h3>Modeles recommandes pour commencer</h3>
+                <p>Selection courte pour eviter de se perdre dans le catalogue complet.</p>
+              </div>
+            </div>
+            <div id="aiRecommendedBox" class="recommendation-grid"></div>
+          </section>
+
+          <section class="decision-card caution">
+            <h3>A eviter pour l'instant</h3>
+            <div class="avoid-grid">
+              <article><strong>Modeles realtime</strong><p>Trop couteux ou prematures pour les premiers tests IC-Lab.</p></article>
+              <article><strong>Modeles image</strong><p>Non utiles pour Prototype 06 tant que l'activite reste orale et scenarisee.</p></article>
+              <article><strong>Embeddings</strong><p>Interessants plus tard pour recherche documentaire, pas pour un agent participant.</p></article>
+              <article><strong>Moderation</strong><p>Utile pour securite future, pas pour generer des temoignages.</p></article>
+              <article><strong>Stale / deprecated</strong><p>A eviter tant que leur disponibilite n'est pas verifiee.</p></article>
+            </div>
+          </section>
+
+          <details class="decision-card">
+            <summary>Glossaire rapide</summary>
+            <dl class="glossary-grid">
+              <div><dt>Provider</dt><dd>Fournisseur technique de modeles IA.</dd></div>
+              <div><dt>Modele</dt><dd>Moteur disponible chez un provider.</dd></div>
+              <div><dt>AIConfig</dt><dd>Profil local qui decrit un mode IA/voix possible pour un prototype.</dd></div>
+              <div><dt>Runtime</dt><dd>Contexte dans lequel une activite execute un comportement.</dd></div>
+              <div><dt>Runtime scenarise</dt><dd>Parcours controle, sans generation IA.</dd></div>
+              <div><dt>Runtime generatif</dt><dd>Parcours qui ferait produire du contenu par un modele IA.</dd></div>
+              <div><dt>Sync</dt><dd>Lecture cote serveur de la liste des modeles accessibles.</dd></div>
+              <div><dt>Stale</dt><dd>Modele vu avant mais non retrouve lors d'une synchronisation recente.</dd></div>
+              <div><dt>Prix input</dt><dd>Cout indicatif des tokens envoyes au modele.</dd></div>
+              <div><dt>Prix output</dt><dd>Cout indicatif des tokens produits par le modele.</dd></div>
+              <div><dt>Allowed for runtime</dt><dd>Rend le modele selectionnable pour une future configuration, sans l'activer dans Proto06.</dd></div>
+              <div><dt>Recommended IC-Lab</dt><dd>Marquage local pour guider les choix admin apres verification.</dd></div>
+            </dl>
+          </details>
+
+          <section class="decision-card maintainer-card">
+            <h3>Si vous reprenez ce projet</h3>
+            <p>Le fichier `.env` doit rester a la racine IC-Lab et ne doit jamais etre committe. Les cles ne sont jamais visibles dans l'admin. La synchronisation OpenAI se fait cote serveur. Les modeles synchronises ne sont pas automatiquement utilises dans les activites. Prototype 06 reste scenarise tant qu'un runtime generatif n'est pas explicitement active. Les prix doivent etre verifies manuellement. En cas de doute, desactiver `allowedForRuntime`.</p>
+            <p><a class="doc-link" href="docs/ai-admin-maintainer-guide.md" target="_blank" rel="noopener">Ouvrir le guide mainteneur IA</a></p>
+            <ol>
+              <li>Verifier l'etat IA.</li>
+              <li>Synchroniser les modeles.</li>
+              <li>Choisir 2 ou 3 modeles recommandes.</li>
+              <li>Associer une AIConfig.</li>
+              <li>Tester cote serveur seulement.</li>
+              <li>Brancher le parcours apprenant uniquement apres validation.</li>
+            </ol>
+          </section>
+
+          <div class="learn-grid">
+            <article>
+              <h3>Provider <button class="help" type="button" title="Un provider est le service technique qui fournit des modeles IA.">?</button></h3>
+              <p>Un provider est un fournisseur technique : OpenAI, Anthropic, Google, Mistral, Ollama, etc.</p>
+            </article>
+            <article>
+              <h3>Modele <button class="help" type="button" title="Un modele est un moteur utilisable chez un provider.">?</button></h3>
+              <p>Un modele est un moteur utilisable chez un provider : modele texte, audio, image, embedding, temps reel, etc.</p>
+            </article>
+            <article>
+              <h3>Synchronisation <button class="help" type="button" title="La cle OpenAI reste cote serveur et n'est jamais affichee.">?</button></h3>
+              <p>La synchronisation OpenAI demande au serveur local quels modeles sont accessibles avec la cle configuree. La cle reste cote serveur et n'est jamais affichee.</p>
+            </article>
+          </div>
+
+          <section class="sync-card">
+            <div>
+              <h3>Catalogue OpenAI</h3>
+              <p>Contacte OpenAI cote serveur pour lire la liste des modeles. Ne lance aucune generation et n'envoie aucun texte apprenant.</p>
+            </div>
+            <button id="syncOpenAiButton" type="button">Mettre a jour la liste des modeles accessibles avec ma cle OpenAI</button>
+            <div id="syncStatusBox" class="sync-status" aria-live="polite"></div>
+          </section>
+
+          <section>
+            <h3>Providers</h3>
+            <div id="aiStatusBox" class="stack"></div>
+            <div id="aiProvidersBox" class="provider-grid"></div>
+          </section>
+
+          <section class="cost-help">
+            <h3>Comprendre les couts</h3>
+            <p>Les couts affiches ici sont indicatifs. La synchronisation OpenAI ne fournit pas automatiquement les prix detailles. Les prix doivent etre renseignes ou verifies manuellement a partir des tarifs officiels. Quand le prix n'est pas connu, le Hub affiche "Prix non renseigne".</p>
+            <div class="legend">
+              <span><strong>free</strong> aucun cout API</span>
+              <span><strong>low</strong> cout faible</span>
+              <span><strong>medium</strong> cout intermediaire</span>
+              <span><strong>high</strong> cout eleve</span>
+              <span><strong>very-high</strong> cout tres eleve</span>
+              <span><strong>unknown</strong> prix non renseigne</span>
+            </div>
+          </section>
+
+          <section>
+            <div class="section-head compact">
+              <div>
+                <h3>Modeles</h3>
+                <p>Lecture simple par defaut. Les champs sensibles restent dans les details ou l'edition avancee.</p>
+              </div>
+              <span id="aiModelCount" class="badge"></span>
+            </div>
+            <div class="filters simple-filters">
+              <label>Provider <select id="aiProviderFilter"><option value="">Tous</option></select></label>
+              <label>Modalite <select id="aiModalityFilter"><option value="">Toutes</option></select></label>
+              <label>Recommandation IC-Lab <select id="aiRecommendationFilter"><option value="">Toutes</option></select></label>
+              <label>Utilisable Proto06 <select id="aiProto06Filter"><option value="">Tous</option><option value="usable">Utilisable</option><option value="not_for_proto06">Non pertinent</option></select></label>
+              <label>Prix connu <select id="aiPricingFilter"><option value="">Tous</option><option value="known">Renseigne</option><option value="unknown">Non renseigne</option></select></label>
+            </div>
+            <details class="advanced-filters">
+              <summary>Filtres avances</summary>
+              <div class="filters">
+                <label>Famille <select id="aiFamilyFilter"><option value="">Toutes</option></select></label>
+                <label>Statut <select id="aiStatusFilter"><option value="">Tous</option></select></label>
+                <label>Runtime <select id="aiRuntimeFilter"><option value="">Tous</option><option value="true">Autorise</option><option value="false">Non autorise</option></select></label>
+                <label>Cout <select id="aiCostFilter"><option value="">Tous</option></select></label>
+              </div>
+            </details>
+            <div id="aiModelsBox" class="model-grid"></div>
+          </section>
+        </section>
+        <section class="panel"><h2>Configurations IA</h2><div id="aiConfigsBox" class="stack"></div></section>
+        <section class="panel"><h2>Utilisateurs</h2><div id="usersBox" class="stack"></div></section>
+        <section class="panel"><h2>Institutions</h2><div id="institutionsBox" class="stack"></div></section>
+        <section class="panel">
+          <h2>Activites referencees</h2>
+          <div class="filters">
+            <label>Visibilite <select id="visibilityFilter"><option value="">Toutes</option></select></label>
+            <label>Institution <select id="institutionFilter"><option value="">Toutes</option></select></label>
+            <label>Owner <select id="ownerFilter"><option value="">Tous</option></select></label>
+            <label>Prototype <select id="prototypeFilter"><option value="">Tous</option></select></label>
+          </div>
+          <div id="ownershipBox" class="stack"></div>
+        </section>
+        <section class="panel"><h2>Cours</h2><div id="coursesBox" class="stack"></div></section>
+        <section class="panel"><h2>Prototypes</h2><div id="prototypesBox" class="stack"></div></section>
+        <section class="panel"><h2>Connecteurs</h2><div id="connectorsBox" class="stack"></div></section>
+        <section class="panel"><h2>Sessions actives</h2><pre id="sessionsBox"></pre></section>
+      </section>
+      <p id="message" class="message"></p>
+    </main>
+    <script src="admin-0.9.3.js"></script>
+  </body>
+</html>

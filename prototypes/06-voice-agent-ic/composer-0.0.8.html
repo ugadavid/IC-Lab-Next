@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Composer une rencontre REPLI4C - V0.8</title>
+    <link rel="stylesheet" href="composer-0.0.8.css">
+  </head>
+  <body>
+    <main class="composer-app">
+      <header class="composer-header">
+        <div>
+          <p class="kicker">IC-Lab - Prototype 06 V0.8</p>
+          <h1>Composer une rencontre REPLI4C</h1>
+          <p>
+            Choisissez une activité d'intercompréhension, sélectionnez de 2 à 4 personnages,
+            puis lancez une rencontre plurilingue reconstruite depuis les catalogues.
+          </p>
+        </div>
+        <a class="text-link" href="index-0.0.8.html">Ouvrir la rencontre</a>
+      </header>
+
+      <section class="composer-layout">
+        <section class="catalog-panel" aria-labelledby="catalog-title">
+          <div class="section-heading">
+            <p class="step-label">0. Charger une activité composée</p>
+            <h2 id="activity-title">Activités prêtes à tester</h2>
+          </div>
+          <div id="activityList" class="activity-list"></div>
+
+          <div class="section-heading">
+            <p class="step-label">1. Choisir un scénario pédagogique</p>
+            <h2 id="scenario-title">Activité</h2>
+          </div>
+          <div id="scenarioList" class="scenario-list"></div>
+
+          <div class="section-heading character-heading">
+            <p class="step-label">2. Choisir 2 à 4 personnages</p>
+            <h2 id="catalog-title">Personnages disponibles</h2>
+          </div>
+          <div id="characterList" class="character-list"></div>
+        </section>
+
+        <aside class="selection-panel" aria-labelledby="selection-title">
+          <div class="section-heading">
+            <p class="step-label">3. Prévisualiser la rencontre</p>
+            <h2 id="selection-title">Participants sélectionnés</h2>
+          </div>
+
+          <div id="selectionStatus" class="selection-status" role="status"></div>
+          <ol id="selectedList" class="selected-list"></ol>
+
+          <section class="preview-card" aria-labelledby="preview-title">
+            <h2 id="preview-title">Aperçu</h2>
+            <div id="meetingPreview" class="meeting-preview"></div>
+          </section>
+
+          <section class="config-card" aria-labelledby="config-title">
+            <h2 id="config-title">Configuration générée</h2>
+            <pre id="configOutput"></pre>
+          </section>
+
+          <div class="actions">
+            <button id="launchButton" class="primary-button" type="button" disabled>
+              Lancer cette rencontre
+            </button>
+            <button id="resetButton" type="button">Réinitialiser</button>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script src="data-0.0.8.js"></script>
+    <script src="composer-0.0.8.js"></script>
+  </body>
+</html>

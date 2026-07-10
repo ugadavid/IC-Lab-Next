@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype 01 — Seven Sieves Explorer</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      color: #243654;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 20px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e3ebf7;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.04);
+    }
+
+    .topbar-brand {
+      font-weight: bold;
+      font-size: 18px;
+      color: #243654;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .topbar-subtitle {
+      font-size: 12px;
+      color: #5f6b7a;
+    }
+
+    .topbar-meta {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .meta-chip {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid #dbe8ff;
+      background: #f7fbff;
+      color: #243654;
+    }
+
+    .meta-chip.active {
+      background: #243654;
+      color: white;
+      border-color: #243654;
+    }
+
+    .help-btn {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #F5A623;
+      color: #243654;
+      border: 1px solid #e2a019;
+    }
+
+    .help-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .help-panel {
+      position: fixed;
+      inset: 0;
+      background: rgba(36, 54, 84, 0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    .help-panel.hidden {
+      display: none;
+    }
+
+    .help-content {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 400px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 320px 1fr 400px;
+      gap: 20px;
+      min-height: calc(100vh - 76px);
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    @media (max-width: 1200px) {
+      .topbar {
+        flex-direction: column;
+        justify-items: center;
+        text-align: center;
+      }
+
+      .topbar-meta {
+        justify-content: center;
+      }
+
+      .app {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.08);
+    }
+
+    h1, h2, h3, h4 {
+      margin-top: 0;
+    }
+
+    .small {
+      color: #5f6b7a;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .sieve-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .sieve-btn {
+      text-align: left;
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      background: #eef4ff;
+      color: #243654;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .sieve-btn:hover {
+      transform: translateY(-1px);
+    }
+
+    .sieve-btn.active {
+      background: #4A90E2;
+      color: white;
+    }
+
+    .sieve-btn.coming-soon {
+      background: #f2f2f2;
+      color: #777;
+      cursor: default;
+      opacity: 0.82;
+    }
+
+    .sieve-btn.coming-soon:hover {
+      transform: none;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+
+    button.action {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      background: #243654;
+      color: white;
+    }
+
+    button.reset {
+      background: #D0021B;
+    }
+
+    button.check {
+      background: #F5A623;
+      color: #243654;
+      font-weight: bold;
+    }
+
+    .text-box {
+      font-size: 20px;
+      line-height: 2;
+      background: #fcfdff;
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid #e8edf5;
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+    }
+
+    .word {
+      display: inline-block;
+      margin: 2px 3px;
+      padding: 2px 5px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.15s ease;
+      position: relative;
+      user-select: none;
+      -webkit-user-select: none;
+      -ms-user-select: none;
+      transition: all 0.15s ease;
+    }
+
+    .word.selected {
+      transform: scale(1.05);
+    }
+
+    .word:active {
+      transform: scale(0.95);
+    }
+
+    .word:hover {
+      background: #eef4ff;
+    }
+
+    .word.correct {
+      background: #7ED321 !important;
+      color: white;
+    }
+
+    .word.incorrect {
+      background: #D0021B !important;
+      color: white;
+    }
+
+    .selected {
+      background: #7ED321;
+      color: white;
+    }
+
+    .inspected {
+      box-shadow: 0 0 0 2px #243654 inset;
+    }
+
+    .hint {
+      outline: 2px solid rgba(74, 144, 226, 0.25);
+    }
+
+    .suffix {
+      border-bottom: 3px solid #F5A623;
+      background: rgba(245, 166, 35, 0.10);
+    }
+
+    .transform-strong {
+      border-bottom: 3px solid #9b59b6;
+      background: rgba(155, 89, 182, 0.12);
+    }
+
+    .transform-soft {
+      border-bottom: 3px dashed #9b59b6;
+      background: rgba(155, 89, 182, 0.08);
+    }
+
+    .pan-roman-match {
+      border-bottom: 3px solid #2E7D32;
+      background: rgba(46, 125, 50, 0.12);
+    }
+
+    .graphy-match {
+      border-bottom: 3px solid #00A6A6;
+      background: rgba(0, 166, 166, 0.12);
+    }
+
+    .morpho-match {
+      border-bottom: 3px solid #C06C00;
+      background: rgba(192, 108, 0, 0.12);
+    }
+
+    .syntax-subject {
+      background: rgba(74, 144, 226, 0.16);
+    }
+
+    .syntax-verb {
+      background: rgba(126, 211, 33, 0.18);
+    }
+
+    .syntax-complement {
+      background: rgba(245, 166, 35, 0.16);
+    }
+
+    .status-known {
+      box-shadow: inset 0 0 0 2px #7ED321;
+    }
+
+    .status-doubt {
+      box-shadow: inset 0 0 0 2px #F5A623;
+    }
+
+    .status-unknown {
+      box-shadow: inset 0 0 0 2px #D0021B;
+    }
+
+    .top-stats-line {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0 18px;
+    }
+
+    .mini-stat {
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 10px 12px;
+      text-align: center;
+    }
+
+    .mini-stat-label {
+      font-size: 12px;
+      color: #5f6b7a;
+      margin-bottom: 4px;
+    }
+
+    .mini-stat-value {
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .list-box {
+      margin-top: 14px;
+      background: #f7fafc;
+      border-radius: 12px;
+      padding: 12px;
+      min-height: 80px;
+      font-size: 14px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+
+    .inspect-box {
+      margin-top: 14px;
+      background: #eef4ff;
+      border-radius: 12px;
+      padding: 14px;
+      min-height: 220px;
+      font-size: 14px;
+      line-height: 1.6;
+      border: 1px solid #dbe8ff;
+    }
+
+    .inspect-section {
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #d6e3fb;
+    }
+
+    .inspect-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .inspect-word {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .inspect-muted {
+      color: #5f6b7a;
+      font-size: 13px;
+    }
+
+    .inspect-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .mini-btn {
+      border: none;
+      border-radius: 10px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 13px;
+      background: #243654;
+      color: white;
+    }
+
+    .mini-btn.secondary {
+      background: #4A90E2;
+    }
+
+    .mini-btn.ghost {
+      background: #dfe9f8;
+      color: #243654;
+    }
+
+    .mini-btn.active-status {
+      box-shadow: inset 0 0 0 2px #243654;
+      font-weight: bold;
+    }
+
+    .multi-line {
+      background: #f7fafc;
+      border-radius: 10px;
+      padding: 10px;
+      white-space: pre-wrap;
+      font-size: 13px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #e9eef7;
+      color: #243654;
+      margin-bottom: 8px;
+    }
+
+    .tooltip {
+      position: absolute;
+      left: 50%;
+      bottom: calc(100% + 8px);
+      transform: translateX(-50%);
+      background: #243654;
+      color: white;
+      font-size: 12px;
+      line-height: 1.4;
+      padding: 8px 10px;
+      border-radius: 8px;
+      width: max-content;
+      max-width: 220px;
+      white-space: normal;
+      z-index: 100;
+      display: none;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18);
+    }
+
+    .word.show-tooltip .tooltip {
+      display: block;
+    }
+
+    .legend-mini {
+      margin-top: 12px;
+      font-size: 13px;
+      color: #5f6b7a;
+      line-height: 1.6;
+    }
+
+    .legend-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0;
+    }
+
+    .legend-sample {
+      display: inline-block;
+      width: 18px;
+      height: 12px;
+      border-radius: 4px;
+    }
+
+    .legend-strong {
+      background: rgba(155, 89, 182, 0.18);
+      border-bottom: 3px solid #9b59b6;
+    }
+
+    .legend-soft {
+      background: rgba(155, 89, 182, 0.10);
+      border-bottom: 3px dashed #9b59b6;
+    }
+
+    .legend-suffix {
+      background: rgba(245, 166, 35, 0.12);
+      border-bottom: 3px solid #F5A623;
+    }
+
+    .legend-pan-roman {
+      background: rgba(46, 125, 50, 0.12);
+      border-bottom: 3px solid #2E7D32;
+    }
+
+    .legend-graphy {
+      background: rgba(0, 166, 166, 0.12);
+      border-bottom: 3px solid #00A6A6;
+    }
+
+    .legend-morpho {
+      background: rgba(192, 108, 0, 0.12);
+      border-bottom: 3px solid #C06C00;
+    }
+
+    .legend-subject {
+      background: rgba(74, 144, 226, 0.16);
+    }
+
+    .legend-verb {
+      background: rgba(126, 211, 33, 0.18);
+    }
+
+    .legend-complement {
+      background: rgba(245, 166, 35, 0.16);
+    }
+
+    .syntax-related {
+      box-shadow: inset 0 -2px 0 rgba(36, 54, 84, 0.35);
+    }
+
+    #globalFeedback {
+      background: #f7fafc;
+      padding: 10px 12px;
+      border-radius: 10px;
+      text-align: center;
+    }
+
+    @media (max-width: 1200px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="topbar-brand">Prototype 01 — Seven Sieves Explorer</div>
+      <div class="topbar-subtitle">Démonstrateur pédagogique léger pour l’intercompréhension</div>
+      <p id="microGuide" class="small"></p>
+    </div>
+
+    <div class="topbar-meta" aria-label="Repères du prototype">
+      <span class="meta-chip active">Lecture guidée</span>
+      <span class="meta-chip">ES → FR</span>
+      <button class="help-btn" onclick="toggleHelp()">❓ Aide</button>
+    </div>
+  </header>
+
+  <div id="helpPanel" class="help-panel hidden">
+    <div class="help-content">
+      <h3>❓ Comment utiliser l’outil</h3>
+
+      <p><strong>Objectif :</strong><br>
+      Explorer un texte en mobilisant les 7 tamis de l’intercompréhension.</p>
+
+      <p><strong>Interactions :</strong><br>
+      • Clique sur un mot → inspecter<br>
+      • Double-clique → ajouter à ta sélection<br>
+      • Utilise les tamis pour guider ta lecture</p>
+
+      <p><strong>Conseil :</strong><br>
+      Ne cherche pas à tout comprendre : repère, compare, déduis.</p>
+
+      <button class="mini-btn" onclick="toggleHelp()">Fermer</button>
+    </div>
+  </div>
+  <div class="app">
+    <aside class="panel">
+      <h2>🧠 Les 7 tamis</h2>
+      <p class="small">
+        Cette version sert à observer des gestes de lecture : repérer,
+        comparer, transformer, reconstruire et qualifier des indices.
+      </p>
+
+      <div class="sieve-list">
+        <button class="sieve-btn" onclick="setSieve(1)" id="btn-sieve-1">
+          1. Lexique international
+        </button>
+        <button class="sieve-btn" onclick="setSieve(2)" id="btn-sieve-2">
+          2. Lexique pan-roman
+        </button>
+        <button class="sieve-btn" onclick="setSieve(3)" id="btn-sieve-3">
+          3. Correspondances phonétiques
+        </button>
+        <button class="sieve-btn" onclick="setSieve(4)" id="btn-sieve-4">
+          4. Graphies / prononciations
+        </button>
+        <button class="sieve-btn" onclick="setSieve(5)" id="btn-sieve-5">
+          5. Syntaxe pan-romane
+        </button>
+        <button class="sieve-btn" onclick="setSieve(6)" id="btn-sieve-6">
+          6. Morphosyntaxe
+        </button>
+        <button class="sieve-btn" onclick="setSieve(7)" id="btn-sieve-7">
+          7. Préfixes / suffixes
+        </button>
+      </div>
+
+      <div style="margin-top: 18px;">
+        <span class="tag">Tamis actif</span>
+        <h3 id="sieve-title">1. Lexique international</h3>
+        <p class="small" id="sieve-description"></p>
+      </div>
+
+      <div class="legend-mini" id="legendBox">
+        <div class="legend-line">
+          <span class="legend-sample legend-strong"></span>
+          <span>Correspondance forte</span>
+        </div>
+        <div class="legend-line">
+          <span class="legend-sample legend-soft"></span>
+          <span>Correspondance partielle</span>
+        </div>
+        <div class="legend-line">
+          <span class="legend-sample legend-suffix"></span>
+          <span>Suffixe repéré</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="panel">
+      <h1>Explorer un texte espagnol avec les tamis</h1>
+      <p class="small">
+        Prototype de lecture guidée : l’objectif est d’observer comment un lecteur
+        repère des indices avant de traduire.
+      </p>
+      <p class="small">
+        Clic gauche : inspecter un mot. Double-clic : l’ajouter ou le retirer de ta sélection.
+      </p>
+
+      <div class="toolbar">
+        <button class="action" onclick="showHints()">💡 Montrer les indices du tamis actif</button>
+        <button class="action check" onclick="checkProgress()">📊 Comparer la sélection</button>
+        <button class="action reset" onclick="resetAll()">🔄 Réinitialiser</button>
+      </div>
+
+      <div id="text" class="text-box"></div>
+    </main>
+
+    <aside class="panel">
+      <h2>📈 Observation</h2>
+
+      <div class="top-stats-line">
+        <div class="mini-stat">
+          <div class="mini-stat-label">Tamis actif</div>
+          <div class="mini-stat-value" id="activeSieveLabel">1</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label">Sélection</div>
+          <div class="mini-stat-value" id="selectedCount">0</div>
+        </div>
+        <div class="mini-stat">
+          <div class="mini-stat-label">Cohérents</div>
+          <div class="mini-stat-value" id="correctCount">0</div>
+        </div>
+      </div>
+      <div id="globalFeedback" class="small" style="margin-top:10px;"></div>
+
+      <h3>🔎 Inspection du mot</h3>
+      <div id="inspectionBox" class="inspect-box"></div>
+
+      <h3 style="margin-top: 18px;">Ta sélection</h3>
+      <div id="selectedWords" class="list-box">Aucun mot sélectionné.</div>
+
+      <h3 style="margin-top: 18px;">Indices du tamis actif</h3>
+      <div id="currentHints" class="list-box">Aucun indice affiché pour le moment.</div>
+
+      <h3 style="margin-top: 18px;">Indices / transformations</h3>
+      <div id="transformationsBox" class="list-box">
+Aucune transformation affichée pour le moment.
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const rawText = `
+La organización internacional promueve la educación científica y la cooperación cultural entre universidades.
+Muchos estudiantes observan que la comunicación académica en lenguas románicas resulta más accesible de lo que imaginaban.
+La información circula rápidamente cuando existe una base común de comprensión, especialmente en contextos de formación, investigación e innovación.
+En esta experiencia, el objetivo no es traducir cada palabra, sino identificar elementos familiares, reconocer terminaciones útiles y construir sentido de manera progresiva.
+Una metodología basada en la observación, la comparación y la reflexión permite desarrollar estrategias duraderas para comprender mejor textos desconocidos.
+`;
+
+    const trackedSuffixes = [
+      "ción", "sión", "dad", "mente", "al", "ible", "able", "ivo", "iva", "ico", "ica"
+    ];
+
+    const panRomanLexicon = {
+      "lenguas": {
+        fr: "langues",
+        it: "lingue",
+        pt: "línguas",
+        family: "langue / lingua",
+        note: "Même idée de langue, avec des formes très proches dans plusieurs langues romanes."
+      },
+      "románicas": {
+        fr: "romanes",
+        it: "romaniche",
+        pt: "românicas",
+        family: "roman-",
+        note: "La famille du mot renvoie directement aux langues romanes."
+      },
+      "estudiantes": {
+        fr: "étudiants",
+        it: "studenti",
+        pt: "estudantes",
+        family: "étude / studio / estudo",
+        note: "Le radical circule entre plusieurs langues, même si chaque langue adapte la forme."
+      },
+      "universidades": {
+        fr: "universités",
+        it: "università",
+        pt: "universidades",
+        family: "universit-",
+        note: "Mot institutionnel très reconnaissable dans les langues romanes."
+      },
+      "palabra": {
+        fr: "parole",
+        it: "parola",
+        pt: "palavra",
+        family: "parole / parola / palavra",
+        note: "Les formes ne sont pas identiques, mais elles dessinent une parenté lexicale utile."
+      },
+      "base": {
+        fr: "base",
+        it: "base",
+        pt: "base",
+        family: "base",
+        note: "Forme très stable : elle donne vite une impression de terrain commun."
+      },
+      "común": {
+        fr: "commun",
+        it: "comune",
+        pt: "comum",
+        family: "commun / comune / comum",
+        note: "Les finales changent, mais le noyau du mot reste facile à rapprocher."
+      },
+      "cultural": {
+        fr: "culturel",
+        it: "culturale",
+        pt: "cultural",
+        family: "cultur-",
+        note: "Le radical reste visible malgré les finales propres à chaque langue."
+      },
+      "sentido": {
+        fr: "sens",
+        it: "senso",
+        pt: "sentido",
+        family: "sens / senso / sentido",
+        note: "Les formes montrent une parenté, mais l’équivalence exacte dépend du contexte."
+      },
+      "manera": {
+        fr: "manière",
+        it: "maniera",
+        pt: "maneira",
+        family: "manière / maniera / maneira",
+        note: "Mot intéressant pour observer des variations régulières autour d’un même noyau."
+      },
+      "mejor": {
+        fr: "meilleur",
+        it: "migliore",
+        pt: "melhor",
+        family: "meilleur / migliore / melhor",
+        note: "La parenté est moins immédiate, mais la comparaison ouvre une piste d’inférence."
+      },
+      "muchos": {
+        fr: "beaucoup / moult",
+        it: "molti",
+        pt: "muitos",
+        family: "mult- / molt- / muit-",
+        note: "Bon exemple de ressemblance partielle plutôt que de transparence directe."
+      },
+      "elementos": {
+        fr: "éléments",
+        it: "elementi",
+        pt: "elementos",
+        family: "élément / elemento",
+        note: "La proximité entre formes aide à confirmer une hypothèse de sens."
+      },
+      "familiares": {
+        fr: "familiers",
+        it: "familiari",
+        pt: "familiares",
+        family: "famil-",
+        note: "Le radical commun rend la parenté assez visible."
+      },
+      "duraderas": {
+        fr: "durables",
+        it: "durature",
+        pt: "duradouras",
+        family: "dur-",
+        note: "La parenté existe, mais elle demande de comparer plutôt que de traduire mot à mot."
+      },
+      "desconocidos": {
+        fr: "inconnus / méconnus",
+        it: "sconosciuti",
+        pt: "desconhecidos",
+        family: "connaître / conoscere / conhecer",
+        note: "La forme est intéressante parce que le préfixe et le radical ne se ressemblent pas tous au même degré."
+      },
+      "comprender": {
+        fr: "comprendre",
+        it: "comprendere",
+        pt: "compreender",
+        family: "comprendre / comprendere / compreender",
+        note: "La parenté lexicale soutient directement l’inférence du sens."
+      },
+      "observan": {
+        fr: "observent",
+        it: "osservano",
+        pt: "observam",
+        family: "observer / osservare / observar",
+        note: "Les formes verbales changent, mais le radical reste très repérable."
+      },
+      "permite": {
+        fr: "permet",
+        it: "permette",
+        pt: "permite",
+        family: "permettre / permettere / permitir",
+        note: "La comparaison aide à voir une fonction verbale commune."
+      },
+      "textos": {
+        fr: "textes",
+        it: "testi",
+        pt: "textos",
+        family: "texte / testo / texto",
+        note: "Un bon candidat pour sentir la parenté sans passer par un dictionnaire."
+      }
+    };
+
+    const transformRules = [
+      { from: "ción", to: "tion", strength: "strong", explanation: "Finale très fréquente entre espagnol et français." },
+      { from: "sión", to: "sion", strength: "strong", explanation: "Correspondance très productive dans le lexique savant." },
+      { from: "dad", to: "té", strength: "strong", explanation: "Transformation classique pour certains noms abstraits." },
+      { from: "mente", to: "ment", strength: "strong", explanation: "Adverbes en -mente / -ment." },
+      { from: "ico", to: "ique", strength: "soft", explanation: "Correspondance utile mais pas toujours parfaite." },
+      { from: "ica", to: "ique", strength: "soft", explanation: "Correspondance utile mais parfois approximative." },
+      { from: "able", to: "able", strength: "strong", explanation: "Forme souvent très proche entre langues romanes." },
+      { from: "ible", to: "ible", strength: "strong", explanation: "Forme souvent très proche entre langues romanes." },
+      { from: "al", to: "al", strength: "soft", explanation: "Finale parfois stable, mais peu discriminante seule." }
+    ];
+
+    const graphyRules = [
+      {
+        label: "ñ → proche de gn",
+        test: word => word.includes("ñ"),
+        explanation: "La lettre ñ peut rappeler le groupe français gn dans certains mots apparentés.",
+        caution: "Correspondance utile pour observer, mais elle ne suffit pas à traduire le mot."
+      },
+      {
+        label: "ll → zone ill / y",
+        test: word => word.includes("ll"),
+        explanation: "Le groupe ll espagnol invite à comparer des graphies proches comme ill ou y selon les familles de mots.",
+        caution: "La prononciation varie selon les régions et la correspondance avec le français reste approximative."
+      },
+      {
+        label: "h initial muet",
+        test: word => word.startsWith("h") && word.length > 1,
+        explanation: "Le h initial espagnol ne se prononce généralement pas.",
+        caution: "Cette observation aide surtout à ne pas surinterpréter la lettre écrite."
+      },
+      {
+        label: "qu → indice de prononciation",
+        test: word => word.includes("qu"),
+        explanation: "Le groupe qu signale souvent une prononciation proche de /k/ devant e ou i.",
+        caution: "À observer comme un indice de lecture, pas comme une règle de traduction."
+      },
+      {
+        label: "gu → indice de prononciation",
+        test: word => word.includes("gu"),
+        explanation: "Le groupe gu peut aider à repérer une prononciation de type g dur dans certains contextes.",
+        caution: "La valeur exacte dépend des lettres qui suivent et de la présence éventuelle d’un tréma."
+      },
+      {
+        label: "j espagnol",
+        test: word => word.includes("j"),
+        explanation: "Le j espagnol ne se lit pas comme le j français.",
+        caution: "Cette différence est surtout utile pour éviter une lecture trop francisée."
+      },
+      {
+        label: "c devant e/i",
+        test: word => /c[eiéí]/.test(word),
+        explanation: "Le c devant e ou i attire l’attention sur une variation graphique importante en espagnol.",
+        caution: "La prononciation varie selon les régions ; ici on observe seulement le signal graphique."
+      },
+      {
+        label: "z → variation graphique",
+        test: word => word.includes("z"),
+        explanation: "La lettre z peut signaler une zone de variation graphique et phonétique entre langues romanes.",
+        caution: "Ce repère demande prudence : la correspondance avec le français n’est pas mécanique."
+      }
+    ];
+
+    const morphoSignals = [
+      {
+        label: "déterminant probable",
+        test: word => ["la", "el", "una"].includes(word),
+        explanation: "Ce petit mot peut servir d’indice de groupe nominal.",
+        caution: "On l’observe comme signal de structure, sans analyser tout le groupe."
+      },
+      {
+        label: "forme verbale probable",
+        test: word => ["observan", "permite", "circula", "existe", "promueve", "resulta", "imaginaban", "es"].includes(word),
+        explanation: "Ce mot semble porter une action, un état ou un processus dans la phrase.",
+        caution: "La personne, le temps et le mode ne sont pas analysés ici."
+      },
+      {
+        label: "infinitif probable",
+        test: word => ["traducir", "identificar", "desarrollar", "comprender", "reconocer", "construir"].includes(word),
+        explanation: "La finale -ar, -er ou -ir peut signaler une forme infinitive en espagnol.",
+        caution: "On repère une forme probable, sans construire de tableau de conjugaison."
+      },
+      {
+        label: "adverbe en -mente",
+        test: word => word.endsWith("mente") && word.length > 6,
+        explanation: "La finale -mente signale souvent un adverbe, proche du français -ment.",
+        caution: "C’est un indice très utile, mais il faut toujours vérifier le rôle dans la phrase."
+      },
+      {
+        label: "marque de pluriel possible",
+        test: word => word.length > 3 && (word.endsWith("s") || word.endsWith("es")),
+        explanation: "La finale -s ou -es peut signaler un pluriel en espagnol.",
+        caution: "Toutes les finales en -s ne sont pas forcément des pluriels ; ici on observe seulement un signal visible."
+      }
+    ];
+
+    const syntaxRoles = {
+      "la": "subject",
+      "organización": "subject",
+      "internacional": "subject",
+      "promueve": "verb",
+      "educación": "complement",
+      "científica": "complement",
+      "y": "complement",
+      "cooperación": "complement",
+      "cultural": "complement",
+      "entre": "complement",
+      "universidades": "complement",
+
+      "muchos": "subject",
+      "estudiantes": "subject",
+      "observan": "verb",
+      "que": "complement",
+      "comunicación": "complement",
+      "académica": "complement",
+      "en": "complement",
+      "lenguas": "complement",
+      "románicas": "complement",
+      "resulta": "verb",
+      "más": "complement",
+      "accesible": "complement",
+      "de": "complement",
+      "lo": "complement",
+      "imaginaban": "verb",
+
+      "información": "subject",
+      "circula": "verb",
+      "rápidamente": "complement",
+      "cuando": "complement",
+      "existe": "verb",
+      "una": "subject",
+      "base": "subject",
+      "común": "subject",
+      "comprensión": "complement",
+      "especialmente": "complement",
+      "contextos": "complement",
+      "formación": "complement",
+      "investigación": "complement",
+      "innovación": "complement",
+
+      "esta": "subject",
+      "experiencia": "subject",
+      "el": "subject",
+      "objetivo": "subject",
+      "no": "complement",
+      "es": "verb",
+      "traducir": "complement",
+      "cada": "complement",
+      "palabra": "complement",
+      "sino": "complement",
+      "identificar": "complement",
+      "elementos": "complement",
+      "familiares": "complement",
+      "reconocer": "complement",
+      "terminaciones": "complement",
+      "útiles": "complement",
+      "construir": "complement",
+      "sentido": "complement",
+      "manera": "complement",
+      "progresiva": "complement",
+
+      "metodología": "subject",
+      "basada": "subject",
+      "observación": "complement",
+      "comparación": "complement",
+      "reflexión": "complement",
+      "permite": "verb",
+      "desarrollar": "complement",
+      "estrategias": "complement",
+      "duraderas": "complement",
+      "para": "complement",
+      "comprender": "complement",
+      "mejor": "complement",
+      "textos": "complement",
+      "desconocidos": "complement"
+    };
+
+    const sieveData = {
+      1: {
+        title: "1. Lexique international",
+        description: "Clique sur les mots transparents, surtout ceux qui ressemblent fortement au français.",
+        candidates: new Set([
+          "organización", "internacional", "educación", "científica", "cooperación",
+          "cultural", "universidades", "estudiantes", "comunicación", "académica",
+          "románicas", "accesible", "información", "comprensión", "contextos",
+          "formación", "investigación", "innovación", "experiencia", "objetivo",
+          "identificar", "elementos", "familiares", "terminaciones", "metodología",
+          "observación", "comparación", "reflexión", "estrategias", "comprender", "textos"
+        ]),
+        hintText: "Exemples typiques : organización, internacional, educación, investigación, metodología."
+      },
+      2: {
+        title: "2. Lexique pan-roman",
+        description: "Compare des formes proches dans plusieurs langues romanes pour sentir des familles lexicales communes.",
+        candidates: new Set(Object.keys(panRomanLexicon)),
+        hintText: "Cherche des mots qui résonnent en français, italien ou portugais : lenguas, palabra, común, comprender, textos..."
+      },
+      3: {
+        title: "3. Correspondances phonétiques",
+        description: "Repère les mots dont certaines finales peuvent se transformer régulièrement vers une forme française proche.",
+        candidates: new Set(),
+        hintText: "Exemples : -ción → -tion, -dad → -té, -mente → -ment, -ico / -ica → -ique."
+      },
+      4: {
+        title: "4. Graphies / prononciations",
+        description: "Observe quelques signaux graphiques qui peuvent orienter la prononciation ou la comparaison avec le français.",
+        candidates: new Set(),
+        hintText: "Cherche des indices comme qu, gu, c devant e/i, ñ, ll, h initial, j ou z."
+      },
+      5: {
+        title: "5. Syntaxe pan-romane",
+        description: "Repère la structure générale de l’énoncé : sujet probable, verbe probable, complément probable.",
+        candidates: new Set(Object.keys(syntaxRoles)),
+        hintText: "Ici on ne cherche pas un mot isolé, mais une fonction probable dans la phrase."
+      },
+      6: {
+        title: "6. Morphosyntaxe",
+        description: "Observe quelques indices grammaticaux visibles : déterminants, formes verbales probables, infinitifs, adverbes et pluriels.",
+        candidates: new Set(),
+        hintText: "Cherche des petits signaux de fonctionnement : la, el, una, verbes probables, -ar/-er/-ir, -mente, -s/-es."
+      },
+      7: {
+        title: "7. Préfixes / suffixes",
+        description: "Repère les mots qui te donnent des indices grâce à leurs finales : -ción, -mente, -dad, -ico, etc.",
+        candidates: new Set(),
+        hintText: "Cherche les finales comme -ción, -sión, -dad, -mente, -ico, -ica, -able, -ible."
+      }
+    };
+
+    let activeSieve = 1;
+    let inspectedWord = null;
+    const wordStatus = {};
+
+    const textContainer = document.getElementById("text");
+    const sieveTitle = document.getElementById("sieve-title");
+    const sieveDescription = document.getElementById("sieve-description");
+    const activeSieveLabel = document.getElementById("activeSieveLabel");
+    const selectedCountEl = document.getElementById("selectedCount");
+    const correctCountEl = document.getElementById("correctCount");
+    const selectedWordsEl = document.getElementById("selectedWords");
+    const currentHintsEl = document.getElementById("currentHints");
+    const transformationsBox = document.getElementById("transformationsBox");
+    const inspectionBox = document.getElementById("inspectionBox");
+    const legendBox = document.getElementById("legendBox");
+
+    function normalizeWord(word) {
+      return word
+        .toLowerCase()
+        .replace(/^[^a-záéíóúñü]+|[^a-záéíóúñü]+$/gi, "");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function hasTrackedSuffix(word) {
+      return trackedSuffixes.some(suffix => word.endsWith(suffix));
+    }
+
+    function transformWord(word) {
+      for (const rule of transformRules) {
+        if (word.endsWith(rule.from) && word.length > rule.from.length + 1) {
+          return {
+            original: word,
+            transformed: word.slice(0, -rule.from.length) + rule.to,
+            rule: `${rule.from} → ${rule.to}`,
+            strength: rule.strength,
+            explanation: rule.explanation
+          };
+        }
+      }
+      return null;
+    }
+
+    function getSyntaxRole(word) {
+      return syntaxRoles[word] || null;
+    }
+
+    function getWordsBySyntaxRole(role) {
+      return Object.entries(syntaxRoles)
+        .filter(([, value]) => value === role)
+        .map(([word]) => word);
+    }
+
+    function getSyntaxRoleLabel(role) {
+      if (role === "subject") return "Sujet probable";
+      if (role === "verb") return "Verbe probable";
+      if (role === "complement") return "Complément probable";
+      return "Rôle non défini";
+    }
+
+    function getSimplifiedSyntaxPattern() {
+      return "[Sujet] → [Verbe] → [Complément]";
+    }
+
+    function getSyntaxExamplesForRole(role) {
+      const words = getWordsBySyntaxRole(role);
+      if (!words.length) return "Aucun exemple disponible.";
+      return words.slice(0, 12).join(", ");
+    }
+
+    function isTamis3Candidate(word) {
+      return transformWord(word) !== null;
+    }
+
+    function getPanRomanEntry(word) {
+      return panRomanLexicon[word] || null;
+    }
+
+    function isTamis2Candidate(word) {
+      return !!getPanRomanEntry(word);
+    }
+
+    function getGraphyMatches(word) {
+      return graphyRules.filter(rule => rule.test(word));
+    }
+
+    function isTamis4Candidate(word) {
+      return getGraphyMatches(word).length > 0;
+    }
+
+    function getMorphoMatches(word) {
+      return morphoSignals.filter(signal => signal.test(word));
+    }
+
+    function isTamis6Candidate(word) {
+      return getMorphoMatches(word).length > 0;
+    }
+
+    function isCandidate(word) {
+      if (activeSieve === 7) return hasTrackedSuffix(word);
+      if (activeSieve === 2) return isTamis2Candidate(word);
+      if (activeSieve === 3) return isTamis3Candidate(word);
+      if (activeSieve === 4) return isTamis4Candidate(word);
+      if (activeSieve === 5) return !!getSyntaxRole(word);
+      if (activeSieve === 6) return isTamis6Candidate(word);
+      return sieveData[activeSieve].candidates.has(word);
+    }
+
+    function createTooltipContent(cleanWord) {
+      if (activeSieve === 3) {
+        const t = transformWord(cleanWord);
+        if (!t) return null;
+        return `${t.original} → ${t.transformed}\n${t.rule}\n${t.explanation}`;
+      }
+
+      if (activeSieve === 2) {
+        const entry = getPanRomanEntry(cleanWord);
+        if (!entry) return null;
+        return `FR : ${entry.fr}\nIT : ${entry.it}\nPT : ${entry.pt}\nFamille : ${entry.family}`;
+      }
+
+      if (activeSieve === 4) {
+        const matches = getGraphyMatches(cleanWord);
+        if (!matches.length) return null;
+        return matches
+          .map(match => `${match.label}\n${match.explanation}\nPrudence : ${match.caution}`)
+          .join("\n\n");
+      }
+
+      if (activeSieve === 6) {
+        const matches = getMorphoMatches(cleanWord);
+        if (!matches.length) return null;
+        return matches
+          .map(match => `${match.label}\n${match.explanation}\nPrudence : ${match.caution}`)
+          .join("\n\n");
+      }
+
+      if (activeSieve === 7 && hasTrackedSuffix(cleanWord)) {
+        const suffix = trackedSuffixes.find(s => cleanWord.endsWith(s));
+        return `Suffixe repéré : -${suffix}`;
+      }
+
+      if (activeSieve === 1 && sieveData[1].candidates.has(cleanWord)) {
+        return `Mot transparent ou quasi transparent pour un lecteur francophone.`;
+      }
+
+      if (activeSieve === 5) {
+        const role = getSyntaxRole(cleanWord);
+        if (!role) return null;
+        if (role === "subject") return "Rôle syntaxique probable : sujet.";
+        if (role === "verb") return "Rôle syntaxique probable : verbe.";
+        return "Rôle syntaxique probable : complément / suite de l’énoncé.";
+      }
+
+      return null;
+    }
+
+    function getActiveAnalysis(word) {
+      if (activeSieve === 1) {
+        if (sieveData[1].candidates.has(word)) {
+          return `Ce mot est traité ici comme transparent ou quasi transparent.
+Il présente une proximité forte avec un lexique savant ou international reconnaissable par un lecteur francophone.
+
+→ bon candidat pour une compréhension immédiate.`;
+        }
+
+        return `Ce mot n’est pas actuellement repéré par le tamis 1 dans cette démo.
+
+→ soit il est moins transparent,
+→ soit il demanderait un autre tamis.`;
+      }
+
+      if (activeSieve === 2) {
+        const entry = getPanRomanEntry(word);
+        if (entry) {
+          return `Formes proches observables :
+FR : ${entry.fr}
+IT : ${entry.it}
+PT : ${entry.pt}
+
+Famille lexicale romane :
+${entry.family}
+
+Piste pédagogique :
+${entry.note}
+
+Prudence :
+Ce n’est pas une traduction automatique. Le but est d’observer une parenté possible pour soutenir l’inférence.`;
+        }
+
+        return `Ce mot n’est pas dans le mini lexique pan-roman de cette démo.
+
+→ cela ne veut pas dire qu’il n’a pas de parenté romane,
+→ seulement qu’il n’est pas suivi ici pour garder le prototype léger.`;
+      }
+
+      if (activeSieve === 3) {
+        const t = transformWord(word);
+        if (t) {
+          const level = t.strength === "strong" ? "forte" : "partielle";
+          return `Transformation proposée :
+${t.original} → ${t.transformed}
+
+Règle mobilisée :
+${t.rule}
+
+Niveau de confiance :
+Correspondance ${level}
+
+Commentaire :
+${t.explanation}`;
+        }
+
+        return `Aucune correspondance de type tamis 3 n’est détectée ici.
+
+→ ce mot relève peut-être davantage du lexique transparent,
+→ ou d’un autre tamis d’observation.`;
+      }
+
+      if (activeSieve === 4) {
+        const matches = getGraphyMatches(word);
+        if (matches.length) {
+          return matches
+            .map(match => `Phénomène repéré :
+${match.label}
+
+Explication :
+${match.explanation}
+
+Prudence :
+${match.caution}`)
+            .join("\n\n---\n\n");
+        }
+
+        return `Aucun phénomène grapho-phonétique suivi par le tamis 4 n’est détecté ici.
+
+→ ce mot peut rester intéressant pour un autre tamis,
+→ ou demander une règle qui n’est pas encore représentée dans cette démo.`;
+      }
+
+      if (activeSieve === 5) {
+          const role = getSyntaxRole(word);
+          if (!role) {
+            return `Aucun rôle syntaxique probable n’est défini ici pour ce mot dans cette démo.
+
+        Structure simplifiée :
+        ${getSimplifiedSyntaxPattern()}
+
+        → soit le mot est périphérique,
+        → soit la structuration devra être affinée plus tard.`;
+          }
+
+          const roleLabel = getSyntaxRoleLabel(role);
+          const examples = getSyntaxExamplesForRole(role);
+
+          if (role === "subject") {
+            return `Rôle syntaxique probable :
+        ${roleLabel}
+
+        Structure simplifiée :
+        ${getSimplifiedSyntaxPattern()}
+
+        Lecture possible :
+        Ce mot participe au groupe qui porte le thème ou le point de départ de l’énoncé.
+
+        Autres mots du même rôle :
+        ${examples}`;
+          }
+
+          if (role === "verb") {
+            return `Rôle syntaxique probable :
+        ${roleLabel}
+
+        Structure simplifiée :
+        ${getSimplifiedSyntaxPattern()}
+
+        Lecture possible :
+        Ce mot semble porter le noyau de l’action, du procès ou de l’énoncé.
+
+        Autres mots du même rôle :
+        ${examples}`;
+          }
+
+          return `Rôle syntaxique probable :
+        ${roleLabel}
+
+        Structure simplifiée :
+        ${getSimplifiedSyntaxPattern()}
+
+        Lecture possible :
+        Ce mot semble appartenir à la partie qui développe, précise ou complète la structure centrale sujet-verbe.
+
+        Autres mots du même rôle :
+        ${examples}`;
+      }
+
+      if (activeSieve === 6) {
+        const matches = getMorphoMatches(word);
+        if (matches.length) {
+          return matches
+            .map(match => `Signal grammatical observé :
+${match.label}
+
+Explication :
+${match.explanation}
+
+Formulation prudente :
+${match.caution}`)
+            .join("\n\n---\n\n");
+        }
+
+        return `Aucun signal morphosyntaxique suivi par le tamis 6 n’est détecté ici.
+
+→ ce mot peut rester utile pour le sens,
+→ mais cette démo ne lui attribue pas de signal grammatical visible.`;
+      }
+
+      if (activeSieve === 7) {
+        if (hasTrackedSuffix(word)) {
+          const suffix = trackedSuffixes.find(s => word.endsWith(s));
+          return `Suffixe détecté :
+-${suffix}
+
+Ce mot donne un indice morphologique utile.
+Même sans comprendre tout le mot, sa finale peut aider à reconnaître une catégorie ou une famille de mots.`;
+        }
+
+        return `Aucun suffixe suivi par le tamis 7 n’est détecté ici.`;
+      }
+
+      return `Le tamis ${activeSieve} n’est pas encore implémenté dans cette version.
+Mais ce panneau est déjà prêt pour accueillir son analyse plus tard.`;
+    }
+
+    function getMultiSieveAnalysis(word) {
+      const lines = [];
+
+      if (sieveData[1].candidates.has(word)) {
+        lines.push("Tamis 1 → ✔️ mot transparent");
+      } else {
+        lines.push("Tamis 1 → ❌ non détecté");
+      }
+
+      const panRomanEntry = getPanRomanEntry(word);
+      if (panRomanEntry) {
+        lines.push(`Tamis 2 → ✔️ famille ${panRomanEntry.family}`);
+      } else {
+        lines.push("Tamis 2 → ❌ hors mini lexique");
+      }
+
+      const t = transformWord(word);
+      if (t) {
+        lines.push(`Tamis 3 → ✔️ ${t.original} → ${t.transformed}`);
+      } else {
+        lines.push("Tamis 3 → ❌ aucune correspondance");
+      }
+
+      const graphyMatches = getGraphyMatches(word);
+      if (graphyMatches.length) {
+        lines.push(`Tamis 4 → ✔️ ${graphyMatches.map(match => match.label).join(", ")}`);
+      } else {
+        lines.push("Tamis 4 → ❌ aucun signal graphique");
+      }
+
+      const role = getSyntaxRole(word);
+      if (role === "subject") {
+        lines.push("Tamis 5 → ✔️ sujet probable");
+      } else if (role === "verb") {
+        lines.push("Tamis 5 → ✔️ verbe probable");
+      } else if (role === "complement") {
+        lines.push("Tamis 5 → ✔️ complément probable");
+      } else {
+        lines.push("Tamis 5 → ❌ aucun rôle défini");
+      }
+
+      const morphoMatches = getMorphoMatches(word);
+      if (morphoMatches.length) {
+        lines.push(`Tamis 6 → ✔️ ${morphoMatches.map(match => match.label).join(", ")}`);
+      } else {
+        lines.push("Tamis 6 → ❌ aucun signal grammatical");
+      }
+
+      if (hasTrackedSuffix(word)) {
+        const suffix = trackedSuffixes.find(s => word.endsWith(s));
+        lines.push(`Tamis 7 → ✔️ suffixe -${suffix}`);
+      } else {
+        lines.push("Tamis 7 → ❌ aucun suffixe");
+      }
+
+      return lines;
+    }
+
+    function getStatusLabel(status) {
+      if (status === "known") return "compris";
+      if (status === "doubt") return "doute";
+      if (status === "unknown") return "inconnu";
+      return "non défini";
+    }
+
+    function updateLegend() {
+      if (activeSieve === 2) {
+        legendBox.innerHTML = `
+          <div class="legend-line">
+            <span class="legend-sample legend-pan-roman"></span>
+            <span>Parenté lexicale romane</span>
+          </div>
+        `;
+        return;
+      }
+
+      if (activeSieve === 4) {
+        legendBox.innerHTML = `
+          <div class="legend-line">
+            <span class="legend-sample legend-graphy"></span>
+            <span>Signal grapho-phonétique</span>
+          </div>
+        `;
+        return;
+      }
+
+      if (activeSieve === 5) {
+        legendBox.innerHTML = `
+          <div class="legend-line">
+            <span class="legend-sample legend-subject"></span>
+            <span>Sujet probable</span>
+          </div>
+          <div class="legend-line">
+            <span class="legend-sample legend-verb"></span>
+            <span>Verbe probable</span>
+          </div>
+          <div class="legend-line">
+            <span class="legend-sample legend-complement"></span>
+            <span>Complément probable</span>
+          </div>
+        `;
+        return;
+      }
+
+      if (activeSieve === 6) {
+        legendBox.innerHTML = `
+          <div class="legend-line">
+            <span class="legend-sample legend-morpho"></span>
+            <span>Signal grammatical visible</span>
+          </div>
+        `;
+        return;
+      }
+
+      legendBox.innerHTML = `
+        <div class="legend-line">
+          <span class="legend-sample legend-strong"></span>
+          <span>Correspondance forte</span>
+        </div>
+        <div class="legend-line">
+          <span class="legend-sample legend-soft"></span>
+          <span>Correspondance partielle</span>
+        </div>
+        <div class="legend-line">
+          <span class="legend-sample legend-suffix"></span>
+          <span>Suffixe repéré</span>
+        </div>
+      `;
+    }
+
+    function renderInspectionBox() {
+      if (!inspectedWord) {
+        inspectionBox.innerHTML = `
+          <div class="inspect-section">
+            Clique sur un mot du texte pour l’inspecter avec le tamis actif.<br>
+            Double-clique pour l’ajouter à ta sélection.
+          </div>
+        `;
+        return;
+      }
+
+      const word = inspectedWord;
+      const safeWord = escapeHtml(word);
+      const wordEl = document.querySelector(`.word[data-clean="${CSS.escape(word)}"]`);
+      const isSelected = wordEl?.classList.contains("selected") || false;
+      const status = wordStatus[word] || "none";
+      const activeAnalysis = escapeHtml(getActiveAnalysis(word));
+      const multiSieveLines = getMultiSieveAnalysis(word)
+        .map(line => escapeHtml(line))
+        .join("<br>");
+
+      inspectionBox.innerHTML = `
+        <div class="inspect-section">
+          <div class="inspect-word">${safeWord}</div>
+          <div class="inspect-muted">Tamis actif : ${activeSieve}</div>
+        </div>
+
+        <div class="inspect-section">
+          <h4>Action</h4>
+          <div class="inspect-actions">
+            <button class="mini-btn secondary" data-action="toggle-select">
+              ${isSelected ? "Retirer de la sélection" : "Ajouter à la sélection"}
+            </button>
+          </div>
+        </div>
+
+        <div class="inspect-section">
+          <h4>Statut du mot</h4>
+          <div class="inspect-actions">
+            <button class="mini-btn ghost ${status === "known" ? "active-status" : ""}" data-status="known">⭐ Compris</button>
+            <button class="mini-btn ghost ${status === "doubt" ? "active-status" : ""}" data-status="doubt">❓ Doute</button>
+            <button class="mini-btn ghost ${status === "unknown" ? "active-status" : ""}" data-status="unknown">❌ Inconnu</button>
+          </div>
+          <div class="inspect-muted" style="margin-top:8px;">
+            Actuel : ${escapeHtml(getStatusLabel(status))}
+          </div>
+        </div>
+
+        <div class="inspect-section">
+          <h4>Analyse du tamis actif</h4>
+          <div class="multi-line">${activeAnalysis}</div>
+        </div>
+
+        <div class="inspect-section">
+          <h4>Analyse multi-tamis</h4>
+          <div class="multi-line">${multiSieveLines}</div>
+        </div>
+      `;
+    }
+
+    function buildText() {
+      const previousSelections = new Set(
+        [...document.querySelectorAll(".word.selected")].map(el => el.dataset.clean)
+      );
+
+      textContainer.innerHTML = "";
+
+      rawText.trim().split(/\s+/).forEach(token => {
+        const clean = normalizeWord(token);
+        const span = document.createElement("span");
+        span.textContent = token;
+        span.className = "word";
+        span.dataset.clean = clean;
+
+        const tooltip = document.createElement("div");
+        tooltip.className = "tooltip";
+        span.appendChild(tooltip);
+
+        if (previousSelections.has(clean)) {
+          span.classList.add("selected");
+        }
+
+        if (inspectedWord === clean) {
+          span.classList.add("inspected");
+        }
+
+        if (wordStatus[clean] === "known") span.classList.add("status-known");
+        if (wordStatus[clean] === "doubt") span.classList.add("status-doubt");
+        if (wordStatus[clean] === "unknown") span.classList.add("status-unknown");
+
+        span.addEventListener("click", () => {
+          if (!clean) return;
+          inspectedWord = clean;
+          refreshInspectedWord();
+        });
+
+        span.addEventListener("dblclick", (event) => {
+          event.preventDefault();
+          if (!clean) return;
+          span.classList.toggle("selected");
+          updateSidebar();
+          renderInspectionBox();
+        });
+
+        span.addEventListener("mouseenter", () => {
+          const content = createTooltipContent(clean);
+          if (content && (span.classList.contains("hint") || activeSieve === 2 || activeSieve === 3 || activeSieve === 4 || activeSieve === 5 || activeSieve === 6)) {
+            tooltip.textContent = content;
+            span.classList.add("show-tooltip");
+          }
+        });
+
+        span.addEventListener("mouseleave", () => {
+          span.classList.remove("show-tooltip");
+        });
+
+        textContainer.appendChild(span);
+      });
+
+      updateSidebar();
+      refreshInspectedWord();
+    }
+
+    function refreshInspectedWord() {
+      document.querySelectorAll(".word").forEach(el => {
+        el.classList.toggle("inspected", el.dataset.clean === inspectedWord);
+
+        el.classList.remove("status-known", "status-doubt", "status-unknown", "syntax-related");
+        const w = el.dataset.clean;
+        if (wordStatus[w] === "known") el.classList.add("status-known");
+        if (wordStatus[w] === "doubt") el.classList.add("status-doubt");
+        if (wordStatus[w] === "unknown") el.classList.add("status-unknown");
+      });
+
+      if (activeSieve === 5) {
+        highlightRelatedSyntaxRole();
+      }
+
+      renderInspectionBox();
+    }
+
+    function updateSidebar() {
+      const selected = [...document.querySelectorAll(".word.selected")]
+        .map(w => w.dataset.clean)
+        .filter(Boolean);
+
+      const uniqueSelected = [...new Set(selected)];
+      const correctSelected = uniqueSelected.filter(word => isCandidate(word));
+
+      selectedCountEl.textContent = uniqueSelected.length;
+      correctCountEl.textContent = correctSelected.length;
+      activeSieveLabel.textContent = activeSieve;
+      selectedWordsEl.textContent = uniqueSelected.length
+        ? uniqueSelected.join(", ")
+        : "Aucun mot sélectionné.";
+
+      currentHintsEl.textContent = sieveData[activeSieve].hintText;
+      updateTransformationsBox();
+
+
+      const feedback = document.getElementById("globalFeedback");
+
+      if (feedback) {
+        if (correctSelected.length === 0) {
+          feedback.textContent = "🔍 Commence l’exploration…";
+          feedback.style.background = "#f7fafc";
+        } else if (correctSelected.length < 5) {
+          feedback.textContent = "👍 Bon début ! Continue.";
+          feedback.style.background = "#eef4ff";
+        } else {
+          feedback.textContent = "🔥 Très bonne lecture du texte !";
+          feedback.style.background = "#eafbe7";
+        }
+      }
+    }
+
+    function updateTransformationsBox() {
+      if (activeSieve === 3) {
+        const allWords = [...document.querySelectorAll(".word")]
+          .map(w => w.dataset.clean)
+          .filter(Boolean);
+
+        const uniqueWords = [...new Set(allWords)];
+        const transformations = uniqueWords
+          .map(transformWord)
+          .filter(Boolean);
+
+        if (!transformations.length) {
+          transformationsBox.textContent = "Aucune transformation détectée dans ce texte.";
+          return;
+        }
+
+        transformationsBox.textContent = transformations
+          .map(item => {
+            const label = item.strength === "strong" ? "[forte]" : "[partielle]";
+            return `${label} ${item.original} → ${item.transformed}   (${item.rule})`;
+          })
+          .join("\n");
+        return;
+      }
+
+      if (activeSieve === 2) {
+        const rows = Object.entries(panRomanLexicon)
+          .map(([word, entry]) => `${word} → FR ${entry.fr} | IT ${entry.it} | PT ${entry.pt}`)
+          .join("\n");
+
+        transformationsBox.textContent =
+`Mini lexique pan-roman suivi dans ce texte :
+${rows}`;
+        return;
+      }
+
+      if (activeSieve === 4) {
+        const allWords = [...document.querySelectorAll(".word")]
+          .map(w => w.dataset.clean)
+          .filter(Boolean);
+
+        const uniqueWords = [...new Set(allWords)];
+        const rows = uniqueWords
+          .map(word => ({ word, matches: getGraphyMatches(word) }))
+          .filter(item => item.matches.length);
+
+        if (!rows.length) {
+          transformationsBox.textContent = "Aucun signal grapho-phonétique détecté dans ce texte.";
+          return;
+        }
+
+        transformationsBox.textContent = rows
+          .map(item => `${item.word} → ${item.matches.map(match => match.label).join(", ")}`)
+          .join("\n");
+        return;
+      }
+
+      if (activeSieve === 5) {
+        transformationsBox.textContent =
+`Sujet probable → point de départ de l’énoncé
+Verbe probable → noyau de l’action / du procès
+Complément probable → développement ou précision
+
+Ici, ce bloc sert à décrire la structure au lieu de proposer des transformations de forme.`;
+        return;
+      }
+
+      if (activeSieve === 6) {
+        const allWords = [...document.querySelectorAll(".word")]
+          .map(w => w.dataset.clean)
+          .filter(Boolean);
+
+        const uniqueWords = [...new Set(allWords)];
+        const rows = uniqueWords
+          .map(word => ({ word, matches: getMorphoMatches(word) }))
+          .filter(item => item.matches.length);
+
+        if (!rows.length) {
+          transformationsBox.textContent = "Aucun signal grammatical léger détecté dans ce texte.";
+          return;
+        }
+
+        transformationsBox.textContent = rows
+          .map(item => `${item.word} → ${item.matches.map(match => match.label).join(", ")}`)
+          .join("\n");
+        return;
+      }
+
+      transformationsBox.textContent = activeSieve === 7
+        ? "Le tamis 7 ne transforme pas les mots : il repère des indices morphologiques."
+        : "Active le tamis 2, 3, 4, 5 ou 6 pour voir un panneau plus spécifique.";
+    }
+
+    function clearHintsVisuals() {
+      document.querySelectorAll(".word").forEach(word => {
+        word.classList.remove(
+          "hint",
+          "suffix",
+          "pan-roman-match",
+          "transform-strong",
+          "transform-soft",
+          "graphy-match",
+          "morpho-match",
+          "syntax-subject",
+          "syntax-verb",
+          "syntax-complement",
+          "syntax-related",
+          "show-tooltip"
+        );
+      });
+    }
+
+    function showHints() {
+      clearHintsVisuals();
+
+      document.querySelectorAll(".word").forEach(wordEl => {
+        const clean = wordEl.dataset.clean;
+        if (!clean) return;
+
+        if (activeSieve === 7 && hasTrackedSuffix(clean)) {
+          wordEl.classList.add("hint", "suffix");
+        } else if (activeSieve === 2) {
+          if (isTamis2Candidate(clean)) {
+            wordEl.classList.add("hint", "pan-roman-match");
+          }
+        } else if (activeSieve === 3) {
+          const t = transformWord(clean);
+          if (t) {
+            wordEl.classList.add("hint");
+            wordEl.classList.add(t.strength === "strong" ? "transform-strong" : "transform-soft");
+          }
+        } else if (activeSieve === 4) {
+          if (isTamis4Candidate(clean)) {
+            wordEl.classList.add("hint", "graphy-match");
+          }
+        } else if (activeSieve === 5) {
+          const role = getSyntaxRole(clean);
+          if (role) {
+            wordEl.classList.add("hint");
+            if (role === "subject") wordEl.classList.add("syntax-subject");
+            if (role === "verb") wordEl.classList.add("syntax-verb");
+            if (role === "complement") wordEl.classList.add("syntax-complement");
+          }
+        } else if (activeSieve === 6) {
+          if (isTamis6Candidate(clean)) {
+            wordEl.classList.add("hint", "morpho-match");
+          }
+        } else if (activeSieve !== 7 && sieveData[activeSieve].candidates.has(clean)) {
+          wordEl.classList.add("hint");
+        }
+      });
+    }
+
+    function highlightRelatedSyntaxRole() {
+      if (activeSieve !== 5 || !inspectedWord) return;
+
+      const role = getSyntaxRole(inspectedWord);
+      if (!role) return;
+
+      document.querySelectorAll(".word").forEach(wordEl => {
+        const clean = wordEl.dataset.clean;
+        if (getSyntaxRole(clean) === role) {
+          wordEl.classList.add("syntax-related");
+        }
+      });
+    }
+
+    function updateMicroGuide() {
+      const guide = document.getElementById("microGuide");
+
+      if (activeSieve === 1) {
+        guide.textContent = "👉 Commence par repérer les mots transparents (ils ressemblent au français).";
+      } else if (activeSieve === 2) {
+        guide.textContent = "👉 Compare les formes romanes : cherche l’air de famille plutôt qu’une traduction.";
+      } else if (activeSieve === 3) {
+        guide.textContent = "👉 Observe les transformations : certains mots changent légèrement de forme.";
+      } else if (activeSieve === 4) {
+        guide.textContent = "👉 Observe les graphies : certains groupes de lettres guident la prononciation.";
+      } else if (activeSieve === 5) {
+        guide.textContent = "👉 Essaie de reconstruire la phrase : qui fait quoi ?";
+      } else if (activeSieve === 6) {
+        guide.textContent = "👉 Repère de petits signaux grammaticaux : déterminants, verbes probables, infinitifs, pluriels.";
+      } else if (activeSieve === 7) {
+        guide.textContent = "👉 Regarde les terminaisons : elles donnent des indices précieux.";
+      } else {
+        guide.textContent = "";
+      }
+    }
+
+    function setSieve(number) {
+      activeSieve = number;
+
+      for (let i = 1; i <= 7; i++) {
+        document.getElementById(`btn-sieve-${i}`).classList.remove("active");
+      }
+
+      document.getElementById(`btn-sieve-${number}`).classList.add("active");
+
+      sieveTitle.textContent = sieveData[number].title;
+      sieveDescription.textContent = sieveData[number].description;
+
+      updateLegend();
+      clearHintsVisuals();
+      updateSidebar();
+      refreshInspectedWord();
+      updateMicroGuide();
+    }
+
+    function checkProgress() {
+      const selected = [...document.querySelectorAll(".word.selected")]
+        .map(w => w.dataset.clean)
+        .filter(Boolean);
+
+      const uniqueSelected = [...new Set(selected)];
+      const valid = uniqueSelected.filter(word => isCandidate(word));
+      const invalid = uniqueSelected.filter(word => !isCandidate(word));
+
+      alert(
+        `Tamis ${activeSieve}\n\n` +
+        `✅ Sélections cohérentes : ${valid.length}\n` +
+        `❌ Sélections discutables : ${invalid.length}\n\n` +
+        `Cette comparaison sert de feedback pour discuter les indices repérés, pas de notation finale.`
+      );
+
+      document.querySelectorAll(".word").forEach(el => {
+        el.classList.remove("correct", "incorrect");
+      });
+
+      uniqueSelected.forEach(word => {
+        const el = document.querySelector(`.word[data-clean="${CSS.escape(word)}"]`);
+        if (!el) return;
+
+        if (isCandidate(word)) {
+          el.classList.add("correct");
+        } else {
+          el.classList.add("incorrect");
+        }
+      });
+    }
+
+    function resetAll() {
+      inspectedWord = null;
+      Object.keys(wordStatus).forEach(key => delete wordStatus[key]);
+
+      document.querySelectorAll(".word").forEach(word => {
+        word.classList.remove(
+          "selected",
+          "hint",
+          "suffix",
+          "pan-roman-match",
+          "transform-strong",
+          "transform-soft",
+          "graphy-match",
+          "morpho-match",
+          "syntax-subject",
+          "syntax-verb",
+          "syntax-complement",
+          "show-tooltip",
+          "inspected",
+          "status-known",
+          "status-doubt",
+          "status-unknown",
+          "syntax-related",
+        );
+      });
+
+      updateSidebar();
+      refreshInspectedWord();
+    }
+
+    inspectionBox.addEventListener("click", (event) => {
+      if (!inspectedWord) return;
+
+      const action = event.target.dataset.action;
+      const status = event.target.dataset.status;
+      const wordEl = document.querySelector(`.word[data-clean="${CSS.escape(inspectedWord)}"]`);
+
+      if (action === "toggle-select" && wordEl) {
+        wordEl.classList.toggle("selected");
+        updateSidebar();
+        renderInspectionBox();
+      }
+
+      if (status) {
+        wordStatus[inspectedWord] = status;
+        refreshInspectedWord();
+      }
+    });
+
+    buildText();
+    setSieve(1);
+
+
+    function toggleHelp() {
+      const panel = document.getElementById("helpPanel");
+      panel.classList.toggle("hidden");
+    }
+  </script>
+</body>
+</html>

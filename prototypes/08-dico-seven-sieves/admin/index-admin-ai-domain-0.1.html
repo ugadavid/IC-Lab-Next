@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dico-IC Admin — Assistant domaine V0</title>
+  <link rel="stylesheet" href="./css/admin-ai-domain-0.1.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <a class="back-link" href="./index-admin-0.1.html">← Administration générale</a>
+      <h1>Assistant lexical par domaine</h1>
+      <p>L’IA propose, l’humain révise, l’API admin écrit.</p>
+    </div>
+    <div class="header-meta">
+      <span class="experimental-label">Expérimental</span>
+      <span id="apiStatus" class="api-status" data-state="loading">Connexion…</span>
+    </div>
+  </header>
+
+  <nav class="admin-page-nav" aria-label="Pages d’administration">
+    <a href="./index-admin-0.1.html">Admin principal</a>
+    <a href="./index-admin-ai-domain-0.1.html" aria-current="page">IA Domaine</a>
+    <a href="./index-admin-ai-text-0.1.html">IA Texte</a>
+    <a href="./index-admin-ai-relations-0.1.html">IA Relations</a>
+    <a href="../prototypes/01-seven-sieves/index-api-live-0.1.html">Seven Sieves</a>
+  </nav>
+
+  <main class="workspace">
+    <section class="configuration" aria-labelledby="configurationTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Étape 1</p>
+          <h2 id="configurationTitle">Configurer les propositions</h2>
+        </div>
+      </div>
+
+      <form id="generationForm">
+        <div class="control-grid">
+          <div class="field domain-field">
+            <label for="domainInput">Domaine pédagogique *</label>
+            <input id="domainInput" required maxlength="100" placeholder="école, santé, transports…">
+          </div>
+          <div class="field">
+            <label for="candidateCount">Nombre</label>
+            <select id="candidateCount">
+              <option value="10" selected>10 propositions</option>
+              <option value="20">20 propositions</option>
+              <option value="30">30 propositions</option>
+              <option value="50">50 propositions</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="levelSelect">Niveau approximatif</label>
+            <select id="levelSelect">
+              <option value="A1">A1</option>
+              <option value="A2" selected>A2</option>
+              <option value="B1">B1</option>
+              <option value="B2">B2</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="choice-grid">
+          <fieldset>
+            <legend>Langues cibles actives</legend>
+            <div id="languageChoices" class="choice-list" aria-live="polite">Chargement des langues…</div>
+          </fieldset>
+          <fieldset>
+            <legend>Catégories souhaitées</legend>
+            <div class="choice-list">
+              <label><input type="checkbox" name="partOfSpeech" value="noun" checked> Noms</label>
+              <label><input type="checkbox" name="partOfSpeech" value="verb" checked> Verbes</label>
+              <label><input type="checkbox" name="partOfSpeech" value="adjective" checked> Adjectifs</label>
+              <label><input type="checkbox" name="partOfSpeech" value="adverb"> Adverbes</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <div id="generationMessage" class="message" role="status" aria-live="polite"></div>
+        <button id="generateButton" class="button primary" type="submit">Générer des propositions</button>
+      </form>
+    </section>
+
+    <section class="drafts" aria-labelledby="draftsTitle">
+      <div class="section-heading drafts-heading">
+        <div>
+          <p class="eyebrow">Étape 2</p>
+          <h2 id="draftsTitle">Réviser les brouillons</h2>
+        </div>
+        <div class="selection-actions">
+          <button id="selectAllButton" class="button secondary" type="button">Tout sélectionner</button>
+          <button id="selectNoneButton" class="button secondary" type="button">Tout désélectionner</button>
+        </div>
+      </div>
+
+      <div class="draft-summary">
+        <span><strong id="candidateTotal">0</strong> proposition(s)</span>
+        <span><strong id="selectedTotal">0</strong> sélectionnée(s)</span>
+        <span id="generationMeta">Aucune génération.</span>
+      </div>
+      <p class="lemma-note">Les formes proposées doivent être des lemmes dictionnaires. Les formes fléchies rencontrées dans les textes seront gérées séparément dans une étape ultérieure.</p>
+
+      <div class="table-wrap">
+        <table class="candidate-table">
+          <thead>
+            <tr>
+              <th>Garder</th>
+              <th>Concept</th>
+              <th>Gloses et domaine</th>
+              <th>Formes multilingues</th>
+              <th>Statut</th>
+              <th><span class="sr-only">Supprimer</span></th>
+            </tr>
+          </thead>
+          <tbody id="candidateTableBody">
+            <tr><td colspan="6" class="empty-cell">Générez un premier lot de propositions.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="create-bar">
+        <p>Seules les lignes cochées et complètes seront envoyées à l’API d’administration.</p>
+        <button id="createSelectedButton" class="button primary" type="button" disabled>Créer les entrées sélectionnées</button>
+      </div>
+      <div id="creationReport" class="creation-report" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="./js/admin-ai-domain-0.1.js"></script>
+</body>
+</html>

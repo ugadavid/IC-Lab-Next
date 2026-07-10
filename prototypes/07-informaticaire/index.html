@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Informaticaire - mémoire communautaire de l'intercompréhension</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#accueil" aria-label="Informaticaire">
+        <span class="brand-mark">IC</span>
+        <span>
+          <strong>Informaticaire</strong>
+          <small>mémoire communautaire IC</small>
+        </span>
+      </a>
+      <nav aria-label="Navigation principale">
+        <a href="#concept">Concept</a>
+        <a href="#visite">Visite</a>
+        <a href="#demo">Démo rapide</a>
+        <a href="#publics">Pour qui ?</a>
+        <a href="#parcours">Je veux...</a>
+        <a href="#frise">Frise</a>
+        <a href="#bibliotheque">Fiches</a>
+        <a href="#partager">À partager</a>
+        <a href="#contribuer">Contribuer</a>
+        <a href="#graphe">Relations</a>
+        <a href="#campagne">Sauver</a>
+        <a href="#pas-encore">Limites</a>
+        <a href="#decisions">Décisions</a>
+        <a href="#sauver">À sauver</a>
+        <a href="#besoins">Besoins</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="accueil" class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Prototype v0.6</p>
+          <h1>Une mémoire vivante et partageable de l'intercompréhension.</h1>
+          <p>
+            Informaticaire aide la communauté de l'intercompréhension à
+            retrouver des ressources, comprendre leur histoire, identifier les
+            personnes et réseaux qui les connaissent, signaler ce qui devient
+            fragile et préparer la réutilisation collective des activités,
+            outils, corpus et plateformes du domaine.
+          </p>
+          <div class="hero-actions" aria-label="Accès rapides">
+            <a class="button primary" href="#bibliotheque">Explorer les fiches</a>
+            <a class="button" href="#visite">Découvrir en 5 étapes</a>
+            <a class="button" href="#demo">Voir la démo rapide</a>
+            <a class="button" href="#contribuer">Préparer une contribution</a>
+          </div>
+        </div>
+        <aside class="hero-panel" aria-label="Synthèse du prototype">
+          <div>
+            <strong id="stat-items">0</strong>
+            <span>fiches documentées</span>
+          </div>
+          <div>
+            <strong id="stat-recovery">0</strong>
+            <span>ressources à sauver ensemble</span>
+          </div>
+          <div>
+            <strong id="stat-share">0</strong>
+            <span>fiches à partager en priorité</span>
+          </div>
+          <div>
+            <strong id="stat-audiences">0</strong>
+            <span>publics cibles</span>
+          </div>
+          <div>
+            <strong id="stat-relations">0</strong>
+            <span>relations typées</span>
+          </div>
+        </aside>
+      </section>
+
+      <section id="concept" class="section concept-section">
+        <div class="section-heading">
+          <p class="eyebrow">Pourquoi Informaticaire ?</p>
+          <h2>Un outil pour conserver, documenter et transmettre</h2>
+          <p>
+            L'Informaticaire répond au problème de mémoire, de maintenance et
+            de circulation des ressources numériques d'intercompréhension. Il
+            ne remplace pas les enseignants, les chercheurs ou les
+            bibliothécaires : il rend visibles les liens entre projets,
+            ressources, acteurs, outils, corpus et besoins.
+          </p>
+        </div>
+        <div class="concept-grid" aria-label="Fonctions de l'Informaticaire">
+          <article><strong>Conserver</strong><span>Identifier les ressources, traces et archives à ne pas perdre.</span></article>
+          <article><strong>Documenter</strong><span>Décrire l'état, les acteurs, les entretiens et les incertitudes.</span></article>
+          <article><strong>Relier</strong><span>Faire apparaître les généalogies, héritages et dépendances entre fiches.</span></article>
+          <article><strong>Retrouver</strong><span>Rendre les éléments dispersés consultables depuis un point d'entrée commun.</span></article>
+          <article><strong>Rendre réutilisable</strong><span>Préparer l'adaptation, le remix et la didactisation des ressources.</span></article>
+          <article><strong>Préparer la maintenance</strong><span>Nommer les risques, les actions suivantes et les personnes à contacter.</span></article>
+          <article><strong>Préparer la transmission</strong><span>Transformer une mémoire fragile en cartographie partageable.</span></article>
+        </div>
+      </section>
+
+      <section id="visite" class="section guided-section">
+        <div class="section-heading">
+          <p class="eyebrow">Visite guidée</p>
+          <h2>Découvrir Informaticaire en 5 étapes</h2>
+          <p>Un parcours court pour présenter l'outil en réunion : comprendre, chercher, relier, sauver puis contribuer.</p>
+        </div>
+        <div class="tour-grid" aria-label="Découvrir Informaticaire en cinq étapes">
+          <button class="tour-step" type="button" data-tour-target="#concept">
+            <span>1</span>
+            <strong>Comprendre le projet.</strong>
+            <small>Voir ce que l'outil conserve, documente, relie et transmet.</small>
+          </button>
+          <button class="tour-step" type="button" data-tour-target="#bibliotheque">
+            <span>2</span>
+            <strong>Explorer la mémoire des ressources.</strong>
+            <small>Utiliser la recherche, les filtres et les fiches consultables.</small>
+          </button>
+          <button class="tour-step" type="button" data-tour-target="#graphe">
+            <span>3</span>
+            <strong>Voir les liens entre acteurs, projets et outils.</strong>
+            <small>Lire les chaînes relationnelles en colonnes.</small>
+          </button>
+          <button class="tour-step" type="button" data-tour-target="#campagne">
+            <span>4</span>
+            <strong>Identifier les ressources à sauver.</strong>
+            <small>Repérer les priorités, états et personnes à contacter.</small>
+          </button>
+          <button class="tour-step" type="button" data-tour-target="#contribuer">
+            <span>5</span>
+            <strong>Préparer une contribution.</strong>
+            <small>Générer un brouillon local relu ensuite humainement.</small>
+          </button>
+        </div>
+      </section>
+
+      <section id="demo" class="section demo-section">
+        <div class="section-heading">
+          <p class="eyebrow">Démo rapide</p>
+          <h2>Un parcours Galanet montrable en deux minutes</h2>
+          <p>Ce scénario peut être joué en direct pour montrer comment une ressource devient une fiche exploitable, reliée et ouverte à contribution.</p>
+        </div>
+        <div class="demo-card">
+          <ol class="demo-path">
+            <li>Je cherche Galanet.</li>
+            <li>Je vois son historique.</li>
+            <li>Je vois qu'il est lié à Galapro, Miriadi, APICAD.</li>
+            <li>Je vois qu'il est fragile.</li>
+            <li>Je vois qui peut aider.</li>
+            <li>Je prépare une contribution.</li>
+          </ol>
+          <div class="result-actions">
+            <button id="demo-galanet-button" class="button primary" type="button">Lancer le parcours Galanet</button>
+            <a class="ghost-button" href="#contribuer">Aller au formulaire</a>
+          </div>
+        </div>
+      </section>
+
+      <section id="publics" class="section audience-section">
+        <div class="section-heading">
+          <p class="eyebrow">Pour qui ?</p>
+          <h2>Un espace commun pour plusieurs métiers de l'IC</h2>
+          <p>Chaque public peut entrer par ses besoins, sans perdre la mémoire historique et documentaire des ressources.</p>
+        </div>
+        <div class="audience-grid">
+          <article><strong>Enseignants</strong><span>Retrouver des activités, ressources, scénarios ou outils à adapter.</span></article>
+          <article><strong>Chercheurs</strong><span>Suivre l'histoire des projets, corpus, concepts et acteurs du domaine.</span></article>
+          <article><strong>Ingénieurs pédagogiques</strong><span>Comprendre les formats, risques, besoins et possibilités de maintenance.</span></article>
+          <article><strong>Réseaux / associations</strong><span>Piloter la récupération, la mutualisation et la transmission.</span></article>
+        </div>
+      </section>
+
+      <section id="parcours" class="section journeys-section">
+        <div class="section-heading">
+          <p class="eyebrow">Je veux...</p>
+          <h2>Entrer par une action concrète</h2>
+          <p>Ces parcours activent des vues ciblées pour passer rapidement d'une intention à des fiches exploitables.</p>
+        </div>
+        <div class="journey-grid">
+          <button class="journey-card" type="button" data-journey="pedagogie"><strong>Je cherche une ressource pédagogique.</strong><span>Voir les ressources, cours, méthodes et supports.</span></button>
+          <button class="journey-card" type="button" data-journey="plateforme"><strong>Je veux savoir si une plateforme existe encore.</strong><span>Comparer les états vivant, fragile, disparu ou à récupérer.</span></button>
+          <button class="journey-card" type="button" data-journey="personne"><strong>Je veux retrouver qui connaît un projet.</strong><span>Afficher les acteurs et personnes ressources.</span></button>
+          <button class="journey-card" type="button" data-journey="sauver"><strong>Je veux contribuer à sauver une ressource fragile.</strong><span>Aller vers les actions collectives de récupération.</span></button>
+          <button class="journey-card" type="button" data-journey="adapter"><strong>Je veux réutiliser ou adapter une activité.</strong><span>Repérer les fiches avec pistes de réemploi.</span></button>
+          <button class="journey-card" type="button" data-journey="histoire"><strong>Je veux comprendre l'histoire d'un outil ou d'un corpus.</strong><span>Explorer la frise et les relations typées.</span></button>
+        </div>
+      </section>
+
+      <section id="frise" class="section timeline-section">
+        <div class="section-heading">
+          <p class="eyebrow">Frise historique</p>
+          <h2>Des CD-ROM aux corpus annotés</h2>
+          <p>Une lecture chronologique des projets cités comme jalons, héritages ou ressources à récupérer.</p>
+        </div>
+        <div id="timeline" class="timeline" aria-label="Frise des projets"></div>
+      </section>
+
+      <section id="bibliotheque" class="section">
+        <div class="section-heading">
+          <p class="eyebrow">Bibliothèque de fiches</p>
+          <h2>Rechercher, filtrer, relier</h2>
+          <p>Chaque fiche indique son type, son état, ses acteurs liés, ses relations et sa traçabilité documentaire.</p>
+        </div>
+
+        <div class="toolbar" aria-label="Recherche et filtres">
+          <label class="search">
+            <span>Recherche</span>
+            <input id="search-input" type="search" placeholder="Projet, personne, besoin, outil..." autocomplete="off">
+          </label>
+          <div id="filters" class="filters" role="list" aria-label="Filtres"></div>
+        </div>
+
+        <div class="results-line">
+          <span id="results-count">0 fiche</span>
+          <div class="result-actions">
+            <button id="export-json-button" class="ghost-button" type="button">Exporter les fiches en JSON</button>
+            <button id="export-csv-button" class="ghost-button" type="button">Exporter la récupération en CSV</button>
+            <button id="reset-button" class="ghost-button" type="button">Réinitialiser</button>
+          </div>
+        </div>
+        <p id="export-status" class="export-status" aria-live="polite"></p>
+
+        <div id="cards" class="card-grid" aria-live="polite"></div>
+      </section>
+
+      <section id="partager" class="section share-section">
+        <div class="section-heading">
+          <p class="eyebrow">À partager en priorité</p>
+          <h2>Les fiches utiles à montrer à la communauté</h2>
+          <p>Ces fiches combinent intérêt collectif, potentiel de réutilisation et besoin de compléments avant partage large.</p>
+        </div>
+        <div id="priority-share-list" class="share-grid"></div>
+      </section>
+
+      <section id="contribuer" class="section contribute-section">
+        <div class="section-heading">
+          <p class="eyebrow">Contribuer</p>
+          <h2>Aider à compléter la mémoire commune</h2>
+          <p>Un membre de la communauté peut signaler une ressource, compléter une fiche, ajouter un lien, préciser un contact, indiquer l'état d'une plateforme, ajouter une capture ou une archive, corriger une référence incertaine ou proposer une réutilisation pédagogique.</p>
+          <p>Une correction n'est pas appliquée automatiquement. Elle produit un brouillon relu humainement avant intégration.</p>
+        </div>
+        <form id="contribution-form" class="contribution-form">
+          <label>
+            <span>Type de contribution</span>
+            <select id="contribution-type">
+              <option value="ressource">Signaler une ressource</option>
+              <option value="fiche">Compléter une fiche</option>
+              <option value="external-link">Ajouter un lien externe</option>
+              <option value="contact">Préciser un contact</option>
+              <option value="etat">Indiquer un état actuel</option>
+              <option value="archive">Ajouter une capture ou une archive</option>
+              <option value="correction">Proposer une correction</option>
+              <option value="reutilisation">Proposer une réutilisation pédagogique</option>
+            </select>
+          </label>
+          <label>
+            <span>Fiche concernée</span>
+            <select id="contribution-target"></select>
+          </label>
+          <label>
+            <span>Champ concerné</span>
+            <select id="correction-field">
+              <option value="">à préciser</option>
+              <option value="title">Titre</option>
+              <option value="description">Description</option>
+              <option value="status">État actuel</option>
+              <option value="period">Période</option>
+              <option value="actors">Acteurs liés</option>
+              <option value="relations">Relations</option>
+              <option value="evidence">Traçabilité documentaire</option>
+              <option value="recovery">Récupération</option>
+              <option value="rights">Droits / accès</option>
+              <option value="other">Autre</option>
+            </select>
+          </label>
+          <label>
+            <span>Titre / lien / remarque</span>
+            <textarea id="contribution-note" rows="4" placeholder="Ex. Je dispose de captures d'écran de l'interface Galanet."></textarea>
+          </label>
+          <label>
+            <span>Label du lien externe</span>
+            <input id="external-link-label" type="text" placeholder="Ex. Site Miriadi">
+          </label>
+          <label>
+            <span>URL du lien externe</span>
+            <input id="external-link-url" type="url" placeholder="https://...">
+          </label>
+          <label>
+            <span>Type de lien externe</span>
+            <select id="external-link-kind">
+              <option value="site officiel">site officiel</option>
+              <option value="page projet">page projet</option>
+              <option value="documentation">documentation</option>
+              <option value="archive">archive</option>
+              <option value="publication">publication</option>
+              <option value="outil externe">outil externe</option>
+              <option value="à vérifier">à vérifier</option>
+            </select>
+          </label>
+          <label>
+            <span>Valeur actuelle</span>
+            <textarea id="correction-current-value" rows="3" placeholder="Copier ou résumer l'information à corriger."></textarea>
+          </label>
+          <label>
+            <span>Correction proposée</span>
+            <textarea id="correction-proposed-value" rows="3" placeholder="Indiquer la formulation ou la donnée proposée."></textarea>
+          </label>
+          <label>
+            <span>Justification</span>
+            <textarea id="correction-reason" rows="3" placeholder="Expliquer pourquoi la correction est proposée et, si possible, indiquer une source."></textarea>
+          </label>
+          <label>
+            <span>Nom ou contact facultatif</span>
+            <input id="contribution-contact" type="text" placeholder="à compléter">
+          </label>
+          <label>
+            <span>Niveau de certitude</span>
+            <select id="contribution-confidence">
+              <option value="haute">haute</option>
+              <option value="moyenne">moyenne</option>
+              <option value="à vérifier">à vérifier</option>
+            </select>
+          </label>
+          <div class="result-actions">
+            <button class="button primary" type="submit">Préparer la contribution</button>
+            <button id="download-contribution-button" class="ghost-button" type="button" disabled>Exporter le brouillon JSON</button>
+          </div>
+        </form>
+        <p id="contribution-export-status" class="export-status" aria-live="polite"></p>
+        <pre id="contribution-draft" class="draft-output" aria-live="polite"></pre>
+        <div id="correction-review" class="correction-review" aria-live="polite">
+          <h3>Corrections à relire</h3>
+          <p>Aucun brouillon de correction préparé pour le moment.</p>
+        </div>
+      </section>
+
+      <section id="graphe" class="section graph-section">
+        <div class="section-heading">
+          <p class="eyebrow">Relations</p>
+          <h2>Acteurs, projets, ressources</h2>
+          <p>Une première visualisation en colonnes pour lire les chaînes relationnelles sans dépendance externe.</p>
+        </div>
+        <div id="graph-map" class="graph-map" aria-label="Carte relationnelle simple"></div>
+      </section>
+
+      <section id="campagne" class="section campaign-section">
+        <div class="section-heading">
+          <p class="eyebrow">Ressources à sauver ensemble</p>
+          <h2>Transformer la mémoire dispersée en actions collectives</h2>
+          <p>Cette section sert à transformer la mémoire dispersée du domaine en actions concrètes de récupération, documentation et transmission.</p>
+        </div>
+        <div id="campaign-list" class="campaign-grid"></div>
+      </section>
+
+      <section id="pas-encore" class="section limits-section">
+        <div class="section-heading">
+          <p class="eyebrow">Ce prototype n'est pas encore...</p>
+          <h2>Un cadre clair pour éviter les malentendus</h2>
+          <p>La démonstration rend l'outil partageable, mais elle garde visibles les prudences nécessaires avant diffusion large.</p>
+        </div>
+        <div class="limit-grid">
+          <article><strong>Une base officielle</strong><span>Les fiches doivent encore être validées collectivement.</span></article>
+          <article><strong>Une base exhaustive</strong><span>Le corpus actuel constitue un premier noyau de travail.</span></article>
+          <article><strong>Un répertoire juridiquement prêt</strong><span>Les droits, licences et accès doivent être vérifiés avant diffusion publique.</span></article>
+          <article><strong>Un système de contribution automatique</strong><span>Les contributions sont préparées localement puis relues humainement.</span></article>
+          <article><strong>Une mémoire consolidée</strong><span>Les données viennent d'une première exploitation d'entretiens et doivent être enrichies avec la communauté.</span></article>
+        </div>
+      </section>
+
+      <section id="decisions" class="section decisions-section">
+        <div class="section-heading">
+          <p class="eyebrow">Prochaines décisions communautaires</p>
+          <h2>Passer du prototype à une gouvernance minimale</h2>
+          <p>Ces questions transforment la démonstration en chantier collectif : elles disent ce qu'il faudra trancher pour maintenir l'outil dans la durée.</p>
+        </div>
+        <div class="decision-grid">
+          <article>Qui valide les fiches ?</article>
+          <article>Où héberger durablement l'outil ?</article>
+          <article>Quels droits pour les ressources ?</article>
+          <article>Qui peut contribuer ?</article>
+          <article>Quel lien avec APICAD, REPLI4C, Miriadi ou l'UGA ?</article>
+          <article>Quelle politique de sauvegarde ?</article>
+          <article>Quelle gouvernance minimale ?</article>
+        </div>
+      </section>
+
+      <section id="sauver" class="section rescue-section">
+        <div class="section-heading">
+          <p class="eyebrow">À sauver / à vérifier</p>
+          <h2>Patrimoine fragile</h2>
+          <p>Les éléments marqués comme fragiles, disparus, à récupérer ou incertains sont isolés pour faciliter les futures campagnes de récupération.</p>
+        </div>
+        <div id="rescue-list" class="rescue-grid"></div>
+      </section>
+
+      <section id="besoins" class="section needs-section">
+        <div class="section-heading">
+          <p class="eyebrow">Besoins récurrents</p>
+          <h2>Besoins utiles pour faire évoluer l'outil</h2>
+          <p>Ces besoins transversaux orientent la suite : données plus complètes, moteur de recherche, corpus, annotation et accompagnement des usages pédagogiques.</p>
+        </div>
+        <div id="needs-list" class="needs-grid"></div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Prototype statique pour une mémoire communautaire de l'intercompréhension.</p>
+      <p>Données v0.6 nourries par une première lecture documentaire des entretiens et préparées pour une démonstration collective.</p>
+    </footer>
+
+    <div id="detail-modal" class="modal" hidden>
+      <div class="modal-backdrop" data-close-detail></div>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+        <button class="modal-close" type="button" data-close-detail aria-label="Fermer la fiche">×</button>
+        <div id="detail-content"></div>
+      </section>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

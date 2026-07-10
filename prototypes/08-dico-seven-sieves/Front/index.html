@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dico IC V1</title>
+</head>
+<body>
+
+<h2>Recherche de cognats</h2>
+
+<input id="word" placeholder="Tape un mot..." />
+<button onclick="search()">Search</button>
+
+<ul id="results"></ul>
+
+<script>
+async function search() {
+  const word = document.getElementById("word").value;
+
+  const res = await fetch(`http://localhost:3000/cognates/${word}`);
+  const data = await res.json();
+
+  const list = document.getElementById("results");
+  list.innerHTML = "";
+
+  data.forEach(item => {
+    const li = document.createElement("li");
+
+    if (item.relation_type === "COGNATE_STRONG") {
+        li.style.color = "green";
+    } else if (item.relation_type === "FALSE_FRIEND") {
+        li.style.color = "red";
+    }
+
+    li.textContent = `${item.word_1} (${item.lang_1}) → ${item.word_2} (${item.lang_2}) [${item.relation_type}]`;
+    list.appendChild(li);
+  });
+}
+</script>
+
+</body>
+</html>

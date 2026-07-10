@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub - Enseignant</title>
+    <link rel="stylesheet" href="teacher.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div>
+          <p class="kicker">IC-Lab Hub V0.1</p>
+          <h1>Espace enseignant</h1>
+          <p id="userLine">Chargement...</p>
+        </div>
+        <nav><a href="hub.html">Hub</a><a href="student.html">Student test</a></nav>
+      </header>
+      <section class="layout">
+        <section>
+          <h2>Mes cours</h2>
+          <div id="courseList" class="stack"></div>
+        </section>
+        <aside class="panel">
+          <h2>Creer un cours</h2>
+          <form id="courseForm">
+            <label>Titre <input id="courseTitle" required></label>
+            <label>Description <textarea id="courseDescription"></textarea></label>
+            <label>Niveau <input id="courseLevel"></label>
+            <label>Code d'acces <input id="courseCode" placeholder="AUTO si vide"></label>
+            <button type="submit">Creer</button>
+          </form>
+          <h2>Assigner une activite</h2>
+          <form id="assignForm">
+            <label>Cours <select id="assignCourse"></select></label>
+            <label>Prototype <select id="prototypeSelect"></select></label>
+            <label>Activity ID <input id="activityId" value="climateObservations001" required></label>
+            <label>Activity source <select id="activitySource"><option value="catalog">catalog</option><option value="local">local</option><option value="server">server</option></select></label>
+            <button type="submit">Assigner</button>
+          </form>
+          <p id="message" class="message"></p>
+        </aside>
+      </section>
+    </main>
+    <script src="teacher.js"></script>
+  </body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bibliothèque d'activités REPLI4C</title>
+    <link rel="stylesheet" href="library-1.0.css">
+  </head>
+  <body>
+    <main class="library-app">
+      <header class="library-header">
+        <div>
+          <p class="kicker">IC-Lab - Prototype 06 V1.0</p>
+          <h1>Bibliothèque d'activités REPLI4C</h1>
+          <p>Cette bibliothèque rassemble les activités prêtes à tester et les activités créées localement. Elle permet de documenter pourquoi une rencontre a été construite, avec quels personnages, dans quel scénario pédagogique, et dans quel but.</p>
+        </div>
+        <nav>
+          <a href="composer-1.0.html">Composer</a>
+          <a href="admin-1.0.html">Créer / modifier</a>
+          <a href="index-1.0.html">Lancer</a>
+        </nav>
+      </header>
+
+      <section class="filters-panel">
+        <input id="searchInput" type="search" placeholder="Rechercher titre, objectif, auteur, tags, thèmes, langues...">
+        <select id="sourceFilter"><option value="all">Toutes sources</option><option value="catalog">Natives</option><option value="local">Locales</option></select>
+        <select id="scenarioFilter"><option value="all">Tous scénarios</option></select>
+        <select id="languageFilter"><option value="all">Toutes langues</option></select>
+        <select id="themeFilter"><option value="all">Tous thèmes</option></select>
+        <select id="durationFilter"><option value="all">Toutes durées</option></select>
+        <select id="statusFilter"><option value="all">Tous statuts</option></select>
+      </section>
+
+      <section class="library-layout">
+        <section>
+          <div id="activityList" class="activity-list"></div>
+        </section>
+        <aside class="detail-panel">
+          <h2>Détail d'activité</h2>
+          <div id="detailBox"></div>
+          <section class="import-panel">
+            <h2>Import / Export JSON</h2>
+            <textarea id="jsonBox" placeholder="JSON d'activité"></textarea>
+            <button id="importButton" type="button">Importer depuis JSON</button>
+          </section>
+          <section id="debugBox" class="debug-box" hidden></section>
+        </aside>
+      </section>
+    </main>
+
+    <script src="data-1.0.js"></script>
+    <script src="library-1.0.js"></script>
+  </body>
+</html>

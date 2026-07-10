@@ -1,0 +1,70 @@
+body { margin: 0; font-family: Arial, sans-serif; background: #f6f7f4; color: #17231f; }
+.page { max-width: 1180px; margin: 0 auto; padding: 1.25rem; }
+.topbar { display: flex; justify-content: space-between; gap: 1rem; align-items: start; }
+.kicker { margin: 0 0 0.4rem; color: #4d665f; font-weight: 700; text-transform: uppercase; font-size: 0.78rem; }
+nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+a, button { border: 0; border-radius: 6px; padding: 0.65rem 0.8rem; background: #214d43; color: white; font: inherit; text-decoration: none; cursor: pointer; }
+.layout { display: grid; grid-template-columns: 1fr 360px; gap: 1rem; }
+.stack, form { display: grid; gap: 0.75rem; }
+.panel, .card { background: white; border: 1px solid #d9ded8; border-radius: 8px; padding: 1rem; }
+label { display: grid; gap: 0.3rem; font-weight: 700; }
+input, textarea, select { border: 1px solid #c8d0ca; border-radius: 6px; padding: 0.65rem; font: inherit; }
+.assignments { margin-top: 0.75rem; padding-left: 1.2rem; }
+.message { color: #8a3b18; min-height: 1.4rem; }
+.connector-status {
+  border-radius: 6px;
+  padding: 0.65rem;
+  background: #edf6f2;
+  color: #214d43;
+  font-weight: 700;
+}
+.connector-status.is-unavailable {
+  background: #fff3ed;
+  color: #8a3b18;
+}
+.activity-picker {
+  display: grid;
+  gap: 0.5rem;
+  max-height: 360px;
+  overflow: auto;
+}
+.activity-option {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.5rem;
+  border: 1px solid #d9ded8;
+  border-radius: 8px;
+  padding: 0.65rem;
+  background: #fbfcfa;
+}
+.activity-option span {
+  display: grid;
+  gap: 0.25rem;
+}
+.activity-option small {
+  font-weight: 400;
+}
+.runs-list {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.7rem;
+}
+.run-row {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem;
+  border: 1px solid #d9ded8;
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+.debug-meta {
+  max-width: 100%;
+  overflow: auto;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: #17231f;
+  color: #f6f7f4;
+  font-size: 0.78rem;
+}
+@media (max-width: 860px) { .topbar, .layout { display: grid; grid-template-columns: 1fr; } }

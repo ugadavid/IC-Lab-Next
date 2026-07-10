@@ -1,0 +1,64 @@
+{
+  "courses": [
+    {
+      "id": "course_demo_repli4c",
+      "title": "REPLI4C - groupe demo",
+      "teacherId": "user_teacher_demo",
+      "description": "Cours demo pour tester les rencontres plurilingues.",
+      "accessCode": "REPLI4C-DEMO",
+      "level": "M2 / formation",
+      "createdAt": "2026-07-02T09:28:26.621Z",
+      "updatedAt": "2026-07-02T09:28:26.621Z",
+      "institutionId": "inst_uga",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "ownerId": "user_teacher_demo",
+      "visibility": "course"
+    },
+    {
+      "id": "course_463ad673-191d-4c27-ab8f-04ca82e9ae96",
+      "title": "Cours test hub V0.1",
+      "teacherId": "user_teacher_demo",
+      "description": "Verification creation teacher",
+      "accessCode": "TEST-3226",
+      "level": "Test",
+      "createdAt": "2026-07-02T09:29:09.052Z",
+      "updatedAt": "2026-07-02T09:29:09.052Z",
+      "institutionId": "inst_uga",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "ownerId": "user_teacher_demo",
+      "visibility": "course"
+    },
+    {
+      "id": "course_b0704c98-8ddd-4371-982f-6b4beaee008d",
+      "title": "CoursDeTest",
+      "teacherId": "user_teacher_demo",
+      "description": "C'est là que tout commence",
+      "accessCode": "IC-E6DBD2",
+      "level": "Top",
+      "createdAt": "2026-07-02T13:23:04.382Z",
+      "updatedAt": "2026-07-02T13:23:04.382Z",
+      "institutionId": "inst_uga",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "ownerId": "user_teacher_demo",
+      "visibility": "course"
+    },
+    {
+      "id": "course_8e09cc8f-94f6-4da0-9e40-1b06b779269f",
+      "title": "Cours David 01",
+      "teacherId": "user_teacher_demo",
+      "description": "Je m'amuse avec les assignations :D",
+      "accessCode": "IC-9CE872",
+      "level": "Tous",
+      "institutionId": "inst_uga",
+      "createdBy": "user_teacher_demo",
+      "updatedBy": "user_teacher_demo",
+      "ownerId": "user_teacher_demo",
+      "visibility": "course",
+      "createdAt": "2026-07-02T16:05:03.474Z",
+      "updatedAt": "2026-07-02T16:05:03.474Z"
+    }
+  ]
+}

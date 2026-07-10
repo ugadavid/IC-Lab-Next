@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Prototype 06 V0.3 - Rencontre plurilingue</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style-0.0.3.css">
+  </head>
+  <body>
+    <main class="app-shell meeting-shell">
+      <section class="exchange-panel" aria-labelledby="page-title">
+        <div class="intro">
+          <p class="kicker">IC-Lab - Prototype 06 V0.3</p>
+          <h1 id="page-title">Rencontre plurilingue REPLI4C</h1>
+          <p class="lead">
+            Trois participants incarnés témoignent successivement. L'utilisateur
+            observe qui parle, qui écoute, puis reconstruit le sens global.
+          </p>
+        </div>
+
+        <div class="controls" aria-label="Contrôles de la rencontre">
+          <button id="startButton" class="primary-button" type="button">
+            Démarrer la rencontre
+          </button>
+          <button id="speakButton" class="secondary-button" type="button" disabled>
+            Répondre
+          </button>
+          <button id="replayButton" class="ghost-button" type="button" disabled>
+            Réécouter la personne active
+          </button>
+        </div>
+
+        <div class="instruction-box" aria-live="polite">
+          <span class="label">Consigne</span>
+          <p id="instructionText">
+            Cliquez sur "Démarrer la rencontre" pour écouter Clara, Marco et Ana.
+          </p>
+        </div>
+
+        <section class="meeting-stage" aria-labelledby="meeting-title">
+          <div class="meeting-heading">
+            <div>
+              <span class="label">Rencontre</span>
+              <h2 id="meeting-title">Participants REPLI4C</h2>
+            </div>
+            <p id="meetingStatus" class="meeting-status">En attente</p>
+          </div>
+          <div id="participantList" class="participant-list"></div>
+        </section>
+
+        <div class="speech-area">
+          <label for="fallbackInput">Transcription ou saisie de secours</label>
+          <textarea
+            id="fallbackInput"
+            rows="4"
+            placeholder="Après la rencontre, dites en français ce que vous avez compris globalement."
+            disabled
+          ></textarea>
+          <p id="speechStatus" class="status" role="status">
+            En attente de démarrage.
+          </p>
+        </div>
+
+        <section class="agent-response" aria-labelledby="agent-title">
+          <span class="label">Moment actif</span>
+          <h2 id="agent-title">Rencontre</h2>
+          <p id="agentText">Le témoignage actif apparaîtra ici.</p>
+        </section>
+      </section>
+
+      <aside class="observation-panel" aria-labelledby="observation-title">
+        <div>
+          <p class="kicker">Observation IC</p>
+          <h2 id="observation-title">Indices visibles</h2>
+        </div>
+
+        <div class="meeting-question">
+          <span class="label">Question pédagogique</span>
+          <p>
+            L'engagement augmente-t-il quand les langues sont portées par des
+            personnes visibles plutôt que par une simple liste de textes ?
+          </p>
+        </div>
+
+        <div class="observation-grid" id="observationGrid"></div>
+
+        <section class="history-section" aria-labelledby="history-title">
+          <h2 id="history-title">Historique</h2>
+          <ol id="historyList" class="history-list"></ol>
+        </section>
+      </aside>
+    </main>
+
+    <script src="script-0.0.3.js"></script>
+  </body>
+</html>

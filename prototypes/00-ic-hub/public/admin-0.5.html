@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab Hub V0.5 - Admin</title>
+    <link rel="stylesheet" href="admin-0.5.css">
+  </head>
+  <body>
+    <main class="page">
+      <header class="topbar">
+        <div><p class="kicker">IC-Lab Hub V0.5</p><h1>Administration locale</h1><p id="userLine">Chargement...</p></div>
+        <nav><a href="hub-0.5.html">Hub</a><a href="teacher-0.5.html">Teacher test</a><a href="student-0.5.html">Student test</a></nav>
+      </header>
+      <section class="grid">
+        <section class="panel"><h2>Etat serveur</h2><pre id="healthBox"></pre></section>
+        <section class="panel"><h2>Utilisateurs</h2><div id="usersBox" class="stack"></div></section>
+        <section class="panel"><h2>Institutions</h2><div id="institutionsBox" class="stack"></div></section>
+        <section class="panel">
+          <h2>Activites referencees</h2>
+          <div class="filters">
+            <label>Visibilite <select id="visibilityFilter"><option value="">Toutes</option></select></label>
+            <label>Institution <select id="institutionFilter"><option value="">Toutes</option></select></label>
+            <label>Owner <select id="ownerFilter"><option value="">Tous</option></select></label>
+            <label>Prototype <select id="prototypeFilter"><option value="">Tous</option></select></label>
+          </div>
+          <div id="ownershipBox" class="stack"></div>
+        </section>
+        <section class="panel"><h2>Cours</h2><div id="coursesBox" class="stack"></div></section>
+        <section class="panel"><h2>Prototypes</h2><div id="prototypesBox" class="stack"></div></section>
+        <section class="panel"><h2>Connecteurs</h2><div id="connectorsBox" class="stack"></div></section>
+        <section class="panel"><h2>Sessions actives</h2><pre id="sessionsBox"></pre></section>
+      </section>
+      <p id="message" class="message"></p>
+    </main>
+    <script src="admin-0.5.js"></script>
+  </body>
+</html>

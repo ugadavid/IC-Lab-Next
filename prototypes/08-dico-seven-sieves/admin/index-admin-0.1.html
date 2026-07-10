@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dico-IC Admin V0</title>
+  <link rel="stylesheet" href="./css/admin-0.1.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>Dico-IC Admin</h1>
+      <p>Consultation et enrichissement local de la base de connaissances</p>
+    </div>
+    <div class="header-actions">
+      <span class="environment-label">V0 locale</span>
+      <span id="apiStatus" class="api-status" data-state="loading">Connexion à l’API…</span>
+    </div>
+  </header>
+
+  <nav class="admin-page-nav" aria-label="Pages d’administration">
+    <a href="./index-admin-0.1.html" aria-current="page">Admin principal</a>
+    <a href="./index-admin-ai-domain-0.1.html">IA Domaine</a>
+    <a href="./index-admin-ai-text-0.1.html">IA Texte</a>
+    <a href="./index-admin-ai-relations-0.1.html">IA Relations</a>
+    <a href="../prototypes/01-seven-sieves/index-api-live-0.1.html">Seven Sieves</a>
+  </nav>
+
+  <nav class="section-nav" aria-label="Sections de l’administration">
+    <a href="#model">Modèle</a>
+    <a href="#languages">Langues</a>
+    <a href="#lexicon">Lexique</a>
+    <a href="#new-entry">Nouvelle entrée</a>
+    <a href="#inflected-forms">Formes fléchies</a>
+    <a href="#connector-helps">Aides discursives</a>
+    <a href="#relations">Relations</a>
+  </nav>
+
+  <main class="workspace">
+    <section id="model" class="workspace-section" aria-labelledby="modelTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">État actuel</p>
+          <h2 id="modelTitle">Résumé du modèle</h2>
+        </div>
+        <button id="refreshButton" class="button secondary" type="button">Actualiser</button>
+      </div>
+      <div id="modelCounts" class="metric-grid" aria-live="polite"></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Table</th><th>Rôle actuel</th></tr></thead>
+          <tbody id="modelTableBody">
+            <tr><td colspan="2" class="empty-cell">Chargement du modèle…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="languages" class="workspace-section" aria-labelledby="languagesTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Référentiel</p>
+          <h2 id="languagesTitle">Langues actives</h2>
+        </div>
+        <span id="languageCount" class="section-count">0 langue</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Code</th><th>Nom</th><th>Famille</th><th>Romane</th><th>État</th></tr>
+          </thead>
+          <tbody id="languagesTableBody">
+            <tr><td colspan="5" class="empty-cell">Chargement des langues…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="lexicon" class="workspace-section" aria-labelledby="lexiconTitle">
+      <div class="section-heading lexicon-heading">
+        <div>
+          <p class="eyebrow">Consultation</p>
+          <h2 id="lexiconTitle">Entrées lexicales récentes</h2>
+        </div>
+        <form id="searchForm" class="search-form" role="search">
+          <label class="sr-only" for="searchInput">Rechercher une entrée</label>
+          <input id="searchInput" type="search" maxlength="100" placeholder="Clé, glose ou domaine">
+          <button class="button secondary" type="submit">Rechercher</button>
+        </form>
+      </div>
+      <p id="lexiconMeta" class="section-note" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="lexicon-table">
+          <thead>
+            <tr><th>Clé</th><th>Glose française</th><th>Domaine</th><th>Formes</th><th><span class="sr-only">Action</span></th></tr>
+          </thead>
+          <tbody id="entriesTableBody">
+            <tr><td colspan="4" class="empty-cell">Chargement du lexique…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" aria-label="Pagination du lexique">
+        <button id="previousPageButton" class="button secondary" type="button">← Précédent</button>
+        <span id="paginationLabel">0–0 / 0</span>
+        <button id="nextPageButton" class="button secondary" type="button">Suivant →</button>
+      </div>
+    </section>
+
+    <section id="new-entry" class="workspace-section" aria-labelledby="newEntryTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Ajout manuel</p>
+          <h2 id="newEntryTitle"><span id="entryModeTitle">Nouvelle entrée lexicale</span></h2>
+        </div>
+      </div>
+      <p id="entryModeNote" class="section-note">L’entrée et toutes ses formes sont enregistrées ensemble. Aucun contenu apprenant n’est créé.</p>
+
+      <form id="entryForm" class="entry-form" novalidate>
+        <div class="field-grid">
+          <div class="field">
+            <label for="entryKey">Clé d’entrée *</label>
+            <input id="entryKey" name="entry_key" required maxlength="100" pattern="[A-Z][A-Z0-9_]{2,99}" placeholder="SCHOOL_PLACE">
+            <small>Majuscules, chiffres et underscores.</small>
+          </div>
+          <div class="field">
+            <label for="glossFr">Glose française *</label>
+            <input id="glossFr" name="gloss_fr" required placeholder="école">
+          </div>
+          <div class="field">
+            <label for="glossEn">Glose anglaise</label>
+            <input id="glossEn" name="gloss_en" placeholder="school">
+          </div>
+          <div class="field">
+            <label for="semanticDomain">Domaine sémantique</label>
+            <input id="semanticDomain" name="semantic_domain" maxlength="100" placeholder="école">
+          </div>
+        </div>
+
+        <div class="forms-heading">
+          <div>
+            <h3>Formes linguistiques</h3>
+            <p>La forme normalisée sera calculée par l’API.</p>
+          </div>
+          <button id="addFormButton" class="icon-text-button" type="button" title="Ajouter une forme">+ Ajouter une forme</button>
+        </div>
+
+        <div class="table-wrap">
+          <table class="forms-table">
+            <thead><tr><th>Langue</th><th>Lemme *</th><th>Catégorie *</th><th><span class="sr-only">Action</span></th></tr></thead>
+            <tbody id="formsTableBody"></tbody>
+          </table>
+        </div>
+
+        <div id="formMessage" class="form-message" role="status" aria-live="polite"></div>
+        <div class="form-actions">
+          <button id="submitEntryButton" class="button primary" type="submit">Créer l’entrée lexicale</button>
+          <button id="resetEntryButton" class="button secondary" type="button">Effacer</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="inflected-forms" class="workspace-section" aria-labelledby="inflectedFormsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Pluriels attestés</p>
+          <h2 id="inflectedFormsTitle">Formes fléchies validées</h2>
+        </div>
+      </div>
+      <p class="section-note">Reliez un pluriel observé à un lemme canonique existant. Cette V0 accepte uniquement les noms et adjectifs FR, ES, IT et PT.</p>
+
+      <form id="inflectedForm" class="relation-form" novalidate>
+        <div class="inflected-editor">
+          <div class="form-picker">
+            <label for="inflectedTargetSearch">Forme canonique cible *</label>
+            <input id="inflectedTargetSearch" type="search" maxlength="100" placeholder="utile, organisation, USEFUL…">
+            <select id="inflectedTargetSelect" size="5" aria-label="Résultats pour la forme canonique cible"></select>
+          </div>
+          <div class="inflected-settings">
+            <div class="field">
+              <label for="inflectedSurface">Surface fléchie *</label>
+              <input id="inflectedSurface" maxlength="255" required placeholder="utiles">
+            </div>
+            <div class="field">
+              <label for="inflectedNumber">Nombre</label>
+              <select id="inflectedNumber"><option value="PLURAL">PLURAL</option></select>
+            </div>
+            <div class="field">
+              <label for="inflectedStatus">Statut</label>
+              <select id="inflectedStatus">
+                <option value="VALIDATED" selected>VALIDATED</option>
+                <option value="PROPOSED">PROPOSED</option>
+                <option value="REJECTED">REJECTED</option>
+                <option value="ARCHIVED">ARCHIVED</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="inflectedConfidence">Confiance</label>
+              <input id="inflectedConfidence" type="number" min="0" max="1" step="0.01" value="1">
+            </div>
+            <div class="field inflected-source-field">
+              <label for="inflectedSourceLabel">Provenance</label>
+              <input id="inflectedSourceLabel" maxlength="100" value="manual_admin_v0">
+            </div>
+          </div>
+        </div>
+        <div id="inflectedMessage" class="form-message" role="status" aria-live="polite"></div>
+        <button id="createInflectedButton" class="button primary" type="submit">Créer le mapping</button>
+      </form>
+
+      <div class="relations-list-heading">
+        <h3>Mappings récents</h3>
+        <form id="inflectedSearchForm" class="search-form" role="search">
+          <label class="sr-only" for="inflectedSearchInput">Rechercher une forme fléchie</label>
+          <input id="inflectedSearchInput" type="search" maxlength="100" placeholder="Surface, lemme ou entrée">
+          <select id="inflectedStatusFilter" aria-label="Filtrer par statut">
+            <option value="">Tous les statuts</option>
+            <option value="VALIDATED">VALIDATED</option>
+            <option value="PROPOSED">PROPOSED</option>
+            <option value="REJECTED">REJECTED</option>
+            <option value="ARCHIVED">ARCHIVED</option>
+          </select>
+          <button class="button secondary" type="submit">Rechercher</button>
+        </form>
+      </div>
+      <p id="inflectedMeta" class="section-note" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="inflected-table">
+          <thead><tr><th>Surface</th><th>Cible canonique</th><th>Nombre</th><th>Statut</th><th>Confiance</th><th>Provenance</th><th>Création</th></tr></thead>
+          <tbody id="inflectedTableBody"><tr><td colspan="7" class="empty-cell">Chargement des mappings…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="connector-helps" class="workspace-section" aria-labelledby="connectorHelpsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Objet pédagogique transversal</p>
+          <h2 id="connectorHelpsTitle">Aides discursives</h2>
+        </div>
+      </div>
+      <p class="section-note">Associez une expression discursive ES ou FR à une aide de lecture validée. Seven Sieves les reçoit par <code>/analysis</code>, indépendamment des sept tamis.</p>
+
+      <div class="connector-layout">
+        <form id="connectorHelpForm" class="relation-form" novalidate>
+          <h3 id="connectorHelpFormTitle">Nouvelle aide discursive</h3>
+          <div class="connector-editor">
+            <div class="field">
+              <label for="connectorLanguage">Langue *</label>
+              <select id="connectorLanguage">
+                <option value="es">ES — Espagnol</option>
+                <option value="fr">FR — Français</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="connectorExpression">Expression *</label>
+              <input id="connectorExpression" maxlength="255" required placeholder="sin embargo">
+            </div>
+            <div class="field">
+              <label for="connectorFunction">Fonction *</label>
+              <select id="connectorFunction"></select>
+            </div>
+            <div class="field">
+              <label for="connectorStatus">Statut *</label>
+              <select id="connectorStatus">
+                <option value="PROPOSED">PROPOSED</option>
+                <option value="VALIDATED">VALIDATED</option>
+                <option value="REJECTED">REJECTED</option>
+                <option value="ARCHIVED">ARCHIVED</option>
+              </select>
+            </div>
+            <div class="field connector-wide">
+              <label for="connectorHint">Aide pédagogique *</label>
+              <textarea id="connectorHint" rows="3" required placeholder="L’auteur introduit probablement une idée qui contraste avec ce qui précède."></textarea>
+            </div>
+            <div class="field connector-wide">
+              <label for="connectorExample">Exemple</label>
+              <input id="connectorExample" placeholder="sin embargo / cependant">
+            </div>
+            <div class="field connector-wide">
+              <label for="connectorCaution">Prudence</label>
+              <input id="connectorCaution" value="La fonction exacte peut dépendre du contexte.">
+            </div>
+            <div class="field">
+              <label for="connectorTitle">Titre</label>
+              <input id="connectorTitle" maxlength="100" value="Connecteur logique">
+            </div>
+            <div class="field">
+              <label for="connectorSourceLabel">Provenance</label>
+              <input id="connectorSourceLabel" maxlength="100" value="manual_admin_v0">
+            </div>
+            <div class="field">
+              <label for="connectorEntryKey">Entrée lexicale facultative</label>
+              <input id="connectorEntryKey" maxlength="100" placeholder="CONNECTOR_OPPOSITION">
+            </div>
+            <div class="field">
+              <label for="connectorNotes">Notes internes</label>
+              <input id="connectorNotes" placeholder="Non exposées dans /analysis">
+            </div>
+          </div>
+          <div id="connectorHelpMessage" class="form-message" role="status" aria-live="polite"></div>
+          <div class="form-actions">
+            <button id="saveConnectorHelpButton" class="button primary" type="submit">Créer l’aide</button>
+            <button id="resetConnectorHelpButton" class="button secondary" type="button">Effacer</button>
+          </div>
+        </form>
+
+        <aside class="function-reference" aria-labelledby="functionReferenceTitle">
+          <h3 id="functionReferenceTitle">Fonctions discursives V0</h3>
+          <div id="connectorFunctionReference" class="function-reference-grid"></div>
+        </aside>
+      </div>
+
+      <div class="relations-list-heading">
+        <h3>Catalogue</h3>
+        <form id="connectorHelpSearchForm" class="search-form" role="search">
+          <label class="sr-only" for="connectorHelpSearchInput">Rechercher une aide discursive</label>
+          <input id="connectorHelpSearchInput" type="search" maxlength="100" placeholder="Expression, aide ou source">
+          <select id="connectorLanguageFilter" aria-label="Filtrer par langue">
+            <option value="">Toutes les langues</option>
+            <option value="es">ES</option>
+            <option value="fr">FR</option>
+          </select>
+          <select id="connectorFunctionFilter" aria-label="Filtrer par fonction">
+            <option value="">Toutes les fonctions</option>
+          </select>
+          <select id="connectorStatusFilter" aria-label="Filtrer par statut">
+            <option value="">Tous les statuts</option>
+            <option value="VALIDATED">VALIDATED</option>
+            <option value="PROPOSED">PROPOSED</option>
+            <option value="REJECTED">REJECTED</option>
+            <option value="ARCHIVED">ARCHIVED</option>
+          </select>
+          <button class="button secondary" type="submit">Rechercher</button>
+        </form>
+      </div>
+      <p id="connectorHelpMeta" class="section-note" aria-live="polite"></p>
+      <div class="table-wrap">
+        <table class="connector-table">
+          <thead><tr><th>Expression</th><th>Langue</th><th>Fonction</th><th>Aide</th><th>Statut</th><th>Provenance</th><th>Actions</th></tr></thead>
+          <tbody id="connectorHelpTableBody"><tr><td colspan="7" class="empty-cell">Chargement des aides discursives…</td></tr></tbody>
+        </table>
+      </div>
+      <div class="pagination" aria-label="Pagination des aides discursives">
+        <button id="connectorPreviousButton" class="button secondary" type="button">← Précédent</button>
+        <span id="connectorPaginationLabel">0–0 / 0</span>
+        <button id="connectorNextButton" class="button secondary" type="button">Suivant →</button>
+      </div>
+    </section>
+
+    <section id="relations" class="workspace-section" aria-labelledby="relationsTitle">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">Ajout manuel</p>
+          <h2 id="relationsTitle">Relations entre formes</h2>
+        </div>
+      </div>
+      <p class="section-note">Sélectionnez deux formes existantes. La relation créée est symétrique dans cette V0.</p>
+
+      <form id="relationForm" class="relation-form" novalidate>
+        <div class="relation-pair">
+          <div class="form-picker">
+            <label for="sourceFormSearch">Forme source *</label>
+            <input id="sourceFormSearch" type="search" maxlength="100" placeholder="internacional, INTERNATIONAL…">
+            <select id="sourceFormSelect" size="5" aria-label="Résultats pour la forme source"></select>
+          </div>
+          <div class="relation-arrow" aria-hidden="true">↔</div>
+          <div class="form-picker">
+            <label for="targetFormSearch">Forme cible *</label>
+            <input id="targetFormSearch" type="search" maxlength="100" placeholder="international, INTERNATIONAL…">
+            <select id="targetFormSelect" size="5" aria-label="Résultats pour la forme cible"></select>
+          </div>
+        </div>
+
+        <div class="relation-settings">
+          <div class="field">
+            <label for="relationType">Type *</label>
+            <select id="relationType">
+              <option value="COGNATE_STRONG">COGNATE_STRONG</option>
+              <option value="COGNATE_WEAK">COGNATE_WEAK</option>
+              <option value="FALSE_FRIEND">FALSE_FRIEND</option>
+              <option value="RELATED_FORM">RELATED_FORM</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="relationScore">Score *</label>
+            <input id="relationScore" type="number" min="0" max="1" step="0.01" value="0.95">
+          </div>
+          <div class="field">
+            <label for="relationSourceLabel">Provenance</label>
+            <input id="relationSourceLabel" maxlength="100" value="manual_admin_v0">
+          </div>
+        </div>
+        <div id="relationMessage" class="form-message" role="status" aria-live="polite"></div>
+        <button id="createRelationButton" class="button primary" type="submit">Créer la relation</button>
+      </form>
+
+      <div class="relations-list-heading">
+        <h3>Relations récentes</h3>
+        <form id="relationSearchForm" class="search-form" role="search">
+          <label class="sr-only" for="relationSearchInput">Rechercher une relation</label>
+          <input id="relationSearchInput" type="search" maxlength="100" placeholder="Forme, entrée ou type">
+          <button class="button secondary" type="submit">Rechercher</button>
+        </form>
+      </div>
+      <div class="table-wrap">
+        <table class="relations-table">
+          <thead><tr><th>Source</th><th>Relation</th><th>Cible</th><th>Score</th><th>Provenance</th></tr></thead>
+          <tbody id="relationsTableBody"><tr><td colspan="5" class="empty-cell">Chargement des relations…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="./js/admin-0.1.js"></script>
+</body>
+</html>

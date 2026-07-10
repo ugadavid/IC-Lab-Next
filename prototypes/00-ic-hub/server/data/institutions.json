@@ -1,0 +1,25 @@
+{
+  "version": "0.4",
+  "institutions": [
+    {
+      "id": "inst_uga",
+      "name": "Universite Grenoble Alpes",
+      "shortName": "UGA",
+      "type": "university",
+      "country": "France",
+      "status": "active",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    },
+    {
+      "id": "inst_repli4c",
+      "name": "REPLI4C",
+      "shortName": "REPLI4C",
+      "type": "project",
+      "country": "international",
+      "status": "active",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    }
+  ]
+}
