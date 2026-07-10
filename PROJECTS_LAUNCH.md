@@ -7,24 +7,29 @@ propres à chaque composant restent dans leurs guides respectifs.
 
 ## IC-Lab Hub
 
-- **Finalité** : portail local, comptes de démonstration, cours, activités et
-  lancement des prototypes connectés.
+- **Finalité** : portail de démonstration des prototypes IC-Lab-Next, avec les
+  parcours locaux de comptes, cours et activités conservés séparément.
 - **Dossier** : `prototypes/00-ic-hub/server`
-- **Version courante probable** : serveur `0.10.1`, interface Hub `0.9.6`.
-- **État** : actif ; recette partielle sans authentification afin de ne créer
-  aucune session.
+- **Version courante probable** : serveur et portail Hub `0.10.3` ; interface
+  authentifiée historique `0.9.6`.
+- **État** : actif ; la racine est un portail public lisible vers les cinq
+  destinations, sans créer de session.
 - **Prérequis** : Node.js 18 ou plus récent et dépendances déjà installées.
 - **Lancement** : `npm start` depuis le dossier du serveur.
 - **Port** : `8790` par défaut.
-- **Entrées** : <http://127.0.0.1:8790/> et
-  <http://127.0.0.1:8790/hub.html>.
+- **Entrées** : <http://127.0.0.1:8790/> (portail de démonstration) et
+  <http://127.0.0.1:8790/hub.html> (Hub authentifié historique).
+- **Routes de démonstrateurs** :
+  <http://127.0.0.1:8790/demos/augmented-video/> et
+  <http://127.0.0.1:8790/demos/informaticaire/> ; elles conservent les dossiers
+  sources des prototypes et ne reposent pas sur `file://`.
 - **Arrêt** : `Ctrl+C` dans le terminal du serveur.
 - **Données locales** : `server/data/` ; les sessions et traces runtime restent
   locales et ignorées.
 - **Limites connues** : l’accès authentifié crée une session et n’a donc pas été
-  exercé pendant la recette de reprise. Seul l’Agent vocal est actuellement
-  connecté dans le catalogue ; les autres composants sont encore marqués
-  `planned`.
+  exercé pendant la recette de reprise. Agent vocal (`8788`) et Dico-IC / Seven
+  Sieves (`3000`) restent des services autonomes : le portail signale leur
+  prérequis sans les démarrer ni les intégrer aux données Hub.
 - **Guide** : [README du serveur](prototypes/00-ic-hub/server/README.md).
 
 ## Vidéo augmentée d’intercompréhension

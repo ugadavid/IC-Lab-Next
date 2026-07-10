@@ -12,9 +12,9 @@ l’archive historique complète des étapes précédentes.
 ### IC-Lab Hub
 
 [`prototypes/00-ic-hub`](prototypes/00-ic-hub/) est le portail local de
-présentation, d’accès et de lancement des prototypes. Il gère notamment des
-comptes de démonstration, des cours, des activités et les connexions entre
-prototypes.
+présentation, d’accès et de lancement des prototypes. Sa racine sert de portail
+de démonstration vers les cinq destinations actives ; les parcours authentifiés
+de comptes, cours et activités restent disponibles séparément.
 
 - [Guide du serveur](prototypes/00-ic-hub/server/README.md)
 - [Guide de maintenance de l’administration IA](prototypes/00-ic-hub/docs/ai-admin-maintainer-guide.md)

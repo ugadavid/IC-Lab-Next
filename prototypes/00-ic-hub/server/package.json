@@ -1,6 +1,6 @@
 {
   "name": "ic-hub-v0.1",
-  "version": "0.9.6",
+  "version": "0.10.3",
   "private": true,
   "description": "Hub IC-Lab local experimental pour comptes, roles, cours et prototypes.",
   "main": "server.js",

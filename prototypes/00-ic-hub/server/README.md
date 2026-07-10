@@ -1,4 +1,4 @@
-# IC-Lab Hub V0.2
+# IC-Lab Hub V0.10.3
 
 Hub local experimental place au-dessus des prototypes IC-Lab. Il gere des comptes demo, des roles, des cours, des inscriptions, des prototypes disponibles et des assignations d'activites.
 
@@ -10,6 +10,15 @@ npm start
 ```
 
 Le serveur ecoute par defaut sur `http://localhost:8790`.
+
+La racine `/` est le portail public de demonstration IC-Lab-Next. Elle propose
+des routes locales stables pour les demonstrateurs statiques, sans les copier :
+
+- `/demos/augmented-video/` ;
+- `/demos/informaticaire/`.
+
+Les services Agent vocal (`8788`) et Dico-IC / Seven Sieves (`3000`) restent
+autonomes : le portail expose seulement leurs liens et leurs prerequis locaux.
 
 La passe V0.1.1 stabilise le serveur : garde-fou contre les doubles reponses HTTP, lecture de body JSON plus defensive, creation/verifications des fichiers JSON au demarrage et logs minimaux.
 
@@ -52,6 +61,7 @@ Authorization: Bearer <token>
 
 ## Pages
 
+- `/` et `/portal.html` : portail de demonstration V0.10.3 ;
 - `/login.html`
 - `/hub.html`
 - `/teacher.html`

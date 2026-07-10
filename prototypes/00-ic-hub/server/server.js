@@ -8,13 +8,25 @@ const modelMetadataEnrichment = require("./ai/modelMetadataEnrichment");
 const openAiRuntime = require("./ai/openaiRuntime");
 
 const PORT = Number(process.env.PORT || 8790);
-const VERSION = "0.10.1";
+const VERSION = "0.10.3";
 const SERVICE = "ic-hub-local";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DOCS_DIR = path.join(ROOT_DIR, "docs");
 const DATA_DIR = path.join(__dirname, "data");
 const WORKSPACE_DIR = path.resolve(ROOT_DIR, "..", "..");
+const DEMO_STATIC_ROUTES = [
+  {
+    prefix: "/demos/augmented-video/",
+    root: path.join(WORKSPACE_DIR, "prototypes", "05-augmented-ic-video-01"),
+    index: "index-0.0.6.html"
+  },
+  {
+    prefix: "/demos/informaticaire/",
+    root: path.join(WORKSPACE_DIR, "prototypes", "07-informaticaire"),
+    index: "index.html"
+  }
+];
 
 function loadRootEnv() {
   const envPath = path.join(WORKSPACE_DIR, ".env");
@@ -346,7 +358,17 @@ const contentTypes = {
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
-  ".md": "text/markdown; charset=utf-8"
+  ".md": "text/markdown; charset=utf-8",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+  ".mp3": "audio/mpeg",
+  ".mp4": "video/mp4",
+  ".m3u8": "application/vnd.apple.mpegurl",
+  ".vtt": "text/vtt; charset=utf-8",
+  ".pdf": "application/pdf"
 };
 
 function now() {
@@ -2689,7 +2711,36 @@ async function serveStatic(response, url) {
     return true;
   }
 
+  for (const route of DEMO_STATIC_ROUTES) {
+    const barePrefix = route.prefix.slice(0, -1);
+    if (url.pathname === barePrefix) {
+      response.writeHead(302, { location: route.prefix });
+      response.end();
+      return true;
+    }
+    if (!url.pathname.startsWith(route.prefix)) continue;
+    const relativeRequest = decodeURIComponent(url.pathname.slice(route.prefix.length)) || route.index;
+    const target = path.resolve(route.root, relativeRequest);
+    if (target !== route.root && !target.startsWith(`${route.root}${path.sep}`)) {
+      response.writeHead(403);
+      response.end("Forbidden");
+      return true;
+    }
+    try {
+      const file = await fs.readFile(target);
+      const extension = path.extname(target).toLowerCase();
+      response.writeHead(200, { "content-type": contentTypes[extension] || "application/octet-stream" });
+      response.end(file);
+    } catch {
+      response.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+      response.end("Not found");
+    }
+    return true;
+  }
+
   const redirects = new Map([
+    ["/", "/portal-0.10.3.html"],
+    ["/portal.html", "/portal-0.10.3.html"],
     ["/student.html", "/student-0.7.1.html"],
     ["/teacher.html", "/teacher-0.7.1.html"],
     ["/hub.html", "/hub-0.9.6.html"],
