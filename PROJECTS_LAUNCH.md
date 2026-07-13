@@ -1,5 +1,11 @@
 # Lancement des projets IC-Lab-Next
 
+Le Prototype 05 autonome est servi par `prototypes/05-augmented-ic-video-01/server`
+sur `http://127.0.0.1:8791/`. Le lanceur global démarre ce serveur avant IC-Hub ;
+l’ancienne entrée IC-Hub `/demos/augmented-video/` redirige vers lui.
+Les espaces sont accessibles via `/student/:activityId`, `/teacher` et
+`/teacher/preview/:activityId`.
+
 Dernière vérification : **10 juillet 2026**
 
 Ce document donne les points d’entrée courts du workspace consolidé. Les détails

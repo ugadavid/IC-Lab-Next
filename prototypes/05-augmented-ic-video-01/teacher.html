@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Prototype 05 — Préparation enseignant</title>
+  <style>
+    body{margin:0;padding:32px;font-family:Arial,sans-serif;color:#20242c;background:linear-gradient(135deg,#eef3f7,#faf7ef)}
+    main{max-width:960px;margin:auto;background:#fff;padding:28px;border:1px solid #d9e0e8;border-radius:14px;box-shadow:0 10px 30px #1923301a}
+    .notice{padding:12px 14px;border-radius:9px;background:#fff4df;color:#7a4c0c;font-weight:700}
+    .activity{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid #d9e0e8;padding:18px 0}
+    a{color:#325f8f;font-weight:700;margin-left:12px} small{color:#667085}
+  </style>
+</head>
+<body><main>
+  <h1>Préparation enseignant</h1>
+  <p class="notice">Mode enseignant local de prototype — aucune authentification ni gestion réelle des droits.</p>
+  <p>Bibliothèque des activités disponibles. La prévisualisation réutilise le moteur de rendu de la vue étudiant.</p><p><a href="/teacher/create">Créer une activité</a></p>
+  <section id="library" aria-live="polite">Chargement de la bibliothèque…</section>
+</main>
+<script>
+  const library = document.getElementById("library");
+  fetch("/api/proto05/activities").then(r => { if (!r.ok) throw new Error("API indisponible"); return r.json(); }).then(payload => {
+    if (!Array.isArray(payload.activities) || !payload.activities.length) { library.textContent = "Aucune activité disponible."; return; }
+    library.innerHTML = payload.activities.map(activity => `
+      <article class="activity"><div><h2>${escapeHtml(activity.title || activity.id)}</h2>
+      <small>${escapeHtml(activity.id)} · version ${escapeHtml(activity.version || "—")} · ${activity.segments?.length || 0} segments</small></div>
+      <div><a href="/teacher/preview/${encodeURIComponent(activity.id)}">Prévisualiser</a>
+      <a href="/teacher/edit/${encodeURIComponent(activity.id)}">Modifier l’activité</a>
+      <a href="/student/${encodeURIComponent(activity.id)}">Vue étudiant</a></div></article>`).join("");
+  }).catch(error => { library.textContent = "Impossible de charger la bibliothèque : " + error.message; });
+  function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
+</script></body></html>

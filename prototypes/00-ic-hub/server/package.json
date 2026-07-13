@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "dotenv": "^17.4.2",
+    "hls.js": "1.6.13",
     "mysql2": "^3.11.5",
     "openai": "^6.45.0"
   },

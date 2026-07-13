@@ -43,8 +43,8 @@ Les segments sont codés en dur dans une structure JavaScript simple :
 ## Limites actuelles
 
 - Les 11 segments sont un échantillon V0 limité, issus de la transcription PDF disponible dans ce dossier et encore à vérifier contre la vidéo.
-- La vidéo HLS peut ne pas être lue nativement par tous les navigateurs.
-- Aucun lecteur HLS externe n’est inclus afin de garder le prototype autonome.
+- La lecture HLS dépend de la disponibilité du flux UGA distant et du proxy fermé fourni par IC-Hub.
+- La version `0.0.6.1` doit être ouverte depuis IC-Hub : une ouverture directe du fichier HTML ne donne pas accès au proxy ni à hls.js.
 - Il n’y a pas de stockage, d’export ou d’édition des annotations.
 - Les timestamps sont des points de départ pour discussion, pas un alignement définitif.
 - Le prototype ne traite pas toute la vidéo.
@@ -165,3 +165,32 @@ Ajouts :
 - export CSV des observations sélectionnées.
 
 Cette passe teste l’hypothèse qu’une vidéo augmentée devient plus utile si l’utilisateur peut sélectionner ses propres moments remarquables et les exporter comme trace de lecture.
+
+## Évolution V0.0.6.1
+
+La version `index-0.0.6.1.html` répare la lecture HLS depuis IC-Hub sans modifier le modèle pédagogique.
+
+Ajouts et corrections :
+
+- hls.js `1.6.13` chargé localement depuis IC-Hub pour Chrome et Chromium ;
+- manifeste et segments servis par un proxy IC-Hub à source UGA fixe ;
+- repli vers la lecture HLS native lorsque hls.js n’est pas supporté ;
+- états explicites `chargement`, `prêt`, `lecture`, `attente`, `erreur réseau` et `format non supporté` ;
+- gestion des erreurs hls.js et des erreurs du lecteur HTML ;
+- destruction de l’instance hls.js avant tout changement de source et à la fermeture de la page.
+
+La même version charge désormais l’activité en lecture seule depuis IC-Hub via
+`GET /api/proto05/activities/proto05-augmented-video-01`. Le fixture JSON sépare
+la vidéo, la transcription, les segments, les locuteurs, les langues, les couches,
+les occurrences de phénomènes, les annotations enseignantes et la configuration
+de visibilité. Les temps synchronisés sont stockés en millisecondes entières.
+
+## Évolution V0.0.6.2
+
+Le fichier servi par IC-Hub est désormais `index-0.0.6.2.html`. Les données métier
+appartiennent physiquement à ce prototype dans `data/activities.json`.
+
+IC-Hub conserve provisoirement la passerelle HTTP `/api/proto05/...` et lit ce
+fichier via un chemin serveur fixe et contrôlé. Il ne conserve plus aucune copie
+du fixture dans `prototypes/00-ic-hub/server/data/`. La création éventuelle d’un
+serveur autonome pour le prototype 05 fera l’objet d’une mission distincte.

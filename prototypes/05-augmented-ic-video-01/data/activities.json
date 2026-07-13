@@ -1,0 +1,669 @@
+{
+  "schemaVersion": "0.1",
+  "updatedAt": "2026-07-13T12:48:12.420Z",
+  "activities": [
+    {
+      "id": "proto05-augmented-video-01",
+      "version": "0.1.2",
+      "title": "Vidéo augmentée d’intercompréhension",
+      "description": "Lecture synchronisée de moments plurilingues, avec annotations pédagogiques IC.",
+      "video": {
+        "id": "video-proto05-uga-37004",
+        "title": "Vidéo augmentée IC — source UGA",
+        "kind": "hls",
+        "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
+        "durationMs": 939217
+      },
+      "languageIntervals": [
+        {"id":"language-interval-segment-01-lang-fr","languageId":"lang-fr","startMs":2000,"endMs":23000,"segmentId":"segment-01"},
+        {"id":"language-interval-segment-02-lang-fr","languageId":"lang-fr","startMs":32000,"endMs":58000,"segmentId":"segment-02"},
+        {"id":"language-interval-segment-03-lang-fr","languageId":"lang-fr","startMs":58000,"endMs":84000,"segmentId":"segment-03"},
+        {"id":"language-interval-segment-03-lang-it","languageId":"lang-it","startMs":58000,"endMs":84000,"segmentId":"segment-03"},
+        {"id":"language-interval-segment-03-lang-es","languageId":"lang-es","startMs":58000,"endMs":84000,"segmentId":"segment-03"},
+        {"id":"language-interval-segment-04-lang-fr","languageId":"lang-fr","startMs":91000,"endMs":102000,"segmentId":"segment-04"},
+        {"id":"language-interval-segment-05-lang-fr","languageId":"lang-fr","startMs":100000,"endMs":118000,"segmentId":"segment-05"},
+        {"id":"language-interval-segment-06-lang-it","languageId":"lang-it","startMs":118000,"endMs":136000,"segmentId":"segment-06"},
+        {"id":"language-interval-segment-06-lang-es","languageId":"lang-es","startMs":118000,"endMs":136000,"segmentId":"segment-06"},
+        {"id":"language-interval-segment-06-lang-fr","languageId":"lang-fr","startMs":118000,"endMs":136000,"segmentId":"segment-06"},
+        {"id":"language-interval-segment-07-lang-es","languageId":"lang-es","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
+        {"id":"language-interval-segment-07-lang-fr","languageId":"lang-fr","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
+        {"id":"language-interval-segment-07-lang-it","languageId":"lang-it","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
+        {"id":"language-interval-segment-07-lang-pt","languageId":"lang-pt","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
+        {"id":"language-interval-segment-08-lang-fr","languageId":"lang-fr","startMs":176000,"endMs":185000,"segmentId":"segment-08"},
+        {"id":"language-interval-segment-09-lang-es","languageId":"lang-es","startMs":186000,"endMs":225000,"segmentId":"segment-09"},
+        {"id":"language-interval-segment-09-lang-fr","languageId":"lang-fr","startMs":186000,"endMs":225000,"segmentId":"segment-09"},
+        {"id":"language-interval-segment-10-lang-es","languageId":"lang-es","startMs":241000,"endMs":273000,"segmentId":"segment-10"},
+        {"id":"language-interval-segment-10-lang-it","languageId":"lang-it","startMs":241000,"endMs":273000,"segmentId":"segment-10"},
+        {"id":"language-interval-segment-10-lang-fr","languageId":"lang-fr","startMs":241000,"endMs":273000,"segmentId":"segment-10"},
+        {"id":"language-interval-segment-11-lang-es","languageId":"lang-es","startMs":273000,"endMs":302000,"segmentId":"segment-11"},
+        {"id":"language-interval-segment-11-lang-fr","languageId":"lang-fr","startMs":273000,"endMs":302000,"segmentId":"segment-11"}
+      ],
+      "transcription": {
+        "id": "transcription-proto05-v0",
+        "languageId": "lang-fr",
+        "segmentIds": [
+          "segment-01",
+          "segment-02",
+          "segment-03",
+          "segment-04",
+          "segment-05",
+          "segment-06",
+          "segment-07",
+          "segment-08",
+          "segment-09",
+          "segment-10",
+          "segment-11"
+        ]
+      },
+      "segments": [
+        {
+          "id": "segment-01",
+          "startMs": 2000,
+          "endMs": 23000,
+          "text": "On va faire un essai, donc chacun va pouvoir se présenter dans sa langue, donc son nom, son université, les langues connues, les études, activités préférées, projets...",
+          "speakerIds": [
+            "speaker-presentateur-1"
+          ],
+          "languageIds": [
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-01-01",
+            "occurrence-01-02"
+          ]
+        },
+        {
+          "id": "segment-02",
+          "startMs": 32000,
+          "endMs": 58000,
+          "text": "Bonjour, moi c’est Marie... J’étudie à l’Université Grenoble-Alpes en master en didactique des langues, en particulier le français langue étrangère.",
+          "speakerIds": [
+            "speaker-presentateur-2"
+          ],
+          "languageIds": [
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-02-01",
+            "occurrence-02-02"
+          ]
+        },
+        {
+          "id": "segment-03",
+          "startMs": 58000,
+          "endMs": 84000,
+          "text": "Je parle le français, l’anglais, l’italien couramment. J’apprends l’espagnol cette année... j’ai habité un an en République tchèque...",
+          "speakerIds": [
+            "speaker-presentateur-2"
+          ],
+          "languageIds": [
+            "lang-fr",
+            "lang-it",
+            "lang-es"
+          ],
+          "phenomenonIds": [
+            "occurrence-03-01",
+            "occurrence-03-02"
+          ]
+        },
+        {
+          "id": "segment-04",
+          "startMs": 91000,
+          "endMs": 102000,
+          "text": "Vous avez bien compris ? Oui, je crois que tout le monde comprend bien le français, donc pas de problème.",
+          "speakerIds": [
+            "speaker-presentateur-1"
+          ],
+          "languageIds": [
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-04-01",
+            "occurrence-04-02"
+          ]
+        },
+        {
+          "id": "segment-05",
+          "startMs": 100000,
+          "endMs": 118000,
+          "text": "On change de langue. Allez, on change de langue. Nicoli, Andréa, Évelyne, Julien, qui veut commencer ?",
+          "speakerIds": [
+            "speaker-presentateur-1"
+          ],
+          "languageIds": [
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-05-01",
+            "occurrence-05-02"
+          ]
+        },
+        {
+          "id": "segment-06",
+          "startMs": 118000,
+          "endMs": 136000,
+          "text": "Io sono di Espaa, studio en la Universidad de Salamanca. Sto facendo la carrera de Estudios franceses...",
+          "speakerIds": [
+            "speaker-presentateur-4"
+          ],
+          "languageIds": [
+            "lang-it",
+            "lang-es",
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-06-01",
+            "occurrence-06-02",
+            "occurrence-06-03"
+          ]
+        },
+        {
+          "id": "segment-07",
+          "startMs": 143000,
+          "endMs": 172000,
+          "text": "Entiendo la mayoría del francés... l’italiano un poco... portugués nunca lo he estudiado, pero alguna parola sí que la entiendo...",
+          "speakerIds": [
+            "speaker-presentateur-4"
+          ],
+          "languageIds": [
+            "lang-es",
+            "lang-fr",
+            "lang-it",
+            "lang-pt"
+          ],
+          "phenomenonIds": [
+            "occurrence-07-01",
+            "occurrence-07-02"
+          ]
+        },
+        {
+          "id": "segment-08",
+          "startMs": 176000,
+          "endMs": 185000,
+          "text": "Alors, ça va ? Tout compris ? Un mot difficile, une expression plus difficile ?",
+          "speakerIds": [
+            "speaker-presentateur-1"
+          ],
+          "languageIds": [
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-08-01",
+            "occurrence-08-02"
+          ]
+        },
+        {
+          "id": "segment-09",
+          "startMs": 186000,
+          "endMs": 225000,
+          "text": "La carrera... comment on dit ça en français, Marie ? La filière... Carrière, non ? Littéralement, oui... mais en français on dirait plutôt un cursus, un diplôme, une filière.",
+          "speakerIds": [
+            "speaker-presentateur-1",
+            "speaker-groupe"
+          ],
+          "languageIds": [
+            "lang-es",
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-09-01",
+            "occurrence-09-02",
+            "occurrence-09-03"
+          ]
+        },
+        {
+          "id": "segment-10",
+          "startMs": 241000,
+          "endMs": 273000,
+          "text": "Bueno, hola a todos. Mi chiamo Yassin, soy de Espagna... Vivo in Francia, in Lyon... estudio la carrera de el CEO espagnol...",
+          "speakerIds": [
+            "speaker-presentateur-6"
+          ],
+          "languageIds": [
+            "lang-es",
+            "lang-it",
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-10-01",
+            "occurrence-10-02",
+            "occurrence-10-03"
+          ]
+        },
+        {
+          "id": "segment-11",
+          "startMs": 273000,
+          "endMs": 302000,
+          "text": "Mucho gusto, Yassine. Alors, bien compris ? Une question, une précision ? Oui, je hablo espagnol, français, anglais, un peu de catalan...",
+          "speakerIds": [
+            "speaker-presentateur-1",
+            "speaker-presentateur-6"
+          ],
+          "languageIds": [
+            "lang-es",
+            "lang-fr"
+          ],
+          "phenomenonIds": [
+            "occurrence-11-01",
+            "occurrence-11-02",
+            "occurrence-11-03"
+          ]
+        }
+      ],
+      "speakers": [
+        {
+          "id": "speaker-presentateur-1",
+          "label": "Présentateur 1"
+        },
+        {
+          "id": "speaker-presentateur-2",
+          "label": "Présentateur 2"
+        },
+        {
+          "id": "speaker-presentateur-4",
+          "label": "Présentateur 4"
+        },
+        {
+          "id": "speaker-presentateur-6",
+          "label": "Présentateur 6"
+        },
+        {
+          "id": "speaker-groupe",
+          "label": "groupe"
+        }
+      ],
+      "languages": [
+        {
+          "id": "lang-fr",
+          "code": "FR",
+          "label": "français"
+        },
+        {
+          "id": "lang-es",
+          "code": "ES",
+          "label": "espagnol"
+        },
+        {
+          "id": "lang-it",
+          "code": "IT",
+          "label": "italien"
+        },
+        {
+          "id": "lang-pt",
+          "code": "PT",
+          "label": "portugais"
+        }
+      ],
+      "layers": [
+        {
+          "id": "layer-presentation",
+          "label": "Présentation"
+        },
+        {
+          "id": "layer-changement-de-langue",
+          "label": "Changement de langue"
+        },
+        {
+          "id": "layer-comprehension-collective",
+          "label": "Compréhension collective"
+        },
+        {
+          "id": "layer-clarification",
+          "label": "Clarification"
+        },
+        {
+          "id": "layer-negociation-du-sens",
+          "label": "Négociation du sens"
+        },
+        {
+          "id": "layer-mot-piege",
+          "label": "Mot-piège"
+        },
+        {
+          "id": "layer-repertoire-plurilingue",
+          "label": "Répertoire plurilingue"
+        }
+      ],
+      "phenomena": [
+        {
+          "id": "occurrence-01-01",
+          "segmentId": "segment-01",
+          "layerId": "layer-presentation",
+          "startMs": 2000,
+          "endMs": 23000
+        },
+        {
+          "id": "occurrence-01-02",
+          "segmentId": "segment-01",
+          "layerId": "layer-repertoire-plurilingue",
+          "startMs": 2000,
+          "endMs": 23000
+        },
+        {
+          "id": "occurrence-02-01",
+          "segmentId": "segment-02",
+          "layerId": "layer-presentation",
+          "startMs": 32000,
+          "endMs": 58000
+        },
+        {
+          "id": "occurrence-02-02",
+          "segmentId": "segment-02",
+          "layerId": "layer-repertoire-plurilingue",
+          "startMs": 32000,
+          "endMs": 58000
+        },
+        {
+          "id": "occurrence-03-01",
+          "segmentId": "segment-03",
+          "layerId": "layer-repertoire-plurilingue",
+          "startMs": 58000,
+          "endMs": 84000
+        },
+        {
+          "id": "occurrence-03-02",
+          "segmentId": "segment-03",
+          "layerId": "layer-presentation",
+          "startMs": 58000,
+          "endMs": 84000
+        },
+        {
+          "id": "occurrence-04-01",
+          "segmentId": "segment-04",
+          "layerId": "layer-comprehension-collective",
+          "startMs": 91000,
+          "endMs": 102000
+        },
+        {
+          "id": "occurrence-04-02",
+          "segmentId": "segment-04",
+          "layerId": "layer-clarification",
+          "startMs": 91000,
+          "endMs": 102000
+        },
+        {
+          "id": "occurrence-05-01",
+          "segmentId": "segment-05",
+          "layerId": "layer-changement-de-langue",
+          "startMs": 100000,
+          "endMs": 118000
+        },
+        {
+          "id": "occurrence-05-02",
+          "segmentId": "segment-05",
+          "layerId": "layer-presentation",
+          "startMs": 100000,
+          "endMs": 118000
+        },
+        {
+          "id": "occurrence-06-01",
+          "segmentId": "segment-06",
+          "layerId": "layer-changement-de-langue",
+          "startMs": 118000,
+          "endMs": 136000
+        },
+        {
+          "id": "occurrence-06-02",
+          "segmentId": "segment-06",
+          "layerId": "layer-repertoire-plurilingue",
+          "startMs": 118000,
+          "endMs": 136000
+        },
+        {
+          "id": "occurrence-06-03",
+          "segmentId": "segment-06",
+          "layerId": "layer-mot-piege",
+          "startMs": 118000,
+          "endMs": 136000
+        },
+        {
+          "id": "occurrence-07-01",
+          "segmentId": "segment-07",
+          "layerId": "layer-repertoire-plurilingue",
+          "startMs": 143000,
+          "endMs": 172000
+        },
+        {
+          "id": "occurrence-07-02",
+          "segmentId": "segment-07",
+          "layerId": "layer-comprehension-collective",
+          "startMs": 143000,
+          "endMs": 172000
+        },
+        {
+          "id": "occurrence-08-01",
+          "segmentId": "segment-08",
+          "layerId": "layer-clarification",
+          "startMs": 176000,
+          "endMs": 185000
+        },
+        {
+          "id": "occurrence-08-02",
+          "segmentId": "segment-08",
+          "layerId": "layer-comprehension-collective",
+          "startMs": 176000,
+          "endMs": 185000
+        },
+        {
+          "id": "occurrence-09-01",
+          "segmentId": "segment-09",
+          "layerId": "layer-mot-piege",
+          "startMs": 186000,
+          "endMs": 225000
+        },
+        {
+          "id": "occurrence-09-02",
+          "segmentId": "segment-09",
+          "layerId": "layer-negociation-du-sens",
+          "startMs": 186000,
+          "endMs": 225000
+        },
+        {
+          "id": "occurrence-09-03",
+          "segmentId": "segment-09",
+          "layerId": "layer-clarification",
+          "startMs": 186000,
+          "endMs": 225000
+        },
+        {
+          "id": "occurrence-10-01",
+          "segmentId": "segment-10",
+          "layerId": "layer-changement-de-langue",
+          "startMs": 241000,
+          "endMs": 273000
+        },
+        {
+          "id": "occurrence-10-02",
+          "segmentId": "segment-10",
+          "layerId": "layer-repertoire-plurilingue",
+          "startMs": 241000,
+          "endMs": 273000
+        },
+        {
+          "id": "occurrence-10-03",
+          "segmentId": "segment-10",
+          "layerId": "layer-mot-piege",
+          "startMs": 241000,
+          "endMs": 273000
+        },
+        {
+          "id": "occurrence-11-01",
+          "segmentId": "segment-11",
+          "layerId": "layer-clarification",
+          "startMs": 273000,
+          "endMs": 302000
+        },
+        {
+          "id": "occurrence-11-02",
+          "segmentId": "segment-11",
+          "layerId": "layer-comprehension-collective",
+          "startMs": 273000,
+          "endMs": 302000
+        },
+        {
+          "id": "occurrence-11-03",
+          "segmentId": "segment-11",
+          "layerId": "layer-repertoire-plurilingue",
+          "startMs": 273000,
+          "endMs": 302000
+        }
+      ],
+      "teacherAnnotations": [
+        {
+          "id": "annotation-01",
+          "segmentId": "segment-01",
+          "note": "Le dispositif est posé comme un tour de présentation plurilingue : chacun peut mobiliser sa langue et son répertoire.",
+          "pedagogicalQuestion": "Comment le cadre autorise-t-il chaque personne à utiliser son propre répertoire linguistique ?",
+          "overlay": {
+            "title": "Cadre plurilingue",
+            "text": "Chacun peut se présenter dans sa langue et rendre son répertoire visible.",
+            "layerIds": [
+              "layer-presentation",
+              "layer-repertoire-plurilingue"
+            ]
+          }
+        },
+        {
+          "id": "annotation-02",
+          "segmentId": "segment-02",
+          "note": "Présentation de soi et ancrage institutionnel. Moment utile pour observer la mise en place d’un contexte partagé.",
+          "pedagogicalQuestion": "Quels éléments de présentation créent un contexte partagé pour le groupe ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-03",
+          "segmentId": "segment-03",
+          "note": "Le répertoire linguistique est explicité : langues maîtrisées, langues en cours d’apprentissage, expérience de mobilité.",
+          "pedagogicalQuestion": "Que nous apprend ce segment sur la diversité des compétences dans un même répertoire ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-04",
+          "segmentId": "segment-04",
+          "note": "Premier contrôle collectif de compréhension. La compréhension devient un objet partagé, pas seulement individuel.",
+          "pedagogicalQuestion": "Qu’est-ce que le groupe vérifie collectivement à ce moment ?",
+          "overlay": {
+            "title": "Compréhension collective",
+            "text": "Le groupe vérifie si la compréhension est suffisamment partagée pour continuer.",
+            "layerIds": [
+              "layer-comprehension-collective",
+              "layer-clarification"
+            ]
+          }
+        },
+        {
+          "id": "annotation-05",
+          "segmentId": "segment-05",
+          "note": "Le changement de langue est annoncé et ritualisé. C’est un marqueur fort pour une vidéo augmentée IC.",
+          "pedagogicalQuestion": "Comment le changement de langue est-il préparé pour ne pas devenir une rupture ?",
+          "overlay": {
+            "title": "Changement de langue",
+            "text": "Le passage à une autre langue est annoncé comme une étape normale de l’échange.",
+            "layerIds": [
+              "layer-changement-de-langue",
+              "layer-presentation"
+            ]
+          }
+        },
+        {
+          "id": "annotation-06",
+          "segmentId": "segment-06",
+          "note": "Segment hybride : italien, espagnol et français se croisent. Le mot carrera apparaît dans un contexte d’études.",
+          "pedagogicalQuestion": "Quel indice permet déjà d’interpréter le mot carrera avant la clarification ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-07",
+          "segmentId": "segment-07",
+          "note": "La participante décrit une compréhension partielle mais opératoire : comprendre certaines langues sans les avoir toutes étudiées.",
+          "pedagogicalQuestion": "Comment ce segment montre-t-il une compréhension partielle mais utile ?",
+          "overlay": {
+            "title": "Répertoire plurilingue",
+            "text": "La compréhension partielle devient une ressource : quelques langues, quelques mots, assez pour avancer.",
+            "layerIds": [
+              "layer-repertoire-plurilingue",
+              "layer-comprehension-collective"
+            ]
+          }
+        },
+        {
+          "id": "annotation-08",
+          "segmentId": "segment-08",
+          "note": "Invitation à signaler une difficulté. Ce type de relance ouvre la négociation du sens.",
+          "pedagogicalQuestion": "Où voit-on l’ouverture d’un espace de clarification ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-09",
+          "segmentId": "segment-09",
+          "note": "Moment central : le groupe répare collectivement un faux ami partiel entre carrera et carrière.",
+          "pedagogicalQuestion": "Où voit-on une négociation du sens autour de carrera ?",
+          "overlay": {
+            "title": "Moment pédagogiquement riche",
+            "text": "La carrera... comment on dit ça en français ?",
+            "layerIds": [
+              "layer-mot-piege",
+              "layer-negociation-du-sens",
+              "layer-clarification"
+            ]
+          }
+        },
+        {
+          "id": "annotation-10",
+          "segmentId": "segment-10",
+          "note": "Nouveau segment plurilingue spontané : le participant mobilise plusieurs langues dans une même présentation.",
+          "pedagogicalQuestion": "Comment le participant combine-t-il plusieurs langues pour rester compréhensible ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-11",
+          "segmentId": "segment-11",
+          "note": "Le groupe revient à la compréhension et au répertoire linguistique. On observe la circulation entre présentation, clarification et pluralité des langues.",
+          "pedagogicalQuestion": "Qu’est-ce que le groupe comprend collectivement du répertoire de Yassine ?",
+          "overlay": {
+            "title": "Répertoire partagé",
+            "text": "Le groupe rassemble des indices sur les langues disponibles et sur ce qui a été compris.",
+            "layerIds": [
+              "layer-clarification",
+              "layer-comprehension-collective",
+              "layer-repertoire-plurilingue"
+            ]
+          }
+        }
+      ],
+      "layerConfiguration": {
+        "id": "layer-config-proto05-default",
+        "defaultVisibleLayerIds": [
+          "layer-presentation",
+          "layer-changement-de-langue",
+          "layer-comprehension-collective",
+          "layer-clarification",
+          "layer-negociation-du-sens",
+          "layer-mot-piege",
+          "layer-repertoire-plurilingue"
+        ],
+        "learnerVisibleLayerIds": [
+          "layer-presentation",
+          "layer-changement-de-langue",
+          "layer-comprehension-collective",
+          "layer-clarification",
+          "layer-negociation-du-sens",
+          "layer-mot-piege",
+          "layer-repertoire-plurilingue"
+        ],
+        "teacherVisibleLayerIds": [
+          "layer-presentation",
+          "layer-changement-de-langue",
+          "layer-comprehension-collective",
+          "layer-clarification",
+          "layer-negociation-du-sens",
+          "layer-mot-piege",
+          "layer-repertoire-plurilingue"
+        ],
+        "allowLearnerToggle": true
+      },
+      "instruction": "",
+      "pedagogicalQuestion": ""
+    }
+  ]
+}

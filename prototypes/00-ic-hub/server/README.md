@@ -35,6 +35,9 @@ Les mots de passe ne sont pas stockes en clair. Ils sont hashes avec `crypto.scr
 ## Endpoints
 
 - `GET /api/health`
+- `GET|HEAD /api/hls/uga-37004/<ressource HLS>` (proxy public fermé à la source vidéo du prototype 05)
+- `GET /api/proto05/activities`
+- `GET /api/proto05/activities/:id`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
 - `GET /api/auth/me`
@@ -58,6 +61,10 @@ Les routes protegees attendent :
 ```txt
 Authorization: Bearer <token>
 ```
+
+Le proxy HLS est l’unique exception publique sous `/api/` : le navigateur ne lui transmet jamais d’URL distante. L’identifiant `uga-37004` résout une source HTTPS inscrite en liste blanche côté serveur ; les redirections amont et les chemins sortant de son répertoire sont refusés.
+
+Le chargement Proto05 est une lecture seule du fixture propriétaire `prototypes/05-augmented-ic-video-01/data/activities.json`. IC-Hub ne conserve aucune copie de ces données dans son propre dossier `server/data/` : il fournit provisoirement la passerelle HTTP via un chemin serveur fixe et contrôlé. Les routes Proto05 n’exposent aucun POST, PUT ou DELETE et ne nécessitent pas d’authentification à ce stade. Une éventuelle séparation vers un serveur propre au prototype fera l’objet d’une mission ultérieure.
 
 ## Pages
 

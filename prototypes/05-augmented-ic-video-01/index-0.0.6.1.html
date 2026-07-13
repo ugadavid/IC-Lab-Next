@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prototype 05 V0.0.6.1 — Vidéo augmentée IC</title>
+  <style>
+    :root {
+      --ink: #20242c;
+      --muted: #667085;
+      --line: #d9e0e8;
+      --paper: #f7f9fc;
+      --panel: #ffffff;
+      --blue: #325f8f;
+      --green: #3d7a5c;
+      --amber: #a46816;
+      --red: #9a3d3d;
+      --violet: #6d4e8a;
+      --shadow: rgba(25, 35, 48, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--ink);
+      background: linear-gradient(135deg, #eef3f7, #faf7ef);
+    }
+
+    .app {
+      min-height: 100vh;
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      grid-template-rows: auto 1fr;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 16px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: 0 10px 30px var(--shadow);
+    }
+
+    h1 {
+      margin: 0 0 4px;
+      font-size: clamp(24px, 4vw, 38px);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .status-pill {
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: #edf4ff;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .focus-button {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--ink);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .focus-button:hover,
+    .focus-button.active {
+      border-color: var(--blue);
+      background: #edf4ff;
+      color: var(--blue);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+      gap: 16px;
+      min-height: 0;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 10px 30px var(--shadow);
+      overflow: hidden;
+    }
+
+    .video-panel {
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      min-height: 0;
+    }
+
+    .video-wrap {
+      background: #14171d;
+      padding: 12px;
+      position: relative;
+    }
+
+    video {
+      display: block;
+      width: 100%;
+      max-height: 58vh;
+      border-radius: 8px;
+      background: #000;
+    }
+
+    .video-overlay {
+      position: absolute;
+      left: 24px;
+      bottom: 24px;
+      width: min(390px, calc(100% - 48px));
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 10px;
+      background: rgba(16, 20, 28, 0.78);
+      color: white;
+      box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+      backdrop-filter: blur(8px);
+      display: grid;
+      gap: 8px;
+      opacity: 1;
+      transform: translateY(0);
+      visibility: visible;
+      transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+      z-index: 3;
+    }
+
+    .video-overlay.hidden {
+      opacity: 0;
+      transform: translateY(8px);
+      visibility: hidden;
+    }
+
+    .overlay-title {
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #d8e6ff;
+      padding-right: 32px;
+    }
+
+    .overlay-close {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: white;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      display: grid;
+      place-items: center;
+    }
+
+    .overlay-close:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .overlay-text {
+      margin: 0;
+      line-height: 1.45;
+      font-size: 15px;
+    }
+
+    .video-overlay .tag {
+      background: rgba(255, 255, 255, 0.14);
+      color: white;
+    }
+
+    .video-note {
+      margin: 0;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .video-note strong {
+      color: var(--ink);
+      margin-right: 5px;
+    }
+
+    .video-note[data-state="ready"] strong,
+    .video-note[data-state="playing"] strong {
+      color: var(--green);
+    }
+
+    .video-note[data-state="waiting"] strong {
+      color: var(--amber);
+    }
+
+    .video-note[data-state="network-error"] strong,
+    .video-note[data-state="unsupported"] strong {
+      color: var(--red);
+    }
+
+    .timeline-panel {
+      padding: 14px 16px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.92);
+      display: grid;
+      gap: 12px;
+    }
+
+    .timeline-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+
+    .timeline-head h2 {
+      margin: 0;
+      font-size: 17px;
+    }
+
+    .timeline-scale {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .timeline-body {
+      position: relative;
+      display: grid;
+      grid-template-columns: 78px minmax(0, 1fr);
+      gap: 8px 10px;
+      align-items: center;
+    }
+
+    .timeline-cursor {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 88px;
+      width: 1px;
+      background: rgba(32, 36, 44, 0.48);
+      pointer-events: none;
+      z-index: 4;
+      transform: translateX(0);
+      transition: transform 90ms linear;
+    }
+
+    .timeline-cursor::before {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: -4px;
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      background: rgba(32, 36, 44, 0.72);
+    }
+
+    .timeline-cursor-label {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 2px 5px;
+      border-radius: 999px;
+      background: rgba(32, 36, 44, 0.78);
+      color: white;
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .timeline-label {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .timeline-track-label,
+    .timeline-scale-spacer {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .timeline-scale-track {
+      position: relative;
+      min-height: 28px;
+      border-bottom: 1px solid #cfd8e3;
+    }
+
+    .time-tick {
+      position: absolute;
+      top: 0;
+      transform: translateX(-50%);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .time-tick::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 16px;
+      width: 1px;
+      height: 9px;
+      background: #cfd8e3;
+    }
+
+    .time-tick:first-child {
+      transform: translateX(0);
+    }
+
+    .time-tick:first-child::after {
+      left: 0;
+    }
+
+    .time-tick:last-child {
+      transform: translateX(-100%);
+    }
+
+    .time-tick:last-child::after {
+      left: 100%;
+    }
+
+    .language-row {
+      display: contents;
+    }
+
+    .timeline-body-grid {
+      display: contents;
+    }
+
+    .language-code {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .timeline-track {
+      position: relative;
+      min-height: 18px;
+      border-radius: 999px;
+      background: #eef2f6;
+      overflow: hidden;
+    }
+
+    .language-bar,
+    .phenomenon-marker {
+      position: absolute;
+      top: 3px;
+      height: 12px;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .language-bar:hover,
+    .phenomenon-marker:hover,
+    .phenomenon-marker.active {
+      outline: 2px solid rgba(32, 36, 44, 0.28);
+      outline-offset: 1px;
+    }
+
+    .phenomenon-track {
+      min-height: 26px;
+    }
+
+    .phenomenon-marker {
+      top: 5px;
+      min-width: 7px;
+      height: 16px;
+    }
+
+    .timeline-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: #9aa5b1;
+    }
+
+    .lang-fr { background: #3c6ea8; }
+    .lang-es { background: #d97938; }
+    .lang-it { background: #47956b; }
+    .lang-pt { background: #7a5bb0; }
+    .ic-presentation { background: #4d7dbc; }
+    .ic-langue { background: #8c65ad; }
+    .ic-collective { background: #57a675; }
+    .ic-clarification { background: #d49b3c; }
+    .ic-negociation { background: #667bc1; }
+    .ic-piege { background: #c95c5c; }
+    .ic-repertoire { background: #3a9a9a; }
+
+    .annotation {
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .annotation h2,
+    .transcript h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .active-time {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .annotation-text {
+      margin: 0;
+      line-height: 1.55;
+      font-size: 16px;
+    }
+
+    .pedagogical-question {
+      margin: 0;
+      padding: 11px 12px;
+      border-radius: 10px;
+      background: #f7fafc;
+      border: 1px solid var(--line);
+      line-height: 1.45;
+    }
+
+    .copy-row {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .copy-button {
+      border: none;
+      border-radius: 999px;
+      padding: 9px 12px;
+      background: var(--blue);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .copy-button:hover {
+      background: #244a72;
+    }
+
+    .add-button {
+      background: var(--green);
+    }
+
+    .add-button:hover {
+      background: #2f6349;
+    }
+
+    .export-button {
+      background: #394150;
+    }
+
+    .export-button:hover {
+      background: #20242c;
+    }
+
+    .copy-status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .observations-panel {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fbfcfe;
+      overflow: hidden;
+    }
+
+    .observations-panel summary {
+      padding: 11px 12px;
+      cursor: pointer;
+      font-weight: 800;
+      color: var(--ink);
+      background: #f3f6fa;
+    }
+
+    .observations-content {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .observations-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .observations-status {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .observations-table-wrap {
+      overflow: auto;
+    }
+
+    .observations-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 780px;
+      font-size: 12px;
+    }
+
+    .observations-table th,
+    .observations-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .observations-table th {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #f8fafc;
+    }
+
+    .observation-note {
+      width: 190px;
+      min-height: 52px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px;
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    .remove-observation {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      width: 26px;
+      height: 26px;
+      background: white;
+      color: var(--red);
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .remove-observation:hover {
+      border-color: var(--red);
+      background: #fff1f1;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 6px 9px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #edf2f7;
+      color: #394150;
+    }
+
+    .tag.presentation { background: #e9f1ff; color: var(--blue); }
+    .tag.langue { background: #f1edff; color: var(--violet); }
+    .tag.collective { background: #eaf7ef; color: var(--green); }
+    .tag.clarification { background: #fff4df; color: var(--amber); }
+    .tag.negociation { background: #f2f5ff; color: #465d99; }
+    .tag.piege { background: #ffecec; color: var(--red); }
+    .tag.repertoire { background: #edf7f7; color: #237070; }
+
+    .transcript {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-height: 0;
+    }
+
+    .transcript-head {
+      padding: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .layers {
+      position: absolute;
+      left: 24px;
+      top: 24px;
+      width: min(280px, calc(100% - 48px));
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      background: rgba(16, 20, 28, 0.68);
+      color: white;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(8px);
+      display: grid;
+      gap: 10px;
+      z-index: 2;
+    }
+
+    .layers-toggle {
+      border: none;
+      padding: 0;
+      background: transparent;
+      font-size: 12px;
+      font-weight: 800;
+      color: #d8e6ff;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .layers.collapsed {
+      width: auto;
+      min-width: 138px;
+      padding: 10px 12px;
+      gap: 0;
+    }
+
+    .layers.collapsed .layer-list {
+      display: none;
+    }
+
+    .layer-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .layer-toggle {
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 6px 7px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.86);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      user-select: none;
+    }
+
+    .layer-toggle:hover,
+    .layer-toggle.active {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.16);
+      color: white;
+    }
+
+    .layer-toggle input {
+      accent-color: #d8e6ff;
+    }
+
+    .transcript-list {
+      overflow: auto;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .segment {
+      border: 1px solid transparent;
+      border-radius: 10px;
+      padding: 11px;
+      background: #f8fafc;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .segment:hover {
+      border-color: #bed0e5;
+      background: #f2f7ff;
+    }
+
+    .segment.active {
+      border-color: var(--blue);
+      background: #edf4ff;
+      box-shadow: inset 4px 0 0 var(--blue);
+    }
+
+    .segment-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .speaker {
+      font-weight: 700;
+      color: var(--ink);
+    }
+
+    .segment-text {
+      margin: 0;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .mini-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+
+    .mini-tags .tag {
+      padding: 4px 7px;
+      font-size: 11px;
+    }
+
+    a {
+      color: var(--blue);
+    }
+
+    .app.focus-mode .layout {
+      grid-template-columns: 1fr;
+    }
+
+    .app.focus-mode .transcript,
+    .app.focus-mode .annotation,
+    .app.focus-mode .video-note,
+    .app.focus-mode .timeline-panel {
+      display: none;
+    }
+
+    .app.focus-mode .video-panel {
+      min-height: 0;
+    }
+
+    .app.focus-mode video {
+      max-height: calc(100vh - 150px);
+    }
+
+    .app.focus-mode .video-wrap {
+      padding: 14px;
+    }
+
+    @media (max-width: 700px) {
+      .layers {
+        position: static;
+        width: auto;
+        margin-bottom: 10px;
+      }
+
+      .video-overlay {
+        left: 18px;
+        bottom: 18px;
+        width: calc(100% - 36px);
+      }
+    }
+
+    @media (max-width: 900px) {
+      header {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      video {
+        max-height: 44vh;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app" class="app">
+    <header>
+      <div>
+        <h1>Vidéo augmentée d’intercompréhension</h1>
+        <p class="subtitle">Prototype 05 — lecture synchronisée de moments plurilingues, avec annotations pédagogiques IC.</p>
+      </div>
+      <div class="header-actions">
+        <button id="focusToggle" class="focus-button" type="button" aria-pressed="false">Mode Focus</button>
+        <div class="status-pill">V0.0.6.1 · lecture HLS fiable</div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="panel video-panel">
+        <div class="video-wrap">
+          <video id="video" controls preload="metadata"></video>
+          <div id="layersPanel" class="layers" aria-label="Couches actives">
+            <button id="layersToggle" class="layers-toggle" type="button" aria-expanded="true">▼ Couches actives</button>
+            <div id="layerList" class="layer-list"></div>
+          </div>
+          <div id="videoOverlay" class="video-overlay hidden" aria-live="polite">
+            <button id="overlayClose" class="overlay-close" type="button" aria-label="Fermer l’observation">×</button>
+            <div id="overlayTitle" class="overlay-title">Moment pédagogiquement riche</div>
+            <p id="overlayText" class="overlay-text"></p>
+            <div id="overlayTags" class="tags"></div>
+          </div>
+        </div>
+        <div class="timeline-panel" aria-label="Timeline IC">
+          <div class="timeline-head">
+            <h2>Timeline IC</h2>
+            <div class="timeline-scale"><span id="timelineStart">00:00</span> — <span id="timelineEnd">15:39</span></div>
+          </div>
+          <div class="timeline-body">
+            <div id="timelineCursor" class="timeline-cursor">
+              <span id="timelineCursorLabel" class="timeline-cursor-label">00:00</span>
+            </div>
+            <div class="timeline-scale-spacer"></div>
+            <div id="timelineTicks" class="timeline-scale-track"></div>
+            <div class="timeline-label">Langues</div>
+            <div class="timeline-label"></div>
+            <div id="languageTimeline" class="timeline-body-grid"></div>
+            <div class="timeline-track-label">Phénomènes</div>
+            <div id="phenomenonTimeline" class="timeline-track phenomenon-track"></div>
+          </div>
+          <div id="timelineLegend" class="timeline-legend"></div>
+        </div>
+        <p id="videoNote" class="video-note" data-state="loading" role="status" aria-live="polite">
+          <strong id="playerStatus">Chargement</strong>
+          <span id="playerStatusDetail">Initialisation du lecteur HLS local…</span>
+          <a id="streamLink" href="#" target="_blank" rel="noreferrer">Ouvrir le manifeste local</a>.
+        </p>
+        <div class="annotation" aria-live="polite">
+          <div>
+            <h2>Annotation IC</h2>
+            <div id="activeTime" class="active-time">Sélectionnez un segment pour commencer.</div>
+          </div>
+          <p id="annotationText" class="annotation-text">
+            Cette zone indique ce qui semble intéressant pour l’intercompréhension : changement de langue,
+            clarification, négociation du sens, répertoire plurilingue, etc.
+          </p>
+          <p id="pedagogicalQuestion" class="pedagogical-question">
+            Question pédagogique : que peut-on observer dans ce segment ?
+          </p>
+          <div id="activeTags" class="tags"></div>
+          <div class="copy-row">
+            <button id="addObservation" class="copy-button add-button" type="button">+ Ajouter à mes observations</button>
+            <button id="copyObservation" class="copy-button" type="button">Copier l’observation</button>
+            <span id="copyStatus" class="copy-status"></span>
+          </div>
+          <details class="observations-panel" open>
+            <summary>Mes observations <span id="observationsCount">(0)</span></summary>
+            <div class="observations-content">
+              <div class="observations-actions">
+                <span id="observationsStatus" class="observations-status">Aucune observation ajoutée pour le moment.</span>
+                <button id="exportCsv" class="copy-button export-button" type="button">Exporter CSV</button>
+              </div>
+              <div class="observations-table-wrap">
+                <table class="observations-table">
+                  <thead>
+                    <tr>
+                      <th>Timestamp</th>
+                      <th>Locuteur</th>
+                      <th>Texte court</th>
+                      <th>Langues</th>
+                      <th>Tags</th>
+                      <th>Note personnelle</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="observationsBody">
+                    <tr>
+                      <td colspan="7">Sélectionnez un segment puis ajoutez-le à vos observations.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <aside class="panel transcript">
+        <div class="transcript-head">
+          <h2>Transcription synchronisée</h2>
+          <p class="subtitle">Cliquez un segment pour déplacer la vidéo. Les segments V0 sont volontairement limités.</p>
+        </div>
+        <div id="transcriptList" class="transcript-list"></div>
+      </aside>
+    </main>
+  </div>
+
+  <script src="/vendor/hls.js/hls.min.js"></script>
+  <script>
+    let hlsUrl = "";
+    const activityEndpoint = "/api/proto05/activities/proto05-augmented-video-01";
+
+    const tagClasses = {
+      "layer-presentation": "presentation",
+      "layer-changement-de-langue": "langue",
+      "layer-comprehension-collective": "collective",
+      "layer-clarification": "clarification",
+      "layer-negociation-du-sens": "negociation",
+      "layer-mot-piege": "piege",
+      "layer-repertoire-plurilingue": "repertoire"
+    };
+
+    let allTags = [];
+    let tagLabels = {};
+    const languageLabels = {};
+    const languageClasses = {
+      FR: "lang-fr",
+      ES: "lang-es",
+      IT: "lang-it",
+      PT: "lang-pt"
+    };
+    const tagTimelineClasses = {
+      "layer-presentation": "ic-presentation",
+      "layer-changement-de-langue": "ic-langue",
+      "layer-comprehension-collective": "ic-collective",
+      "layer-clarification": "ic-clarification",
+      "layer-negociation-du-sens": "ic-negociation",
+      "layer-mot-piege": "ic-piege",
+      "layer-repertoire-plurilingue": "ic-repertoire"
+    };
+    let timelineLanguages = [];
+    let fallbackTimelineDuration = 15 * 60 + 39;
+    let segments = [];
+    let activityData = null;
+
+    function buildActivityView(activity) {
+      if (!activity || !Array.isArray(activity.segments) || !Array.isArray(activity.layers) || !activity.video?.proxyUrl) {
+        throw new Error("Le JSON de l’activité est incomplet.");
+      }
+
+      activityData = activity;
+      allTags = activity.layers.map(layer => layer.id);
+      tagLabels = Object.fromEntries(activity.layers.map(layer => [layer.id, layer.label]));
+      timelineLanguages = (activity.languages || []).map(language => language.code);
+      Object.assign(languageLabels, Object.fromEntries(
+        (activity.languages || []).map(language => [language.code, language.label])
+      ));
+      fallbackTimelineDuration = Number(activity.video?.durationMs || 0) / 1000 || 15 * 60 + 39;
+
+      const speakersById = new Map((activity.speakers || []).map(speaker => [speaker.id, speaker.label]));
+      const languagesById = new Map((activity.languages || []).map(language => [language.id, language.code]));
+      const phenomenaById = new Map((activity.phenomena || []).map(phenomenon => [phenomenon.id, phenomenon]));
+      const annotationsBySegmentId = new Map(
+        (activity.teacherAnnotations || []).map(annotation => [annotation.segmentId, annotation])
+      );
+
+      segments = activity.segments.map(segment => {
+        const annotation = annotationsBySegmentId.get(segment.id);
+        const tags = (segment.phenomenonIds || [])
+          .map(phenomenonId => phenomenaById.get(phenomenonId)?.layerId)
+          .filter(Boolean);
+        const overlay = annotation?.overlay
+          ? {
+              title: annotation.overlay.title,
+              text: annotation.overlay.text,
+              tags: annotation.overlay.layerIds || []
+            }
+          : null;
+
+        return {
+          id: segment.id,
+          start: segment.startMs / 1000,
+          end: segment.endMs / 1000,
+          speaker: (segment.speakerIds || [])
+            .map(speakerId => speakersById.get(speakerId) || speakerId)
+            .join(" et "),
+          text: segment.text,
+          languages: (segment.languageIds || [])
+            .map(languageId => languagesById.get(languageId))
+            .filter(Boolean),
+          tags,
+          note: annotation?.note || "",
+          question: annotation?.pedagogicalQuestion || "",
+          overlay
+        };
+      });
+
+      if (!segments.length) throw new Error("Le JSON de l’activité ne contient aucun segment.");
+    }
+
+    const video = document.getElementById("video");
+    const app = document.getElementById("app");
+    const focusToggle = document.getElementById("focusToggle");
+    const videoNote = document.getElementById("videoNote");
+    const playerStatus = document.getElementById("playerStatus");
+    const playerStatusDetail = document.getElementById("playerStatusDetail");
+    const streamLink = document.getElementById("streamLink");
+    const transcriptList = document.getElementById("transcriptList");
+    const languageTimeline = document.getElementById("languageTimeline");
+    const phenomenonTimeline = document.getElementById("phenomenonTimeline");
+    const timelineLegend = document.getElementById("timelineLegend");
+    const timelineTicks = document.getElementById("timelineTicks");
+    const timelineEnd = document.getElementById("timelineEnd");
+    const timelineCursor = document.getElementById("timelineCursor");
+    const timelineCursorLabel = document.getElementById("timelineCursorLabel");
+    const annotationText = document.getElementById("annotationText");
+    const pedagogicalQuestion = document.getElementById("pedagogicalQuestion");
+    const activeTime = document.getElementById("activeTime");
+    const activeTags = document.getElementById("activeTags");
+    const layersPanel = document.getElementById("layersPanel");
+    const layersToggle = document.getElementById("layersToggle");
+    const layerList = document.getElementById("layerList");
+    const videoOverlay = document.getElementById("videoOverlay");
+    const overlayClose = document.getElementById("overlayClose");
+    const overlayTitle = document.getElementById("overlayTitle");
+    const overlayText = document.getElementById("overlayText");
+    const overlayTags = document.getElementById("overlayTags");
+    const addObservation = document.getElementById("addObservation");
+    const copyObservation = document.getElementById("copyObservation");
+    const copyStatus = document.getElementById("copyStatus");
+    const observationsCount = document.getElementById("observationsCount");
+    const observationsStatus = document.getElementById("observationsStatus");
+    const observationsBody = document.getElementById("observationsBody");
+    const exportCsv = document.getElementById("exportCsv");
+    let activeSegmentIndex = 0;
+    let collapsedLayers = false;
+    let dismissedOverlayKey = null;
+    let observations = [];
+    let hls = null;
+    let playerState = "loading";
+    const activeLayers = new Set(allTags);
+
+    streamLink.href = hlsUrl;
+
+    const playerStateLabels = {
+      loading: "Chargement",
+      ready: "Prêt",
+      playing: "Lecture",
+      waiting: "Attente",
+      "network-error": "Erreur réseau",
+      unsupported: "Format non supporté"
+    };
+
+    async function loadActivity() {
+      setPlayerState("loading", "Chargement de l’activité depuis IC-Hub…");
+      try {
+        const response = await fetch(activityEndpoint, {
+          headers: { accept: "application/json" }
+        });
+        if (!response.ok) throw new Error(`Réponse IC-Hub ${response.status}.`);
+        const payload = await response.json();
+        buildActivityView(payload.activity);
+        hlsUrl = activityData.video.proxyUrl;
+        streamLink.href = hlsUrl;
+        activeSegmentIndex = 0;
+        activeLayers.clear();
+        allTags.forEach(tag => activeLayers.add(tag));
+        renderLayers();
+        renderTranscript();
+        renderTimeline();
+        renderObservations();
+        loadVideo(hlsUrl);
+        activateSegment(0, false);
+      } catch (error) {
+        setPlayerState("network-error", `Impossible de charger l’activité depuis IC-Hub : ${error.message}`);
+        transcriptList.innerHTML = `<p class="subtitle">${escapeHtml(error.message)}</p>`;
+      }
+    }
+
+    function setPlayerState(state, detail) {
+      playerState = state;
+      videoNote.dataset.state = state;
+      playerStatus.textContent = playerStateLabels[state] || state;
+      playerStatusDetail.textContent = detail;
+    }
+
+    function destroyHls() {
+      if (!hls) return;
+      hls.destroy();
+      hls = null;
+    }
+
+    function stopWithHlsError(state, detail) {
+      setPlayerState(state, detail);
+      destroyHls();
+    }
+
+    function loadVideo(sourceUrl) {
+      destroyHls();
+      video.pause();
+      video.removeAttribute("src");
+      video.load();
+      setPlayerState("loading", "Connexion au flux HLS via IC-Hub…");
+
+      if (window.Hls && Hls.isSupported()) {
+        hls = new Hls();
+        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
+          if (hls) hls.loadSource(sourceUrl);
+        });
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          setPlayerState("ready", "Flux HLS prêt avec hls.js local.");
+        });
+        hls.on(Hls.Events.ERROR, (_event, data) => {
+          if (!data.fatal) {
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              setPlayerState("waiting", "Le lecteur attend une réponse du flux distant…");
+            }
+            return;
+          }
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            stopWithHlsError("network-error", "Impossible de charger le flux vidéo. Vérifiez la connexion à la source UGA puis réessayez.");
+            return;
+          }
+          stopWithHlsError("unsupported", "Le navigateur n’a pas pu décoder ce flux vidéo.");
+        });
+        hls.attachMedia(video);
+        return;
+      }
+
+      if (video.canPlayType("application/vnd.apple.mpegurl")) {
+        video.src = sourceUrl;
+        video.load();
+        return;
+      }
+
+      setPlayerState("unsupported", "Ce navigateur ne fournit ni Media Source Extensions pour hls.js, ni lecture HLS native.");
+    }
+
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const rest = Math.floor(seconds % 60).toString().padStart(2, "0");
+      return `${minutes}:${rest}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function renderTag(tag) {
+      const className = tagClasses[tag] || "";
+      return `<span class="tag ${className}">${escapeHtml(tagLabels[tag] || tag)}</span>`;
+    }
+
+    function getVisibleTags(segment) {
+      return segment.tags.filter(tag => activeLayers.has(tag));
+    }
+
+    function segmentHasActiveLayer(segment) {
+      return getVisibleTags(segment).length > 0;
+    }
+
+    function getSegmentOverlayKey(segment) {
+      return segment.overlay ? `${segment.start}-${segment.end}-${segment.overlay.title}` : null;
+    }
+
+    function renderLayerToggle() {
+      const activeCount = activeLayers.size;
+      layersToggle.textContent = collapsedLayers
+        ? `▶ Couches (${activeCount}/${allTags.length})`
+        : "▼ Couches actives";
+      layersToggle.setAttribute("aria-expanded", String(!collapsedLayers));
+      layersPanel.classList.toggle("collapsed", collapsedLayers);
+    }
+
+    function renderLayers() {
+      renderLayerToggle();
+      layerList.innerHTML = allTags.map(tag => {
+        const checked = activeLayers.has(tag);
+        return `
+          <label class="layer-toggle ${checked ? "active" : ""}">
+            <input type="checkbox" data-tag="${escapeHtml(tag)}" ${checked ? "checked" : ""}>
+            ${escapeHtml(tagLabels[tag] || tag)}
+          </label>
+        `;
+      }).join("");
+    }
+
+    function renderTranscript() {
+      const visibleSegments = segments
+        .map((segment, index) => ({ segment, index }))
+        .filter(item => segmentHasActiveLayer(item.segment));
+
+      if (!visibleSegments.length) {
+        transcriptList.innerHTML = `<p class="subtitle">Aucune couche active. Cochez au moins une couche pour faire réapparaître des segments.</p>`;
+        return;
+      }
+
+      transcriptList.innerHTML = visibleSegments.map(({ segment, index }) => `
+        <button class="segment" type="button" data-index="${index}">
+          <div class="segment-meta">
+            <span class="speaker">${escapeHtml(segment.speaker)}</span>
+            <span>${formatTime(segment.start)} — ${formatTime(segment.end)}</span>
+          </div>
+          <p class="segment-text">${escapeHtml(segment.text)}</p>
+          <div class="mini-tags">${getVisibleTags(segment).map(renderTag).join("")}</div>
+        </button>
+      `).join("");
+    }
+
+    function getTimelineDuration() {
+      if (Number.isFinite(video.duration) && video.duration > 0) return video.duration;
+      return fallbackTimelineDuration;
+    }
+
+    function getTimelineWidth(segment) {
+      const duration = getTimelineDuration();
+      const width = ((segment.end - segment.start) / duration) * 100;
+      return Math.max(width, 0.8);
+    }
+
+    function getTimelineLeft(segment) {
+      return (segment.start / getTimelineDuration()) * 100;
+    }
+
+    function renderTimelineLegend() {
+      const languageItems = timelineLanguages.map(code => `
+        <span class="legend-item">
+          <span class="legend-swatch ${languageClasses[code]}"></span>
+          ${code}
+        </span>
+      `);
+
+      const tagItems = allTags.map(tag => `
+        <span class="legend-item">
+          <span class="legend-swatch ${tagTimelineClasses[tag]}"></span>
+          ${escapeHtml(tagLabels[tag] || tag)}
+        </span>
+      `);
+
+      timelineLegend.innerHTML = [...languageItems, ...tagItems].join("");
+    }
+
+    function renderTimelineTicks() {
+      const duration = getTimelineDuration();
+      const ticks = [];
+      for (let time = 0; time <= duration; time += 60) {
+        ticks.push(time);
+      }
+      if (ticks[ticks.length - 1] !== duration) ticks.push(duration);
+
+      timelineTicks.innerHTML = ticks.map(time => `
+        <span class="time-tick" style="left:${(time / duration) * 100}%">
+          ${formatTime(time)}
+        </span>
+      `).join("");
+    }
+
+    function renderLanguageTimeline() {
+      languageTimeline.innerHTML = timelineLanguages.map(code => {
+        const bars = segments
+          .map((segment, index) => ({ segment, index }))
+          .filter(item => item.segment.languages.includes(code))
+          .map(({ segment, index }) => `
+            <button
+              class="language-bar ${languageClasses[code]}"
+              type="button"
+              data-index="${index}"
+              title="${code} · ${escapeHtml(segment.speaker)} · ${formatTime(segment.start)}"
+              style="left:${getTimelineLeft(segment)}%;width:${getTimelineWidth(segment)}%;"
+            ></button>
+          `).join("");
+
+        return `
+          <div class="language-row">
+            <div class="language-code">${code}</div>
+            <div class="timeline-track">${bars}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderPhenomenonTimeline() {
+      const markers = segments.flatMap((segment, index) => {
+        return segment.tags
+          .filter(tag => activeLayers.has(tag))
+          .map((tag, tagIndex) => {
+            const width = getTimelineWidth(segment);
+            const left = getTimelineLeft(segment);
+            const markerWidth = Math.min(Math.max(width, 1.1), 4.5);
+            const offset = tagIndex * 0.45;
+            return `
+              <button
+                class="phenomenon-marker ${tagTimelineClasses[tag]} ${index === activeSegmentIndex ? "active" : ""}"
+                type="button"
+                data-index="${index}"
+                title="${escapeHtml(tagLabels[tag] || tag)} · ${escapeHtml(segment.speaker)} · ${formatTime(segment.start)}"
+                style="left:${Math.min(left + offset, 99)}%;width:${markerWidth}%;"
+              ></button>
+            `;
+          });
+      }).join("");
+
+      phenomenonTimeline.innerHTML = markers || `<span class="subtitle">Aucun phénomène visible : réactivez une couche.</span>`;
+    }
+
+    function renderTimeline() {
+      timelineEnd.textContent = formatTime(getTimelineDuration());
+      renderTimelineTicks();
+      renderLanguageTimeline();
+      renderPhenomenonTimeline();
+      renderTimelineLegend();
+      updateTimelineCursor(video.currentTime || 0);
+    }
+
+    function updateTimelineCursor(time) {
+      const duration = getTimelineDuration();
+      const boundedTime = Math.min(Math.max(time || 0, 0), duration);
+      const percent = (boundedTime / duration) * 100;
+      const trackWidth = timelineTicks.getBoundingClientRect().width;
+      timelineCursor.style.transform = `translateX(${(trackWidth * percent) / 100}px)`;
+      timelineCursorLabel.textContent = formatTime(boundedTime);
+    }
+
+    function buildLayeredNote(segment, visibleTags) {
+      if (!visibleTags.length) {
+        return "Ce segment continue d’exister dans la vidéo, mais aucune de ses couches d’observation n’est actuellement active.";
+      }
+
+      const layerText = visibleTags
+        .map(tag => tagLabels[tag] || tag)
+        .join(", ");
+
+      return `${segment.note}\n\nCouches observées ici : ${layerText}.`;
+    }
+
+    function updateOverlay(segment) {
+      if (!segment.overlay) {
+        videoOverlay.classList.add("hidden");
+        return;
+      }
+
+      const overlayKey = getSegmentOverlayKey(segment);
+      if (overlayKey && dismissedOverlayKey === overlayKey) {
+        videoOverlay.classList.add("hidden");
+        return;
+      }
+
+      const visibleOverlayTags = segment.overlay.tags.filter(tag => activeLayers.has(tag));
+      if (!visibleOverlayTags.length) {
+        videoOverlay.classList.add("hidden");
+        return;
+      }
+
+      overlayTitle.textContent = segment.overlay.title;
+      overlayText.textContent = segment.overlay.text;
+      overlayTags.innerHTML = visibleOverlayTags.map(renderTag).join("");
+      videoOverlay.classList.remove("hidden");
+    }
+
+    function toggleLayer(tag, checked) {
+      if (checked) {
+        activeLayers.add(tag);
+      } else {
+        activeLayers.delete(tag);
+      }
+
+      renderLayers();
+      renderTranscript();
+      renderTimeline();
+      activateSegment(activeSegmentIndex, false);
+    }
+
+    function toggleLayersPanel() {
+      collapsedLayers = !collapsedLayers;
+      renderLayerToggle();
+    }
+
+    function activateSegment(index, seek = false) {
+      const segment = segments[index];
+      if (!segment) return;
+      const previousSegmentIndex = activeSegmentIndex;
+      activeSegmentIndex = index;
+      if (previousSegmentIndex !== index) dismissedOverlayKey = null;
+      const visibleTags = getVisibleTags(segment);
+
+      document.querySelectorAll(".segment").forEach((item, itemIndex) => {
+        item.classList.toggle("active", Number(item.dataset.index) === index);
+      });
+
+      activeTime.textContent = `${formatTime(segment.start)} — ${formatTime(segment.end)} · ${segment.speaker}`;
+      annotationText.textContent = buildLayeredNote(segment, visibleTags);
+      pedagogicalQuestion.textContent = visibleTags.length
+        ? `Question pédagogique : ${segment.question}`
+        : "Question pédagogique : quelle couche faudrait-il réactiver pour observer ce segment ?";
+      activeTags.innerHTML = visibleTags.length
+        ? visibleTags.map(renderTag).join("")
+        : `<span class="tag">aucune couche active ici</span>`;
+      copyStatus.textContent = "";
+      updateOverlay(segment);
+      renderPhenomenonTimeline();
+
+      if (seek) {
+        video.currentTime = segment.start;
+        updateTimelineCursor(segment.start);
+        video.play().catch((error) => {
+          if (error.name === "NotAllowedError") {
+            setPlayerState("ready", "Segment sélectionné. Utilisez le bouton Lecture du lecteur pour démarrer.");
+          }
+        });
+      }
+    }
+
+    function findActiveSegment(time) {
+      return segments.findIndex(segment => time >= segment.start && time < segment.end);
+    }
+
+    function buildObservationText(segment) {
+      return [
+        `Timestamp : ${formatTime(segment.start)} — ${formatTime(segment.end)}`,
+        `Locuteur : ${segment.speaker}`,
+        `Texte : ${segment.text}`,
+        `Tags : ${segment.tags.map(tag => tagLabels[tag] || tag).join(", ")}`,
+        `Note IC : ${segment.note}`,
+        `Question pédagogique : ${segment.question}`
+      ].join("\n");
+    }
+
+    async function copyActiveObservation() {
+      const segment = segments[activeSegmentIndex];
+      if (!segment) return;
+      const text = buildObservationText(segment);
+
+      try {
+        await navigator.clipboard.writeText(text);
+        copyStatus.textContent = "Observation copiée.";
+      } catch (error) {
+        copyStatus.textContent = "Copie automatique indisponible. Sélectionnez le texte depuis la console ou le code.";
+        console.info(text);
+      }
+    }
+
+    function getShortText(text) {
+      return text.length > 110 ? `${text.slice(0, 107)}...` : text;
+    }
+
+    function buildObservation(segment) {
+      return {
+        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+        start: segment.start,
+        end: segment.end,
+        speaker: segment.speaker,
+        text: segment.text,
+        languages: [...segment.languages],
+        tags: [...segment.tags],
+        personalNote: ""
+      };
+    }
+
+    function renderObservations() {
+      observationsCount.textContent = `(${observations.length})`;
+      observationsStatus.textContent = observations.length
+        ? `${observations.length} observation${observations.length > 1 ? "s" : ""} en mémoire pour cette session.`
+        : "Aucune observation ajoutée pour le moment.";
+
+      if (!observations.length) {
+        observationsBody.innerHTML = `
+          <tr>
+            <td colspan="7">Sélectionnez un segment puis ajoutez-le à vos observations.</td>
+          </tr>
+        `;
+        return;
+      }
+
+      observationsBody.innerHTML = observations.map(item => `
+        <tr data-id="${escapeHtml(item.id)}">
+          <td>${formatTime(item.start)} — ${formatTime(item.end)}</td>
+          <td>${escapeHtml(item.speaker)}</td>
+          <td>${escapeHtml(getShortText(item.text))}</td>
+          <td>${escapeHtml(item.languages.join(" / "))}</td>
+          <td>${escapeHtml(item.tags.map(tag => tagLabels[tag] || tag).join(", "))}</td>
+          <td>
+            <textarea class="observation-note" data-id="${escapeHtml(item.id)}" placeholder="Note personnelle...">${escapeHtml(item.personalNote)}</textarea>
+          </td>
+          <td>
+            <button class="remove-observation" type="button" data-id="${escapeHtml(item.id)}" aria-label="Supprimer l’observation">×</button>
+          </td>
+        </tr>
+      `).join("");
+    }
+
+    function addActiveObservation() {
+      const segment = segments[activeSegmentIndex];
+      if (!segment) return;
+      observations.push(buildObservation(segment));
+      renderObservations();
+      copyStatus.textContent = "Observation ajoutée au tableau.";
+    }
+
+    function csvCell(value) {
+      return `"${String(value ?? "").replaceAll('"', '""')}"`;
+    }
+
+    function buildCsv() {
+      const header = [
+        "timestamp_start",
+        "timestamp_end",
+        "speaker",
+        "text",
+        "languages",
+        "tags",
+        "personal_note"
+      ];
+
+      const rows = observations.map(item => [
+        item.start,
+        item.end,
+        item.speaker,
+        item.text,
+        item.languages.join("|"),
+        item.tags.map(tag => tagLabels[tag] || tag).join("|"),
+        item.personalNote
+      ].map(csvCell).join(","));
+
+      return [header.join(","), ...rows].join("\r\n");
+    }
+
+    function exportObservationsCsv() {
+      if (!observations.length) {
+        observationsStatus.textContent = "Ajoutez au moins une observation avant l’export.";
+        return;
+      }
+
+      const blob = new Blob([buildCsv()], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "ic-lab-prototype-05-observations.csv";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      observationsStatus.textContent = "Export CSV généré.";
+    }
+
+    transcriptList.addEventListener("click", event => {
+      const button = event.target.closest(".segment");
+      if (!button) return;
+      activateSegment(Number(button.dataset.index), true);
+    });
+
+    languageTimeline.addEventListener("click", event => {
+      const marker = event.target.closest("[data-index]");
+      if (!marker) return;
+      activateSegment(Number(marker.dataset.index), true);
+    });
+
+    phenomenonTimeline.addEventListener("click", event => {
+      const marker = event.target.closest("[data-index]");
+      if (!marker) return;
+      activateSegment(Number(marker.dataset.index), true);
+    });
+
+    layerList.addEventListener("change", event => {
+      const checkbox = event.target.closest("input[type='checkbox']");
+      if (!checkbox) return;
+      toggleLayer(checkbox.dataset.tag, checkbox.checked);
+    });
+
+    layersToggle.addEventListener("click", toggleLayersPanel);
+
+    overlayClose.addEventListener("click", () => {
+      const segment = segments[activeSegmentIndex];
+      dismissedOverlayKey = segment ? getSegmentOverlayKey(segment) : null;
+      videoOverlay.classList.add("hidden");
+    });
+
+    focusToggle.addEventListener("click", () => {
+      const isFocus = app.classList.toggle("focus-mode");
+      focusToggle.classList.toggle("active", isFocus);
+      focusToggle.setAttribute("aria-pressed", String(isFocus));
+      focusToggle.textContent = isFocus ? "Quitter le focus" : "Mode Focus";
+    });
+
+    addObservation.addEventListener("click", addActiveObservation);
+
+    copyObservation.addEventListener("click", copyActiveObservation);
+
+    observationsBody.addEventListener("input", event => {
+      const field = event.target.closest(".observation-note");
+      if (!field) return;
+      const item = observations.find(observation => observation.id === field.dataset.id);
+      if (item) item.personalNote = field.value;
+    });
+
+    observationsBody.addEventListener("click", event => {
+      const button = event.target.closest(".remove-observation");
+      if (!button) return;
+      observations = observations.filter(item => item.id !== button.dataset.id);
+      renderObservations();
+    });
+
+    exportCsv.addEventListener("click", exportObservationsCsv);
+
+    video.addEventListener("timeupdate", () => {
+      updateTimelineCursor(video.currentTime);
+      const index = findActiveSegment(video.currentTime);
+      if (index >= 0) activateSegment(index, false);
+      if (index < 0) {
+        dismissedOverlayKey = null;
+        videoOverlay.classList.add("hidden");
+      }
+    });
+
+    video.addEventListener("loadstart", () => {
+      if (!["network-error", "unsupported"].includes(playerState)) {
+        setPlayerState("loading", "Chargement des métadonnées vidéo…");
+      }
+    });
+
+    video.addEventListener("loadedmetadata", () => {
+      if (!["network-error", "unsupported"].includes(playerState)) {
+        setPlayerState("ready", "Flux prêt. Durée et timeline synchronisées.");
+      }
+      renderTimeline();
+      updateTimelineCursor(video.currentTime || 0);
+    });
+
+    video.addEventListener("canplay", () => {
+      if (video.paused && !["network-error", "unsupported"].includes(playerState)) {
+        setPlayerState("ready", "La vidéo peut être lue.");
+      }
+    });
+
+    video.addEventListener("playing", () => {
+      setPlayerState("playing", "La vidéo est en cours de lecture.");
+    });
+
+    video.addEventListener("waiting", () => {
+      if (!["network-error", "unsupported"].includes(playerState)) {
+        setPlayerState("waiting", "Mise en mémoire tampon du flux…");
+      }
+    });
+
+    video.addEventListener("stalled", () => {
+      if (!["network-error", "unsupported"].includes(playerState)) {
+        setPlayerState("waiting", "Le téléchargement du flux tarde à répondre…");
+      }
+    });
+
+    video.addEventListener("error", () => {
+      if (["network-error", "unsupported"].includes(playerState)) return;
+      if (video.error && video.error.code === MediaError.MEDIA_ERR_NETWORK) {
+        setPlayerState("network-error", "La lecture a été interrompue par une erreur réseau.");
+        return;
+      }
+      setPlayerState("unsupported", "Le navigateur ne peut pas lire le média reçu.");
+    });
+
+    window.addEventListener("resize", () => {
+      updateTimelineCursor(video.currentTime || 0);
+    });
+
+    window.addEventListener("beforeunload", destroyHls);
+
+    loadActivity();
+  </script>
+</body>
+</html>

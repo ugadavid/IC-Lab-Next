@@ -3,6 +3,8 @@ setlocal
 set "SCRIPT_DIR=%~dp0"
 
 echo === IC-Lab-Next : demarrage des services locaux ===
+call "%SCRIPT_DIR%start-proto05.bat"
+set "PROTO05_LAUNCH=%errorlevel%"
 call "%SCRIPT_DIR%start-hub.bat"
 set "HUB_LAUNCH=%errorlevel%"
 call "%SCRIPT_DIR%start-agent-vocal.bat"
@@ -10,6 +12,8 @@ set "VOICE_LAUNCH=%errorlevel%"
 call "%SCRIPT_DIR%start-dico-seven.bat"
 set "DICO_LAUNCH=%errorlevel%"
 
+call :service_status "Proto 05" 8791 %PROTO05_LAUNCH%
+set "PROTO05_STATUS=%errorlevel%"
 call :service_status "IC-Hub" 8790 %HUB_LAUNCH%
 set "HUB_STATUS=%errorlevel%"
 call :service_status "Agent vocal" 8788 %VOICE_LAUNCH%
@@ -19,6 +23,7 @@ set "DICO_STATUS=%errorlevel%"
 
 echo.
 echo === Resume ===
+call :print_status "Proto 05" %PROTO05_STATUS%
 call :print_status "IC-Hub" %HUB_STATUS%
 call :print_status "Agent vocal" %VOICE_STATUS%
 call :print_status "Dico-IC / Seven Sieves" %DICO_STATUS%

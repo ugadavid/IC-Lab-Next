@@ -3,6 +3,8 @@ const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const { Readable } = require("node:stream");
+const { pipeline } = require("node:stream/promises");
 const openAiModels = require("./ai/openaiModels");
 const modelMetadataEnrichment = require("./ai/modelMetadataEnrichment");
 const openAiRuntime = require("./ai/openaiRuntime");
@@ -15,11 +17,29 @@ const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DOCS_DIR = path.join(ROOT_DIR, "docs");
 const DATA_DIR = path.join(__dirname, "data");
 const WORKSPACE_DIR = path.resolve(ROOT_DIR, "..", "..");
+const PROTO05_DATA_DIR = path.join(WORKSPACE_DIR, "prototypes", "05-augmented-ic-video-01", "data");
+const PROTO05_DATA_FILE = path.join(PROTO05_DATA_DIR, "activities.json");
+const HLS_JS_ASSET_PATH = path.join(__dirname, "node_modules", "hls.js", "dist", "hls.min.js");
+const HLS_PROXY_PREFIX = "/api/hls/";
+const HLS_SOURCES = Object.freeze({
+  "uga-37004": Object.freeze({
+    baseUrl: "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/",
+    resources: Object.freeze([
+      "livestream.m3u8",
+      "360p.m3u8",
+      "720p.m3u8",
+      "1080p.m3u8",
+      "360p.ts",
+      "720p.ts",
+      "1080p.ts"
+    ])
+  })
+});
 const DEMO_STATIC_ROUTES = [
   {
     prefix: "/demos/augmented-video/",
     root: path.join(WORKSPACE_DIR, "prototypes", "05-augmented-ic-video-01"),
-    index: "index-0.0.6.html"
+    index: "index-0.0.6.2.html"
   },
   {
     prefix: "/demos/informaticaire/",
@@ -371,6 +391,140 @@ const contentTypes = {
   ".pdf": "application/pdf"
 };
 
+function parseHlsProxyTarget(url) {
+  if (!url.pathname.startsWith(HLS_PROXY_PREFIX)) return null;
+
+  const proxyPath = url.pathname.slice(HLS_PROXY_PREFIX.length);
+  const separatorIndex = proxyPath.indexOf("/");
+  if (separatorIndex <= 0) return { error: "Source HLS ou ressource manquante." };
+
+  let sourceId;
+  let resourcePath;
+  try {
+    sourceId = decodeURIComponent(proxyPath.slice(0, separatorIndex));
+    resourcePath = decodeURIComponent(proxyPath.slice(separatorIndex + 1));
+  } catch {
+    return { error: "Chemin HLS invalide." };
+  }
+
+  const source = HLS_SOURCES[sourceId];
+  if (!source) return { error: "Source HLS non autorisee." };
+  if (
+    !resourcePath ||
+    resourcePath.startsWith("/") ||
+    resourcePath.includes("\\") ||
+    resourcePath.includes("\0") ||
+    /^[a-z][a-z\d+.-]*:/i.test(resourcePath) ||
+    resourcePath.split("/").some((segment) => segment === "." || segment === "..")
+  ) {
+    return { error: "Ressource HLS non autorisee." };
+  }
+  if (!source.resources.includes(resourcePath)) {
+    return { error: "Ressource absente de la liste blanche HLS." };
+  }
+
+  const baseUrl = new URL(source.baseUrl);
+  const upstreamUrl = new URL(resourcePath, baseUrl);
+  if (
+    upstreamUrl.protocol !== "https:" ||
+    upstreamUrl.origin !== baseUrl.origin ||
+    !upstreamUrl.pathname.startsWith(baseUrl.pathname)
+  ) {
+    return { error: "Ressource HLS hors de la source autorisee." };
+  }
+
+  return { sourceId, resourcePath, upstreamUrl };
+}
+
+async function handleHlsProxy(request, response, url) {
+  const target = parseHlsProxyTarget(url);
+  if (target === null) return false;
+  if (target.error) {
+    sendJson(response, 404, { error: target.error });
+    return true;
+  }
+  if (!["GET", "HEAD"].includes(request.method)) {
+    response.setHeader("allow", "GET, HEAD");
+    sendJson(response, 405, { error: "Methode non autorisee pour le proxy HLS." });
+    return true;
+  }
+
+  const controller = new AbortController();
+  const abortUpstream = () => controller.abort();
+  request.once("aborted", abortUpstream);
+  response.once("close", abortUpstream);
+
+  const upstreamHeaders = { accept: request.headers.accept || "*/*" };
+  if (request.headers.range) upstreamHeaders.range = request.headers.range;
+  if (request.headers["if-range"]) upstreamHeaders["if-range"] = request.headers["if-range"];
+
+  let upstream;
+  try {
+    upstream = await fetch(target.upstreamUrl, {
+      method: request.method,
+      headers: upstreamHeaders,
+      redirect: "manual",
+      signal: controller.signal
+    });
+  } catch (error) {
+    request.off("aborted", abortUpstream);
+    response.off("close", abortUpstream);
+    if (!response.headersSent && !response.writableEnded) {
+      sendJson(response, 502, { error: "Le flux video distant est momentanement inaccessible." });
+    }
+    if (!controller.signal.aborted) {
+      console.error(`[hls-proxy] ${target.sourceId}/${target.resourcePath}: ${error.message}`);
+    }
+    return true;
+  }
+
+  if (upstream.status >= 300 && upstream.status < 400) {
+    controller.abort();
+    request.off("aborted", abortUpstream);
+    response.off("close", abortUpstream);
+    sendJson(response, 502, { error: "Redirection refusee par le proxy HLS." });
+    return true;
+  }
+
+  const relayHeaders = {};
+  for (const name of [
+    "accept-ranges",
+    "cache-control",
+    "content-length",
+    "content-range",
+    "content-type",
+    "etag",
+    "last-modified"
+  ]) {
+    const value = upstream.headers.get(name);
+    if (value) relayHeaders[name] = value;
+  }
+  if (!relayHeaders["content-type"]) {
+    relayHeaders["content-type"] = contentTypes[path.extname(target.resourcePath).toLowerCase()] || "application/octet-stream";
+  }
+
+  response.writeHead(upstream.status, relayHeaders);
+  if (request.method === "HEAD" || !upstream.body) {
+    response.end();
+    request.off("aborted", abortUpstream);
+    response.off("close", abortUpstream);
+    return true;
+  }
+
+  try {
+    await pipeline(Readable.fromWeb(upstream.body), response);
+  } catch (error) {
+    if (!controller.signal.aborted) {
+      console.error(`[hls-proxy] streaming ${target.sourceId}/${target.resourcePath}: ${error.message}`);
+      if (!response.destroyed) response.destroy(error);
+    }
+  } finally {
+    request.off("aborted", abortUpstream);
+    response.off("close", abortUpstream);
+  }
+  return true;
+}
+
 function now() {
   return new Date().toISOString();
 }
@@ -471,6 +625,26 @@ async function readLocalJson(name) {
   } catch (error) {
     console.error(`[data] failed to read ${stores[name]}: ${error.message}`);
     throw new Error(`Lecture JSON impossible: ${stores[name]}`);
+  }
+}
+
+function proto05DataFile() {
+  const dataRoot = path.resolve(PROTO05_DATA_DIR);
+  const dataFilePath = path.resolve(PROTO05_DATA_FILE);
+  if (dataFilePath !== dataRoot && !dataFilePath.startsWith(`${dataRoot}${path.sep}`)) {
+    throw new Error("Chemin de donnees Proto05 invalide.");
+  }
+  return dataFilePath;
+}
+
+async function readProto05Activities() {
+  const file = proto05DataFile();
+  try {
+    const parsed = JSON.parse(await fs.readFile(file, "utf8"));
+    return parsed && typeof parsed === "object" ? parsed : { schemaVersion: "0.1", activities: [] };
+  } catch (error) {
+    console.error(`[data] failed to read Proto05 activities: ${error.message}`);
+    throw new Error("Lecture JSON impossible: prototypes/05-augmented-ic-video-01/data/activities.json");
   }
 }
 
@@ -870,6 +1044,37 @@ async function handleProto06Manifests(request, response, url) {
     return sendJson(response, 404, { error: "Manifest Proto06 introuvable." });
   }
   return sendJson(response, 200, manifest);
+}
+
+async function handleProto05Activities(request, response, url) {
+  const listMatch = url.pathname === "/api/proto05/activities";
+  const detailMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)$/);
+  if (!listMatch && !detailMatch) return false;
+  if (request.method !== "GET") {
+    response.setHeader("allow", "GET");
+    return sendJson(response, 405, { error: "Methode non autorisee." });
+  }
+
+  const store = await readProto05Activities();
+  const activities = Array.isArray(store.activities) ? store.activities : [];
+  if (listMatch) {
+    return sendJson(response, 200, {
+      schemaVersion: store.schemaVersion || "0.1",
+      updatedAt: store.updatedAt || null,
+      activities
+    });
+  }
+
+  const activityId = decodeURIComponent(detailMatch[1]);
+  const activity = activities.find((item) => item.id === activityId);
+  if (!activity) {
+    return sendJson(response, 404, { error: "Activite Proto05 introuvable." });
+  }
+  return sendJson(response, 200, {
+    schemaVersion: store.schemaVersion || "0.1",
+    updatedAt: store.updatedAt || null,
+    activity
+  });
 }
 
 const visibilityValues = new Set(["private", "course", "institution", "shared", "public"]);
@@ -2604,6 +2809,9 @@ async function handleApi(request, response, url) {
     return sendJson(response, 200, await storeHealth());
   }
 
+  const proto05ActivitiesHandled = await handleProto05Activities(request, response, url);
+  if (proto05ActivitiesHandled !== false) return;
+
   const proto06ManifestsHandled = await handleProto06Manifests(request, response, url);
   if (proto06ManifestsHandled !== false) return;
 
@@ -2711,6 +2919,27 @@ async function serveStatic(response, url) {
     return true;
   }
 
+  if (url.pathname === "/vendor/hls.js/hls.min.js") {
+    try {
+      const file = await fs.readFile(HLS_JS_ASSET_PATH);
+      response.writeHead(200, {
+        "cache-control": "public, max-age=31536000, immutable",
+        "content-type": contentTypes[".js"]
+      });
+      response.end(file);
+    } catch {
+      response.writeHead(503, { "content-type": "text/plain; charset=utf-8" });
+      response.end("hls.js is not installed");
+    }
+    return true;
+  }
+
+  if (url.pathname === "/demos/augmented-video" || url.pathname === "/demos/augmented-video/") {
+    response.writeHead(302, { location: "http://127.0.0.1:8791/" });
+    response.end();
+    return true;
+  }
+
   for (const route of DEMO_STATIC_ROUTES) {
     const barePrefix = route.prefix.slice(0, -1);
     if (url.pathname === barePrefix) {
@@ -2782,6 +3011,8 @@ async function serveStatic(response, url) {
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   try {
+    const hlsProxyHandled = await handleHlsProxy(request, response, url);
+    if (hlsProxyHandled) return;
     if (url.pathname.startsWith("/api/")) {
       await handleApi(request, response, url);
       return;

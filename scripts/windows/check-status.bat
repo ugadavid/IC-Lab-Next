@@ -7,6 +7,7 @@ call :print_port "MariaDB" 3306
 call :print_port "Dico-IC / Seven Sieves" 3000
 call :print_port "Agent vocal" 8788
 call :print_port "IC-Hub" 8790
+call :print_port "Proto 05" 8791
 exit /b 0
 
 :print_port
