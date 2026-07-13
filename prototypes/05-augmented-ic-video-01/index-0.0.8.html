@@ -861,25 +861,7 @@
             <div id="overlayTags" class="tags"></div>
           </div>
         </div>
-        <div class="timeline-panel" aria-label="Timeline IC">
-          <div class="timeline-head">
-            <h2>Timeline IC</h2>
-            <div class="timeline-scale"><span id="timelineStart">00:00</span> — <span id="timelineEnd">15:39</span></div>
-          </div>
-          <div class="timeline-body">
-            <div id="timelineCursor" class="timeline-cursor">
-              <span id="timelineCursorLabel" class="timeline-cursor-label">00:00</span>
-            </div>
-            <div class="timeline-scale-spacer"></div>
-            <div id="timelineTicks" class="timeline-scale-track"></div>
-            <div class="timeline-label">Langues</div>
-            <div class="timeline-label"></div>
-            <div id="languageTimeline" class="timeline-body-grid"></div>
-            <div class="timeline-track-label">Phénomènes</div>
-            <div id="phenomenonTimeline" class="timeline-track phenomenon-track"></div>
-          </div>
-          <div id="timelineLegend" class="timeline-legend"></div>
-        </div>
+        <div id="sharedTimelineMount" class="timeline-panel" aria-label="Timeline IC"></div>
         <p id="videoNote" class="video-note" data-state="loading" role="status" aria-live="polite">
           <strong id="playerStatus">Chargement</strong>
           <span id="playerStatusDetail">Initialisation du lecteur HLS local…</span>
@@ -946,9 +928,10 @@
     </main>
   </div>
 
-  <script src="/vendor/hls.js/hls.min.js"></script>
+  <link rel="stylesheet" href="/shared/ic-timeline.css"><script src="/vendor/hls.js/hls.min.js"></script><script src="/shared/ic-timeline.js"></script>
   <script>
     let hlsUrl = "";
+    let sharedICTimeline = null;
     const routeActivityMatch = location.pathname.match(/(?:student|teacher\/preview)\/([^/]+)/);
     const activityId = new URLSearchParams(location.search).get("activity") || (routeActivityMatch && decodeURIComponent(routeActivityMatch[1])) || "proto05-augmented-video-01";
     const viewMode = location.pathname.startsWith("/teacher") ? "teacher" : "student";
@@ -1058,7 +1041,7 @@
         };
       });
 
-      if (!segments.length) throw new Error("Le JSON de l’activité ne contient aucun segment.");
+      if (!segments.length) return;
     }
 
     const video = document.getElementById("video");
@@ -1069,13 +1052,7 @@
     const playerStatusDetail = document.getElementById("playerStatusDetail");
     const streamLink = document.getElementById("streamLink");
     const transcriptList = document.getElementById("transcriptList");
-    const languageTimeline = document.getElementById("languageTimeline");
-    const phenomenonTimeline = document.getElementById("phenomenonTimeline");
-    const timelineLegend = document.getElementById("timelineLegend");
-    const timelineTicks = document.getElementById("timelineTicks");
-    const timelineEnd = document.getElementById("timelineEnd");
-    const timelineCursor = document.getElementById("timelineCursor");
-    const timelineCursorLabel = document.getElementById("timelineCursorLabel");
+    const sharedTimelineMount = document.getElementById("sharedTimelineMount");
     const annotationText = document.getElementById("annotationText");
     const pedagogicalQuestion = document.getElementById("pedagogicalQuestion");
     const activeTime = document.getElementById("activeTime");
@@ -1120,7 +1097,7 @@
         const response = await fetch(activityEndpoint, {
           headers: { accept: "application/json" }
         });
-        if (!response.ok) throw new Error(`Réponse IC-Hub ${response.status}.`);
+        if (!response.ok) { const error = new Error(response.status === 404 ? "Cette activité est inconnue." : `Réponse serveur ${response.status}.`); error.kind = response.status === 404 ? "not-found" : "network"; throw error; }
         const payload = await response.json();
         buildActivityView(payload.activity);
         hlsUrl = activityData.video.proxyUrl;
@@ -1133,9 +1110,16 @@
         renderTimeline();
         renderObservations();
         loadVideo(hlsUrl);
-        activateSegment(0, false);
+        if (segments.length) activateSegment(0, false);
+        else {
+          activeTime.textContent = "Cette activité ne contient encore aucun segment.";
+          annotationText.textContent = "Ajoutez des segments depuis l’atelier auteur pour préparer cette activité.";
+          setPlayerState("ready", "Activité chargée, sans segment.");
+        }
       } catch (error) {
-        setPlayerState("network-error", `Impossible de charger l’activité depuis IC-Hub : ${error.message}`);
+        const kind = error.kind || (error instanceof TypeError ? "network" : "render");
+        const label = kind === "network" ? "Erreur réseau" : kind === "not-found" ? "Activité inconnue" : "Erreur de rendu";
+        setPlayerState(kind === "network" ? "network-error" : "unsupported", `${label} : ${error.message}`);
         transcriptList.innerHTML = `<p class="subtitle">${escapeHtml(error.message)}</p>`;
       }
     }
@@ -1336,7 +1320,7 @@
               type="button"
               data-index="${index}"
               data-time="${interval.start}"
-              title="${code} · ${escapeHtml(segment.speaker)} · ${formatTime(segment.start)}"
+              title="${escapeHtml(languageLabels[code] || code)} · ${formatTime(interval.start)}"
               style="left:${getTimelineLeft(timing)}%;width:${getTimelineWidth(timing)}%;"
             ></button>
           `;
@@ -1376,21 +1360,15 @@
     }
 
     function renderTimeline() {
-      timelineEnd.textContent = formatTime(getTimelineDuration());
-      renderTimelineTicks();
-      renderLanguageTimeline();
-      renderPhenomenonTimeline();
-      renderTimelineLegend();
-      updateTimelineCursor(video.currentTime || 0);
-    }
-
-    function updateTimelineCursor(time) {
-      const duration = getTimelineDuration();
-      const boundedTime = Math.min(Math.max(time || 0, 0), duration);
-      const percent = (boundedTime / duration) * 100;
-      const trackWidth = timelineTicks.getBoundingClientRect().width;
-      timelineCursor.style.transform = `translateX(${(trackWidth * percent) / 100}px)`;
-      timelineCursorLabel.textContent = formatTime(boundedTime);
+      const target = sharedTimelineMount;
+      if (!target || !activityData) return;
+      if (!sharedICTimeline) {
+        sharedICTimeline = createICTimeline({
+          container: target, activity: activityData, durationMs: getTimelineDuration() * 1000, currentTime: (video.currentTime || 0) * 1000,
+          mode: "student", onSeek: timeMs => { video.currentTime = timeMs / 1000; },
+          onSelect: selection => { if (selection.type === "segment") { const index = segments.findIndex(item => item.id === selection.item.id); if (index >= 0) activateSegment(index, true); } }
+        });
+      } else { sharedICTimeline.update({activity: activityData, durationMs: getTimelineDuration() * 1000}); }
     }
 
     function buildLayeredNote(segment, visibleTags) {
@@ -1469,11 +1447,8 @@
         : `<span class="tag">aucune couche active ici</span>`;
       copyStatus.textContent = "";
       updateOverlay(segment);
-      renderPhenomenonTimeline();
-
       if (seek) {
         video.currentTime = segment.start;
-        updateTimelineCursor(segment.start);
         video.play().catch((error) => {
           if (error.name === "NotAllowedError") {
             setPlayerState("ready", "Segment sélectionné. Utilisez le bouton Lecture du lecteur pour démarrer.");
@@ -1620,20 +1595,6 @@
       activateSegment(Number(button.dataset.index), true);
     });
 
-    languageTimeline.addEventListener("click", event => {
-      const marker = event.target.closest("[data-index]");
-      if (!marker) return;
-      const index = Number(marker.dataset.index);
-      if (index >= 0) activateSegment(index, true);
-      else if (Number.isFinite(Number(marker.dataset.time))) video.currentTime = Number(marker.dataset.time);
-    });
-
-    phenomenonTimeline.addEventListener("click", event => {
-      const marker = event.target.closest("[data-index]");
-      if (!marker) return;
-      activateSegment(Number(marker.dataset.index), true);
-    });
-
     layerList.addEventListener("change", event => {
       const checkbox = event.target.closest("input[type='checkbox']");
       if (!checkbox) return;
@@ -1676,7 +1637,7 @@
     exportCsv.addEventListener("click", exportObservationsCsv);
 
     video.addEventListener("timeupdate", () => {
-      updateTimelineCursor(video.currentTime);
+      sharedICTimeline?.setCurrentTime(video.currentTime * 1000);
       const index = findActiveSegment(video.currentTime);
       if (index >= 0) activateSegment(index, false);
       if (index < 0) {
@@ -1696,7 +1657,7 @@
         setPlayerState("ready", "Flux prêt. Durée et timeline synchronisées.");
       }
       renderTimeline();
-      updateTimelineCursor(video.currentTime || 0);
+      sharedICTimeline?.setCurrentTime((video.currentTime || 0) * 1000);
     });
 
     video.addEventListener("canplay", () => {
@@ -1731,7 +1692,7 @@
     });
 
     window.addEventListener("resize", () => {
-      updateTimelineCursor(video.currentTime || 0);
+      sharedICTimeline?.setCurrentTime((video.currentTime || 0) * 1000);
     });
 
     window.addEventListener("beforeunload", destroyHls);

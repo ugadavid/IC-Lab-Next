@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-13T12:48:12.420Z",
+  "updatedAt": "2026-07-13T13:50:53.525Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -15,28 +15,160 @@
         "durationMs": 939217
       },
       "languageIntervals": [
-        {"id":"language-interval-segment-01-lang-fr","languageId":"lang-fr","startMs":2000,"endMs":23000,"segmentId":"segment-01"},
-        {"id":"language-interval-segment-02-lang-fr","languageId":"lang-fr","startMs":32000,"endMs":58000,"segmentId":"segment-02"},
-        {"id":"language-interval-segment-03-lang-fr","languageId":"lang-fr","startMs":58000,"endMs":84000,"segmentId":"segment-03"},
-        {"id":"language-interval-segment-03-lang-it","languageId":"lang-it","startMs":58000,"endMs":84000,"segmentId":"segment-03"},
-        {"id":"language-interval-segment-03-lang-es","languageId":"lang-es","startMs":58000,"endMs":84000,"segmentId":"segment-03"},
-        {"id":"language-interval-segment-04-lang-fr","languageId":"lang-fr","startMs":91000,"endMs":102000,"segmentId":"segment-04"},
-        {"id":"language-interval-segment-05-lang-fr","languageId":"lang-fr","startMs":100000,"endMs":118000,"segmentId":"segment-05"},
-        {"id":"language-interval-segment-06-lang-it","languageId":"lang-it","startMs":118000,"endMs":136000,"segmentId":"segment-06"},
-        {"id":"language-interval-segment-06-lang-es","languageId":"lang-es","startMs":118000,"endMs":136000,"segmentId":"segment-06"},
-        {"id":"language-interval-segment-06-lang-fr","languageId":"lang-fr","startMs":118000,"endMs":136000,"segmentId":"segment-06"},
-        {"id":"language-interval-segment-07-lang-es","languageId":"lang-es","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
-        {"id":"language-interval-segment-07-lang-fr","languageId":"lang-fr","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
-        {"id":"language-interval-segment-07-lang-it","languageId":"lang-it","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
-        {"id":"language-interval-segment-07-lang-pt","languageId":"lang-pt","startMs":143000,"endMs":172000,"segmentId":"segment-07"},
-        {"id":"language-interval-segment-08-lang-fr","languageId":"lang-fr","startMs":176000,"endMs":185000,"segmentId":"segment-08"},
-        {"id":"language-interval-segment-09-lang-es","languageId":"lang-es","startMs":186000,"endMs":225000,"segmentId":"segment-09"},
-        {"id":"language-interval-segment-09-lang-fr","languageId":"lang-fr","startMs":186000,"endMs":225000,"segmentId":"segment-09"},
-        {"id":"language-interval-segment-10-lang-es","languageId":"lang-es","startMs":241000,"endMs":273000,"segmentId":"segment-10"},
-        {"id":"language-interval-segment-10-lang-it","languageId":"lang-it","startMs":241000,"endMs":273000,"segmentId":"segment-10"},
-        {"id":"language-interval-segment-10-lang-fr","languageId":"lang-fr","startMs":241000,"endMs":273000,"segmentId":"segment-10"},
-        {"id":"language-interval-segment-11-lang-es","languageId":"lang-es","startMs":273000,"endMs":302000,"segmentId":"segment-11"},
-        {"id":"language-interval-segment-11-lang-fr","languageId":"lang-fr","startMs":273000,"endMs":302000,"segmentId":"segment-11"}
+        {
+          "id": "language-interval-segment-01-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 2000,
+          "endMs": 23000,
+          "segmentId": "segment-01"
+        },
+        {
+          "id": "language-interval-segment-02-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 32000,
+          "endMs": 58000,
+          "segmentId": "segment-02"
+        },
+        {
+          "id": "language-interval-segment-03-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 58000,
+          "endMs": 84000,
+          "segmentId": "segment-03"
+        },
+        {
+          "id": "language-interval-segment-03-lang-it",
+          "languageId": "lang-it",
+          "startMs": 58000,
+          "endMs": 84000,
+          "segmentId": "segment-03"
+        },
+        {
+          "id": "language-interval-segment-03-lang-es",
+          "languageId": "lang-es",
+          "startMs": 58000,
+          "endMs": 84000,
+          "segmentId": "segment-03"
+        },
+        {
+          "id": "language-interval-segment-04-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 91000,
+          "endMs": 102000,
+          "segmentId": "segment-04"
+        },
+        {
+          "id": "language-interval-segment-05-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 100000,
+          "endMs": 118000,
+          "segmentId": "segment-05"
+        },
+        {
+          "id": "language-interval-segment-06-lang-it",
+          "languageId": "lang-it",
+          "startMs": 118000,
+          "endMs": 136000,
+          "segmentId": "segment-06"
+        },
+        {
+          "id": "language-interval-segment-06-lang-es",
+          "languageId": "lang-es",
+          "startMs": 118000,
+          "endMs": 136000,
+          "segmentId": "segment-06"
+        },
+        {
+          "id": "language-interval-segment-06-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 118000,
+          "endMs": 136000,
+          "segmentId": "segment-06"
+        },
+        {
+          "id": "language-interval-segment-07-lang-es",
+          "languageId": "lang-es",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-07"
+        },
+        {
+          "id": "language-interval-segment-07-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-07"
+        },
+        {
+          "id": "language-interval-segment-07-lang-it",
+          "languageId": "lang-it",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-07"
+        },
+        {
+          "id": "language-interval-segment-07-lang-pt",
+          "languageId": "lang-pt",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-07"
+        },
+        {
+          "id": "language-interval-segment-08-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 176000,
+          "endMs": 185000,
+          "segmentId": "segment-08"
+        },
+        {
+          "id": "language-interval-segment-09-lang-es",
+          "languageId": "lang-es",
+          "startMs": 186000,
+          "endMs": 225000,
+          "segmentId": "segment-09"
+        },
+        {
+          "id": "language-interval-segment-09-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 186000,
+          "endMs": 225000,
+          "segmentId": "segment-09"
+        },
+        {
+          "id": "language-interval-segment-10-lang-es",
+          "languageId": "lang-es",
+          "startMs": 241000,
+          "endMs": 273000,
+          "segmentId": "segment-10"
+        },
+        {
+          "id": "language-interval-segment-10-lang-it",
+          "languageId": "lang-it",
+          "startMs": 241000,
+          "endMs": 273000,
+          "segmentId": "segment-10"
+        },
+        {
+          "id": "language-interval-segment-10-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 241000,
+          "endMs": 273000,
+          "segmentId": "segment-10"
+        },
+        {
+          "id": "language-interval-segment-11-lang-es",
+          "languageId": "lang-es",
+          "startMs": 273000,
+          "endMs": 302000,
+          "segmentId": "segment-11"
+        },
+        {
+          "id": "language-interval-segment-11-lang-fr",
+          "languageId": "lang-fr",
+          "startMs": 273000,
+          "endMs": 302000,
+          "segmentId": "segment-11"
+        }
       ],
       "transcription": {
         "id": "transcription-proto05-v0",
@@ -297,31 +429,45 @@
       "layers": [
         {
           "id": "layer-presentation",
-          "label": "Présentation"
+          "label": "Présentation",
+          "description": "",
+          "color": "#6d9ed1"
         },
         {
           "id": "layer-changement-de-langue",
-          "label": "Changement de langue"
+          "label": "Changement de langue",
+          "description": "",
+          "color": "#6d9ed1"
         },
         {
           "id": "layer-comprehension-collective",
-          "label": "Compréhension collective"
+          "label": "Compréhension collective",
+          "description": "",
+          "color": "#6d9ed1"
         },
         {
           "id": "layer-clarification",
-          "label": "Clarification"
+          "label": "Clarification",
+          "description": "",
+          "color": "#6d9ed1"
         },
         {
           "id": "layer-negociation-du-sens",
-          "label": "Négociation du sens"
+          "label": "Négociation du sens",
+          "description": "",
+          "color": "#6d9ed1"
         },
         {
           "id": "layer-mot-piege",
-          "label": "Mot-piège"
+          "label": "Mot-piège",
+          "description": "",
+          "color": "#6d9ed1"
         },
         {
           "id": "layer-repertoire-plurilingue",
-          "label": "Répertoire plurilingue"
+          "label": "Répertoire plurilingue",
+          "description": "",
+          "color": "#6d9ed1"
         }
       ],
       "phenomena": [
@@ -663,7 +809,8 @@
         "allowLearnerToggle": true
       },
       "instruction": "",
-      "pedagogicalQuestion": ""
+      "pedagogicalQuestion": "",
+      "status": "draft"
     }
   ]
 }
