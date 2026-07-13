@@ -994,7 +994,8 @@
       document.getElementById("activityInstruction").textContent = activity.instruction ? `Consigne : ${activity.instruction}` : "";
 
       activityData = activity;
-      allTags = activity.layers.map(layer => layer.id);
+      const learnerLayerIds = new Set(activity.layerConfiguration?.learnerVisibleLayerIds || activity.layers.map(layer => layer.id));
+      allTags = activity.layers.filter(layer => learnerLayerIds.has(layer.id)).map(layer => layer.id);
       tagLabels = Object.fromEntries(activity.layers.map(layer => [layer.id, layer.label]));
       timelineLanguages = (activity.languages || []).map(language => language.code);
       Object.assign(languageLabels, Object.fromEntries(
@@ -1104,7 +1105,8 @@
         streamLink.href = hlsUrl;
         activeSegmentIndex = 0;
         activeLayers.clear();
-        allTags.forEach(tag => activeLayers.add(tag));
+        const learnerVisible = new Set(activityData.layerConfiguration?.learnerVisibleLayerIds || allTags);
+        allTags.filter(tag => learnerVisible.has(tag)).forEach(tag => activeLayers.add(tag));
         renderLayers();
         renderTranscript();
         renderTimeline();
@@ -1363,12 +1365,13 @@
       const target = sharedTimelineMount;
       if (!target || !activityData) return;
       if (!sharedICTimeline) {
+        const visibleActivity = { ...activityData, phenomena: (activityData.phenomena || []).filter(item => activeLayers.has(item.layerId)) };
         sharedICTimeline = createICTimeline({
-          container: target, activity: activityData, durationMs: getTimelineDuration() * 1000, currentTime: (video.currentTime || 0) * 1000,
+          container: target, activity: visibleActivity, durationMs: getTimelineDuration() * 1000, currentTime: (video.currentTime || 0) * 1000,
           mode: "student", onSeek: timeMs => { video.currentTime = timeMs / 1000; },
           onSelect: selection => { if (selection.type === "segment") { const index = segments.findIndex(item => item.id === selection.item.id); if (index >= 0) activateSegment(index, true); } }
         });
-      } else { sharedICTimeline.update({activity: activityData, durationMs: getTimelineDuration() * 1000}); }
+      } else { sharedICTimeline.update({activity: { ...activityData, phenomena: (activityData.phenomena || []).filter(item => activeLayers.has(item.layerId)) }, durationMs: getTimelineDuration() * 1000}); }
     }
 
     function buildLayeredNote(segment, visibleTags) {

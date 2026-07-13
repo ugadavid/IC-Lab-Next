@@ -7,7 +7,7 @@ const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.6.4";
+const VERSION = "0.1.7";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
