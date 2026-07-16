@@ -88,3 +88,10 @@ Les secrets `.env`, dépendances, sessions, traces d’exécution, sauvegardes,
 bases locales, journaux et documents privés sont exclus par le `.gitignore`
 racine. Les fichiers `.env.example` peuvent être suivis lorsqu’ils ne contiennent
 que des valeurs d’exemple.
+
+## Référentiels partagés
+
+Les petits dictionnaires transversaux appartenant au workspace sont conservés
+dans [`shared/reference-data`](shared/reference-data/). Ils sont distincts des
+données métier possédées par chaque prototype et sont consommés en lecture
+seule.

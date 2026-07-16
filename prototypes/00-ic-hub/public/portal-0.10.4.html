@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>IC-Lab-Next — Portail de démonstration</title>
+    <link rel="stylesheet" href="portal-0.10.4.css">
+  </head>
+  <body>
+    <main class="portal-shell">
+      <header class="hero">
+        <p class="eyebrow">IC-Lab-Next · Hub V0.10.4</p>
+        <h1>Portail de démonstration</h1>
+        <p class="intro">Cinq environnements pour explorer l’intercompréhension, de l’observation multimodale aux connaissances plurilingues.</p>
+        <nav aria-label="Accès Hub">
+          <a class="secondary-action" href="/hub.html">Mon espace local</a>
+        </nav>
+      </header>
+
+      <section class="portfolio" aria-labelledby="portfolio-title">
+        <div class="section-heading">
+          <p class="eyebrow">Portefeuille actif</p>
+          <h2 id="portfolio-title">Ouvrir une démonstration</h2>
+        </div>
+        <div class="card-grid">
+          <article class="project-card demo-card proto05-card">
+            <div class="card-meta"><span class="badge active">Démonstrateur actif</span><span>Serveur V0.1.7</span></div>
+            <h3>Vidéo augmentée</h3>
+            <p>Observer une interaction plurilingue à travers vidéo, transcription, timeline et annotations.</p>
+            <p class="requirement">Nécessite le serveur Proto05 sur <code>8791</code> ; le flux vidéo dépend encore du proxy HLS du Hub et de la source UGA.</p>
+            <div class="action-group" aria-label="Accès à Proto05">
+              <a class="primary-action" href="/demos/augmented-video/">Entrée générale Proto05</a>
+              <a class="secondary-action" href="http://127.0.0.1:8791/student/proto05-augmented-video-01">Vue étudiant · activité historique</a>
+              <a class="secondary-action" href="http://127.0.0.1:8791/teacher">Espace enseignant</a>
+              <a class="secondary-action" href="http://127.0.0.1:8791/teacher/guided/proto05-augmented-video-01">Atelier guidé · activité historique</a>
+              <a class="secondary-action" href="http://127.0.0.1:8791/teacher/author/proto05-augmented-video-01">Mode avancé · activité historique</a>
+            </div>
+          </article>
+
+          <article class="project-card service-card">
+            <div class="card-meta"><span class="badge active">Démonstrateur actif</span><span>Runtime V1.2.3</span></div>
+            <h3>Agent vocal IC</h3>
+            <p>Composer et exécuter des rencontres orales plurilingues.</p>
+            <p class="requirement">Nécessite le serveur Agent vocal sur <code>8788</code>.</p>
+            <a class="primary-action" href="http://127.0.0.1:8788/library-1.1.html">Ouvrir l’Agent vocal</a>
+          </article>
+
+          <article class="project-card demo-card">
+            <div class="card-meta"><span class="badge frozen">Démonstrateur gelé</span><span>V0.6.5</span></div>
+            <h3>Informaticaire</h3>
+            <p>Retrouver, documenter et relier les ressources, acteurs et projets d’intercompréhension.</p>
+            <p class="requirement">Servi directement par le Hub ; aucune dépendance locale supplémentaire.</p>
+            <a class="primary-action" href="/demos/informaticaire/">Ouvrir Informaticaire</a>
+          </article>
+
+          <article class="project-card service-card">
+            <div class="card-meta"><span class="badge developing">Service en développement</span><span>Contrat 0.1</span></div>
+            <h3>Dico-IC</h3>
+            <p>Administrer et fournir des connaissances plurilingues explicables.</p>
+            <p class="requirement">Nécessite la stack Dico et le serveur Node sur <code>3000</code>.</p>
+            <a class="primary-action" href="http://127.0.0.1:3000/admin-app/index-admin-0.1.html">Ouvrir l’administration Dico-IC</a>
+          </article>
+
+          <article class="project-card service-card">
+            <div class="card-meta"><span class="badge developing">Application en développement</span><span>Connectée à Dico-IC</span></div>
+            <h3>Seven Sieves</h3>
+            <p>Guider la lecture et l’inférence grâce aux sept tamis.</p>
+            <p class="requirement">Nécessite la stack Dico et le serveur Node sur <code>3000</code>.</p>
+            <a class="primary-action" href="http://127.0.0.1:3000/prototypes/01-seven-sieves/index-api-live-0.1.html">Ouvrir Seven Sieves</a>
+          </article>
+        </div>
+      </section>
+
+      <footer>
+        Les services locaux arrêtés n’empêchent pas l’ouverture du portail : lancez-les seulement avant leur démonstration.
+      </footer>
+    </main>
+  </body>
+</html>

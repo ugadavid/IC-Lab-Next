@@ -8,7 +8,13 @@
     main{max-width:960px;margin:auto;background:#fff;padding:28px;border:1px solid #d9e0e8;border-radius:14px;box-shadow:0 10px 30px #1923301a}
     .notice{padding:12px 14px;border-radius:9px;background:#fff4df;color:#7a4c0c;font-weight:700}
     .activity{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid #d9e0e8;padding:18px 0}
+    .activity-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px}
     a{color:#325f8f;font-weight:700;margin-left:12px} small{color:#667085}
+    .activity-actions a{margin-left:0}
+    .activity-actions button{padding:8px 11px;border:0;border-radius:6px;background:#325f8f;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+    .activity-actions button:disabled{cursor:wait;opacity:.65}
+    .duplicate-status{flex-basis:100%;min-height:1.2em;text-align:right;color:#667085;font-size:.9rem}
+    .duplicate-status[data-state="error"]{color:#9a3d3d;font-weight:700}
   </style>
 </head>
 <body><main>
@@ -24,9 +30,38 @@
     library.innerHTML = payload.activities.map(activity => `
       <article class="activity"><div><h2>${escapeHtml(activity.title || activity.id)}</h2>
       <small>${escapeHtml(activity.id)} · version ${escapeHtml(activity.version || "—")} · ${activity.segments?.length || 0} segments</small></div>
-      <div><a href="/teacher/preview/${encodeURIComponent(activity.id)}">Prévisualiser</a>
+      <div class="activity-actions"><a href="/teacher/preview/${encodeURIComponent(activity.id)}">Prévisualiser</a>
       <a href="/teacher/edit/${encodeURIComponent(activity.id)}">Modifier l’activité</a>
-      <a href="/student/${encodeURIComponent(activity.id)}">Vue étudiant</a></div></article>`).join("");
+      <a href="/student/${encodeURIComponent(activity.id)}">Vue étudiant</a>
+      <button type="button" data-duplicate-id="${escapeHtml(activity.id)}">Dupliquer l’activité</button>
+      <span class="duplicate-status" role="status" aria-live="polite"></span></div></article>`).join("");
   }).catch(error => { library.textContent = "Impossible de charger la bibliothèque : " + error.message; });
+  library.addEventListener("click", async event => {
+    const button = event.target.closest("[data-duplicate-id]");
+    if (!button || button.disabled) return;
+    const sourceId = button.dataset.duplicateId;
+    const status = button.parentElement.querySelector(".duplicate-status");
+    button.disabled = true;
+    button.setAttribute("aria-busy", "true");
+    button.textContent = "Duplication en cours…";
+    status.dataset.state = "saving";
+    status.textContent = "Création d’une copie indépendante…";
+    try {
+      const response = await fetch(`/api/proto05/activities/${encodeURIComponent(sourceId)}/duplicate`, { method: "POST" });
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(payload?.error || "Duplication refusée par l’API.");
+      const copyId = payload?.activity?.id;
+      if (typeof copyId !== "string" || !copyId || copyId === sourceId) throw new Error("Réponse de duplication invalide.");
+      status.dataset.state = "success";
+      status.textContent = "Copie créée. Ouverture de l’atelier auteur…";
+      location.assign(`/teacher/author/${encodeURIComponent(copyId)}`);
+    } catch (error) {
+      status.dataset.state = "error";
+      status.textContent = `Échec de la duplication : ${error.message || "API indisponible."}`;
+      button.disabled = false;
+      button.removeAttribute("aria-busy");
+      button.textContent = "Dupliquer l’activité";
+    }
+  });
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
 </script></body></html>

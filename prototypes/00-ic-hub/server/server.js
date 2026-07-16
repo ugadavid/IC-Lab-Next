@@ -10,7 +10,7 @@ const modelMetadataEnrichment = require("./ai/modelMetadataEnrichment");
 const openAiRuntime = require("./ai/openaiRuntime");
 
 const PORT = Number(process.env.PORT || 8790);
-const VERSION = "0.10.3";
+const VERSION = "0.10.4";
 const SERVICE = "ic-hub-local";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
@@ -2968,8 +2968,8 @@ async function serveStatic(response, url) {
   }
 
   const redirects = new Map([
-    ["/", "/portal-0.10.3.html"],
-    ["/portal.html", "/portal-0.10.3.html"],
+    ["/", "/portal-0.10.4.html"],
+    ["/portal.html", "/portal-0.10.4.html"],
     ["/student.html", "/student-0.7.1.html"],
     ["/teacher.html", "/teacher-0.7.1.html"],
     ["/hub.html", "/hub-0.9.6.html"],

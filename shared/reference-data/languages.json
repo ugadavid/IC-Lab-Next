@@ -1,0 +1,20 @@
+{
+  "languages": [
+    {
+      "id": "fr",
+      "label": "Français"
+    },
+    {
+      "id": "es",
+      "label": "Espagnol"
+    },
+    {
+      "id": "it",
+      "label": "Italien"
+    },
+    {
+      "id": "pt",
+      "label": "Portugais"
+    }
+  ]
+}

@@ -12,9 +12,9 @@ function findChromium() {
   const candidates = [
     process.env.CHROME_PATH,
     process.env.EDGE_PATH,
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
     "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
     "/usr/bin/google-chrome",
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
@@ -26,13 +26,14 @@ function findChromium() {
 async function runChromium(chromium, url, profileDirectory, options = {}) {
   const virtualTimeBudget = options.virtualTimeBudget || 6000;
   const timeout = options.timeout || 15000;
+  const windowSize = options.windowSize || "1440,1000";
   const argumentsList = [
     "--headless=new",
     "--disable-gpu",
-    "--disable-software-rasterizer",
-    "--disable-gpu-compositing",
+    "--no-sandbox",
     "--no-first-run",
     "--no-default-browser-check",
+    `--window-size=${windowSize}`,
     `--user-data-dir=${profileDirectory}`,
     `--virtual-time-budget=${virtualTimeBudget}`,
     "--dump-dom",

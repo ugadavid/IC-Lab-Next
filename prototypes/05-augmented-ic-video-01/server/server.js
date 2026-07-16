@@ -7,7 +7,7 @@ const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.7";
+const VERSION = "0.1.11";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -16,6 +16,7 @@ const INDEX_FILE = "index-0.0.8.html";
 const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
 const HLS_PREFIX = "/api/hls/";
+const LANGUAGE_CATALOG_FILE = path.resolve(process.env.PROTO05_LANGUAGE_CATALOG_FILE || path.join(ROOT_DIR, "..", "..", "shared", "reference-data", "languages.json"));
 const STATIC_TYPES = Object.freeze({
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -44,6 +45,20 @@ const VIDEO_CATALOG = Object.freeze([
     authorized: true
   })
 ]);
+function loadLanguageCatalog() {
+  const parsed = JSON.parse(fsSync.readFileSync(LANGUAGE_CATALOG_FILE, "utf8"));
+  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.languages)) throw new Error("Référentiel partagé des langues invalide.");
+  const identifiers = new Set();
+  const languages = parsed.languages.map(language => {
+    if (!language || typeof language !== "object" || Array.isArray(language) || typeof language.id !== "string" || !language.id || typeof language.label !== "string" || !language.label) throw new Error("Entrée invalide dans le référentiel partagé des langues.");
+    if (identifiers.has(language.id)) throw new Error(`Identifiant de langue partagé dupliqué : ${language.id}.`);
+    identifiers.add(language.id);
+    return Object.freeze({ id: language.id, label: language.label });
+  });
+  return Object.freeze(languages);
+}
+const LANGUAGE_CATALOG = loadLanguageCatalog();
+const LANGUAGE_CATALOG_BY_ID = new Map(LANGUAGE_CATALOG.map(language => [language.id, language]));
 let writeQueue = Promise.resolve();
 
 function sendJson(response, status, payload, headers = {}) {
@@ -106,47 +121,281 @@ function integerTime(value, label, durationMs = Infinity) {
   if (!Number.isInteger(value) || value < 0 || value > durationMs) throw new Error(`${label} doit être un entier positif dans la durée vidéo.`);
 }
 
+function requireObject(value, label) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${label} doit être un objet.`);
+  return value;
+}
+
+function requireIdentifier(value, label) {
+  if (typeof value !== "string" || !value) throw new Error(`${label} doit avoir un identifiant non vide.`);
+  return value;
+}
+
+function collectionIdentifiers(activity, key, label) {
+  const collection = activity[key];
+  if (!Array.isArray(collection)) throw new Error(`${key} doit être un tableau.`);
+  const identifiers = new Set();
+  for (const item of collection) {
+    requireObject(item, label);
+    const id = requireIdentifier(item.id, label);
+    if (identifiers.has(id)) throw new Error(`Identifiant dupliqué dans ${key} : ${id}.`);
+    identifiers.add(id);
+  }
+  return identifiers;
+}
+
+function validateReferences(values, available, label) {
+  if (!Array.isArray(values)) throw new Error(`${label} doit être un tableau.`);
+  const references = new Set();
+  for (const id of values) {
+    if (typeof id !== "string" || !id) throw new Error(`${label} contient une référence invalide.`);
+    if (references.has(id)) throw new Error(`${label} contient un identifiant dupliqué : ${id}.`);
+    if (!available.has(id)) throw new Error(`${label} référence un identifiant inexistant : ${id}.`);
+    references.add(id);
+  }
+  return references;
+}
+
+function validateActivityIntegrity(activity) {
+  requireObject(activity, "L’activité");
+  const durationMs = activity.video?.durationMs || Infinity;
+  const identifiers = {
+    speakers: collectionIdentifiers(activity, "speakers", "Chaque locuteur"),
+    languages: collectionIdentifiers(activity, "languages", "Chaque langue"),
+    segments: collectionIdentifiers(activity, "segments", "Chaque segment"),
+    languageIntervals: collectionIdentifiers(activity, "languageIntervals", "Chaque intervalle linguistique"),
+    layers: collectionIdentifiers(activity, "layers", "Chaque couche"),
+    phenomena: collectionIdentifiers(activity, "phenomena", "Chaque phénomène"),
+    teacherAnnotations: collectionIdentifiers(activity, "teacherAnnotations", "Chaque annotation")
+  };
+
+  const allIdentifiers = new Map();
+  const registerIdentifier = (id, label) => {
+    requireIdentifier(id, label);
+    if (allIdentifiers.has(id)) throw new Error(`Identifiant dupliqué entre ${allIdentifiers.get(id)} et ${label} : ${id}.`);
+    allIdentifiers.set(id, label);
+  };
+  for (const [key, values] of Object.entries(identifiers)) for (const id of values) registerIdentifier(id, key);
+
+  const transcription = requireObject(activity.transcription, "La transcription");
+  registerIdentifier(transcription.id, "transcription");
+  if (transcription.languageId !== null && transcription.languageId !== undefined) {
+    if (typeof transcription.languageId !== "string" || !identifiers.languages.has(transcription.languageId)) {
+      throw new Error(`La transcription référence une langue inexistante : ${String(transcription.languageId)}.`);
+    }
+  }
+  validateReferences(transcription.segmentIds, identifiers.segments, "transcription.segmentIds");
+
+  const phenomenaBySegment = new Map();
+  for (const segment of activity.segments) {
+    if (typeof segment.text !== "string") throw new Error(`Le segment ${segment.id} doit contenir un texte.`);
+    integerTime(segment.startMs, `startMs du segment ${segment.id}`, durationMs);
+    integerTime(segment.endMs, `endMs du segment ${segment.id}`, durationMs);
+    if (segment.startMs >= segment.endMs) throw new Error(`Le segment ${segment.id} doit commencer avant sa fin.`);
+    validateReferences(segment.languageIds, identifiers.languages, `Le segment ${segment.id} (langues)`);
+    validateReferences(segment.speakerIds, identifiers.speakers, `Le segment ${segment.id} (locuteurs)`);
+    validateReferences(segment.phenomenonIds, identifiers.phenomena, `Le segment ${segment.id} (phénomènes)`);
+    for (const phenomenonId of segment.phenomenonIds) {
+      if (!phenomenaBySegment.has(phenomenonId)) phenomenaBySegment.set(phenomenonId, []);
+      phenomenaBySegment.get(phenomenonId).push(segment.id);
+    }
+  }
+
+  for (const interval of activity.languageIntervals) {
+    if (typeof interval.languageId !== "string" || !identifiers.languages.has(interval.languageId)) throw new Error(`L’intervalle ${interval.id} référence une langue inexistante : ${String(interval.languageId)}.`);
+    if (interval.segmentId && !identifiers.segments.has(interval.segmentId)) throw new Error(`L’intervalle ${interval.id} référence un segment inexistant : ${interval.segmentId}.`);
+    integerTime(interval.startMs, `startMs de l’intervalle ${interval.id}`, durationMs);
+    integerTime(interval.endMs, `endMs de l’intervalle ${interval.id}`, durationMs);
+    if (interval.startMs >= interval.endMs) throw new Error(`L’intervalle ${interval.id} doit commencer avant sa fin.`);
+  }
+
+  for (const phenomenon of activity.phenomena) {
+    if (typeof phenomenon.layerId !== "string" || !identifiers.layers.has(phenomenon.layerId)) throw new Error(`Le phénomène ${phenomenon.id} référence une couche inexistante : ${String(phenomenon.layerId)}.`);
+    if (typeof phenomenon.segmentId !== "string" || !identifiers.segments.has(phenomenon.segmentId)) throw new Error(`Le phénomène ${phenomenon.id} référence un segment inexistant : ${String(phenomenon.segmentId)}.`);
+    integerTime(phenomenon.startMs, `startMs du phénomène ${phenomenon.id}`, durationMs);
+    integerTime(phenomenon.endMs, `endMs du phénomène ${phenomenon.id}`, durationMs);
+    if (phenomenon.startMs >= phenomenon.endMs) throw new Error(`Le phénomène ${phenomenon.id} doit commencer avant sa fin.`);
+    const declaredSegments = phenomenaBySegment.get(phenomenon.id) || [];
+    if (declaredSegments.length !== 1 || declaredSegments[0] !== phenomenon.segmentId) {
+      throw new Error(`Références de phénomène incohérentes pour ${phenomenon.id} : phénomène=${phenomenon.segmentId}, segments=${declaredSegments.join(", ") || "aucun"}.`);
+    }
+  }
+
+  for (const annotation of activity.teacherAnnotations) {
+    if (annotation.segmentId && !identifiers.segments.has(annotation.segmentId)) throw new Error(`L’annotation ${annotation.id} référence un segment inexistant : ${annotation.segmentId}.`);
+    if (annotation.overlay !== undefined && annotation.overlay !== null) {
+      requireObject(annotation.overlay, `L’overlay de l’annotation ${annotation.id}`);
+      validateReferences(annotation.overlay.layerIds, identifiers.layers, `L’overlay de l’annotation ${annotation.id} (couches)`);
+    }
+  }
+
+  const layerConfiguration = requireObject(activity.layerConfiguration, "La configuration de couches");
+  registerIdentifier(layerConfiguration.id, "layerConfiguration");
+  for (const key of ["defaultVisibleLayerIds", "learnerVisibleLayerIds", "teacherVisibleLayerIds"]) {
+    validateReferences(layerConfiguration[key], identifiers.layers, `layerConfiguration.${key}`);
+  }
+  if (typeof layerConfiguration.allowLearnerToggle !== "boolean") throw new Error("layerConfiguration.allowLearnerToggle doit être un booléen.");
+  const learnerVisible = new Set(layerConfiguration.learnerVisibleLayerIds);
+  const invalidDefaults = layerConfiguration.defaultVisibleLayerIds.filter(id => !learnerVisible.has(id));
+  if (invalidDefaults.length) throw new Error(`Les couches visibles par défaut doivent être visibles par les étudiants : ${invalidDefaults.join(", ")}.`);
+}
+
+function validateSharedLanguageSelection(languages, currentLanguages) {
+  if (!Array.isArray(languages)) throw new Error("languages doit être un tableau.");
+  const current = Array.isArray(currentLanguages) ? currentLanguages : [];
+  const currentUsesSharedCatalog = current.length === 0 || current.every(language => LANGUAGE_CATALOG_BY_ID.has(language?.id));
+  if (!currentUsesSharedCatalog) {
+    if (JSON.stringify(languages) !== JSON.stringify(current)) throw new Error("Les langues historiques de cette activité restent en lecture seule sans migration explicite.");
+    return;
+  }
+  for (const language of languages) {
+    const reference = LANGUAGE_CATALOG_BY_ID.get(language?.id);
+    if (!reference) throw new Error(`Langue absente du référentiel partagé : ${String(language?.id)}.`);
+    if (language.label !== reference.label || language.code !== reference.id.toUpperCase()) throw new Error(`La langue ${reference.id} doit reprendre le code et le libellé du référentiel partagé.`);
+  }
+}
+
 function validateAuthoringPatch(payload, current) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
   const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "segments", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]);
   const unknown = Object.keys(payload).filter(key => !allowed.has(key));
   if (unknown.length) throw new Error(`Champ non autorisé : ${unknown.join(", ")}.`);
-  const metadata = validateMetadataPatch(Object.fromEntries(Object.entries(payload).filter(([key]) => ["title", "description", "instruction", "pedagogicalQuestion", "videoId"].includes(key))));
-  const durationMs = current.video?.durationMs || Infinity;
-  const availableLanguages = new Set((payload.languages || current.languages || []).map(item => item.id));
-  const availableLayers = new Set((payload.layers || current.layers || []).map(item => item.id));
-  const availableSegments = new Set((payload.segments || current.segments || []).map(item => item.id));
-  if ([...availableLayers].some(id => !id) || (payload.layers && availableLayers.size !== payload.layers.length)) throw new Error("Les identifiants de couches doivent être uniques.");
-  if (payload.segments !== undefined) {
-    if (!Array.isArray(payload.segments)) throw new Error("segments doit être un tableau.");
-    for (const segment of payload.segments) {
-      if (!segment || typeof segment.id !== "string" || !segment.id || typeof segment.text !== "string") throw new Error("Segment invalide.");
-      integerTime(segment.startMs, "startMs", durationMs); integerTime(segment.endMs, "endMs", durationMs);
-      if (segment.startMs >= segment.endMs) throw new Error("Chaque segment doit commencer avant sa fin.");
-      if (!Array.isArray(segment.languageIds) || !Array.isArray(segment.speakerIds)) throw new Error("Les références d’un segment sont invalides.");
-      if (segment.languageIds.some(id => !availableLanguages.has(id))) throw new Error("Un segment référence une langue inconnue.");
-      if (segment.speakerIds.some(id => !(current.speakers || []).some(speaker => speaker.id === id))) throw new Error("Un segment référence un locuteur inconnu.");
-    }
+  validateMetadataPatch(Object.fromEntries(Object.entries(payload).filter(([key]) => ["title", "description", "instruction", "pedagogicalQuestion", "videoId"].includes(key))));
+  const next = { ...current };
+  for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
+  if (payload.videoId !== undefined) {
+    const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId && entry.authorized);
+    next.video = { ...current.video, id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
   }
-  if (payload.languageIntervals !== undefined) {
-    if (!Array.isArray(payload.languageIntervals)) throw new Error("languageIntervals doit être un tableau.");
-    const intervalIds = new Set();
-    for (const interval of payload.languageIntervals) { if (!interval?.id || intervalIds.has(interval.id) || !interval?.languageId || !availableLanguages.has(interval.languageId) || (interval.segmentId && !availableSegments.has(interval.segmentId))) throw new Error("Intervalle linguistique invalide."); intervalIds.add(interval.id); integerTime(interval.startMs, "startMs", durationMs); integerTime(interval.endMs, "endMs", durationMs); if (interval.startMs >= interval.endMs) throw new Error("Un intervalle doit commencer avant sa fin."); }
-  }
-  if (payload.phenomena !== undefined) {
-    if (!Array.isArray(payload.phenomena)) throw new Error("phenomena doit être un tableau.");
-    for (const phenomenon of payload.phenomena) { if (!phenomenon?.id || !phenomenon?.layerId || !availableLayers.has(phenomenon.layerId) || (phenomenon.segmentId && !availableSegments.has(phenomenon.segmentId))) throw new Error("Occurrence de phénomène invalide."); integerTime(phenomenon.startMs, "startMs", durationMs); integerTime(phenomenon.endMs, "endMs", durationMs); if (phenomenon.startMs >= phenomenon.endMs) throw new Error("Une occurrence doit commencer avant sa fin."); }
-  }
-  for (const key of ["languages", "layers", "teacherAnnotations", "layerConfiguration"]) if (payload[key] !== undefined && (typeof payload[key] !== "object" || payload[key] === null)) throw new Error(`${key} invalide.`);
-  if (payload.teacherAnnotations && payload.teacherAnnotations.some(annotation => annotation.segmentId && !availableSegments.has(annotation.segmentId))) throw new Error("Une annotation référence un segment inconnu.");
-  return metadata;
+  validateSharedLanguageSelection(next.languages, current.languages);
+  validateActivityIntegrity(next);
+  return next;
 }
 
 function draftActivity(videoId, metadata = {}) {
   const video = VIDEO_CATALOG.find(entry => entry.id === videoId && entry.authorized);
   if (!video) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
-  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: { id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs }, transcription: { id: `transcription-${id}`, languageId: "lang-fr", segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: { id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs }, transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+}
+
+function uniqueCopyActivityId(activities) {
+  const existingIds = new Set(activities.map(activity => activity && activity.id).filter(Boolean));
+  let id;
+  do {
+    id = `proto05-copy-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+  } while (existingIds.has(id));
+  return id;
+}
+
+function remapCollection(items, activityId, kind) {
+  if (!Array.isArray(items)) throw new Error(`${kind} doit être un tableau.`);
+  const identifiers = new Map();
+  const copies = items.map((item, index) => {
+    if (!item || typeof item !== "object" || typeof item.id !== "string" || !item.id || identifiers.has(item.id)) {
+      throw new Error(`Les identifiants ${kind} doivent être présents et uniques.`);
+    }
+    const id = `${kind}-${activityId}-${index + 1}`;
+    identifiers.set(item.id, id);
+    return { ...item, id };
+  });
+  return { copies, identifiers };
+}
+
+function remapReferences(values, identifiers, label) {
+  if (!Array.isArray(values)) throw new Error(`${label} doit être un tableau.`);
+  return values.map(value => {
+    const remapped = identifiers.get(value);
+    if (!remapped) throw new Error(`${label} référence un identifiant inconnu.`);
+    return remapped;
+  });
+}
+
+function duplicateActivity(source, activities) {
+  if (!source || typeof source !== "object") throw new Error("Activité source invalide.");
+  validateActivityIntegrity(source);
+  const videoId = source.video && source.video.id;
+  validateMetadataPatch({
+    title: source.title,
+    description: source.description,
+    instruction: source.instruction || "",
+    pedagogicalQuestion: source.pedagogicalQuestion || "",
+    videoId
+  });
+  if (!source.transcription || typeof source.transcription !== "object") throw new Error("Transcription source invalide.");
+  if (!source.layerConfiguration || typeof source.layerConfiguration !== "object") throw new Error("Configuration de couches source invalide.");
+
+  const id = uniqueCopyActivityId(activities);
+  const speakers = remapCollection(source.speakers, id, "speaker");
+  const languages = remapCollection(source.languages, id, "language");
+  const segments = remapCollection(source.segments, id, "segment");
+  const intervals = remapCollection(source.languageIntervals, id, "language-interval");
+  const layers = remapCollection(source.layers, id, "layer");
+  const phenomena = remapCollection(source.phenomena, id, "phenomenon");
+  const annotations = remapCollection(source.teacherAnnotations, id, "annotation");
+
+  segments.copies = segments.copies.map(segment => ({
+    ...segment,
+    speakerIds: remapReferences(segment.speakerIds, speakers.identifiers, "speakerIds"),
+    languageIds: remapReferences(segment.languageIds, languages.identifiers, "languageIds"),
+    phenomenonIds: remapReferences(segment.phenomenonIds || [], phenomena.identifiers, "phenomenonIds")
+  }));
+  intervals.copies = intervals.copies.map(interval => ({
+    ...interval,
+    languageId: remapReferences([interval.languageId], languages.identifiers, "languageId")[0],
+    segmentId: remapReferences([interval.segmentId], segments.identifiers, "segmentId")[0]
+  }));
+  phenomena.copies = phenomena.copies.map(phenomenon => ({
+    ...phenomenon,
+    segmentId: remapReferences([phenomenon.segmentId], segments.identifiers, "segmentId")[0],
+    layerId: remapReferences([phenomenon.layerId], layers.identifiers, "layerId")[0]
+  }));
+  annotations.copies = annotations.copies.map(annotation => ({
+    ...annotation,
+    segmentId: remapReferences([annotation.segmentId], segments.identifiers, "segmentId")[0],
+    ...(annotation.overlay && typeof annotation.overlay === "object" ? {
+      overlay: {
+        ...annotation.overlay,
+        layerIds: remapReferences(annotation.overlay.layerIds || [], layers.identifiers, "overlay.layerIds")
+      }
+    } : {})
+  }));
+
+  const transcriptionLanguageId = languages.identifiers.get(source.transcription.languageId);
+  if (!transcriptionLanguageId && languages.copies.length) throw new Error("La transcription référence une langue inconnue.");
+  const copy = {
+    id,
+    version: typeof source.version === "string" ? source.version : "0.1.0",
+    status: "draft",
+    title: `Copie de ${source.title || source.id}`.slice(0, 5000),
+    description: source.description || "",
+    instruction: source.instruction || "",
+    pedagogicalQuestion: source.pedagogicalQuestion || "",
+    video: { ...source.video },
+    transcription: {
+      ...source.transcription,
+      id: `transcription-${id}`,
+      languageId: transcriptionLanguageId || source.transcription.languageId,
+      segmentIds: remapReferences(source.transcription.segmentIds, segments.identifiers, "transcription.segmentIds")
+    },
+    segments: segments.copies,
+    speakers: speakers.copies,
+    languages: languages.copies,
+    languageIntervals: intervals.copies,
+    layers: layers.copies,
+    phenomena: phenomena.copies,
+    teacherAnnotations: annotations.copies,
+    layerConfiguration: {
+      ...source.layerConfiguration,
+      id: `layer-config-${id}`,
+      defaultVisibleLayerIds: remapReferences(source.layerConfiguration.defaultVisibleLayerIds, layers.identifiers, "defaultVisibleLayerIds"),
+      learnerVisibleLayerIds: remapReferences(source.layerConfiguration.learnerVisibleLayerIds, layers.identifiers, "learnerVisibleLayerIds"),
+      teacherVisibleLayerIds: remapReferences(source.layerConfiguration.teacherVisibleLayerIds, layers.identifiers, "teacherVisibleLayerIds")
+    }
+  };
+
+  validateActivityIntegrity(copy);
+  return copy;
 }
 
 async function persistActivities(store) {
@@ -179,13 +428,32 @@ async function handleApi(request, response, url) {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
     return sendJson(response, 200, { videos: VIDEO_CATALOG });
   }
+  if (url.pathname === "/api/proto05/language-catalog") {
+    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
+    return sendJson(response, 200, { languages: LANGUAGE_CATALOG });
+  }
+  const duplicateMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)\/duplicate$/);
+  if (duplicateMatch) {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    const id = decodeURIComponent(duplicateMatch[1]);
+    const store = await readActivities();
+    const source = store.activities.find(activity => activity && activity.id === id);
+    if (!source) return sendJson(response, 404, { error: "Activité introuvable." });
+    let activity;
+    try { activity = duplicateActivity(source, store.activities); }
+    catch (error) { return sendJson(response, 400, { error: error.message || "Duplication invalide." }); }
+    store.activities.push(activity); store.updatedAt = new Date().toISOString();
+    try { await persistActivities(store); }
+    catch (error) { console.error(`[data] duplication Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Duplication JSON impossible." }); }
+    return sendJson(response, 201, activityResponse(store, activity));
+  }
   if (url.pathname === "/api/proto05/activities" && request.method === "POST") {
     let payload;
     try { payload = validateMetadataPatch(JSON.parse(await readRequestBody(request))); }
     catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
     const store = await readActivities();
     let activity;
-    try { activity = draftActivity(payload.videoId, payload); }
+    try { activity = draftActivity(payload.videoId, payload); validateActivityIntegrity(activity); }
     catch (error) { return sendJson(response, 400, { error: error.message }); }
     store.activities.push(activity); store.updatedAt = new Date().toISOString();
     try { await persistActivities(store); } catch { return sendJson(response, 500, { error: "Création JSON impossible." }); }
@@ -197,10 +465,9 @@ async function handleApi(request, response, url) {
       const id = decodeURIComponent(url.pathname.slice("/api/proto05/activities/".length, -"/authoring".length));
       const store = await readActivities(); const index = store.activities.findIndex(activity => activity && activity.id === id);
       if (index < 0) return sendJson(response, 404, { error: "Activité introuvable." });
-      let payload; try { payload = JSON.parse(await readRequestBody(request)); validateAuthoringPatch(payload, store.activities[index]); } catch (error) { return sendJson(response, 400, { error: error.message || "Données d’atelier invalides." }); }
-      const current = store.activities[index]; const next = { ...current };
-      for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
-      if (payload.videoId !== undefined) { const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId); next.video = { ...current.video, id: video.id, title: video.title, proxyUrl: video.proxyUrl, durationMs: video.durationMs }; }
+      let payload; let next;
+      try { payload = JSON.parse(await readRequestBody(request)); next = validateAuthoringPatch(payload, store.activities[index]); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Données d’atelier invalides." }); }
       next.status = "draft"; store.activities[index] = next; store.updatedAt = new Date().toISOString();
       try { await persistActivities(store); } catch { return sendJson(response, 500, { error: "Sauvegarde de l’atelier impossible." }); }
       return sendJson(response, 200, activityResponse(store, next));
@@ -220,6 +487,8 @@ async function handleApi(request, response, url) {
         const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId);
         next.video = { ...current.video, id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
       }
+      try { validateActivityIntegrity(next); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Activité invalide." }); }
       store.activities[index] = next;
       store.updatedAt = new Date().toISOString();
       try { await persistActivities(store); }

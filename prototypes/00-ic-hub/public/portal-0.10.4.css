@@ -1,0 +1,53 @@
+:root {
+  color: #17231f;
+  background: #f4f6f3;
+  font-family: Arial, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body { margin: 0; }
+
+.portal-shell { max-width: 1200px; margin: 0 auto; padding: 2rem 1.25rem 3rem; }
+
+.hero { max-width: 760px; padding: 1.5rem 0 2.5rem; }
+
+.eyebrow { margin: 0 0 .5rem; color: #356457; font-size: .78rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+h1, h2, h3, p { margin-top: 0; }
+h1 { margin-bottom: .7rem; font-size: clamp(2rem, 5vw, 3.45rem); letter-spacing: -.04em; }
+h2 { margin-bottom: 0; font-size: 1.55rem; }
+h3 { margin-bottom: .65rem; font-size: 1.25rem; }
+
+.intro { max-width: 680px; color: #43534e; font-size: 1.12rem; line-height: 1.55; }
+
+.secondary-action, .primary-action { display: inline-flex; align-items: center; border-radius: 7px; font-weight: 700; text-decoration: none; }
+.secondary-action { padding: .7rem .9rem; border: 1px solid #214d43; color: #214d43; }
+.primary-action { margin-top: auto; padding: .72rem .9rem; background: #214d43; color: #fff; }
+.primary-action:hover, .primary-action:focus { background: #173c34; }
+.secondary-action:hover, .secondary-action:focus { background: #e6eeea; }
+
+.section-heading { margin-bottom: 1rem; }
+.card-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.project-card { display: flex; flex-direction: column; min-height: 255px; padding: 1.25rem; border: 1px solid #d2ddd7; border-radius: 10px; background: #fff; box-shadow: 0 2px 10px rgba(23, 35, 31, .04); }
+.project-card p { line-height: 1.45; }
+.proto05-card { grid-column: 1 / -1; min-height: 0; }
+.action-group { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: auto; }
+.action-group .primary-action, .action-group .secondary-action { margin-top: 0; }
+.card-meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .55rem; margin-bottom: 1rem; color: #52625c; font-size: .84rem; }
+.badge { display: inline-flex; padding: .24rem .48rem; border-radius: 999px; font-size: .75rem; font-weight: 700; }
+.demo { background: #e9f0ed; color: #285a4e; }
+.active { background: #dff2e6; color: #17623c; }
+.frozen { background: #eef0f1; color: #4f5c62; }
+.developing { background: #fff0d4; color: #7a5110; }
+.requirement { color: #52625c; font-size: .9rem; }
+code { font-family: Consolas, monospace; }
+footer { margin-top: 2rem; color: #52625c; font-size: .9rem; }
+
+@media (max-width: 720px) {
+  .portal-shell { padding-top: 1rem; }
+  .card-grid { grid-template-columns: 1fr; }
+  .project-card { min-height: 0; }
+  .action-group { display: grid; }
+  .action-group a { justify-content: center; }
+}

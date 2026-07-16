@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-13T18:23:47.041Z",
+  "updatedAt": "2026-07-16T19:38:41.228Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -811,6 +811,837 @@
       "instruction": "",
       "pedagogicalQuestion": "",
       "status": "draft"
+    },
+    {
+      "id": "proto05-draft-1784218562686-f87014",
+      "version": "0.1.0",
+      "status": "draft",
+      "title": "MboloTest",
+      "description": "Maintenant oui",
+      "instruction": "C'est ok",
+      "pedagogicalQuestion": "Kékidi?",
+      "video": {
+        "id": "video-proto05-uga-37004",
+        "title": "Vidéo augmentée IC — source UGA",
+        "kind": "hls",
+        "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
+        "durationMs": 939217
+      },
+      "transcription": {
+        "id": "transcription-proto05-draft-1784218562686-f87014",
+        "languageId": "lang-fr",
+        "segmentIds": []
+      },
+      "segments": [],
+      "speakers": [],
+      "languages": [],
+      "languageIntervals": [],
+      "layers": [],
+      "phenomena": [],
+      "teacherAnnotations": [],
+      "layerConfiguration": {
+        "id": "layer-config-proto05-draft-1784218562686-f87014",
+        "defaultVisibleLayerIds": [],
+        "learnerVisibleLayerIds": [],
+        "teacherVisibleLayerIds": [],
+        "allowLearnerToggle": true
+      }
+    },
+    {
+      "id": "proto05-draft-1784219853222-b9e6a5",
+      "version": "0.1.0",
+      "status": "draft",
+      "title": "Lbinz",
+      "description": "Une description",
+      "instruction": "Une consigne",
+      "pedagogicalQuestion": "Une question pédagogique",
+      "video": {
+        "id": "video-proto05-uga-37004",
+        "title": "Vidéo augmentée IC — source UGA",
+        "kind": "hls",
+        "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
+        "durationMs": 939217
+      },
+      "transcription": {
+        "id": "transcription-proto05-draft-1784219853222-b9e6a5",
+        "languageId": "lang-fr",
+        "segmentIds": []
+      },
+      "segments": [],
+      "speakers": [],
+      "languages": [],
+      "languageIntervals": [],
+      "layers": [],
+      "phenomena": [],
+      "teacherAnnotations": [],
+      "layerConfiguration": {
+        "id": "layer-config-proto05-draft-1784219853222-b9e6a5",
+        "defaultVisibleLayerIds": [],
+        "learnerVisibleLayerIds": [],
+        "teacherVisibleLayerIds": [],
+        "allowLearnerToggle": true
+      }
+    },
+    {
+      "id": "proto05-copy-1784223289628-f9a025",
+      "version": "0.1.2",
+      "status": "draft",
+      "title": "Original_copy",
+      "description": "Lecture synchronisée de moments plurilingues, avec annotations pédagogiques IC.",
+      "instruction": "",
+      "pedagogicalQuestion": "",
+      "video": {
+        "id": "video-proto05-uga-37004",
+        "title": "Vidéo augmentée IC — source UGA",
+        "kind": "hls",
+        "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
+        "durationMs": 939217
+      },
+      "transcription": {
+        "id": "transcription-proto05-copy-1784223289628-f9a025",
+        "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+        "segmentIds": [
+          "segment-proto05-copy-1784223289628-f9a025-1",
+          "segment-proto05-copy-1784223289628-f9a025-2",
+          "segment-proto05-copy-1784223289628-f9a025-3",
+          "segment-proto05-copy-1784223289628-f9a025-4",
+          "segment-proto05-copy-1784223289628-f9a025-5",
+          "segment-proto05-copy-1784223289628-f9a025-6",
+          "segment-proto05-copy-1784223289628-f9a025-7",
+          "segment-proto05-copy-1784223289628-f9a025-8",
+          "segment-proto05-copy-1784223289628-f9a025-9",
+          "segment-proto05-copy-1784223289628-f9a025-10",
+          "segment-proto05-copy-1784223289628-f9a025-11"
+        ]
+      },
+      "segments": [
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 2000,
+          "endMs": 23000,
+          "text": "On va faire un essai, donc chacun va pouvoir se présenter dans sa langue, donc son nom, son université, les langues connues, les études, activités préférées, projets...",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-1",
+            "phenomenon-proto05-copy-1784223289628-f9a025-2"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 32000,
+          "endMs": 58000,
+          "text": "Bonjour, moi c’est Marie... J’étudie à l’Université Grenoble-Alpes en master en didactique des langues, en particulier le français langue étrangère.",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-2"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-3",
+            "phenomenon-proto05-copy-1784223289628-f9a025-4"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-3",
+          "startMs": 58000,
+          "endMs": 84000,
+          "text": "Je parle le français, l’anglais, l’italien couramment. J’apprends l’espagnol cette année... j’ai habité un an en République tchèque...",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-2"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-1",
+            "language-proto05-copy-1784223289628-f9a025-3",
+            "language-proto05-copy-1784223289628-f9a025-2"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-5",
+            "phenomenon-proto05-copy-1784223289628-f9a025-6"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-4",
+          "startMs": 91000,
+          "endMs": 102000,
+          "text": "Vous avez bien compris ? Oui, je crois que tout le monde comprend bien le français, donc pas de problème.",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-7",
+            "phenomenon-proto05-copy-1784223289628-f9a025-8"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-5",
+          "startMs": 100000,
+          "endMs": 118000,
+          "text": "On change de langue. Allez, on change de langue. Nicoli, Andréa, Évelyne, Julien, qui veut commencer ?",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-9",
+            "phenomenon-proto05-copy-1784223289628-f9a025-10"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-6",
+          "startMs": 118000,
+          "endMs": 136000,
+          "text": "Io sono di Espaa, studio en la Universidad de Salamanca. Sto facendo la carrera de Estudios franceses...",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-3"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-3",
+            "language-proto05-copy-1784223289628-f9a025-2",
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-11",
+            "phenomenon-proto05-copy-1784223289628-f9a025-12",
+            "phenomenon-proto05-copy-1784223289628-f9a025-13"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-7",
+          "startMs": 143000,
+          "endMs": 172000,
+          "text": "Entiendo la mayoría del francés... l’italiano un poco... portugués nunca lo he estudiado, pero alguna parola sí que la entiendo...",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-3"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-2",
+            "language-proto05-copy-1784223289628-f9a025-1",
+            "language-proto05-copy-1784223289628-f9a025-3",
+            "language-proto05-copy-1784223289628-f9a025-4"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-14",
+            "phenomenon-proto05-copy-1784223289628-f9a025-15"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-8",
+          "startMs": 176000,
+          "endMs": 185000,
+          "text": "Alors, ça va ? Tout compris ? Un mot difficile, une expression plus difficile ?",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-16",
+            "phenomenon-proto05-copy-1784223289628-f9a025-17"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-9",
+          "startMs": 186000,
+          "endMs": 225000,
+          "text": "La carrera... comment on dit ça en français, Marie ? La filière... Carrière, non ? Littéralement, oui... mais en français on dirait plutôt un cursus, un diplôme, une filière.",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-1",
+            "speaker-proto05-copy-1784223289628-f9a025-5"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-2",
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-18",
+            "phenomenon-proto05-copy-1784223289628-f9a025-19",
+            "phenomenon-proto05-copy-1784223289628-f9a025-20"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-10",
+          "startMs": 241000,
+          "endMs": 273000,
+          "text": "Bueno, hola a todos. Mi chiamo Yassin, soy de Espagna... Vivo in Francia, in Lyon... estudio la carrera de el CEO espagnol...",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-4"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-2",
+            "language-proto05-copy-1784223289628-f9a025-3",
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-21",
+            "phenomenon-proto05-copy-1784223289628-f9a025-22",
+            "phenomenon-proto05-copy-1784223289628-f9a025-23"
+          ]
+        },
+        {
+          "id": "segment-proto05-copy-1784223289628-f9a025-11",
+          "startMs": 273000,
+          "endMs": 302000,
+          "text": "Mucho gusto, Yassine. Alors, bien compris ? Une question, une précision ? Oui, je hablo espagnol, français, anglais, un peu de catalan...",
+          "speakerIds": [
+            "speaker-proto05-copy-1784223289628-f9a025-1",
+            "speaker-proto05-copy-1784223289628-f9a025-4"
+          ],
+          "languageIds": [
+            "language-proto05-copy-1784223289628-f9a025-2",
+            "language-proto05-copy-1784223289628-f9a025-1"
+          ],
+          "phenomenonIds": [
+            "phenomenon-proto05-copy-1784223289628-f9a025-24",
+            "phenomenon-proto05-copy-1784223289628-f9a025-25",
+            "phenomenon-proto05-copy-1784223289628-f9a025-26"
+          ]
+        }
+      ],
+      "speakers": [
+        {
+          "id": "speaker-proto05-copy-1784223289628-f9a025-1",
+          "label": "Présentateur 1"
+        },
+        {
+          "id": "speaker-proto05-copy-1784223289628-f9a025-2",
+          "label": "Présentateur 2"
+        },
+        {
+          "id": "speaker-proto05-copy-1784223289628-f9a025-3",
+          "label": "Présentateur 4"
+        },
+        {
+          "id": "speaker-proto05-copy-1784223289628-f9a025-4",
+          "label": "Présentateur 6"
+        },
+        {
+          "id": "speaker-proto05-copy-1784223289628-f9a025-5",
+          "label": "groupe"
+        }
+      ],
+      "languages": [
+        {
+          "id": "language-proto05-copy-1784223289628-f9a025-1",
+          "code": "FR",
+          "label": "français"
+        },
+        {
+          "id": "language-proto05-copy-1784223289628-f9a025-2",
+          "code": "ES",
+          "label": "espagnol"
+        },
+        {
+          "id": "language-proto05-copy-1784223289628-f9a025-3",
+          "code": "IT",
+          "label": "italien"
+        },
+        {
+          "id": "language-proto05-copy-1784223289628-f9a025-4",
+          "code": "PT",
+          "label": "portugais"
+        }
+      ],
+      "languageIntervals": [
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 2000,
+          "endMs": 23000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-1"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-2",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 32000,
+          "endMs": 58000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-2"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-3",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 58000,
+          "endMs": 84000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-3"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-4",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "startMs": 58000,
+          "endMs": 84000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-3"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-5",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 58000,
+          "endMs": 84000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-3"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-6",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 91000,
+          "endMs": 102000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-4"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-7",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 100000,
+          "endMs": 118000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-5"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-8",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "startMs": 118000,
+          "endMs": 136000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-6"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-9",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 118000,
+          "endMs": 136000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-6"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-10",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 118000,
+          "endMs": 136000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-6"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-11",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-12",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-13",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-14",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-4",
+          "startMs": 143000,
+          "endMs": 172000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-15",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 176000,
+          "endMs": 185000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-8"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-16",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 186000,
+          "endMs": 225000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-9"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-17",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 186000,
+          "endMs": 225000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-9"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-18",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 241000,
+          "endMs": 273000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-10"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-19",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "startMs": 241000,
+          "endMs": 273000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-10"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-20",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 241000,
+          "endMs": 273000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-10"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-21",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 273000,
+          "endMs": 302000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-11"
+        },
+        {
+          "id": "language-interval-proto05-copy-1784223289628-f9a025-22",
+          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 273000,
+          "endMs": 302000,
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-11"
+        }
+      ],
+      "layers": [
+        {
+          "id": "layer-proto05-copy-1784223289628-f9a025-1",
+          "label": "Présentation",
+          "description": "",
+          "color": "#6d9ed1"
+        },
+        {
+          "id": "layer-proto05-copy-1784223289628-f9a025-2",
+          "label": "Changement de langue",
+          "description": "",
+          "color": "#6d9ed1"
+        },
+        {
+          "id": "layer-proto05-copy-1784223289628-f9a025-3",
+          "label": "Compréhension collective",
+          "description": "",
+          "color": "#6d9ed1"
+        },
+        {
+          "id": "layer-proto05-copy-1784223289628-f9a025-4",
+          "label": "Clarification",
+          "description": "",
+          "color": "#6d9ed1"
+        },
+        {
+          "id": "layer-proto05-copy-1784223289628-f9a025-5",
+          "label": "Négociation du sens",
+          "description": "",
+          "color": "#6d9ed1"
+        },
+        {
+          "id": "layer-proto05-copy-1784223289628-f9a025-6",
+          "label": "Mot-piège",
+          "description": "",
+          "color": "#6d9ed1"
+        },
+        {
+          "id": "layer-proto05-copy-1784223289628-f9a025-7",
+          "label": "Répertoire plurilingue",
+          "description": "",
+          "color": "#6d9ed1"
+        }
+      ],
+      "phenomena": [
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-3",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-2",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 32000,
+          "endMs": 58000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-4",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-2",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-7",
+          "startMs": 32000,
+          "endMs": 58000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-5",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-3",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-7",
+          "startMs": 58000,
+          "endMs": 84000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-6",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-3",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 58000,
+          "endMs": 84000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-7",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-4",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-3",
+          "startMs": 91000,
+          "endMs": 102000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-8",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-4",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-4",
+          "startMs": 91000,
+          "endMs": 102000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-9",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-5",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 100000,
+          "endMs": 118000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-10",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-5",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-1",
+          "startMs": 100000,
+          "endMs": 118000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-11",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-6",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-2",
+          "startMs": 118000,
+          "endMs": 136000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-12",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-6",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-7",
+          "startMs": 118000,
+          "endMs": 136000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-13",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-6",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-6",
+          "startMs": 118000,
+          "endMs": 136000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-14",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-7",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-7",
+          "startMs": 143000,
+          "endMs": 172000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-15",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-7",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-3",
+          "startMs": 143000,
+          "endMs": 172000
+        },
+        {
+          "id": "phenomenon-proto05-copy-1784223289628-f9a025-16",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-8",
+          "layerId": "layer-proto05-copy-1784223289628-f9a025-4",
+          "startMs": 176000,
+          "endMs": 185000
+        }
+      ],
+      "teacherAnnotations": [
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-1",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-1",
+          "note": "Le dispositif est posé comme un tour de présentation plurilingue : chacun peut mobiliser sa langue et son répertoire.",
+          "pedagogicalQuestion": "Comment le cadre autorise-t-il chaque personne à utiliser son propre répertoire linguistique ?",
+          "overlay": {
+            "title": "Cadre plurilingue",
+            "text": "Chacun peut se présenter dans sa langue et rendre son répertoire visible.",
+            "layerIds": [
+              "layer-proto05-copy-1784223289628-f9a025-1",
+              "layer-proto05-copy-1784223289628-f9a025-7"
+            ]
+          }
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-2",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-2",
+          "note": "Présentation de soi et ancrage institutionnel. Moment utile pour observer la mise en place d’un contexte partagé.",
+          "pedagogicalQuestion": "Quels éléments de présentation créent un contexte partagé pour le groupe ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-3",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-3",
+          "note": "Le répertoire linguistique est explicité : langues maîtrisées, langues en cours d’apprentissage, expérience de mobilité.",
+          "pedagogicalQuestion": "Que nous apprend ce segment sur la diversité des compétences dans un même répertoire ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-4",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-4",
+          "note": "Premier contrôle collectif de compréhension. La compréhension devient un objet partagé, pas seulement individuel.",
+          "pedagogicalQuestion": "Qu’est-ce que le groupe vérifie collectivement à ce moment ?",
+          "overlay": {
+            "title": "Compréhension collective",
+            "text": "Le groupe vérifie si la compréhension est suffisamment partagée pour continuer.",
+            "layerIds": [
+              "layer-proto05-copy-1784223289628-f9a025-3",
+              "layer-proto05-copy-1784223289628-f9a025-4"
+            ]
+          }
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-5",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-5",
+          "note": "Le changement de langue est annoncé et ritualisé. C’est un marqueur fort pour une vidéo augmentée IC.",
+          "pedagogicalQuestion": "Comment le changement de langue est-il préparé pour ne pas devenir une rupture ?",
+          "overlay": {
+            "title": "Changement de langue",
+            "text": "Le passage à une autre langue est annoncé comme une étape normale de l’échange.",
+            "layerIds": [
+              "layer-proto05-copy-1784223289628-f9a025-2",
+              "layer-proto05-copy-1784223289628-f9a025-1"
+            ]
+          }
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-6",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-6",
+          "note": "Segment hybride : italien, espagnol et français se croisent. Le mot carrera apparaît dans un contexte d’études.",
+          "pedagogicalQuestion": "Quel indice permet déjà d’interpréter le mot carrera avant la clarification ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-7",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-7",
+          "note": "La participante décrit une compréhension partielle mais opératoire : comprendre certaines langues sans les avoir toutes étudiées.",
+          "pedagogicalQuestion": "Comment ce segment montre-t-il une compréhension partielle mais utile ?",
+          "overlay": {
+            "title": "Répertoire plurilingue",
+            "text": "La compréhension partielle devient une ressource : quelques langues, quelques mots, assez pour avancer.",
+            "layerIds": [
+              "layer-proto05-copy-1784223289628-f9a025-7",
+              "layer-proto05-copy-1784223289628-f9a025-3"
+            ]
+          }
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-8",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-8",
+          "note": "Invitation à signaler une difficulté. Ce type de relance ouvre la négociation du sens.",
+          "pedagogicalQuestion": "Où voit-on l’ouverture d’un espace de clarification ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-9",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-9",
+          "note": "Moment central : le groupe répare collectivement un faux ami partiel entre carrera et carrière.",
+          "pedagogicalQuestion": "Où voit-on une négociation du sens autour de carrera ?",
+          "overlay": {
+            "title": "Moment pédagogiquement riche",
+            "text": "La carrera... comment on dit ça en français ?",
+            "layerIds": [
+              "layer-proto05-copy-1784223289628-f9a025-6",
+              "layer-proto05-copy-1784223289628-f9a025-5",
+              "layer-proto05-copy-1784223289628-f9a025-4"
+            ]
+          }
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-10",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-10",
+          "note": "Nouveau segment plurilingue spontané : le participant mobilise plusieurs langues dans une même présentation.",
+          "pedagogicalQuestion": "Comment le participant combine-t-il plusieurs langues pour rester compréhensible ?",
+          "overlay": null
+        },
+        {
+          "id": "annotation-proto05-copy-1784223289628-f9a025-11",
+          "segmentId": "segment-proto05-copy-1784223289628-f9a025-11",
+          "note": "Le groupe revient à la compréhension et au répertoire linguistique. On observe la circulation entre présentation, clarification et pluralité des langues.",
+          "pedagogicalQuestion": "Qu’est-ce que le groupe comprend collectivement du répertoire de Yassine ?",
+          "overlay": {
+            "title": "Répertoire partagé",
+            "text": "Le groupe rassemble des indices sur les langues disponibles et sur ce qui a été compris.",
+            "layerIds": [
+              "layer-proto05-copy-1784223289628-f9a025-4",
+              "layer-proto05-copy-1784223289628-f9a025-3",
+              "layer-proto05-copy-1784223289628-f9a025-7"
+            ]
+          }
+        }
+      ],
+      "layerConfiguration": {
+        "id": "layer-config-proto05-copy-1784223289628-f9a025",
+        "defaultVisibleLayerIds": [
+          "layer-proto05-copy-1784223289628-f9a025-1",
+          "layer-proto05-copy-1784223289628-f9a025-2",
+          "layer-proto05-copy-1784223289628-f9a025-3",
+          "layer-proto05-copy-1784223289628-f9a025-4",
+          "layer-proto05-copy-1784223289628-f9a025-5",
+          "layer-proto05-copy-1784223289628-f9a025-6",
+          "layer-proto05-copy-1784223289628-f9a025-7"
+        ],
+        "learnerVisibleLayerIds": [
+          "layer-proto05-copy-1784223289628-f9a025-2",
+          "layer-proto05-copy-1784223289628-f9a025-3",
+          "layer-proto05-copy-1784223289628-f9a025-4",
+          "layer-proto05-copy-1784223289628-f9a025-5",
+          "layer-proto05-copy-1784223289628-f9a025-6",
+          "layer-proto05-copy-1784223289628-f9a025-7",
+          "layer-proto05-copy-1784223289628-f9a025-1"
+        ],
+        "teacherVisibleLayerIds": [
+          "layer-proto05-copy-1784223289628-f9a025-1",
+          "layer-proto05-copy-1784223289628-f9a025-2",
+          "layer-proto05-copy-1784223289628-f9a025-3",
+          "layer-proto05-copy-1784223289628-f9a025-4",
+          "layer-proto05-copy-1784223289628-f9a025-5",
+          "layer-proto05-copy-1784223289628-f9a025-6",
+          "layer-proto05-copy-1784223289628-f9a025-7"
+        ],
+        "allowLearnerToggle": true
+      }
+    },
+    {
+      "id": "proto05-draft-1784230655360-d1182f",
+      "version": "0.1.0",
+      "status": "draft",
+      "title": "brouillon_vide",
+      "description": "Yop",
+      "instruction": "",
+      "pedagogicalQuestion": "",
+      "video": {
+        "id": "video-proto05-uga-37004",
+        "title": "Vidéo augmentée IC — source UGA",
+        "kind": "hls",
+        "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
+        "durationMs": 939217
+      },
+      "transcription": {
+        "id": "transcription-proto05-draft-1784230655360-d1182f",
+        "languageId": null,
+        "segmentIds": []
+      },
+      "segments": [],
+      "speakers": [],
+      "languages": [],
+      "languageIntervals": [],
+      "layers": [],
+      "phenomena": [],
+      "teacherAnnotations": [],
+      "layerConfiguration": {
+        "id": "layer-config-proto05-draft-1784230655360-d1182f",
+        "defaultVisibleLayerIds": [],
+        "learnerVisibleLayerIds": [],
+        "teacherVisibleLayerIds": [],
+        "allowLearnerToggle": true
+      }
     }
   ]
 }

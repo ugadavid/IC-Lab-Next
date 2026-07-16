@@ -149,6 +149,7 @@ bus de données entre tous les prototypes.
 | Proto06 | `server/data/activities.json` | Activités du backend vocal. Le Hub les consulte par HTTP pour son connecteur; les manifestes publiés du Hub restent une donnée transversale distincte. |
 | Informaticaire | `data.js` | Corpus statique chargé par la page. Les contributions et exports sont préparés côté navigateur; le corpus n’est ni une base officielle ni une donnée Hub. |
 | Dico-IC | MariaDB `ic_dico` dans `ic_lab_next_mariadb_data` | Lexique, relations, formes et objets pédagogiques. Seven Sieves consomme l’API et ne lit jamais MariaDB directement. |
+| Workspace IC-Lab-Next | `shared/reference-data/languages.json` | Petit dictionnaire transversal en lecture seule. Il définit uniquement les identifiants stables et libellés communs des langues ; il ne possède ni activités ni annotations. |
 
 Les médias HLS restent externes au dépôt et au modèle de données Proto05. Les
 documents privés d’entretien, secrets, journaux, bases locales, dépendances et
@@ -250,6 +251,10 @@ la chaîne HLS complète, ni pour sa dépendance locale à hls.js.
   par l’architecture actuelle.
 - **Données** : chaque composant reste propriétaire de sa source. Un accès de
   compatibilité à un fichier voisin ne transfère pas cette propriété.
+- **Référentiels partagés** : les dictionnaires minimaux placés dans
+  `shared/reference-data/` appartiennent au workspace et sont lus sans écriture
+  par les composants autorisés. Ils ne remplacent pas les données métier des
+  activités et n’entraînent aucune migration automatique.
 - **Base de données** : `ic_dico` appartient à Dico-IC. L’éventuel schéma
   `ic_hub` appartient au Hub; aucune table Dico-IC ne doit être utilisée comme
   stockage Hub.

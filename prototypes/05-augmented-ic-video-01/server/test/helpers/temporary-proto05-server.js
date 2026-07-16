@@ -7,6 +7,8 @@ const path = require("node:path");
 const { spawn } = require("node:child_process");
 
 const serverDirectory = path.resolve(__dirname, "..", "..");
+const sourcePrototypeDirectory = path.resolve(serverDirectory, "..");
+const sourceLanguageCatalogFile = path.resolve(sourcePrototypeDirectory, "..", "..", "shared", "reference-data", "languages.json");
 
 async function freePort() {
   const server = http.createServer();
@@ -49,11 +51,26 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const prototypeDirectory = path.join(root, "prototype");
   const temporaryServerDirectory = path.join(prototypeDirectory, "server");
   const temporaryDataDirectory = path.join(prototypeDirectory, "data");
+  const temporaryReferenceDirectory = path.join(root, "shared", "reference-data");
   fs.mkdirSync(temporaryServerDirectory, { recursive: true });
   fs.mkdirSync(temporaryDataDirectory, { recursive: true });
+  fs.mkdirSync(temporaryReferenceDirectory, { recursive: true });
   const serverFile = path.join(temporaryServerDirectory, "server.js");
   const dataFile = path.join(temporaryDataDirectory, "activities.json");
+  const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
+  fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
+  for (const file of ["teacher-create.html", "teacher-author.html", "index-0.0.8.html"]) {
+    fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));
+  }
+  const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
+  fs.mkdirSync(temporarySharedDirectory, { recursive: true });
+  for (const file of ["ic-timeline.js", "ic-timeline.css"]) {
+    fs.copyFileSync(path.join(sourcePrototypeDirectory, "shared", file), path.join(temporarySharedDirectory, file));
+  }
+  const temporaryHlsDirectory = path.join(root, "00-ic-hub", "server", "node_modules", "hls.js", "dist");
+  fs.mkdirSync(temporaryHlsDirectory, { recursive: true });
+  fs.writeFileSync(path.join(temporaryHlsDirectory, "hls.min.js"), "window.Hls={isSupported:()=>false};\n", "utf8");
   fs.writeFileSync(dataFile, `${JSON.stringify(store, null, 2)}\n`, "utf8");
 
   const port = await freePort();
@@ -61,7 +78,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   let stderr = "";
   const child = spawn(process.execPath, [serverFile], {
     cwd: temporaryServerDirectory,
-    env: { ...process.env, PORT: String(port) },
+    env: { ...process.env, PORT: String(port), PROTO05_LANGUAGE_CATALOG_FILE: languageCatalogFile },
     windowsHide: true
   });
   child.stderr.setEncoding("utf8");
@@ -78,6 +95,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   return {
     baseUrl,
     dataFile,
+    languageCatalogFile,
     root,
     async stop() { await stopChild(child); },
     async cleanup() {

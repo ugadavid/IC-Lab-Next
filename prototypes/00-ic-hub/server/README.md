@@ -1,4 +1,4 @@
-# IC-Lab Hub V0.10.3
+# IC-Lab Hub V0.10.4
 
 Hub local experimental place au-dessus des prototypes IC-Lab. Il gere des comptes demo, des roles, des cours, des inscriptions, des prototypes disponibles et des assignations d'activites.
 
@@ -12,7 +12,8 @@ npm start
 Le serveur ecoute par defaut sur `http://localhost:8790`.
 
 La racine `/` est le portail public de demonstration IC-Lab-Next. Elle propose
-des routes locales stables pour les demonstrateurs statiques, sans les copier :
+des accès directs aux vues étudiante et enseignantes de Proto05, ainsi que des
+routes locales stables pour les démonstrateurs, sans les copier :
 
 - `/demos/augmented-video/` ;
 - `/demos/informaticaire/`.
@@ -68,7 +69,7 @@ Le chargement Proto05 est une lecture seule du fixture propriétaire `prototypes
 
 ## Pages
 
-- `/` et `/portal.html` : portail de demonstration V0.10.3 ;
+- `/` et `/portal.html` : portail de demonstration V0.10.4 ;
 - `/login.html`
 - `/hub.html`
 - `/teacher.html`
