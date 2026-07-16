@@ -158,6 +158,12 @@ chaque activité et ses références (`transcription.languageId`,
 dictionnaire en lecture seule, valide les sélections contre lui et conserve les
 identifiants globaux lors d’une duplication.
 
+Les locuteurs suivent la frontière opposée : chaque activité possède sa propre
+collection `speakers`. Les segments la référencent par `speakerIds`; les
+éventuelles références d’annotation restent elles aussi locales à l’activité.
+Il n’existe pas de dictionnaire partagé de locuteurs. Une duplication régénère
+leurs identifiants et remappe les références internes.
+
 Les médias HLS restent externes au dépôt et au modèle de données Proto05. Les
 documents privés d’entretien, secrets, journaux, bases locales, dépendances et
 sauvegardes runtime ne sont pas des données partagées du workspace.
@@ -172,13 +178,13 @@ actuelle.
 
 Proto05 est désormais autonome pour ses pages, son API et son JSON. Son moteur de
 lecture et sa prévisualisation enseignant utilisent le même fichier
-`index-0.0.8.html`.
+`index-0.0.9.html`.
 
 ```text
                        serveur Proto05 :8791
 ┌──────────────────────────────────────────────────────────────┐
 │ Routes étudiant / prévisualisation                           │
-│   -> moteur partagé index-0.0.8.html                         │
+│   -> moteur partagé index-0.0.9.html                         │
 │      -> lecteur HLS, transcription, couches, observations    │
 │      -> shared/ic-timeline.js + shared/ic-timeline.css       │
 │                                                              │
@@ -189,7 +195,7 @@ lecture et sa prévisualisation enseignant utilisent le même fichier
 │ API /api/proto05                                             │
 │   -> catalogue vidéo contrôlé                                │
 │   -> référentiel de langues partagé en lecture seule          │
-│   -> lecture, création et mise à jour des activités          │
+│   -> lecture, création, mise à jour et suppression           │
 │   -> validation + écriture JSON atomique + copie .bak        │
 └───────────────────────────┬──────────────────────────────────┘
                             │
@@ -215,11 +221,27 @@ enseignantes et configuration de visibilité. Les temps sont des millisecondes
 entières. La timeline partagée rend les langues et phénomènes sur un repère
 commun, avec des interactions adaptées au mode étudiant ou auteur.
 
+Dans l’atelier auteur, les locuteurs de `activity.speakers` peuvent être ajoutés,
+renommés et sélectionnés dans les segments. Leur identifiant n’est pas éditable
+après création. Une suppression est bloquée si un segment ou une annotation
+référence encore le locuteur ; le serveur contrôle également cette intégrité à
+la sauvegarde.
+
+La relation canonique entre phénomène et transcription est
+`phenomena[].segmentId`. Les temps du phénomène restent indépendants de ceux du
+segment. `segments[].phenomenonIds`, encore présent dans les activités
+historiques, n’est qu’un cache dérivé : aucun affichage ne le prend comme source
+et toute écriture le valide strictement contre les `segmentId` des phénomènes.
+
 Le serveur expose actuellement des écritures locales : création d’un brouillon
 par `POST /api/proto05/activities`, mise à jour des métadonnées par
-`PUT /api/proto05/activities/:id` et sauvegarde de l’atelier par
-`PUT /api/proto05/activities/:id/authoring`. Ces opérations ne sont pas protégées
-par une authentification ou des droits réels.
+`PUT /api/proto05/activities/:id`, sauvegarde de l’atelier par
+`PUT /api/proto05/activities/:id/authoring` et suppression explicite par
+`DELETE /api/proto05/activities/:id`. La suppression exige un identifiant unique
+et valide ; l’interface demande une confirmation contenant titre et identifiant.
+Comme les autres écritures, elle crée une copie `.bak` puis remplace le JSON par
+renommage atomique. Ces opérations ne sont pas protégées par une authentification
+ou des droits réels.
 
 ## Dépendances provisoires Proto05 ↔ IC-Hub
 
@@ -304,7 +326,7 @@ Les divergences les plus structurantes sont :
 | Source | Information ancienne ou contradictoire | État retenu ici |
 |---|---|---|
 | `PROJECTS_LAUNCH.md` | Son introduction décrit Proto05 sur `8791`, mais sa section détaillée le présente encore comme un fichier statique sans port | Serveur autonome `8791`, vérifié dans le launcher, le package et `server.js` |
-| README racine et README Proto05 | Référencent encore `0.0.6`/`0.0.6.2` et présentent le serveur autonome comme futur | Le serveur sert `index-0.0.8.html`, version serveur/package `0.1.7` |
+| README racine et README Proto05 | Référencent encore `0.0.6`/`0.0.6.2` et présentent le serveur autonome comme futur | Le serveur sert `index-0.0.9.html`, version serveur/package `0.1.15` |
 | README IC-Hub | Présente la séparation Proto05 comme future | La séparation existe; seules les routes de compatibilité et le HLS restent au Hub |
 | README du serveur Proto05 | Affirme d’abord que `PUT` métadonnées est la seule écriture, puis documente l’atelier | Le code expose aussi `POST` de création et `PUT .../authoring` |
 | Guide des launchers Windows | Sa phrase d’ouverture omet Proto05 | `start-all.bat` lance effectivement Proto05 en premier |

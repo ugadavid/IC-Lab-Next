@@ -7,12 +7,12 @@ const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.12";
+const VERSION = "0.1.15";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "activities.json");
-const INDEX_FILE = "index-0.0.8.html";
+const INDEX_FILE = "index-0.0.9.html";
 const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
 const HLS_PREFIX = "/api/hls/";
@@ -131,6 +131,14 @@ function requireIdentifier(value, label) {
   return value;
 }
 
+function decodeDeletionIdentifier(value) {
+  let id;
+  try { id = decodeURIComponent(value); }
+  catch { throw new Error("Identifiant d’activité invalide."); }
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$/.test(id)) throw new Error("Identifiant d’activité invalide.");
+  return id;
+}
+
 function collectionIdentifiers(activity, key, label) {
   const collection = activity[key];
   if (!Array.isArray(collection)) throw new Error(`${key} doit être un tableau.`);
@@ -186,7 +194,12 @@ function validateActivityIntegrity(activity) {
   }
   validateReferences(transcription.segmentIds, identifiers.segments, "transcription.segmentIds");
 
-  const phenomenaBySegment = new Map();
+  for (const speaker of activity.speakers) {
+    if (typeof speaker.label !== "string" || !speaker.label.trim() || speaker.label.length > 500) {
+      throw new Error(`Le locuteur ${speaker.id} doit avoir un libellé non vide de 500 caractères maximum.`);
+    }
+  }
+
   for (const segment of activity.segments) {
     if (typeof segment.text !== "string") throw new Error(`Le segment ${segment.id} doit contenir un texte.`);
     integerTime(segment.startMs, `startMs du segment ${segment.id}`, durationMs);
@@ -194,11 +207,6 @@ function validateActivityIntegrity(activity) {
     if (segment.startMs >= segment.endMs) throw new Error(`Le segment ${segment.id} doit commencer avant sa fin.`);
     validateReferences(segment.languageIds, identifiers.languages, `Le segment ${segment.id} (langues)`);
     validateReferences(segment.speakerIds, identifiers.speakers, `Le segment ${segment.id} (locuteurs)`);
-    validateReferences(segment.phenomenonIds, identifiers.phenomena, `Le segment ${segment.id} (phénomènes)`);
-    for (const phenomenonId of segment.phenomenonIds) {
-      if (!phenomenaBySegment.has(phenomenonId)) phenomenaBySegment.set(phenomenonId, []);
-      phenomenaBySegment.get(phenomenonId).push(segment.id);
-    }
   }
 
   for (const interval of activity.languageIntervals) {
@@ -209,20 +217,33 @@ function validateActivityIntegrity(activity) {
     if (interval.startMs >= interval.endMs) throw new Error(`L’intervalle ${interval.id} doit commencer avant sa fin.`);
   }
 
+  const phenomenonIdsBySegment = new Map(activity.segments.map(segment => [segment.id, []]));
   for (const phenomenon of activity.phenomena) {
     if (typeof phenomenon.layerId !== "string" || !identifiers.layers.has(phenomenon.layerId)) throw new Error(`Le phénomène ${phenomenon.id} référence une couche inexistante : ${String(phenomenon.layerId)}.`);
     if (typeof phenomenon.segmentId !== "string" || !identifiers.segments.has(phenomenon.segmentId)) throw new Error(`Le phénomène ${phenomenon.id} référence un segment inexistant : ${String(phenomenon.segmentId)}.`);
     integerTime(phenomenon.startMs, `startMs du phénomène ${phenomenon.id}`, durationMs);
     integerTime(phenomenon.endMs, `endMs du phénomène ${phenomenon.id}`, durationMs);
     if (phenomenon.startMs >= phenomenon.endMs) throw new Error(`Le phénomène ${phenomenon.id} doit commencer avant sa fin.`);
-    const declaredSegments = phenomenaBySegment.get(phenomenon.id) || [];
-    if (declaredSegments.length !== 1 || declaredSegments[0] !== phenomenon.segmentId) {
-      throw new Error(`Références de phénomène incohérentes pour ${phenomenon.id} : phénomène=${phenomenon.segmentId}, segments=${declaredSegments.join(", ") || "aucun"}.`);
+    phenomenonIdsBySegment.get(phenomenon.segmentId).push(phenomenon.id);
+  }
+
+  for (const segment of activity.segments) {
+    if (segment.phenomenonIds === undefined) continue;
+    if (!Array.isArray(segment.phenomenonIds)) throw new Error(`Le segment ${segment.id} (phénomènes dérivés) doit être un tableau.`);
+    const declared = [...segment.phenomenonIds].sort();
+    const derived = [...phenomenonIdsBySegment.get(segment.id)].sort();
+    if (JSON.stringify(declared) !== JSON.stringify(derived)) {
+      throw new Error(`Références de phénomène incohérentes pour le segment ${segment.id} : phenomenonIds dérivés attendus=${derived.join(", ") || "aucun"}, reçus=${declared.join(", ") || "aucun"}. La source de vérité est phenomena[].segmentId.`);
     }
+    validateReferences(segment.phenomenonIds, identifiers.phenomena, `Le segment ${segment.id} (phénomènes dérivés)`);
   }
 
   for (const annotation of activity.teacherAnnotations) {
     if (annotation.segmentId && !identifiers.segments.has(annotation.segmentId)) throw new Error(`L’annotation ${annotation.id} référence un segment inexistant : ${annotation.segmentId}.`);
+    if (annotation.speakerId !== undefined && (typeof annotation.speakerId !== "string" || !identifiers.speakers.has(annotation.speakerId))) {
+      throw new Error(`L’annotation ${annotation.id} référence un locuteur inexistant : ${String(annotation.speakerId)}.`);
+    }
+    if (annotation.speakerIds !== undefined) validateReferences(annotation.speakerIds, identifiers.speakers, `L’annotation ${annotation.id} (locuteurs)`);
     if (annotation.overlay !== undefined && annotation.overlay !== null) {
       requireObject(annotation.overlay, `L’overlay de l’annotation ${annotation.id}`);
       validateReferences(annotation.overlay.layerIds, identifiers.layers, `L’overlay de l’annotation ${annotation.id} (couches)`);
@@ -251,12 +272,12 @@ function validateSharedLanguageSelection(languages) {
 
 function validateAuthoringPatch(payload, current) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
-  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "segments", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]);
+  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]);
   const unknown = Object.keys(payload).filter(key => !allowed.has(key));
   if (unknown.length) throw new Error(`Champ non autorisé : ${unknown.join(", ")}.`);
   validateMetadataPatch(Object.fromEntries(Object.entries(payload).filter(([key]) => ["title", "description", "instruction", "pedagogicalQuestion", "videoId"].includes(key))));
   const next = { ...current };
-  for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
+  for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
   if (payload.videoId !== undefined) {
     const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId && entry.authorized);
     next.video = { ...current.video, id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
@@ -335,8 +356,7 @@ function duplicateActivity(source, activities) {
   segments.copies = segments.copies.map(segment => ({
     ...segment,
     speakerIds: remapReferences(segment.speakerIds, speakers.identifiers, "speakerIds"),
-    languageIds: remapReferences(segment.languageIds, languages.identifiers, "languageIds"),
-    phenomenonIds: remapReferences(segment.phenomenonIds || [], phenomena.identifiers, "phenomenonIds")
+    languageIds: remapReferences(segment.languageIds, languages.identifiers, "languageIds")
   }));
   intervals.copies = intervals.copies.map(interval => ({
     ...interval,
@@ -347,6 +367,12 @@ function duplicateActivity(source, activities) {
     ...phenomenon,
     segmentId: remapReferences([phenomenon.segmentId], segments.identifiers, "segmentId")[0],
     layerId: remapReferences([phenomenon.layerId], layers.identifiers, "layerId")[0]
+  }));
+  const copiedPhenomenonIdsBySegment = new Map(segments.copies.map(segment => [segment.id, []]));
+  for (const phenomenon of phenomena.copies) copiedPhenomenonIdsBySegment.get(phenomenon.segmentId).push(phenomenon.id);
+  segments.copies = segments.copies.map(segment => ({
+    ...segment,
+    phenomenonIds: copiedPhenomenonIdsBySegment.get(segment.id)
   }));
   annotations.copies = annotations.copies.map(annotation => ({
     ...annotation,
@@ -445,6 +471,32 @@ async function handleApi(request, response, url) {
     catch (error) { console.error(`[data] duplication Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Duplication JSON impossible." }); }
     return sendJson(response, 201, activityResponse(store, activity));
   }
+  const deleteMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)$/);
+  if (request.method === "DELETE" && deleteMatch) {
+    let id;
+    try { id = decodeDeletionIdentifier(deleteMatch[1]); }
+    catch (error) { return sendJson(response, 400, { error: error.message }); }
+    const store = await readActivities();
+    const matches = store.activities
+      .map((activity, index) => activity && activity.id === id ? index : -1)
+      .filter(index => index >= 0);
+    if (!matches.length) return sendJson(response, 404, { error: "Activité introuvable." });
+    if (matches.length > 1) return sendJson(response, 409, { error: `Identifiant d’activité ambigu : ${id}.` });
+    const [index] = matches;
+    const [deleted] = store.activities.splice(index, 1);
+    store.updatedAt = new Date().toISOString();
+    try { await persistActivities(store); }
+    catch (error) {
+      console.error(`[data] suppression Proto05 impossible : ${error.message}`);
+      return sendJson(response, 500, { error: "Suppression JSON impossible." });
+    }
+    return sendJson(response, 200, {
+      schemaVersion: store.schemaVersion || "0.1",
+      updatedAt: store.updatedAt,
+      deleted: { id: deleted.id, title: deleted.title || deleted.id },
+      activitiesRemaining: store.activities.length
+    });
+  }
   if (url.pathname === "/api/proto05/activities" && request.method === "POST") {
     let payload;
     try { payload = validateMetadataPatch(JSON.parse(await readRequestBody(request))); }
@@ -493,7 +545,7 @@ async function handleApi(request, response, url) {
       catch (error) { console.error(`[data] sauvegarde Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Sauvegarde JSON impossible." }); }
       return sendJson(response, 200, activityResponse(store, next));
     }
-    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: isDetail ? "GET, PUT" : "GET" });
+    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: isDetail ? "GET, PUT, DELETE" : "GET" });
     const store = await readActivities();
     if (url.pathname === "/api/proto05/activities") {
       return sendJson(response, 200, { schemaVersion: store.schemaVersion || "0.1", updatedAt: store.updatedAt || null, activities: store.activities });

@@ -17,10 +17,17 @@ L’hypothèse n’est pas que l’annotation donne la “bonne lecture”, mais
 - Référentiel partagé des langues `fr`, `es`, `it`, `pt`, servi en lecture seule
   depuis `shared/reference-data/languages.json` et utilisé par toutes les
   activités Proto05.
+- Locuteurs définis localement dans chaque activité, avec identifiants stables
+  et sélection multiple dans les segments ; aucun dictionnaire global de
+  locuteurs.
 - Lecteur vidéo pointant vers le flux HLS fourni.
 - Colonne de transcription synchronisée.
 - Segments cliquables qui déplacent la vidéo au timestamp associé.
 - Annotation IC affichée pour le segment actif.
+- Rattachement des phénomènes aux segments défini par
+  `phenomena[].segmentId`; chaque phénomène conserve ses propres temps.
+- Bibliothèque enseignant avec duplication et suppression explicite sécurisée
+  par confirmation, sauvegarde `.bak` et remplacement atomique du JSON.
 - Badges de stratégie :
   - présentation ;
   - changement de langue ;

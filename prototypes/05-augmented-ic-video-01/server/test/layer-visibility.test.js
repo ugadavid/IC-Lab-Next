@@ -69,7 +69,7 @@ function runnerPage() {
 }
 
 function studentPageWithInertMedia() {
-  const page = fs.readFileSync(path.join(prototypeDirectory, "index-0.0.8.html"), "utf8");
+  const page = fs.readFileSync(path.join(prototypeDirectory, "index-0.0.9.html"), "utf8");
   const mediaStub = `<div id="video" data-test-media-stub></div><script>
     const testVideo = document.getElementById('video');
     testVideo.currentTime = 0;

@@ -60,7 +60,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
   fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
-  for (const file of ["teacher-create.html", "teacher-author.html", "index-0.0.8.html"]) {
+  for (const file of ["teacher.html", "teacher-create.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));
   }
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");

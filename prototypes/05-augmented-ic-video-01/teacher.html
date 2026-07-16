@@ -12,15 +12,19 @@
     a{color:#325f8f;font-weight:700;margin-left:12px} small{color:#667085}
     .activity-actions a{margin-left:0}
     .activity-actions button{padding:8px 11px;border:0;border-radius:6px;background:#325f8f;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+    .activity-actions .delete-activity{background:#9a3d3d}
     .activity-actions button:disabled{cursor:wait;opacity:.65}
-    .duplicate-status{flex-basis:100%;min-height:1.2em;text-align:right;color:#667085;font-size:.9rem}
-    .duplicate-status[data-state="error"]{color:#9a3d3d;font-weight:700}
+    .activity-status{flex-basis:100%;min-height:1.2em;text-align:right;color:#667085;font-size:.9rem}
+    .activity-status[data-state="error"]{color:#9a3d3d;font-weight:700}
+    #library-status{min-height:1.3em;color:#17633a;font-weight:700}
+    #library-status[data-state="error"]{color:#9a3d3d}
   </style>
 </head>
 <body><main>
   <h1>Préparation enseignant</h1>
   <p class="notice">Mode enseignant local de prototype — aucune authentification ni gestion réelle des droits.</p>
   <p>Bibliothèque des activités disponibles. La prévisualisation réutilise le moteur de rendu de la vue étudiant.</p><p><a href="/teacher/create">Créer une activité</a></p>
+  <p id="library-status" role="status" aria-live="polite"></p>
   <section id="library" aria-live="polite">Chargement de la bibliothèque…</section>
 </main>
 <script>
@@ -34,13 +38,49 @@
       <a href="/teacher/edit/${encodeURIComponent(activity.id)}">Modifier l’activité</a>
       <a href="/student/${encodeURIComponent(activity.id)}">Vue étudiant</a>
       <button type="button" data-duplicate-id="${escapeHtml(activity.id)}">Dupliquer l’activité</button>
-      <span class="duplicate-status" role="status" aria-live="polite"></span></div></article>`).join("");
+      <button type="button" class="delete-activity" data-delete-id="${escapeHtml(activity.id)}" data-delete-title="${escapeHtml(activity.title || activity.id)}">Supprimer l’activité</button>
+      <span class="activity-status" role="status" aria-live="polite"></span></div></article>`).join("");
   }).catch(error => { library.textContent = "Impossible de charger la bibliothèque : " + error.message; });
   library.addEventListener("click", async event => {
+    const deleteButton = event.target.closest("[data-delete-id]");
+    if (deleteButton && !deleteButton.disabled) {
+      const id = deleteButton.dataset.deleteId;
+      const title = deleteButton.dataset.deleteTitle;
+      const status = deleteButton.parentElement.querySelector(".activity-status");
+      const confirmed = confirm(`Supprimer définitivement l’activité « ${title} » (identifiant : ${id}) ?\n\nUne sauvegarde .bak sera créée avant la suppression.`);
+      if (!confirmed) {
+        status.dataset.state = "cancelled";
+        status.textContent = "Suppression annulée. Aucune donnée modifiée.";
+        return;
+      }
+      deleteButton.disabled = true;
+      deleteButton.setAttribute("aria-busy", "true");
+      deleteButton.textContent = "Suppression en cours…";
+      status.dataset.state = "saving";
+      status.textContent = "Création de la sauvegarde et suppression atomique…";
+      try {
+        const response = await fetch(`/api/proto05/activities/${encodeURIComponent(id)}`, { method: "DELETE" });
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) throw new Error(payload?.error || "Suppression refusée par l’API.");
+        if (payload?.deleted?.id !== id) throw new Error("Réponse de suppression invalide.");
+        deleteButton.closest("article.activity").remove();
+        const libraryStatus = document.getElementById("library-status");
+        libraryStatus.dataset.state = "success";
+        libraryStatus.textContent = `Activité supprimée : « ${title} » (${id}). Retour à la bibliothèque.`;
+        if (!library.querySelector("article.activity")) library.textContent = "Aucune activité disponible.";
+      } catch (error) {
+        status.dataset.state = "error";
+        status.textContent = `Échec de la suppression : ${error.message || "API indisponible."}`;
+        deleteButton.disabled = false;
+        deleteButton.removeAttribute("aria-busy");
+        deleteButton.textContent = "Supprimer l’activité";
+      }
+      return;
+    }
     const button = event.target.closest("[data-duplicate-id]");
     if (!button || button.disabled) return;
     const sourceId = button.dataset.duplicateId;
-    const status = button.parentElement.querySelector(".duplicate-status");
+    const status = button.parentElement.querySelector(".activity-status");
     button.disabled = true;
     button.setAttribute("aria-busy", "true");
     button.textContent = "Duplication en cours…";

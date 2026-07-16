@@ -157,9 +157,6 @@ function timingIssues(activity) {
   }
   for (const phenomenon of activity.phenomena) {
     checkRange(phenomenon, phenomenon.id);
-    const segment = segments.get(phenomenon.segmentId);
-    if (segment && (phenomenon.startMs !== segment.startMs || phenomenon.endMs !== segment.endMs)) issues.push(`${phenomenon.id}: désynchronisé du segment`);
-    if (segment && !segment.phenomenonIds.includes(phenomenon.id)) issues.push(`${phenomenon.id}: référence inverse absente`);
   }
   return issues;
 }
