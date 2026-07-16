@@ -1,37 +1,17 @@
 "use strict";
 
 const assert = require("node:assert/strict");
-const crypto = require("node:crypto");
 const fs = require("node:fs");
 const http = require("node:http");
 const os = require("node:os");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
 const test = require("node:test");
+const { findChromium, readBrowserResults, runChromium, sha256 } = require("./helpers/chromium");
 
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
 const canonicalDataFile = path.join(prototypeDirectory, "data", "activities.json");
 const fixtureFile = path.join(__dirname, "fixtures", "layer-visibility.activity.json");
-
-function sha256(file) {
-  return crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
-}
-
-function findChromium() {
-  const candidates = [
-    process.env.CHROME_PATH,
-    process.env.EDGE_PATH,
-    "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
-    "C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe",
-    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
-    "/usr/bin/google-chrome",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-  ].filter(Boolean);
-  return candidates.find(candidate => fs.existsSync(candidate));
-}
 
 function send(response, status, contentType, body) {
   response.writeHead(status, { "content-type": contentType, "cache-control": "no-store" });
@@ -127,54 +107,6 @@ async function startFixtureServer(requests) {
     server.listen(0, "127.0.0.1", resolve);
   });
   return server;
-}
-
-async function runChromium(chromium, url, profileDirectory) {
-  const argumentsList = [
-    "--headless=new",
-    "--disable-gpu",
-    "--disable-software-rasterizer",
-    "--disable-gpu-compositing",
-    "--no-first-run",
-    "--no-default-browser-check",
-    `--user-data-dir=${profileDirectory}`,
-    "--virtual-time-budget=6000",
-    "--dump-dom",
-    url
-  ];
-  return new Promise((resolve, reject) => {
-    const child = spawn(chromium, argumentsList, { windowsHide: true });
-    let stdout = "";
-    let stderr = "";
-    const timer = setTimeout(() => {
-      child.kill();
-      reject(new Error("Chromium n’a pas terminé le scénario de visibilité dans le délai imparti."));
-    }, 15000);
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", chunk => { stdout += chunk; });
-    child.stderr.on("data", chunk => { stderr += chunk; });
-    child.once("error", error => {
-      clearTimeout(timer);
-      reject(error);
-    });
-    child.once("close", code => {
-      clearTimeout(timer);
-      if (code !== 0) return reject(new Error(`Chromium a quitté avec le code ${code}. ${stderr.trim()}`));
-      resolve(stdout);
-    });
-  });
-}
-
-function readBrowserResults(dom) {
-  const state = dom.match(/data-test-state="([^"]+)"/)?.[1];
-  if (state !== "done") {
-    const encodedError = dom.match(/data-error="([^"]+)"/)?.[1];
-    throw new Error(encodedError ? decodeURIComponent(encodedError) : `Scénario navigateur incomplet (${state || "état absent"}).`);
-  }
-  const encodedResults = dom.match(/data-results="([^"]+)"/)?.[1];
-  if (!encodedResults) throw new Error("Chromium n’a pas restitué les résultats du scénario.");
-  return JSON.parse(decodeURIComponent(encodedResults));
 }
 
 test("visibilité des couches dans la vue étudiant", { timeout: 25000 }, async context => {
