@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-16T19:38:41.228Z",
+  "updatedAt": "2026-07-16T20:30:02.196Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -17,154 +17,154 @@
       "languageIntervals": [
         {
           "id": "language-interval-segment-01-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 2000,
           "endMs": 23000,
           "segmentId": "segment-01"
         },
         {
           "id": "language-interval-segment-02-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 32000,
           "endMs": 58000,
           "segmentId": "segment-02"
         },
         {
           "id": "language-interval-segment-03-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 58000,
           "endMs": 84000,
           "segmentId": "segment-03"
         },
         {
           "id": "language-interval-segment-03-lang-it",
-          "languageId": "lang-it",
+          "languageId": "it",
           "startMs": 58000,
           "endMs": 84000,
           "segmentId": "segment-03"
         },
         {
           "id": "language-interval-segment-03-lang-es",
-          "languageId": "lang-es",
+          "languageId": "es",
           "startMs": 58000,
           "endMs": 84000,
           "segmentId": "segment-03"
         },
         {
           "id": "language-interval-segment-04-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 91000,
           "endMs": 102000,
           "segmentId": "segment-04"
         },
         {
           "id": "language-interval-segment-05-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 100000,
           "endMs": 118000,
           "segmentId": "segment-05"
         },
         {
           "id": "language-interval-segment-06-lang-it",
-          "languageId": "lang-it",
+          "languageId": "it",
           "startMs": 118000,
           "endMs": 136000,
           "segmentId": "segment-06"
         },
         {
           "id": "language-interval-segment-06-lang-es",
-          "languageId": "lang-es",
+          "languageId": "es",
           "startMs": 118000,
           "endMs": 136000,
           "segmentId": "segment-06"
         },
         {
           "id": "language-interval-segment-06-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 118000,
           "endMs": 136000,
           "segmentId": "segment-06"
         },
         {
           "id": "language-interval-segment-07-lang-es",
-          "languageId": "lang-es",
+          "languageId": "es",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-07"
         },
         {
           "id": "language-interval-segment-07-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-07"
         },
         {
           "id": "language-interval-segment-07-lang-it",
-          "languageId": "lang-it",
+          "languageId": "it",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-07"
         },
         {
           "id": "language-interval-segment-07-lang-pt",
-          "languageId": "lang-pt",
+          "languageId": "pt",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-07"
         },
         {
           "id": "language-interval-segment-08-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 176000,
           "endMs": 185000,
           "segmentId": "segment-08"
         },
         {
           "id": "language-interval-segment-09-lang-es",
-          "languageId": "lang-es",
+          "languageId": "es",
           "startMs": 186000,
           "endMs": 225000,
           "segmentId": "segment-09"
         },
         {
           "id": "language-interval-segment-09-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 186000,
           "endMs": 225000,
           "segmentId": "segment-09"
         },
         {
           "id": "language-interval-segment-10-lang-es",
-          "languageId": "lang-es",
+          "languageId": "es",
           "startMs": 241000,
           "endMs": 273000,
           "segmentId": "segment-10"
         },
         {
           "id": "language-interval-segment-10-lang-it",
-          "languageId": "lang-it",
+          "languageId": "it",
           "startMs": 241000,
           "endMs": 273000,
           "segmentId": "segment-10"
         },
         {
           "id": "language-interval-segment-10-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 241000,
           "endMs": 273000,
           "segmentId": "segment-10"
         },
         {
           "id": "language-interval-segment-11-lang-es",
-          "languageId": "lang-es",
+          "languageId": "es",
           "startMs": 273000,
           "endMs": 302000,
           "segmentId": "segment-11"
         },
         {
           "id": "language-interval-segment-11-lang-fr",
-          "languageId": "lang-fr",
+          "languageId": "fr",
           "startMs": 273000,
           "endMs": 302000,
           "segmentId": "segment-11"
@@ -172,7 +172,7 @@
       ],
       "transcription": {
         "id": "transcription-proto05-v0",
-        "languageId": "lang-fr",
+        "languageId": "fr",
         "segmentIds": [
           "segment-01",
           "segment-02",
@@ -197,7 +197,7 @@
             "speaker-presentateur-1"
           ],
           "languageIds": [
-            "lang-fr"
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-01-01",
@@ -213,7 +213,7 @@
             "speaker-presentateur-2"
           ],
           "languageIds": [
-            "lang-fr"
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-02-01",
@@ -229,9 +229,9 @@
             "speaker-presentateur-2"
           ],
           "languageIds": [
-            "lang-fr",
-            "lang-it",
-            "lang-es"
+            "fr",
+            "it",
+            "es"
           ],
           "phenomenonIds": [
             "occurrence-03-01",
@@ -247,7 +247,7 @@
             "speaker-presentateur-1"
           ],
           "languageIds": [
-            "lang-fr"
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-04-01",
@@ -263,7 +263,7 @@
             "speaker-presentateur-1"
           ],
           "languageIds": [
-            "lang-fr"
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-05-01",
@@ -279,9 +279,9 @@
             "speaker-presentateur-4"
           ],
           "languageIds": [
-            "lang-it",
-            "lang-es",
-            "lang-fr"
+            "it",
+            "es",
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-06-01",
@@ -298,10 +298,10 @@
             "speaker-presentateur-4"
           ],
           "languageIds": [
-            "lang-es",
-            "lang-fr",
-            "lang-it",
-            "lang-pt"
+            "es",
+            "fr",
+            "it",
+            "pt"
           ],
           "phenomenonIds": [
             "occurrence-07-01",
@@ -317,7 +317,7 @@
             "speaker-presentateur-1"
           ],
           "languageIds": [
-            "lang-fr"
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-08-01",
@@ -334,8 +334,8 @@
             "speaker-groupe"
           ],
           "languageIds": [
-            "lang-es",
-            "lang-fr"
+            "es",
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-09-01",
@@ -352,9 +352,9 @@
             "speaker-presentateur-6"
           ],
           "languageIds": [
-            "lang-es",
-            "lang-it",
-            "lang-fr"
+            "es",
+            "it",
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-10-01",
@@ -372,8 +372,8 @@
             "speaker-presentateur-6"
           ],
           "languageIds": [
-            "lang-es",
-            "lang-fr"
+            "es",
+            "fr"
           ],
           "phenomenonIds": [
             "occurrence-11-01",
@@ -406,24 +406,24 @@
       ],
       "languages": [
         {
-          "id": "lang-fr",
+          "id": "fr",
           "code": "FR",
-          "label": "français"
+          "label": "Français"
         },
         {
-          "id": "lang-es",
+          "id": "es",
           "code": "ES",
-          "label": "espagnol"
+          "label": "Espagnol"
         },
         {
-          "id": "lang-it",
+          "id": "it",
           "code": "IT",
-          "label": "italien"
+          "label": "Italien"
         },
         {
-          "id": "lang-pt",
+          "id": "pt",
           "code": "PT",
-          "label": "portugais"
+          "label": "Portugais"
         }
       ],
       "layers": [
@@ -829,7 +829,7 @@
       },
       "transcription": {
         "id": "transcription-proto05-draft-1784218562686-f87014",
-        "languageId": "lang-fr",
+        "languageId": null,
         "segmentIds": []
       },
       "segments": [],
@@ -864,7 +864,7 @@
       },
       "transcription": {
         "id": "transcription-proto05-draft-1784219853222-b9e6a5",
-        "languageId": "lang-fr",
+        "languageId": null,
         "segmentIds": []
       },
       "segments": [],
@@ -899,7 +899,7 @@
       },
       "transcription": {
         "id": "transcription-proto05-copy-1784223289628-f9a025",
-        "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+        "languageId": "fr",
         "segmentIds": [
           "segment-proto05-copy-1784223289628-f9a025-1",
           "segment-proto05-copy-1784223289628-f9a025-2",
@@ -924,7 +924,7 @@
             "speaker-proto05-copy-1784223289628-f9a025-1"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-1",
@@ -940,7 +940,7 @@
             "speaker-proto05-copy-1784223289628-f9a025-2"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-3",
@@ -956,9 +956,9 @@
             "speaker-proto05-copy-1784223289628-f9a025-2"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-1",
-            "language-proto05-copy-1784223289628-f9a025-3",
-            "language-proto05-copy-1784223289628-f9a025-2"
+            "fr",
+            "it",
+            "es"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-5",
@@ -974,7 +974,7 @@
             "speaker-proto05-copy-1784223289628-f9a025-1"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-7",
@@ -990,7 +990,7 @@
             "speaker-proto05-copy-1784223289628-f9a025-1"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-9",
@@ -1006,9 +1006,9 @@
             "speaker-proto05-copy-1784223289628-f9a025-3"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-3",
-            "language-proto05-copy-1784223289628-f9a025-2",
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "it",
+            "es",
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-11",
@@ -1025,10 +1025,10 @@
             "speaker-proto05-copy-1784223289628-f9a025-3"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-2",
-            "language-proto05-copy-1784223289628-f9a025-1",
-            "language-proto05-copy-1784223289628-f9a025-3",
-            "language-proto05-copy-1784223289628-f9a025-4"
+            "es",
+            "fr",
+            "it",
+            "pt"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-14",
@@ -1044,7 +1044,7 @@
             "speaker-proto05-copy-1784223289628-f9a025-1"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-16",
@@ -1061,8 +1061,8 @@
             "speaker-proto05-copy-1784223289628-f9a025-5"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-2",
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "es",
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-18",
@@ -1079,9 +1079,9 @@
             "speaker-proto05-copy-1784223289628-f9a025-4"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-2",
-            "language-proto05-copy-1784223289628-f9a025-3",
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "es",
+            "it",
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-21",
@@ -1099,8 +1099,8 @@
             "speaker-proto05-copy-1784223289628-f9a025-4"
           ],
           "languageIds": [
-            "language-proto05-copy-1784223289628-f9a025-2",
-            "language-proto05-copy-1784223289628-f9a025-1"
+            "es",
+            "fr"
           ],
           "phenomenonIds": [
             "phenomenon-proto05-copy-1784223289628-f9a025-24",
@@ -1133,177 +1133,177 @@
       ],
       "languages": [
         {
-          "id": "language-proto05-copy-1784223289628-f9a025-1",
+          "id": "fr",
           "code": "FR",
-          "label": "français"
+          "label": "Français"
         },
         {
-          "id": "language-proto05-copy-1784223289628-f9a025-2",
+          "id": "es",
           "code": "ES",
-          "label": "espagnol"
+          "label": "Espagnol"
         },
         {
-          "id": "language-proto05-copy-1784223289628-f9a025-3",
+          "id": "it",
           "code": "IT",
-          "label": "italien"
+          "label": "Italien"
         },
         {
-          "id": "language-proto05-copy-1784223289628-f9a025-4",
+          "id": "pt",
           "code": "PT",
-          "label": "portugais"
+          "label": "Portugais"
         }
       ],
       "languageIntervals": [
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-1",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 2000,
           "endMs": 23000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-1"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-2",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 32000,
           "endMs": 58000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-2"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-3",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 58000,
           "endMs": 84000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-3"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-4",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "languageId": "it",
           "startMs": 58000,
           "endMs": 84000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-3"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-5",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "languageId": "es",
           "startMs": 58000,
           "endMs": 84000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-3"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-6",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 91000,
           "endMs": 102000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-4"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-7",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 100000,
           "endMs": 118000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-5"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-8",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "languageId": "it",
           "startMs": 118000,
           "endMs": 136000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-6"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-9",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "languageId": "es",
           "startMs": 118000,
           "endMs": 136000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-6"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-10",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 118000,
           "endMs": 136000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-6"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-11",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "languageId": "es",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-12",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-13",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "languageId": "it",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-14",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-4",
+          "languageId": "pt",
           "startMs": 143000,
           "endMs": 172000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-7"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-15",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 176000,
           "endMs": 185000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-8"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-16",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "languageId": "es",
           "startMs": 186000,
           "endMs": 225000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-9"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-17",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 186000,
           "endMs": 225000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-9"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-18",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "languageId": "es",
           "startMs": 241000,
           "endMs": 273000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-10"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-19",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-3",
+          "languageId": "it",
           "startMs": 241000,
           "endMs": 273000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-10"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-20",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 241000,
           "endMs": 273000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-10"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-21",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-2",
+          "languageId": "es",
           "startMs": 273000,
           "endMs": 302000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-11"
         },
         {
           "id": "language-interval-proto05-copy-1784223289628-f9a025-22",
-          "languageId": "language-proto05-copy-1784223289628-f9a025-1",
+          "languageId": "fr",
           "startMs": 273000,
           "endMs": 302000,
           "segmentId": "segment-proto05-copy-1784223289628-f9a025-11"
@@ -1630,8 +1630,44 @@
       },
       "segments": [],
       "speakers": [],
-      "languages": [],
-      "languageIntervals": [],
+      "languages": [
+        {
+          "id": "fr",
+          "code": "FR",
+          "label": "Français"
+        },
+        {
+          "id": "es",
+          "code": "ES",
+          "label": "Espagnol"
+        }
+      ],
+      "languageIntervals": [
+        {
+          "id": "interval-draft-1784233724941",
+          "languageId": "fr",
+          "startMs": 0,
+          "endMs": 1000
+        },
+        {
+          "id": "interval-draft-1784233734393",
+          "languageId": "es",
+          "startMs": 1000,
+          "endMs": 2000
+        },
+        {
+          "id": "interval-draft-1784233740073",
+          "languageId": "fr",
+          "startMs": 0,
+          "endMs": 1000
+        },
+        {
+          "id": "language-guided-1784233779108",
+          "languageId": "es",
+          "startMs": 3000,
+          "endMs": 51000
+        }
+      ],
       "layers": [],
       "phenomena": [],
       "teacherAnnotations": [],

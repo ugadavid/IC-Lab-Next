@@ -7,4 +7,6 @@ prototypes.
 `languages.json` est le dictionnaire commun minimal des langues. Ses
 identifiants sont stables et ses consommateurs le traitent en lecture seule.
 Toute extension ou modification de ce dictionnaire demande une mission
-explicite ; les activités existantes ne sont pas migrées automatiquement.
+explicite. Depuis Proto05 `0.1.12`, ses activités utilisent exclusivement ces
+identifiants ; le serveur et les interfaces n’entretiennent plus de vocabulaire
+local de langues en parallèle.

@@ -14,6 +14,9 @@ L’hypothèse n’est pas que l’annotation donne la “bonne lecture”, mais
 
 ## Mécanique du prototype
 
+- Référentiel partagé des langues `fr`, `es`, `it`, `pt`, servi en lecture seule
+  depuis `shared/reference-data/languages.json` et utilisé par toutes les
+  activités Proto05.
 - Lecteur vidéo pointant vers le flux HLS fourni.
 - Colonne de transcription synchronisée.
 - Segments cliquables qui déplacent la vidéo au timestamp associé.

@@ -69,7 +69,7 @@ function allInternalIds(activity) {
   return [
     activity.transcription.id,
     activity.layerConfiguration.id,
-    ...["segments", "speakers", "languages", "languageIntervals", "layers", "phenomena", "teacherAnnotations"]
+    ...["segments", "speakers", "languageIntervals", "layers", "phenomena", "teacherAnnotations"]
       .flatMap(key => activity[key].map(item => item.id))
   ];
 }
@@ -210,12 +210,14 @@ test("duplication d’une activité Proto05", { timeout: 15000 }, async context 
     assert.deepEqual(authoredData(normalizeCopy(historicalCopy, fixtureHistorical)), authoredData(fixtureHistorical));
   });
 
-  await context.test("tous les identifiants internes sont régénérés sans collision", () => {
+  await context.test("les identifiants internes locaux sont régénérés et les langues partagées restent stables", () => {
     const sourceIds = new Set(allInternalIds(fixtureHistorical));
     const copyIds = allInternalIds(historicalCopy);
     assert.equal(new Set(copyIds).size, copyIds.length);
     assert.ok(copyIds.every(id => !sourceIds.has(id)));
     assert.ok(copyIds.every(id => id.includes(historicalCopy.id)));
+    assert.deepEqual(historicalCopy.languages, fixtureHistorical.languages);
+    assert.deepEqual(historicalCopy.languages.map(language => language.id), ["fr", "es", "it", "pt"]);
   });
 
   await context.test("les observations étudiantes ne sont jamais copiées", () => {

@@ -151,6 +151,13 @@ bus de données entre tous les prototypes.
 | Dico-IC | MariaDB `ic_dico` dans `ic_lab_next_mariadb_data` | Lexique, relations, formes et objets pédagogiques. Seven Sieves consomme l’API et ne lit jamais MariaDB directement. |
 | Workspace IC-Lab-Next | `shared/reference-data/languages.json` | Petit dictionnaire transversal en lecture seule. Il définit uniquement les identifiants stables et libellés communs des langues ; il ne possède ni activités ni annotations. |
 
+Pour Proto05, ce dictionnaire est l’unique source de vérité des identifiants et
+libellés de langues. `activities.json` matérialise seulement la sélection de
+chaque activité et ses références (`transcription.languageId`,
+`segments[].languageIds`, `languageIntervals[].languageId`). Le serveur sert le
+dictionnaire en lecture seule, valide les sélections contre lui et conserve les
+identifiants globaux lors d’une duplication.
+
 Les médias HLS restent externes au dépôt et au modèle de données Proto05. Les
 documents privés d’entretien, secrets, journaux, bases locales, dépendances et
 sauvegardes runtime ne sont pas des données partagées du workspace.
@@ -181,6 +188,7 @@ lecture et sa prévisualisation enseignant utilisent le même fichier
 │                                                              │
 │ API /api/proto05                                             │
 │   -> catalogue vidéo contrôlé                                │
+│   -> référentiel de langues partagé en lecture seule          │
 │   -> lecture, création et mise à jour des activités          │
 │   -> validation + écriture JSON atomique + copie .bak        │
 └───────────────────────────┬──────────────────────────────────┘

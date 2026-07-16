@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.11
+# Serveur autonome du Prototype 05 — 0.1.12
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.8.html` à la racine.
@@ -21,7 +21,7 @@ sauvegardes de métadonnées ou d’atelier auteur. Elles utilisent les validati
 du prototype ; la sauvegarde JSON est atomique, séquencée et précédée d’un
 fichier `.bak` UTF-8.
 
-## Référentiel partagé des langues (0.1.11)
+## Référentiel partagé des langues (0.1.12)
 
 Le dictionnaire minimal du workspace se trouve dans
 `shared/reference-data/languages.json`. Proto05 le sert en lecture seule sous
@@ -29,9 +29,15 @@ Le dictionnaire minimal du workspace se trouve dans
 route.
 
 L’atelier auteur propose exclusivement les quatre entrées `fr`, `es`, `it` et
-`pt` dans une sélection multiple. Un nouveau brouillon enregistre les codes et
-libellés issus du référentiel ; les langues historiques restent inchangées et
-en lecture seule dans l’atelier tant qu’aucune migration n’est autorisée.
+`pt` dans une sélection multiple. Les cinq activités présentes au passage en
+`0.1.12` ont été migrées vers ces identifiants stables. Le serveur refuse les
+identifiants et libellés locaux ; une duplication conserve les identifiants du
+référentiel au lieu d’en créer de nouveaux.
+
+Le script `scripts/migrate-language-catalog.js` réalise la migration sur un
+fichier explicitement désigné. En mode `--apply`, il exige une sauvegarde `.bak`,
+la crée sans écraser un fichier existant, puis remplace le JSON par renommage
+atomique après validation des volumes et des champs autorisés à changer.
 
 ## Brouillon vide et validation d’intégrité (0.1.10)
 

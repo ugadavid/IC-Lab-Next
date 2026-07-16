@@ -7,7 +7,7 @@ const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.11";
+const VERSION = "0.1.12";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -240,14 +240,8 @@ function validateActivityIntegrity(activity) {
   if (invalidDefaults.length) throw new Error(`Les couches visibles par défaut doivent être visibles par les étudiants : ${invalidDefaults.join(", ")}.`);
 }
 
-function validateSharedLanguageSelection(languages, currentLanguages) {
+function validateSharedLanguageSelection(languages) {
   if (!Array.isArray(languages)) throw new Error("languages doit être un tableau.");
-  const current = Array.isArray(currentLanguages) ? currentLanguages : [];
-  const currentUsesSharedCatalog = current.length === 0 || current.every(language => LANGUAGE_CATALOG_BY_ID.has(language?.id));
-  if (!currentUsesSharedCatalog) {
-    if (JSON.stringify(languages) !== JSON.stringify(current)) throw new Error("Les langues historiques de cette activité restent en lecture seule sans migration explicite.");
-    return;
-  }
   for (const language of languages) {
     const reference = LANGUAGE_CATALOG_BY_ID.get(language?.id);
     if (!reference) throw new Error(`Langue absente du référentiel partagé : ${String(language?.id)}.`);
@@ -267,7 +261,7 @@ function validateAuthoringPatch(payload, current) {
     const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId && entry.authorized);
     next.video = { ...current.video, id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
   }
-  validateSharedLanguageSelection(next.languages, current.languages);
+  validateSharedLanguageSelection(next.languages);
   validateActivityIntegrity(next);
   return next;
 }
@@ -327,7 +321,11 @@ function duplicateActivity(source, activities) {
 
   const id = uniqueCopyActivityId(activities);
   const speakers = remapCollection(source.speakers, id, "speaker");
-  const languages = remapCollection(source.languages, id, "language");
+  validateSharedLanguageSelection(source.languages);
+  const languages = {
+    copies: source.languages.map(language => ({ ...language })),
+    identifiers: new Map(source.languages.map(language => [language.id, language.id]))
+  };
   const segments = remapCollection(source.segments, id, "segment");
   const intervals = remapCollection(source.languageIntervals, id, "language-interval");
   const layers = remapCollection(source.layers, id, "layer");
