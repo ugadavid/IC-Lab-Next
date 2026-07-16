@@ -1,0 +1,147 @@
+{
+  "activity": {
+    "id": "layer-visibility-fixture",
+    "version": "test-only",
+    "status": "draft",
+    "title": "Fixture de visibilité des couches",
+    "description": "Activité isolée pour les tests de visibilité étudiant.",
+    "instruction": "Observer les couches proposées.",
+    "pedagogicalQuestion": "Quelles couches sont visibles ?",
+    "video": {
+      "id": "test-video",
+      "title": "Vidéo de test sans réseau",
+      "kind": "hls",
+      "proxyUrl": "/test/no-video.m3u8",
+      "durationMs": 60000
+    },
+    "transcription": {
+      "id": "test-transcription",
+      "languageId": "lang-fr",
+      "segmentIds": [
+        "segment-proposed",
+        "segment-shared",
+        "segment-masked"
+      ]
+    },
+    "speakers": [
+      {
+        "id": "speaker-test",
+        "label": "Locuteur test"
+      }
+    ],
+    "languages": [
+      {
+        "id": "lang-fr",
+        "code": "FR",
+        "label": "Français"
+      }
+    ],
+    "languageIntervals": [
+      {
+        "id": "interval-fr",
+        "languageId": "lang-fr",
+        "startMs": 0,
+        "endMs": 60000
+      }
+    ],
+    "layers": [
+      {
+        "id": "layer-proposed",
+        "label": "Couche proposée",
+        "description": "Visible et désactivable par l’étudiant.",
+        "color": "#4d7dbc"
+      },
+      {
+        "id": "layer-shared",
+        "label": "Couche témoin",
+        "description": "Reste visible quand l’autre couche est désactivée.",
+        "color": "#57a675"
+      },
+      {
+        "id": "layer-masked",
+        "label": "Couche masquée",
+        "description": "Masquée par l’enseignant.",
+        "color": "#c56b5b"
+      }
+    ],
+    "phenomena": [
+      {
+        "id": "phenomenon-proposed",
+        "segmentId": "segment-proposed",
+        "layerId": "layer-proposed",
+        "startMs": 5000,
+        "endMs": 10000
+      },
+      {
+        "id": "phenomenon-shared",
+        "segmentId": "segment-shared",
+        "layerId": "layer-shared",
+        "startMs": 20000,
+        "endMs": 25000
+      },
+      {
+        "id": "phenomenon-masked",
+        "segmentId": "segment-masked",
+        "layerId": "layer-masked",
+        "startMs": 40000,
+        "endMs": 45000
+      }
+    ],
+    "segments": [
+      {
+        "id": "segment-proposed",
+        "startMs": 5000,
+        "endMs": 10000,
+        "speakerIds": ["speaker-test"],
+        "languageIds": ["lang-fr"],
+        "phenomenonIds": ["phenomenon-proposed"],
+        "text": "Segment de la couche proposée."
+      },
+      {
+        "id": "segment-shared",
+        "startMs": 20000,
+        "endMs": 25000,
+        "speakerIds": ["speaker-test"],
+        "languageIds": ["lang-fr"],
+        "phenomenonIds": ["phenomenon-shared"],
+        "text": "Segment de la couche témoin."
+      },
+      {
+        "id": "segment-masked",
+        "startMs": 40000,
+        "endMs": 45000,
+        "speakerIds": ["speaker-test"],
+        "languageIds": ["lang-fr"],
+        "phenomenonIds": ["phenomenon-masked"],
+        "text": "Segment de la couche masquée."
+      }
+    ],
+    "teacherAnnotations": [
+      {
+        "id": "annotation-proposed",
+        "segmentId": "segment-proposed",
+        "note": "Annotation proposée.",
+        "pedagogicalQuestion": "Que montre la couche proposée ?"
+      },
+      {
+        "id": "annotation-shared",
+        "segmentId": "segment-shared",
+        "note": "Annotation témoin.",
+        "pedagogicalQuestion": "La couche témoin reste-t-elle visible ?"
+      },
+      {
+        "id": "annotation-masked",
+        "segmentId": "segment-masked",
+        "note": "Annotation masquée.",
+        "pedagogicalQuestion": "Cette annotation doit-elle être absente ?"
+      }
+    ],
+    "layerConfiguration": {
+      "id": "layer-config-visibility-test",
+      "defaultVisibleLayerIds": ["layer-proposed", "layer-shared"],
+      "learnerVisibleLayerIds": ["layer-proposed", "layer-shared"],
+      "teacherVisibleLayerIds": ["layer-proposed", "layer-shared", "layer-masked"],
+      "allowLearnerToggle": true
+    }
+  }
+}

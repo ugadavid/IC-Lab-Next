@@ -2,8 +2,8 @@
 
 État observé dans le dépôt le **16 juillet 2026**. Ce document décrit
 l’organisation courante du workspace et les frontières entre ses composants. Il
-ne remplace ni les guides de lancement, ni les README métier, ni les futurs
-documents de statut et de modèle de données.
+ne remplace ni les guides de lancement, ni les README métier, ni le statut
+courant ou les règles de contribution.
 
 ## Statut des informations
 
@@ -321,12 +321,11 @@ Le rapport associé donne la liste complète des contrôles et contradictions :
   [modèle de visibilité des couches](../reports/025_prototype_05_layer_management_report.md)
 - [État récent de Proto05](../reports/026_prototype_05_daily_summary_2026-07-13.md)
 
-### Emplacements documentaires futurs
+### Documents de gouvernance et de modèle
 
-Les documents suivants sont des **cibles réservées mais absentes du dépôt au
-16 juillet 2026**. Les liens indiquent leur emplacement prévu et ne doivent pas
-être interprétés comme des livrables existants :
+Les documents suivants complètent désormais cette architecture :
 
-- [STATUS.md](../STATUS.md) — statut synthétique futur du workspace ;
-- [AGENTS.md](../AGENTS.md) — règles de contribution futures ;
-- [DATA_MODEL.md](DATA_MODEL.md) — synthèse future des modèles de données.
+- [STATUS.md](../STATUS.md) — statut synthétique et prochaine priorité du workspace ;
+- [AGENTS.md](../AGENTS.md) — règles de contribution et d’exécution pour Codex ;
+- [DATA_MODEL.md](DATA_MODEL.md) — emplacement réservé pour une future synthèse
+  des modèles de données. Ce document n’existe pas encore.
