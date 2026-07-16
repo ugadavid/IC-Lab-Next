@@ -1,143 +1,222 @@
 # Lancement des projets IC-Lab-Next
 
-Le Prototype 05 autonome est servi par `prototypes/05-augmented-ic-video-01/server`
-sur `http://127.0.0.1:8791/`. Le lanceur global démarre ce serveur avant IC-Hub ;
-l’ancienne entrée IC-Hub `/demos/augmented-video/` redirige vers lui.
-Les espaces sont accessibles via `/student/:activityId`, `/teacher` et
-`/teacher/preview/:activityId`.
+État documentaire vérifié le **16 juillet 2026** à partir de
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) et des launchers présents dans
+`scripts/windows/`.
 
-Dernière vérification : **10 juillet 2026**
+Ce document indique comment les composants actifs sont lancés et atteints en
+local. Les ports ci-dessous sont ceux déclarés par les scripts et serveurs. Aucun
+service n’a été démarré pendant cette vérification documentaire ; leur
+disponibilité runtime n’est donc pas affirmée ici.
 
-Ce document donne les points d’entrée courts du workspace consolidé. Les détails
-propres à chaque composant restent dans leurs guides respectifs.
+## Vue d’ensemble
+
+| Ordre global | Composant | Port | Entrée principale | Mode d’exécution |
+|---:|---|---:|---|---|
+| 1 | Prototype 05 — Vidéo augmentée | `8791` | <http://127.0.0.1:8791/> | Serveur Node autonome |
+| 2 | IC-Lab Hub | `8790` | <http://127.0.0.1:8790/> | Serveur Node et portail |
+| 3 | Prototype 06 — Agent vocal | `8788` | <http://127.0.0.1:8788/library-1.1.html> | Serveur Node autonome |
+| 4a | MariaDB Dico-IC | `3306` | Service de base de données | Conteneur Docker Compose |
+| 4b | Dico-IC / Seven Sieves | `3000` | <http://127.0.0.1:3000/admin-app/index-admin-0.1.html> | Serveur Node/Express après MariaDB |
+
+Informaticaire n’a pas de serveur autonome : IC-Hub sert ses fichiers sous
+<http://127.0.0.1:8790/demos/informaticaire/>.
 
 ## Lanceur global sous Windows
 
-- **Démarrage** : double-cliquer sur
-  [`START_IC_LAB_NEXT.bat`](START_IC_LAB_NEXT.bat) depuis n’importe quel dossier.
-- **Comportement** : démarre ou réutilise Hub (`8790`), Agent vocal (`8788`) et
-  Dico-IC / Seven Sieves (`3000`), puis ouvre le portail Hub.
-- **Statut** : [`check-status.bat`](scripts/windows/check-status.bat) vérifie
-  Docker et les ports sans démarrer de service.
-- **Sécurité** : aucun `npm install`, migration, script SQL, initialisation ou
-  suppression de volume n’est exécuté. Le lanceur Dico utilise seulement
-  `docker compose up -d` dans sa stack existante.
+Le point d’entrée est
+[`START_IC_LAB_NEXT.bat`](START_IC_LAB_NEXT.bat). Il délègue à
+[`scripts/windows/start-all.bat`](scripts/windows/start-all.bat), qui appelle les
+launchers spécialisés dans cet ordre exact :
+
+```text
+START_IC_LAB_NEXT.bat
+  -> start-all.bat
+       1. start-proto05.bat       -> 8791
+       2. start-hub.bat           -> 8790
+       3. start-agent-vocal.bat   -> 8788
+       4. start-dico-seven.bat
+            -> docker compose up -d
+            -> attend MariaDB     -> 3306
+            -> démarre Node       -> 3000
+       5. contrôle les quatre serveurs
+       6. ouvre http://127.0.0.1:8790/
+```
+
+Chaque launcher réutilise le service si son port est déjà ouvert. Après les
+appels de démarrage, `start-all.bat` attend jusqu’à 30 tentatives par serveur et
+affiche un résumé `démarré ou déjà actif`, `indisponible` ou `délai dépassé`.
+Le portail Hub est ouvert même si l’un des services autonomes manque.
+
+Les launchers utilisent des chemins calculés depuis leur propre emplacement. Ils
+peuvent donc être appelés depuis un autre répertoire courant ou depuis un clone
+placé dans un chemin contenant des espaces.
+
+## Contrôle d’état sans démarrage
+
+[`scripts/windows/check-status.bat`](scripts/windows/check-status.bat) est un
+contrôle en lecture seule. Il :
+
+- interroge la disponibilité de Docker Desktop avec `docker info` ;
+- teste l’ouverture locale des ports MariaDB `3306`, Dico-IC `3000`, Agent vocal
+  `8788`, IC-Hub `8790` et Proto05 `8791` ;
+- affiche `actif` ou `indisponible` pour chaque port ;
+- ne démarre aucun service et n’appelle aucun endpoint HTTP applicatif.
+
+Il ne vérifie pas le port phpMyAdmin `8080`, bien que ce service soit déclaré
+dans la stack Compose Dico-IC. Un port ouvert confirme seulement qu’un processus
+écoute ; il ne valide ni son identité ni son état fonctionnel complet.
+
+## Prototype 05 — Vidéo augmentée
+
+- **Launcher** :
+  [`scripts/windows/start-proto05.bat`](scripts/windows/start-proto05.bat).
+- **Dossier serveur** : `prototypes/05-augmented-ic-video-01/server`.
+- **Port** : `8791`.
+- **Démarrage direct** : `npm start` depuis le dossier serveur.
+- **Entrée racine** : <http://127.0.0.1:8791/> ; le serveur sert actuellement
+  `index-0.0.8.html`.
+- **Vue étudiante** : <http://127.0.0.1:8791/student/:activityId>.
+- **Bibliothèque enseignante** : <http://127.0.0.1:8791/teacher>.
+- **Prévisualisation** :
+  <http://127.0.0.1:8791/teacher/preview/:activityId>.
+- **Création et ateliers** : `/teacher/create`,
+  `/teacher/edit/:activityId`, `/teacher/author/:activityId` et
+  `/teacher/guided/:activityId`.
+- **Guide** :
+  [README du serveur autonome](prototypes/05-augmented-ic-video-01/server/README.md).
+
+Le launcher global démarre Proto05 **avant IC-Hub**. Le serveur possède ses
+pages, son API et `data/activities.json`, mais sa chaîne vidéo n’est pas encore
+entièrement autonome :
+
+- les requêtes HLS autorisées sont relayées par Proto05 vers le proxy strict
+  d’IC-Hub sur `8790` ;
+- IC-Hub contacte ensuite une source HLS UGA fixe ;
+- Proto05 sert `hls.js`, mais lit actuellement le fichier installé dans le
+  `node_modules` du serveur Hub.
+
+Proto05 peut donc démarrer avant le Hub, mais la lecture HLS reste indisponible
+tant qu’IC-Hub ou la source UGA ne répond pas. Le mode enseignant local ne fournit
+ni authentification ni gestion réelle des droits.
 
 ## IC-Lab Hub
 
-- **Finalité** : portail de démonstration des prototypes IC-Lab-Next, avec les
-  parcours locaux de comptes, cours et activités conservés séparément.
-- **Dossier** : `prototypes/00-ic-hub/server`
-- **Version courante probable** : serveur et portail Hub `0.10.3` ; interface
-  authentifiée historique `0.9.6`.
-- **État** : actif ; la racine est un portail public lisible vers les cinq
-  destinations, sans créer de session.
-- **Prérequis** : Node.js 18 ou plus récent et dépendances déjà installées.
-- **Lancement** : `npm start` depuis le dossier du serveur.
-- **Port** : `8790` par défaut.
-- **Entrées** : <http://127.0.0.1:8790/> (portail de démonstration) et
-  <http://127.0.0.1:8790/hub.html> (Hub authentifié historique).
-- **Routes de démonstrateurs** :
-  <http://127.0.0.1:8790/demos/augmented-video/> et
-  <http://127.0.0.1:8790/demos/informaticaire/> ; elles conservent les dossiers
-  sources des prototypes et ne reposent pas sur `file://`.
-- **Arrêt** : `Ctrl+C` dans le terminal du serveur.
-- **Données locales** : `server/data/` ; les sessions et traces runtime restent
-  locales et ignorées.
-- **Limites connues** : l’accès authentifié crée une session et n’a donc pas été
-  exercé pendant la recette de reprise. Agent vocal (`8788`) et Dico-IC / Seven
-  Sieves (`3000`) restent des services autonomes : le portail signale leur
-  prérequis sans les démarrer ni les intégrer aux données Hub.
+- **Launcher** : [`scripts/windows/start-hub.bat`](scripts/windows/start-hub.bat).
+- **Dossier serveur** : `prototypes/00-ic-hub/server`.
+- **Port** : `8790`.
+- **Démarrage direct** : `npm start` depuis le dossier serveur.
+- **Portail public** : <http://127.0.0.1:8790/> ; la racine redirige vers
+  `/portal-0.10.3.html`.
+- **Alias du portail** : <http://127.0.0.1:8790/portal.html>, redirigé vers la
+  même page.
+- **Hub pédagogique historique** : <http://127.0.0.1:8790/hub.html>, redirigé
+  vers `/hub-0.9.6.html`.
 - **Guide** : [README du serveur](prototypes/00-ic-hub/server/README.md).
 
-## Vidéo augmentée d’intercompréhension
+### Routes de démonstrateurs
 
-- **Finalité** : observation multimodale et timeline pédagogique d’une vidéo
-  d’intercompréhension.
-- **Dossier** : `prototypes/05-augmented-ic-video-01`
-- **Version courante probable** : `0.0.6`.
-- **État** : démonstrateur ; structure et ressources vérifiées, validation
-  visuelle non effectuée dans le navigateur intégré.
-- **Prérequis** : navigateur moderne et accès au flux HLS distant de l’UGA.
-- **Lancement** : ouvrir `index-0.0.6.html` dans un navigateur.
-- **Port** : aucun.
-- **Entrée** :
-  [`index-0.0.6.html`](prototypes/05-augmented-ic-video-01/index-0.0.6.html).
-- **Arrêt** : fermer l’onglet.
-- **Limites connues** : la vidéo courante dépend d’un flux HLS distant ; le
-  navigateur intégré de recette refuse les URL locales `file://`.
-- **Guide** : [README du prototype](prototypes/05-augmented-ic-video-01/README.md).
+- <http://127.0.0.1:8790/demos/augmented-video/> redirige vers
+  <http://127.0.0.1:8791/>. Cette route est une entrée de compatibilité ; les
+  chemins descendants du montage statique historique restent encore présents
+  côté Hub.
+- <http://127.0.0.1:8790/demos/informaticaire/> sert directement les fichiers de
+  `prototypes/07-informaticaire`.
 
-## Agent vocal IC
+IC-Hub est le portail et conserve ses parcours propres de comptes, cours et
+activités. Il ne démarre ni Proto05, ni Agent vocal, ni Dico-IC : cette
+orchestration appartient aux launchers. Les anciennes routes Hub
+`GET /api/proto05/activities` et `GET /api/proto05/activities/:id` restent
+provisoirement disponibles en lecture seule et lisent la source appartenant à
+Proto05.
 
-- **Finalité** : bibliothèque, composition et exécution de rencontres orales
-  plurilingues.
-- **Dossier serveur** : `prototypes/06-voice-agent-ic/server`
-- **Version courante probable** : runtime connecté `1.2.3`, backend `1.1`.
-- **État** : actif et en développement ; lancement réussi.
-- **Prérequis** : Node.js 18 ou plus récent. Le backend n’a aucune dépendance npm
-  externe déclarée.
-- **Lancement** : `npm start` depuis le dossier serveur.
-- **Port** : `8788` par défaut.
-- **Entrées** : <http://127.0.0.1:8788/library-1.1.html>,
-  <http://127.0.0.1:8788/index-1.2.3.html> et, pour inspection uniquement,
+Le launcher Hub exige Node.js, npm et les dépendances déjà installées dans
+`server/node_modules`. Il ne lance aucune installation.
+
+## Prototype 06 — Agent vocal IC
+
+- **Launcher** :
+  [`scripts/windows/start-agent-vocal.bat`](scripts/windows/start-agent-vocal.bat).
+- **Dossier serveur** : `prototypes/06-voice-agent-ic/server`.
+- **Port** : `8788`.
+- **Démarrage direct** : `npm start` depuis le dossier serveur.
+- **Bibliothèque** : <http://127.0.0.1:8788/library-1.1.html>.
+- **Runtime connecté** : <http://127.0.0.1:8788/index-1.2.3.html>.
+- **Sandbox d’inspection** :
   <http://127.0.0.1:8788/sandbox-1.3-alpha.html>.
-- **Arrêt** : `Ctrl+C` dans le terminal du serveur.
-- **Données locales** : `server/data/activities.json`; les sauvegardes runtime
-  restent ignorées.
-- **Limites connues** : la synthèse et la reconnaissance vocales dépendent des
-  capacités du navigateur. La génération IA de la sandbox est désactivée.
-- **Guide** : [README du serveur](prototypes/06-voice-agent-ic/server/README.md).
+- **Guide** :
+  [README du serveur](prototypes/06-voice-agent-ic/server/README.md).
+
+Le serveur possède son API et ses activités dans `server/data/activities.json`.
+IC-Hub peut le consulter et construire des lancements locaux, mais le service
+reste autonome. La synthèse et la reconnaissance vocales dépendent des capacités
+du navigateur et du système. La génération IA de la sandbox reste désactivée.
+
+Le launcher vérifie Node.js et npm, mais ne fait aucune installation de
+dépendances.
 
 ## Informaticaire
 
-- **Finalité** : mémoire communautaire, documentation et retrouvabilité des
-  ressources d’intercompréhension.
-- **Dossier** : `prototypes/07-informaticaire`
-- **Version courante probable** : démonstrateur gelé `0.6.5`.
-- **État** : gelé ; structure, scripts et parcours documenté vérifiés, validation
-  visuelle non effectuée dans le navigateur intégré.
-- **Prérequis** : navigateur moderne ; aucun serveur ni paquet externe.
-- **Lancement** : ouvrir `index.html` dans un navigateur.
-- **Port** : aucun.
-- **Entrée** : [`index.html`](prototypes/07-informaticaire/index.html).
-- **Arrêt** : fermer l’onglet.
-- **Données locales** : `data.js`, chargé directement par la page.
-- **Limites connues** : données dérivées d’entretiens à gouvernance humaine ; les
-  PDF privés retirés ne sont pas nécessaires au runtime. Le navigateur intégré
-  de recette refuse les URL locales `file://`.
-- **Guides** : [README](prototypes/07-informaticaire/README.md) et
-  [gel de démonstration](prototypes/07-informaticaire/DEMO_FREEZE.md).
+- **Serveur autonome** : aucun.
+- **Entrée recommandée dans le workspace lancé** :
+  <http://127.0.0.1:8790/demos/informaticaire/>.
+- **Source** : `prototypes/07-informaticaire/index.html`.
+- **Données** : `prototypes/07-informaticaire/data.js`.
+- **Guide** : [README](prototypes/07-informaticaire/README.md).
+
+La disponibilité d’Informaticaire dépend donc d’IC-Hub `8790`. Les exports sont
+produits côté navigateur. Les documents privés d’entretien ne font pas partie
+du dépôt.
 
 ## Dico-IC / Seven Sieves
 
-- **Finalité** : service de connaissances plurilingues, administration et
-  interface de lecture guidée Seven Sieves.
-- **Dossier serveur** : `prototypes/08-dico-seven-sieves/Node`
-- **Version courante probable** : API/administration V0, contrat d’analyse `0.1`.
-- **État** : en développement ; validation de reprise réussie avec l’API et les
-  deux interfaces connectées à la stack Docker actuelle d’IC-Lab-Next.
-- **Prérequis** : Node.js, dépendances installées et stack Docker existante dans
-  `prototypes/08-dico-seven-sieves`. Le projet Compose `08-dico-seven-sieves`
-  utilise MariaDB `ic_dico_mariadb_next`, phpMyAdmin
-  `ic_lab_next_phpmyadmin` et le volume externe
-  `ic_lab_next_mariadb_data` sur `/var/lib/mysql`; MariaDB écoute sur `3306`.
-  Ne pas initialiser une base fraîche dans le cadre d’une reprise.
-- **Lancement** : `npm start` depuis le dossier `Node`, après vérification de la
-  base existante.
-- **Port** : `3000` par défaut.
-- **Entrées** : <http://127.0.0.1:3000/admin-app/index-admin-0.1.html> et
+- **Launcher** :
+  [`scripts/windows/start-dico-seven.bat`](scripts/windows/start-dico-seven.bat).
+- **Racine Compose** : `prototypes/08-dico-seven-sieves`.
+- **Dossier serveur** : `prototypes/08-dico-seven-sieves/Node`.
+- **MariaDB** : `3306`.
+- **Serveur Node/Express** : `3000`.
+- **Administration Dico-IC** :
+  <http://127.0.0.1:3000/admin-app/index-admin-0.1.html>.
+- **Seven Sieves live** :
   <http://127.0.0.1:3000/prototypes/01-seven-sieves/index-api-live-0.1.html>.
-- **Contrôles API** : `GET /languages` et `POST /analysis` validés sans écriture
-  de données ; validation humaine du clic « Analyser avec Dico-IC », résultats
-  et enrichissements affichés dans Seven Sieves.
-- **Arrêt** : `Ctrl+C` dans le terminal du serveur.
-- **Limites connues** : MariaDB/Docker doit déjà être disponible. La
-  canonicalisation SQL et l’initialisation d’une base fraîche restent hors
-  périmètre et nécessitent une mission dédiée.
 - **Guide** :
   [démarrage local](prototypes/08-dico-seven-sieves/docs/dico-local-development-startup.md).
 
-## Résultat détaillé de la recette
+Le launcher :
 
-Voir [`reports/002_workspace_recovery_validation_report.md`](reports/002_workspace_recovery_validation_report.md).
+1. vérifie Node.js, npm, Docker Desktop et les dépendances Node déjà présentes ;
+2. exécute uniquement `docker compose up -d` dans la racine Dico-IC ;
+3. attend l’ouverture de MariaDB sur `3306` ;
+4. réutilise le serveur `3000` s’il est déjà actif, sinon lance `npm start` dans
+   `Node`.
+
+La stack utilise le volume externe `ic_lab_next_mariadb_data`. Le launcher ne
+fait ni migration, ni import SQL, ni initialisation explicite de base et ne
+supprime aucun volume. Le dossier `database/current_draft/` n’est pas une source
+SQL canonique validée ; la reconstruction d’une base fraîche reste hors du flux
+de lancement courant.
+
+MariaDB et Docker doivent être disponibles avant le démarrage du serveur Node.
+Le conteneur phpMyAdmin déclaré sur `8080` est auxiliaire et n’est ni une entrée
+principale de ce guide ni un service vérifié par `check-status.bat`.
+
+## Arrêt et limites générales
+
+- Arrêter chaque serveur Node avec `Ctrl+C` dans sa fenêtre dédiée.
+- Le workspace ne fournit pas de `stop-all.bat`.
+- Pour arrêter les conteneurs Dico sans supprimer les données, utiliser
+  `docker compose stop` depuis `prototypes/08-dico-seven-sieves`.
+- Ne pas utiliser `docker compose down -v`, qui supprimerait les volumes.
+- Les launchers ne font aucun `npm install`, migration, import SQL ou réparation
+  automatique de données.
+- Un port déjà ouvert est réutilisé sans vérification de l’identité du processus.
+- Le portail peut s’ouvrir alors qu’un service autonome est indisponible.
+- Proto05 dépend encore d’IC-Hub et de la source UGA pour la lecture HLS.
+- Agent vocal dépend des API vocales du navigateur et du système.
+- Dico-IC dépend de Docker, de MariaDB et de son volume externe existant.
+
+Pour les frontières entre composants, données et services, consulter
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Pour les règles d’arrêt sûr et le
+détail des scripts Windows, consulter
+[`scripts/windows/README.md`](scripts/windows/README.md).
