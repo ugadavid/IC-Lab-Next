@@ -5,9 +5,9 @@ const fs = require("node:fs");
 const http = require("node:http");
 const os = require("node:os");
 const path = require("node:path");
-const { spawn } = require("node:child_process");
 const test = require("node:test");
 const { findChromium, readBrowserResults, runChromium, sha256 } = require("./helpers/chromium");
+const { startTemporaryProto05Server } = require("./helpers/temporary-proto05-server");
 
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
@@ -34,60 +34,12 @@ function readBody(request) {
   });
 }
 
-async function freePort() {
-  const server = http.createServer();
-  await new Promise((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", resolve);
-  });
-  const port = server.address().port;
-  await new Promise(resolve => server.close(resolve));
-  return port;
-}
-
-async function waitForHealth(baseUrl, child, stderr) {
-  const deadline = Date.now() + 4000;
-  while (Date.now() < deadline) {
-    if (child.exitCode !== null) throw new Error(`Le serveur de test Proto05 s’est arrêté prématurément. ${stderr()}`);
-    try {
-      const response = await fetch(`${baseUrl}/api/health`);
-      if (response.ok) return;
-    } catch {}
-    await new Promise(resolve => setTimeout(resolve, 30));
-  }
-  throw new Error("Le serveur de test Proto05 n’a pas répondu au healthcheck.");
-}
-
-async function stopChild(child) {
-  if (child.exitCode !== null) return;
-  const closed = new Promise(resolve => child.once("close", resolve));
-  child.kill();
-  await Promise.race([closed, new Promise(resolve => setTimeout(resolve, 2000))]);
-}
-
 test("API auteur sur une copie temporaire", { timeout: 15000 }, async context => {
   const canonicalHashBefore = sha256(canonicalDataFile);
-  const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-save-api-"));
-  const temporaryPrototype = path.join(temporaryRoot, "prototype");
-  const temporaryServer = path.join(temporaryPrototype, "server");
-  const temporaryData = path.join(temporaryPrototype, "data");
-  fs.mkdirSync(temporaryServer, { recursive: true });
-  fs.mkdirSync(temporaryData, { recursive: true });
-  fs.copyFileSync(path.join(serverDirectory, "server.js"), path.join(temporaryServer, "server.js"));
-  const temporaryDataFile = path.join(temporaryData, "activities.json");
   const originalStore = { schemaVersion: "0.1", updatedAt: "test-only", activities: [fixtureActivity] };
-  fs.writeFileSync(temporaryDataFile, `${JSON.stringify(originalStore, null, 2)}\n`, "utf8");
-
-  const port = await freePort();
-  const baseUrl = `http://127.0.0.1:${port}`;
-  let stderr = "";
-  const child = spawn(process.execPath, [path.join(temporaryServer, "server.js")], {
-    cwd: temporaryServer,
-    env: { ...process.env, PORT: String(port) },
-    windowsHide: true
-  });
-  child.stderr.setEncoding("utf8");
-  child.stderr.on("data", chunk => { stderr += chunk; });
+  const temporary = await startTemporaryProto05Server(originalStore, "proto05-save-api-");
+  const temporaryDataFile = temporary.dataFile;
+  const baseUrl = temporary.baseUrl;
   const writes = [];
   let validResponse;
   let validPayload;
@@ -111,7 +63,6 @@ test("API auteur sur une copie temporaire", { timeout: 15000 }, async context =>
   };
 
   try {
-    await waitForHealth(baseUrl, child, () => stderr);
     const validPath = "/api/proto05/activities/layer-visibility-fixture/authoring";
     validResponse = await authoringFetch(validPath, JSON.stringify({ title: "Titre sauvegardé dans la copie temporaire" }));
     validPayload = await validResponse.json();
@@ -127,14 +78,14 @@ test("API auteur sur une copie temporaire", { timeout: 15000 }, async context =>
   } catch (error) {
     executionError = error;
   } finally {
-    await stopChild(child);
+    await temporary.stop();
   }
 
   await context.test("les données historiques canoniques restent inchangées", () => {
     assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
   });
   if (executionError) {
-    fs.rmSync(temporaryRoot, { recursive: true, force: true });
+    await temporary.cleanup();
     throw executionError;
   }
 
@@ -165,7 +116,7 @@ test("API auteur sur une copie temporaire", { timeout: 15000 }, async context =>
     ]);
   });
 
-  fs.rmSync(temporaryRoot, { recursive: true, force: true });
+  await temporary.cleanup();
 });
 
 function teacherPageForTest() {
