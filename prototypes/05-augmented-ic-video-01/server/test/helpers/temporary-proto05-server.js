@@ -9,6 +9,7 @@ const { spawn } = require("node:child_process");
 const serverDirectory = path.resolve(__dirname, "..", "..");
 const sourcePrototypeDirectory = path.resolve(serverDirectory, "..");
 const sourceLanguageCatalogFile = path.resolve(sourcePrototypeDirectory, "..", "..", "shared", "reference-data", "languages.json");
+const sourceVideoCatalogFile = path.join(sourcePrototypeDirectory, "data", "video-catalog.json");
 
 async function freePort() {
   const server = http.createServer();
@@ -57,9 +58,21 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   fs.mkdirSync(temporaryReferenceDirectory, { recursive: true });
   const serverFile = path.join(temporaryServerDirectory, "server.js");
   const dataFile = path.join(temporaryDataDirectory, "activities.json");
+  const videoCatalogFile = path.join(temporaryDataDirectory, "video-catalog.json");
   const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
   fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
+  const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
+  const knownVideoIds = new Set(videoCatalog.videos.map(video => video.id));
+  for (const activity of store.activities || []) {
+    if (activity.video?.id && !knownVideoIds.has(activity.video.id)) {
+      const proxyUrl = "/api/hls/uga-37004/livestream.m3u8";
+      activity.video.proxyUrl = proxyUrl;
+      videoCatalog.videos.push({ id: activity.video.id, title: activity.video.title || "Fixture vidéo", provider: "uga", sourceUrl: "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8", proxyUrl, durationMs: activity.video.durationMs ?? null, authorized: true });
+      knownVideoIds.add(activity.video.id);
+    }
+  }
+  fs.writeFileSync(videoCatalogFile, `${JSON.stringify(videoCatalog, null, 2)}\n`, "utf8");
   for (const file of ["teacher.html", "teacher-create.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));
   }
@@ -68,6 +81,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   for (const file of ["ic-timeline.js", "ic-timeline.css"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, "shared", file), path.join(temporarySharedDirectory, file));
   }
+  fs.copyFileSync(path.join(sourcePrototypeDirectory, "guided-overlays.js"), path.join(prototypeDirectory, "guided-overlays.js"));
   const temporaryHlsDirectory = path.join(root, "00-ic-hub", "server", "node_modules", "hls.js", "dist");
   fs.mkdirSync(temporaryHlsDirectory, { recursive: true });
   fs.writeFileSync(path.join(temporaryHlsDirectory, "hls.min.js"), "window.Hls={isSupported:()=>false};\n", "utf8");

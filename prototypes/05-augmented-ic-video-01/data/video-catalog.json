@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "0.1",
+  "videos": [
+    {
+      "id": "video-proto05-uga-37004",
+      "title": "Vidéo augmentée IC — source UGA",
+      "provider": "uga",
+      "source": "UGA",
+      "sourceType": "hls-proxy",
+      "key": "uga-37004/livestream.m3u8",
+      "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
+      "mimeType": "application/vnd.apple.mpegurl",
+      "durationMs": 939217,
+      "authorized": true,
+      "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8"
+    },
+    {
+      "id": "video-proto05-youtube-fg4h0-v3otk",
+      "title": "Vidéo de test — YouTube contrôlé",
+      "provider": "youtube",
+      "videoId": "FG4h0_v3oTk",
+      "embedUrl": "https://www.youtube.com/embed/FG4h0_v3oTk?si=O4Rv_ybx21escKID",
+      "durationMs": null,
+      "authorized": true
+    },
+    {
+      "id": "video-proto05-youtube-ev9rfkfhfa0",
+      "title": "Intercompréhension Catalan-Français",
+      "provider": "youtube",
+      "videoId": "eV9RFKFhfa0",
+      "embedUrl": "https://www.youtube.com/embed/eV9RFKFhfa0?si=b0uIF3FV83dTrIIF",
+      "authorized": true
+    }
+  ]
+}

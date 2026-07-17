@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sources vidéo — Proto05</title>
+  <style>
+    body{font:16px system-ui,sans-serif;max-width:960px;margin:2rem auto;padding:0 1rem;color:#172033;background:#f6f7fb}main{background:white;padding:1.5rem;border-radius:12px;box-shadow:0 2px 16px #17203318}label{display:block;margin:.8rem 0 .25rem;font-weight:600}input,select,button{font:inherit;padding:.55rem;border:1px solid #9aa5b8;border-radius:6px}input,select{width:100%;box-sizing:border-box}button{margin-top:1rem;background:#164e63;color:white;cursor:pointer}.source{border-top:1px solid #dbe1ea;padding:1rem 0}.source code{overflow-wrap:anywhere}.error{color:#a21caf}.ok{color:#166534}
+  </style>
+</head>
+<body><main>
+  <p><a href="/teacher">← Bibliothèque</a></p>
+  <h1>Catalogue vidéo Proto05</h1>
+  <p>Les sources sont contrôlées par le serveur et appartiennent aux données de Proto05.</p>
+  <form id="form">
+    <label for="provider">Type de source</label>
+    <select id="provider"><option value="youtube">YouTube</option><option value="uga">HLS UGA</option></select>
+    <label for="title">Titre</label><input id="title" maxlength="500" placeholder="Titre affiché">
+    <label for="link">Lien ou identifiant</label><input id="link" required autocomplete="off" spellcheck="false">
+    <p id="help">YouTube : URL https://www.youtube.com/embed/... ou identifiant vidéo de 11 caractères.</p>
+    <button type="submit">Ajouter la source</button>
+  </form>
+  <p id="status" role="status" aria-live="polite"></p>
+  <h2>Sources existantes</h2><section id="catalog" aria-live="polite">Chargement…</section>
+</main><script>
+const $=id=>document.getElementById(id), provider=$("provider"), link=$("link"), help=$("help"), status=$("status"), catalog=$("catalog");
+const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+function updateHelp(){const youtube=provider.value==="youtube";link.placeholder=youtube?"https://www.youtube.com/embed/VIDEO_ID ou VIDEO_ID":"https://videos.univ-grenoble-alpes.fr/media/videos/.../37004/livestream.m3u8";help.textContent=youtube?"YouTube : URL https://www.youtube.com/embed/... ou identifiant vidéo de 11 caractères.":"HLS : uniquement une playlist m3u8 UGA autorisée (domaine et chemin contrôlés)."}
+async function load(){const response=await fetch("/api/proto05/video-catalog");const data=await response.json();catalog.innerHTML=data.videos.map(video=>`<article class="source"><strong>${esc(video.title)}</strong><br><span>${esc(video.provider.toUpperCase())}</span><br><code>${esc(video.provider==="youtube"?video.embedUrl:(video.sourceUrl||video.proxyUrl))}</code></article>`).join("")||"<p>Aucune source.</p>"}
+provider.addEventListener("change",updateHelp);updateHelp();load().catch(error=>catalog.textContent="Impossible de charger le catalogue : "+error.message);
+$("form").addEventListener("submit",async event=>{event.preventDefault();status.className="";status.textContent="";try{const response=await fetch("/api/proto05/video-catalog",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({provider:provider.value,title:$("title").value,link:link.value})});const data=await response.json();if(!response.ok)throw new Error(data.error||"Source invalide.");status.className="ok";status.textContent="Source ajoutée : "+data.video.title;event.target.reset();updateHelp();await load()}catch(error){status.className="error";status.textContent=error.message}});
+</script></body></html>

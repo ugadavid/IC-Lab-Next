@@ -984,6 +984,7 @@
     let segments = [];
     let languageIntervals = [];
     let activityData = null;
+    let allOverlays = [];
 
     function buildActivityView(activity) {
       if (!activity || !Array.isArray(activity.segments) || !Array.isArray(activity.layers) || !activity.video || !(activity.video.proxyUrl || activity.video.provider === "youtube")) {
@@ -1003,6 +1004,15 @@
         (activity.languages || []).map(language => [language.code, language.label])
       ));
       fallbackTimelineDuration = Number(activity.video?.durationMs || 0) / 1000 || 15 * 60 + 39;
+      allOverlays = (activity.overlays || []).map(overlay => ({
+        id: overlay.id,
+        annotationId: overlay.annotationId || null,
+        start: overlay.startMs / 1000,
+        end: overlay.endMs / 1000,
+        title: overlay.title || "",
+        text: overlay.text || "",
+        tags: Array.isArray(overlay.layerIds) ? overlay.layerIds : []
+      }));
 
       const speakersById = new Map((activity.speakers || []).map(speaker => [speaker.id, speaker.label]));
       const languagesById = new Map((activity.languages || []).map(language => [language.id, language.code]));
@@ -1021,14 +1031,6 @@
         const tags = (phenomenaBySegmentId.get(segment.id) || [])
           .map(phenomenon => phenomenon.layerId)
           .filter(Boolean);
-        const overlay = annotation?.overlay
-          ? {
-              title: annotation.overlay.title,
-              text: annotation.overlay.text,
-              tags: annotation.overlay.layerIds || []
-            }
-          : null;
-
         return {
           id: segment.id,
           start: segment.startMs / 1000,
@@ -1043,7 +1045,7 @@
           tags,
           note: annotation?.note || "",
           question: annotation?.pedagogicalQuestion || "",
-          overlay
+          overlays: annotation ? allOverlays.filter(overlay => overlay.annotationId === annotation.id) : []
         };
       });
 
@@ -1186,8 +1188,12 @@
       return getVisibleTags(segment).length > 0;
     }
 
-    function getSegmentOverlayKey(segment) {
-      return segment.overlay ? `${segment.start}-${segment.end}-${segment.overlay.title}` : null;
+    function getOverlayAt(time = video.currentTime) {
+      return allOverlays.find(overlay => time >= overlay.start && time < overlay.end) || null;
+    }
+
+    function getSegmentOverlayKey() {
+      return getOverlayAt()?.id || null;
     }
 
     function renderLayerToggle() {
@@ -1360,25 +1366,26 @@
     }
 
     function updateOverlay(segment) {
-      if (!segment.overlay) {
+      const overlay = getOverlayAt();
+      if (!overlay) {
         videoOverlay.classList.add("hidden");
         return;
       }
 
-      const overlayKey = getSegmentOverlayKey(segment);
+      const overlayKey = getSegmentOverlayKey();
       if (overlayKey && dismissedOverlayKey === overlayKey) {
         videoOverlay.classList.add("hidden");
         return;
       }
 
-      const visibleOverlayTags = segment.overlay.tags.filter(tag => activeLayers.has(tag));
+      const visibleOverlayTags = overlay.tags.filter(tag => activeLayers.has(tag));
       if (!visibleOverlayTags.length) {
         videoOverlay.classList.add("hidden");
         return;
       }
 
-      overlayTitle.textContent = segment.overlay.title;
-      overlayText.textContent = segment.overlay.text;
+      overlayTitle.textContent = overlay.title;
+      overlayText.textContent = overlay.text;
       overlayTags.innerHTML = visibleOverlayTags.map(renderTag).join("");
       videoOverlay.classList.remove("hidden");
     }
@@ -1580,8 +1587,7 @@
     layersToggle.addEventListener("click", toggleLayersPanel);
 
     overlayClose.addEventListener("click", () => {
-      const segment = segments[activeSegmentIndex];
-      dismissedOverlayKey = segment ? getSegmentOverlayKey(segment) : null;
+      dismissedOverlayKey = getSegmentOverlayKey();
       videoOverlay.classList.add("hidden");
     });
 
@@ -1616,10 +1622,8 @@
       sharedICTimeline?.setCurrentTime(video.currentTime * 1000);
       const index = findActiveSegment(video.currentTime);
       if (index >= 0) activateSegment(index, false);
-      if (index < 0) {
-        dismissedOverlayKey = null;
-        videoOverlay.classList.add("hidden");
-      }
+      if (index < 0) dismissedOverlayKey = null;
+      updateOverlay(index >= 0 ? segments[index] : null);
     });
 
     video.addEventListener("loadstart", () => {

@@ -7,11 +7,12 @@ const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.17";
+const VERSION = "0.1.22";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "activities.json");
+const VIDEO_CATALOG_FILE = path.join(DATA_DIR, "video-catalog.json");
 const INDEX_FILE = "index-0.0.9.html";
 const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
@@ -32,7 +33,8 @@ const STATIC_TYPES = Object.freeze({
   ".m3u8": "application/vnd.apple.mpegurl",
   ".ts": "video/mp2t"
 });
-const VIDEO_CATALOG = Object.freeze([
+/* Legacy catalog retained only in history; the persistent data file below is authoritative.
+const LEGACY_VIDEO_CATALOG = Object.freeze([
   Object.freeze({
     id: "video-proto05-uga-37004",
     title: "Vidéo augmentée IC — source UGA",
@@ -54,7 +56,60 @@ const VIDEO_CATALOG = Object.freeze([
     durationMs: null,
     authorized: true
   })
-]);
+]); */
+
+function freezeVideoCatalog(entries) {
+  return Object.freeze(entries.map(entry => Object.freeze({ ...entry })));
+}
+
+function safeVideoCatalogFile() {
+  const root = path.resolve(DATA_DIR);
+  const file = path.resolve(VIDEO_CATALOG_FILE);
+  if (file !== root && !file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de catalogue invalide.");
+  return file;
+}
+
+function validateYouTubeLink(value) {
+  const input = String(value || "").trim();
+  if (/^[A-Za-z0-9_-]{11}$/.test(input)) return { videoId: input, embedUrl: `https://www.youtube.com/embed/${input}` };
+  let url;
+  try { url = new URL(input); } catch { throw new Error("YouTube doit utiliser une URL d’intégration youtube.com/embed/... ou un identifiant vidéo valide."); }
+  if (url.protocol !== "https:" || url.hostname !== "www.youtube.com" || !url.pathname.startsWith("/embed/") || !/^[A-Za-z0-9_-]{11}$/.test(url.pathname.slice("/embed/".length)) || url.hash) throw new Error("YouTube doit utiliser une URL d’intégration youtube.com/embed/... ou un identifiant vidéo valide.");
+  return { videoId: url.pathname.slice("/embed/".length), embedUrl: url.toString() };
+}
+
+function validateUgaLink(value) {
+  let url;
+  try { url = new URL(String(value || "").trim()); } catch { throw new Error("La source HLS doit être une URL UGA autorisée."); }
+  const prefix = "/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/";
+  const match = url.protocol === "https:" && url.hostname === "videos.univ-grenoble-alpes.fr" && url.pathname.startsWith(prefix) && /^(livestream|360p|720p|1080p)\.m3u8$/.test(url.pathname.slice(prefix.length)) && !url.search && !url.hash;
+  if (!match) throw new Error("La source HLS doit utiliser le domaine et le chemin UGA autorisés.");
+  const file = url.pathname.slice(prefix.length);
+  return { sourceUrl: url.toString(), key: `uga-37004/${file}`, proxyUrl: `/api/hls/uga-37004/${file}` };
+}
+
+function loadVideoCatalog() {
+  const parsed = JSON.parse(fsSync.readFileSync(safeVideoCatalogFile(), "utf8"));
+  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.videos)) throw new Error("Catalogue vidéo Proto05 invalide.");
+  const ids = new Set();
+  return freezeVideoCatalog(parsed.videos.map(video => {
+    if (!video || typeof video !== "object" || typeof video.id !== "string" || !video.id || ids.has(video.id) || video.authorized !== true) throw new Error("Entrée vidéo Proto05 invalide.");
+    ids.add(video.id);
+    if (video.provider === "youtube") {
+      const checked = validateYouTubeLink(video.embedUrl);
+      if (checked.videoId !== video.videoId) throw new Error("Entrée YouTube Proto05 invalide.");
+      return { ...video, ...checked };
+    }
+    if (video.provider === "uga") {
+      const checked = validateUgaLink(video.sourceUrl || "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8");
+      if (video.proxyUrl !== checked.proxyUrl) throw new Error("Entrée HLS Proto05 invalide.");
+      return { ...video, ...checked };
+    }
+    throw new Error("Fournisseur vidéo Proto05 non autorisé.");
+  }));
+}
+
+let VIDEO_CATALOG = loadVideoCatalog();
 function loadLanguageCatalog() {
   const parsed = JSON.parse(fsSync.readFileSync(LANGUAGE_CATALOG_FILE, "utf8"));
   if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.languages)) throw new Error("Référentiel partagé des langues invalide.");
@@ -88,11 +143,45 @@ async function readActivities() {
   try {
     const parsed = JSON.parse(await fs.readFile(safeDataFile(), "utf8"));
     if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.activities)) throw new Error("JSON d’activités invalide.");
+    parsed.activities = parsed.activities.map(normalizeActivityOverlays);
+    parsed.activities.forEach(validateActivityVideoReference);
     return parsed;
   } catch (error) {
     console.error(`[data] lecture impossible : ${error.message}`);
     throw new Error("Données Proto05 absentes ou JSON invalide.");
   }
+}
+
+function normalizeActivityOverlays(activity) {
+  const next = { ...activity };
+  const segments = new Map((activity.segments || []).map(segment => [segment.id, segment]));
+  const overlays = Array.isArray(activity.overlays) ? activity.overlays.map(overlay => ({ ...overlay, layerIds: [...(overlay.layerIds || [])] })) : [];
+  const overlayIds = new Set(overlays.map(overlay => overlay.id));
+  next.teacherAnnotations = (activity.teacherAnnotations || []).map(annotation => {
+    const copy = { ...annotation };
+    if (Object.prototype.hasOwnProperty.call(copy, "overlay") && !copy.overlay) delete copy.overlay;
+    if (copy.overlay && typeof copy.overlay === "object") {
+      const segment = segments.get(copy.segmentId);
+      if (!segment) throw new Error(`Segment inconnu pour l’annotation ${copy.id}.`);
+      let id = `overlay-${copy.id}`;
+      let suffix = 1;
+      while (overlayIds.has(id)) id = `overlay-${copy.id}-${suffix++}`;
+      overlays.push({ id, annotationId: copy.id, startMs: segment.startMs, endMs: segment.endMs, title: copy.overlay.title, text: copy.overlay.text, layerIds: [...(copy.overlay.layerIds || [])] });
+      overlayIds.add(id);
+      delete copy.overlay;
+    }
+    return copy;
+  });
+  next.overlays = overlays;
+  return next;
+}
+
+function validateActivityVideoReference(activity) {
+  const video = activity?.video;
+  const catalogEntry = VIDEO_CATALOG.find(entry => entry.id === video?.id && entry.authorized);
+  if (!catalogEntry) throw new Error("Une activité référence une source vidéo absente ou non validée.");
+  if (catalogEntry.provider === "youtube" && (video.provider !== "youtube" || video.videoId !== catalogEntry.videoId || video.embedUrl !== catalogEntry.embedUrl)) throw new Error("Une activité référence une source YouTube incohérente.");
+  if (catalogEntry.provider === "uga" && video.proxyUrl !== catalogEntry.proxyUrl) throw new Error("Une activité référence une source HLS incohérente.");
 }
 
 function readRequestBody(request, limit = 64 * 1024) {
@@ -131,7 +220,7 @@ function activityVideoFromCatalog(video, current = {}) {
   if (video.provider === "youtube") {
     return { ...current, id: video.id, title: video.title, provider: "youtube", videoId: video.videoId, embedUrl: video.embedUrl, durationMs: video.durationMs };
   }
-  return { ...current, id: video.id, title: video.title, provider: "uga", kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
+  return { ...current, id: video.id, title: video.title, ...(current.provider ? { provider: "uga" } : {}), kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
 }
 
 function integerTime(value, label, durationMs = Infinity) {
@@ -183,6 +272,7 @@ function validateReferences(values, available, label) {
 
 function validateActivityIntegrity(activity) {
   requireObject(activity, "L’activité");
+  validateActivityVideoReference(activity);
   const durationMs = activity.video?.durationMs || Infinity;
   const identifiers = {
     speakers: collectionIdentifiers(activity, "speakers", "Chaque locuteur"),
@@ -191,7 +281,8 @@ function validateActivityIntegrity(activity) {
     languageIntervals: collectionIdentifiers(activity, "languageIntervals", "Chaque intervalle linguistique"),
     layers: collectionIdentifiers(activity, "layers", "Chaque couche"),
     phenomena: collectionIdentifiers(activity, "phenomena", "Chaque phénomène"),
-    teacherAnnotations: collectionIdentifiers(activity, "teacherAnnotations", "Chaque annotation")
+    teacherAnnotations: collectionIdentifiers(activity, "teacherAnnotations", "Chaque annotation"),
+    overlays: collectionIdentifiers(activity, "overlays", "Chaque overlay")
   };
 
   const allIdentifiers = new Map();
@@ -256,15 +347,24 @@ function validateActivityIntegrity(activity) {
   }
 
   for (const annotation of activity.teacherAnnotations) {
-    if (annotation.segmentId && !identifiers.segments.has(annotation.segmentId)) throw new Error(`L’annotation ${annotation.id} référence un segment inexistant : ${annotation.segmentId}.`);
+    if (typeof annotation.segmentId !== "string" || !identifiers.segments.has(annotation.segmentId)) throw new Error(`L’annotation ${annotation.id} référence un segment inexistant : ${String(annotation.segmentId)}.`);
+    for (const key of ["note", "pedagogicalQuestion"]) {
+      if (typeof annotation[key] !== "string" || annotation[key].length > 5000) throw new Error(`Le champ ${key} de l’annotation ${annotation.id} doit être une chaîne de 5000 caractères maximum.`);
+    }
     if (annotation.speakerId !== undefined && (typeof annotation.speakerId !== "string" || !identifiers.speakers.has(annotation.speakerId))) {
       throw new Error(`L’annotation ${annotation.id} référence un locuteur inexistant : ${String(annotation.speakerId)}.`);
     }
     if (annotation.speakerIds !== undefined) validateReferences(annotation.speakerIds, identifiers.speakers, `L’annotation ${annotation.id} (locuteurs)`);
-    if (annotation.overlay !== undefined && annotation.overlay !== null) {
-      requireObject(annotation.overlay, `L’overlay de l’annotation ${annotation.id}`);
-      validateReferences(annotation.overlay.layerIds, identifiers.layers, `L’overlay de l’annotation ${annotation.id} (couches)`);
-    }
+    if (Object.prototype.hasOwnProperty.call(annotation, "overlay")) throw new Error(`L’annotation ${annotation.id} ne doit plus contenir d’overlay imbriqué.`);
+  }
+
+  for (const overlay of activity.overlays) {
+    integerTime(overlay.startMs, `startMs de l’overlay ${overlay.id}`, durationMs);
+    integerTime(overlay.endMs, `endMs de l’overlay ${overlay.id}`, durationMs);
+    if (overlay.startMs >= overlay.endMs) throw new Error(`L’overlay ${overlay.id} doit commencer avant sa fin.`);
+    for (const key of ["title", "text"]) if (typeof overlay[key] !== "string" || overlay[key].length > 5000) throw new Error(`Le champ ${key} de l’overlay ${overlay.id} doit être une chaîne de 5000 caractères maximum.`);
+    validateReferences(overlay.layerIds, identifiers.layers, `L’overlay ${overlay.id} (couches)`);
+    if (overlay.annotationId !== undefined && (typeof overlay.annotationId !== "string" || !identifiers.teacherAnnotations.has(overlay.annotationId))) throw new Error(`L’overlay ${overlay.id} référence une annotation inexistante : ${String(overlay.annotationId)}.`);
   }
 
   const layerConfiguration = requireObject(activity.layerConfiguration, "La configuration de couches");
@@ -289,12 +389,13 @@ function validateSharedLanguageSelection(languages) {
 
 function validateAuthoringPatch(payload, current) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
-  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]);
+  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "overlays", "layerConfiguration"]);
   const unknown = Object.keys(payload).filter(key => !allowed.has(key));
   if (unknown.length) throw new Error(`Champ non autorisé : ${unknown.join(", ")}.`);
   validateMetadataPatch(Object.fromEntries(Object.entries(payload).filter(([key]) => ["title", "description", "instruction", "pedagogicalQuestion", "videoId"].includes(key))));
   const next = { ...current };
-  for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
+  for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "overlays", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
+  next.transcription = { ...(current.transcription || {}), segmentIds: (next.segments || []).map(segment => segment.id) };
   if (payload.videoId !== undefined) {
     const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId && entry.authorized);
     next.video = activityVideoFromCatalog(video, current.video);
@@ -308,7 +409,7 @@ function draftActivity(videoId, metadata = {}) {
   const video = VIDEO_CATALOG.find(entry => entry.id === videoId && entry.authorized);
   if (!video) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
-  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: activityVideoFromCatalog(video), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: activityVideoFromCatalog(video), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
 }
 
 function uniqueCopyActivityId(activities) {
@@ -369,6 +470,7 @@ function duplicateActivity(source, activities) {
   const layers = remapCollection(source.layers, id, "layer");
   const phenomena = remapCollection(source.phenomena, id, "phenomenon");
   const annotations = remapCollection(source.teacherAnnotations, id, "annotation");
+  const overlays = remapCollection(source.overlays, id, "overlay");
 
   segments.copies = segments.copies.map(segment => ({
     ...segment,
@@ -393,13 +495,12 @@ function duplicateActivity(source, activities) {
   }));
   annotations.copies = annotations.copies.map(annotation => ({
     ...annotation,
-    segmentId: remapReferences([annotation.segmentId], segments.identifiers, "segmentId")[0],
-    ...(annotation.overlay && typeof annotation.overlay === "object" ? {
-      overlay: {
-        ...annotation.overlay,
-        layerIds: remapReferences(annotation.overlay.layerIds || [], layers.identifiers, "overlay.layerIds")
-      }
-    } : {})
+    segmentId: remapReferences([annotation.segmentId], segments.identifiers, "segmentId")[0]
+  }));
+  overlays.copies = overlays.copies.map(overlay => ({
+    ...overlay,
+    layerIds: remapReferences(overlay.layerIds, layers.identifiers, "overlay.layerIds"),
+    ...(overlay.annotationId ? { annotationId: remapReferences([overlay.annotationId], annotations.identifiers, "overlay.annotationId")[0] } : {})
   }));
 
   const transcriptionLanguageId = languages.identifiers.get(source.transcription.languageId);
@@ -426,6 +527,7 @@ function duplicateActivity(source, activities) {
     layers: layers.copies,
     phenomena: phenomena.copies,
     teacherAnnotations: annotations.copies,
+    overlays: overlays.copies,
     layerConfiguration: {
       ...source.layerConfiguration,
       id: `layer-config-${id}`,
@@ -456,6 +558,36 @@ async function persistActivities(store) {
   return operation;
 }
 
+async function persistVideoCatalog(videos) {
+  const operation = writeQueue.then(async () => {
+    const file = safeVideoCatalogFile();
+    const backup = `${file}.bak`;
+    const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
+    await fs.copyFile(file, backup);
+    try {
+      await fs.writeFile(temp, `${JSON.stringify({ schemaVersion: "0.1", videos }, null, 2)}\n`, "utf8");
+      await fs.rename(temp, file);
+    } finally {
+      try { await fs.unlink(temp); } catch {}
+    }
+  });
+  writeQueue = operation.catch(() => {});
+  return operation;
+}
+
+function catalogEntryFromInput(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
+  if (typeof payload.provider !== "string" || !["youtube", "uga"].includes(payload.provider)) throw new Error("Le type doit être YouTube ou HLS UGA.");
+  const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim().slice(0, 500) : "Source vidéo Proto05";
+  const link = payload.link;
+  let source;
+  if (payload.provider === "youtube") source = validateYouTubeLink(link);
+  else source = validateUgaLink(link);
+  const id = payload.provider === "youtube" ? `video-proto05-youtube-${source.videoId.toLowerCase()}` : `video-proto05-uga-${source.key.split("/").pop().replace(".m3u8", "")}`;
+  if (VIDEO_CATALOG.some(video => video.id === id)) throw new Error("Cette source vidéo existe déjà dans le catalogue.");
+  return { id, title, provider: payload.provider, ...(payload.provider === "youtube" ? source : { source: "UGA", sourceType: "hls-proxy", mimeType: "application/vnd.apple.mpegurl", durationMs: null, ...source }), authorized: true };
+}
+
 function activityResponse(store, activity) {
   return { schemaVersion: store.schemaVersion || "0.1", updatedAt: store.updatedAt || null, activity };
 }
@@ -466,8 +598,15 @@ async function handleApi(request, response, url) {
     return sendJson(response, 200, { ok: true, service: SERVICE, version: VERSION, port: PORT });
   }
   if (url.pathname === "/api/proto05/video-catalog") {
-    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
-    return sendJson(response, 200, { videos: VIDEO_CATALOG });
+    if (request.method === "GET") return sendJson(response, 200, { videos: VIDEO_CATALOG });
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, POST" });
+    let entry;
+    try { entry = catalogEntryFromInput(JSON.parse(await readRequestBody(request))); }
+    catch (error) { return sendJson(response, 400, { error: error.message || "Source vidéo invalide." }); }
+    const nextCatalog = freezeVideoCatalog([...VIDEO_CATALOG, entry]);
+    try { await persistVideoCatalog(nextCatalog); VIDEO_CATALOG = nextCatalog; }
+    catch (error) { console.error(`[data] catalogue vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement du catalogue impossible." }); }
+    return sendJson(response, 201, { video: entry });
   }
   if (url.pathname === "/api/proto05/language-catalog") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
@@ -552,7 +691,7 @@ async function handleApi(request, response, url) {
       for (const key of ["title", "description", "instruction", "pedagogicalQuestion"]) if (payload[key] !== undefined) next[key] = payload[key];
       if (payload.videoId !== undefined) {
         const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId);
-        next.video = { ...current.video, id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
+        next.video = activityVideoFromCatalog(video, current.video);
       }
       try { validateActivityIntegrity(next); }
       catch (error) { return sendJson(response, 400, { error: error.message || "Activité invalide." }); }
@@ -647,6 +786,11 @@ async function serveStatic(request, response, url) {
   }
   if (url.pathname === "/teacher/create" || url.pathname === "/teacher/create/") {
     const target = path.join(ROOT_DIR, "teacher-create.html"); const file = await fs.readFile(target);
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
+    return request.method === "HEAD" ? response.end() : response.end(file);
+  }
+  if (url.pathname === "/teacher/videos" || url.pathname === "/teacher/videos/") {
+    const target = path.join(ROOT_DIR, "teacher-videos.html"); const file = await fs.readFile(target);
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
   }
