@@ -23,7 +23,7 @@ partir d’un brouillon vide.
 | Composant | État retenu | Version importante | Exécution |
 |---|---|---|---|
 | **IC-Hub** | Vérifié dans le dépôt; portail et services transversaux actifs dans l’architecture | serveur/portail `0.10.3`; Hub historique `0.9.6` | Node `8790` |
-| **Proto05 — Vidéo augmentée** | Fonctionnel; sécurisation automatisée terminée; encore provisoirement couplé au Hub | serveur `0.1.15`; moteur `index-0.0.9.html` | Node `8791` |
+| **Proto05 — Vidéo augmentée** | Fonctionnel; sécurisation automatisée terminée; encore provisoirement couplé au Hub | serveur `0.1.16`; moteur `index-0.0.9.html` | Node `8791` |
 | **Proto06 — Agent vocal** | Actif et autonome; fonctions vocales dépendantes du navigateur | backend déclaré `1.1` (`package` `1.1.0`); runtime `1.2.3` | Node `8788` |
 | **Informaticaire** | Démonstrateur statique gelé | gel `0.6.5` | servi par IC-Hub, sans port propre |
 | **Dico-IC / Seven Sieves** | Actif en développement; API, administration et client réunis | contrat API `0.1`; package Node générique `1.0.0` | Node `3000` + MariaDB `3306` |
@@ -60,8 +60,9 @@ réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
   activités ;
 - référentiel de langues partagé `fr`, `es`, `it`, `pt`, unique source de vérité
   des identifiants et libellés utilisés par les cinq activités ;
-- locuteurs propres à chaque activité, gérés dans l’atelier auteur et
-  sélectionnés par référence dans les segments, sans référentiel global ;
+- locuteurs propres à chaque activité, gérés dans les ateliers avancé et guidé,
+  sélectionnés par référence dans les segments, avec identifiants techniques
+  générés et masqués, sans référentiel global ;
 - `phenomena[].segmentId` comme source de vérité du rattachement des phénomènes;
   le cache inverse historique est strictement dérivé et validé ;
 - visibilité des couches testée côté étudiant et enseignant ;

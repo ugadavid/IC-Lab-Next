@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.15
+# Serveur autonome du Prototype 05 — 0.1.16
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -22,12 +22,14 @@ suppression et les sauvegardes de métadonnées ou d’atelier auteur. Elles
 utilisent les validations du prototype ; la sauvegarde JSON est atomique,
 séquencée et précédée d’un fichier `.bak` UTF-8.
 
-## Locuteurs propres à chaque activité (0.1.15)
+## Locuteurs propres à chaque activité (0.1.16)
 
 Les locuteurs restent dans `activity.speakers` et ne proviennent d’aucun
-référentiel global. L’atelier auteur affiche leurs identifiants stables, permet
-d’ajouter un couple identifiant/libellé, de modifier le libellé et de choisir un
-ou plusieurs locuteurs existants dans chaque segment.
+référentiel global. Les ateliers avancé et guidé affichent uniquement leurs noms
+lisibles, permettent de les ajouter ou modifier et de choisir un ou plusieurs
+locuteurs existants dans chaque segment. Les identifiants techniques sont
+générés automatiquement, conservés après sauvegarde et masqués dans les deux
+interfaces ; les identifiants historiques ne sont pas renommés.
 
 La suppression locale est refusée tant que le locuteur est référencé par un
 segment ou par les champs optionnels `speakerId`/`speakerIds` d’une annotation.

@@ -17,9 +17,9 @@ L’hypothèse n’est pas que l’annotation donne la “bonne lecture”, mais
 - Référentiel partagé des langues `fr`, `es`, `it`, `pt`, servi en lecture seule
   depuis `shared/reference-data/languages.json` et utilisé par toutes les
   activités Proto05.
-- Locuteurs définis localement dans chaque activité, avec identifiants stables
-  et sélection multiple dans les segments ; aucun dictionnaire global de
-  locuteurs.
+- Locuteurs définis localement dans chaque activité, avec sélection multiple
+  dans les segments des ateliers avancé et guidé ; leurs identifiants stables
+  sont générés automatiquement et masqués, sans dictionnaire global.
 - Lecteur vidéo pointant vers le flux HLS fourni.
 - Colonne de transcription synchronisée.
 - Segments cliquables qui déplacent la vidéo au timestamp associé.

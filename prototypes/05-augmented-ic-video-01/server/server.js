@@ -7,7 +7,7 @@ const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.15";
+const VERSION = "0.1.17";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -42,6 +42,16 @@ const VIDEO_CATALOG = Object.freeze([
     proxyUrl: "/api/hls/uga-37004/livestream.m3u8",
     mimeType: "application/vnd.apple.mpegurl",
     durationMs: 939217,
+    provider: "uga",
+    authorized: true
+  }),
+  Object.freeze({
+    id: "video-proto05-youtube-fg4h0-v3otk",
+    title: "Vidéo de test — YouTube contrôlé",
+    provider: "youtube",
+    videoId: "FG4h0_v3oTk",
+    embedUrl: "https://www.youtube.com/embed/FG4h0_v3oTk?si=O4Rv_ybx21escKID",
+    durationMs: null,
     authorized: true
   })
 ]);
@@ -115,6 +125,13 @@ function validateMetadataPatch(payload) {
     throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   }
   return payload;
+}
+
+function activityVideoFromCatalog(video, current = {}) {
+  if (video.provider === "youtube") {
+    return { ...current, id: video.id, title: video.title, provider: "youtube", videoId: video.videoId, embedUrl: video.embedUrl, durationMs: video.durationMs };
+  }
+  return { ...current, id: video.id, title: video.title, provider: "uga", kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
 }
 
 function integerTime(value, label, durationMs = Infinity) {
@@ -280,7 +297,7 @@ function validateAuthoringPatch(payload, current) {
   for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
   if (payload.videoId !== undefined) {
     const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId && entry.authorized);
-    next.video = { ...current.video, id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
+    next.video = activityVideoFromCatalog(video, current.video);
   }
   validateSharedLanguageSelection(next.languages);
   validateActivityIntegrity(next);
@@ -291,7 +308,7 @@ function draftActivity(videoId, metadata = {}) {
   const video = VIDEO_CATALOG.find(entry => entry.id === videoId && entry.authorized);
   if (!video) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
-  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: { id: video.id, title: video.title, kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs }, transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: activityVideoFromCatalog(video), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
 }
 
 function uniqueCopyActivityId(activities) {
@@ -639,7 +656,8 @@ async function serveStatic(request, response, url) {
     return request.method === "HEAD" ? response.end() : response.end(file);
   }
   if (/^\/teacher\/guided\/[^/]+$/.test(url.pathname)) {
-    const target = path.join(ROOT_DIR, "teacher-guided.html"); const file = await fs.readFile(target);
+    const target = path.join(ROOT_DIR, "teacher-guided.html");
+    const file = Buffer.from((await fs.readFile(target, "utf8")).replace("</head>", "<script src=\"/shared/ic-video-player.js\"></script></head>").replace("</body>", "<script>attachVideo=()=>{upgradeICVideoElement(video,state.activity.video).catch(error=>$('#status').textContent=error.message)};</script></body>"));
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
   }

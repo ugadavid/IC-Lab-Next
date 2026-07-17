@@ -849,7 +849,7 @@
     <main class="layout">
       <section class="panel video-panel">
         <div class="video-wrap">
-          <video id="video" controls preload="metadata"></video>
+          <div id="videoPlayer" class="video" aria-label="Lecteur vidéo"></div>
           <div id="layersPanel" class="layers" aria-label="Couches actives">
             <button id="layersToggle" class="layers-toggle" type="button" aria-expanded="true">▼ Couches actives</button>
             <div id="layerList" class="layer-list"></div>
@@ -928,9 +928,10 @@
     </main>
   </div>
 
-  <link rel="stylesheet" href="/shared/ic-timeline.css"><script src="/vendor/hls.js/hls.min.js"></script><script src="/shared/ic-timeline.js"></script>
+  <link rel="stylesheet" href="/shared/ic-timeline.css"><script src="/vendor/hls.js/hls.min.js"></script><script src="/shared/ic-video-player.js"></script><script src="/shared/ic-timeline.js"></script>
   <script>
     let hlsUrl = "";
+    let videoPlayer = null;
     let sharedICTimeline = null;
     const routeActivityMatch = location.pathname.match(/(?:student|teacher\/preview)\/([^/]+)/);
     const activityId = new URLSearchParams(location.search).get("activity") || (routeActivityMatch && decodeURIComponent(routeActivityMatch[1])) || "proto05-augmented-video-01";
@@ -985,7 +986,7 @@
     let activityData = null;
 
     function buildActivityView(activity) {
-      if (!activity || !Array.isArray(activity.segments) || !Array.isArray(activity.layers) || !activity.video?.proxyUrl) {
+      if (!activity || !Array.isArray(activity.segments) || !Array.isArray(activity.layers) || !activity.video || !(activity.video.proxyUrl || activity.video.provider === "youtube")) {
         throw new Error("Le JSON de l’activité est incomplet.");
       }
       document.querySelector("h1").textContent = activity.title || "Vidéo augmentée d’intercompréhension";
@@ -1049,7 +1050,9 @@
       if (!segments.length) return;
     }
 
-    const video = document.getElementById("video");
+    const videoPlayerMount = document.getElementById("videoPlayer");
+    const videoListeners = new Map();
+    const video = { get currentTime() { return videoPlayer?.currentTime || 0; }, set currentTime(value) { videoPlayer?.seek(value); }, get duration() { return videoPlayer?.duration || 0; }, get paused() { return videoPlayer?.paused ?? true; }, play() { return videoPlayer?.play(); }, pause() { return videoPlayer?.pause(); }, addEventListener(type, handler) { if (!videoListeners.has(type)) videoListeners.set(type, new Set()); videoListeners.get(type).add(handler); videoPlayer?.addEventListener(type, handler); }, removeEventListener(type, handler) { videoListeners.get(type)?.delete(handler); videoPlayer?.removeEventListener(type, handler); } };
     const app = document.getElementById("app");
     const focusToggle = document.getElementById("focusToggle");
     const videoNote = document.getElementById("videoNote");
@@ -1105,7 +1108,7 @@
         if (!response.ok) { const error = new Error(response.status === 404 ? "Cette activité est inconnue." : `Réponse serveur ${response.status}.`); error.kind = response.status === 404 ? "not-found" : "network"; throw error; }
         const payload = await response.json();
         buildActivityView(payload.activity);
-        hlsUrl = activityData.video.proxyUrl;
+        hlsUrl = activityData.video.proxyUrl || "#";
         streamLink.href = hlsUrl;
         activeSegmentIndex = 0;
         activeLayers.clear();
@@ -1115,7 +1118,7 @@
         renderTranscript();
         renderTimeline();
         renderObservations();
-        loadVideo(hlsUrl);
+        loadVideo(activityData.video);
         if (segments.length) activateSegment(0, false);
         else {
           activeTime.textContent = "Cette activité ne contient encore aucun segment.";
@@ -1148,45 +1151,11 @@
       destroyHls();
     }
 
-    function loadVideo(sourceUrl) {
-      destroyHls();
-      video.pause();
-      video.removeAttribute("src");
-      video.load();
-      setPlayerState("loading", "Connexion au flux HLS via IC-Hub…");
-
-      if (window.Hls && Hls.isSupported()) {
-        hls = new Hls();
-        hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-          if (hls) hls.loadSource(sourceUrl);
-        });
-        hls.on(Hls.Events.MANIFEST_PARSED, () => {
-          setPlayerState("ready", "Flux HLS prêt avec hls.js local.");
-        });
-        hls.on(Hls.Events.ERROR, (_event, data) => {
-          if (!data.fatal) {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-              setPlayerState("waiting", "Le lecteur attend une réponse du flux distant…");
-            }
-            return;
-          }
-          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
-            stopWithHlsError("network-error", "Impossible de charger le flux vidéo. Vérifiez la connexion à la source UGA puis réessayez.");
-            return;
-          }
-          stopWithHlsError("unsupported", "Le navigateur n’a pas pu décoder ce flux vidéo.");
-        });
-        hls.attachMedia(video);
-        return;
-      }
-
-      if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = sourceUrl;
-        video.load();
-        return;
-      }
-
-      setPlayerState("unsupported", "Ce navigateur ne fournit ni Media Source Extensions pour hls.js, ni lecture HLS native.");
+    async function loadVideo(source) {
+      destroyHls(); videoPlayer?.destroy(); videoPlayer = createICVideoPlayer({ container: videoPlayerMount });
+      videoListeners.forEach((handlers, type) => handlers.forEach(handler => videoPlayer.addEventListener(type, handler)));
+      setPlayerState("loading", source.provider === "youtube" ? "Chargement via l’API officielle YouTube IFrame…" : "Connexion au flux HLS via IC-Hub…");
+      try { await videoPlayer.load(source); } catch (error) { setPlayerState("network-error", error.message); }
     }
 
     function formatTime(seconds) {
@@ -1702,7 +1671,7 @@
       sharedICTimeline?.setCurrentTime((video.currentTime || 0) * 1000);
     });
 
-    window.addEventListener("beforeunload", destroyHls);
+    window.addEventListener("beforeunload", () => { destroyHls(); videoPlayer?.destroy(); });
 
     loadActivity();
   </script>

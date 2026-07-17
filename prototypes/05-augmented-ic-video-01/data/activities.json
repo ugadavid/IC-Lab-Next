@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-16T21:21:15.862Z",
+  "updatedAt": "2026-07-17T08:46:46.180Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -962,11 +962,14 @@
       "instruction": "",
       "pedagogicalQuestion": "",
       "video": {
-        "id": "video-proto05-uga-37004",
-        "title": "Vidéo augmentée IC — source UGA",
+        "id": "video-proto05-youtube-fg4h0-v3otk",
+        "title": "Vidéo de test — YouTube contrôlé",
         "kind": "hls",
         "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
-        "durationMs": 939217
+        "durationMs": null,
+        "provider": "youtube",
+        "videoId": "FG4h0_v3oTk",
+        "embedUrl": "https://www.youtube.com/embed/FG4h0_v3oTk?si=O4Rv_ybx21escKID"
       },
       "transcription": {
         "id": "transcription-proto05-copy-1784236861048-984dec",
@@ -1200,6 +1203,18 @@
         {
           "id": "speaker-proto05-copy-1784236861048-984dec-5",
           "label": "groupe"
+        },
+        {
+          "id": "speaker-1784238948958-jylryq",
+          "label": "Mbappé"
+        },
+        {
+          "id": "speaker-1784239004912-k584nz",
+          "label": "Mbappé"
+        },
+        {
+          "id": "speaker-1784239014638-57bkju",
+          "label": "Mbappé"
         }
       ],
       "languages": [

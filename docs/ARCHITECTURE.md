@@ -221,11 +221,12 @@ enseignantes et configuration de visibilité. Les temps sont des millisecondes
 entières. La timeline partagée rend les langues et phénomènes sur un repère
 commun, avec des interactions adaptées au mode étudiant ou auteur.
 
-Dans l’atelier auteur, les locuteurs de `activity.speakers` peuvent être ajoutés,
-renommés et sélectionnés dans les segments. Leur identifiant n’est pas éditable
-après création. Une suppression est bloquée si un segment ou une annotation
-référence encore le locuteur ; le serveur contrôle également cette intégrité à
-la sauvegarde.
+Dans les ateliers avancé et guidé, les locuteurs de `activity.speakers` peuvent
+être ajoutés, renommés et sélectionnés dans les segments. Leur identifiant
+technique est généré automatiquement, stable et masqué dans les interfaces ;
+les identifiants déjà stockés ne sont pas migrés. Une suppression est bloquée si
+un segment ou une annotation référence encore le locuteur ; le serveur contrôle
+également cette intégrité à la sauvegarde.
 
 La relation canonique entre phénomène et transcription est
 `phenomena[].segmentId`. Les temps du phénomène restent indépendants de ceux du
@@ -326,7 +327,7 @@ Les divergences les plus structurantes sont :
 | Source | Information ancienne ou contradictoire | État retenu ici |
 |---|---|---|
 | `PROJECTS_LAUNCH.md` | Son introduction décrit Proto05 sur `8791`, mais sa section détaillée le présente encore comme un fichier statique sans port | Serveur autonome `8791`, vérifié dans le launcher, le package et `server.js` |
-| README racine et README Proto05 | Référencent encore `0.0.6`/`0.0.6.2` et présentent le serveur autonome comme futur | Le serveur sert `index-0.0.9.html`, version serveur/package `0.1.15` |
+| README racine et README Proto05 | Référencent encore `0.0.6`/`0.0.6.2` et présentent le serveur autonome comme futur | Le serveur sert `index-0.0.9.html`, version serveur/package `0.1.16` |
 | README IC-Hub | Présente la séparation Proto05 comme future | La séparation existe; seules les routes de compatibilité et le HLS restent au Hub |
 | README du serveur Proto05 | Affirme d’abord que `PUT` métadonnées est la seule écriture, puis documente l’atelier | Le code expose aussi `POST` de création et `PUT .../authoring` |
 | Guide des launchers Windows | Sa phrase d’ouverture omet Proto05 | `start-all.bat` lance effectivement Proto05 en premier |
