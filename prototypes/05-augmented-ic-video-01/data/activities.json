@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-17T16:45:43.578Z",
+  "updatedAt": "2026-07-17T20:42:14.983Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -1212,7 +1212,7 @@
       "speakers": [
         {
           "id": "speaker-proto05-copy-1784236861048-984dec-1",
-          "label": "Présentateur 1"
+          "label": "Présentateur vérifié"
         },
         {
           "id": "speaker-proto05-copy-1784236861048-984dec-2",
@@ -1425,8 +1425,8 @@
         {
           "id": "layer-proto05-copy-1784236861048-984dec-1",
           "label": "Présentation",
-          "description": "",
-          "color": "#6d9ed1"
+          "description": "Contrôle de mise en page",
+          "color": "#4d7dbc"
         },
         {
           "id": "layer-proto05-copy-1784236861048-984dec-2",
