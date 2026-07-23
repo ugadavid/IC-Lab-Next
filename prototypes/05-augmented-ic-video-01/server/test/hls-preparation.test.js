@@ -82,6 +82,33 @@ test("préparation HLS temporaire, métadonnées, annulation et nettoyage", asyn
   assert.deepEqual(fs.readdirSync(path.resolve(__dirname, "../../data/video-library-media")), mediaBefore);
   assert.equal(fs.readFileSync(activitiesFile, "utf8"), activitiesBefore);
   assert.equal(fs.readFileSync(libraryFile, "utf8"), libraryBefore);
+  const derivationStarted = await (await fetch(`${server.baseUrl}/api/proto05/library/hls-derivations`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ preparationJobId: started.job.id }) })).json();
+  assert.equal(derivationStarted.job.preparationJobId, started.job.id);
+  let derived;
+  for (let attempt = 0; attempt < 300; attempt += 1) {
+    const response = await fetch(`${server.baseUrl}/api/proto05/library/hls-derivations/${derivationStarted.job.id}`);
+    const payload = await response.json();
+    if (["terminé", "échoué", "annulé"].includes(payload.job.status)) { derived = payload.job; break; }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.equal(derived.status, "terminé", derived.error || "dérivation non terminée");
+  assert.equal(derived.metadata.mimeType, "video/mp4");
+  assert.ok(derived.metadata.sha256);
+  const derivedLibrary = JSON.parse(fs.readFileSync(server.videoLibraryFile, "utf8"));
+  const derivedAsset = derivedLibrary.assets.find(asset => asset.id === derived.assetId);
+  const derivedPlayable = derivedLibrary.playables.find(playable => playable.id === derived.playableId);
+  assert.ok(derivedAsset && derivedPlayable);
+  assert.equal(derivedAsset.provenance.method, "ffmpeg-drawbox-rectangles");
+  assert.equal(derivedAsset.provenance.sourcePreparationJobId, started.job.id);
+  assert.equal(fs.existsSync(path.join(server.root, "prototype", "data", "video-library-media", derivedPlayable.storageKey)), true);
+  assert.equal(fs.existsSync(path.join(os.tmpdir(), "proto05-hls-preparations", workspace, "work.mp4")), false);
+  const mediaResponse = await fetch(`${server.baseUrl}${derivedPlayable.url}`, { headers: { range: "bytes=0-31" } });
+  assert.ok([200, 206].includes(mediaResponse.status));
+  assert.match(mediaResponse.headers.get("content-type") || "", /video\/mp4/);
+  await server.restart();
+  const persistedLibrary = await (await fetch(`${server.baseUrl}/api/proto05/library/assets`)).json();
+  assert.ok(persistedLibrary.assets.some(asset => asset.id === derivedAsset.id));
+  assert.equal(fs.readFileSync(activitiesFile, "utf8"), activitiesBefore);
   origin.state.delaySegments = true;
   const cancelling = await (await fetch(`${server.baseUrl}/api/proto05/library/hls-preparations`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(requestBody) })).json();
   await fetch(`${server.baseUrl}/api/proto05/library/hls-preparations/${cancelling.job.id}`, { method: "DELETE" });
