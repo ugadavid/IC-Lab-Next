@@ -19,7 +19,7 @@ const {
 } = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.24";
+const VERSION = "0.1.25";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -219,12 +219,24 @@ function normalizeActivityOverlays(activity) {
 function validateActivityVideoReference(activity) {
   const video = activity?.video;
   const catalogEntry = VIDEO_CATALOG.find(entry => entry.id === video?.id && entry.authorized);
-  if (!catalogEntry) throw new Error("Une activité référence une source vidéo absente ou non validée.");
-  if (catalogEntry.provider === "youtube" && (video.provider !== "youtube" || video.videoId !== catalogEntry.videoId || video.embedUrl !== catalogEntry.embedUrl)) throw new Error("Une activité référence une source YouTube incohérente.");
-  if (catalogEntry.provider === "uga" && video.proxyUrl !== catalogEntry.proxyUrl) throw new Error("Une activité référence une source HLS incohérente.");
+  if (catalogEntry) {
+    if (catalogEntry.provider === "youtube" && (video.provider !== "youtube" || video.videoId !== catalogEntry.videoId || video.embedUrl !== catalogEntry.embedUrl)) throw new Error("Une activité référence une source YouTube incohérente.");
+    if (catalogEntry.provider === "uga" && video.proxyUrl !== catalogEntry.proxyUrl) throw new Error("Une activité référence une source HLS incohérente.");
+    return;
+  }
+  if (activity?.videoRef) {
+    const playable = resolveLibraryPlayable(activity.videoRef, VIDEO_LIBRARY);
+    if (!video || video.id !== playable.id) throw new Error("La projection activity.video ne correspond pas au playable Library.");
+    return;
+  }
+  throw new Error("Une activité référence une source vidéo absente ou non validée.");
 }
 
 function activityVideoRef(activity) {
+  if (activity?.videoRef) {
+    try { return resolveLibraryPlayable(activity.videoRef, VIDEO_LIBRARY) && { schemaVersion: "0.1", assetId: activity.videoRef.assetId, playableId: activity.videoRef.playableId }; }
+    catch {}
+  }
   const entry = VIDEO_CATALOG.find(item => item.id === activity?.video?.id && item.authorized);
   if (!entry) throw new Error("Impossible de construire videoRef pour cette activitÃ©.");
   if (activity?.videoRef) {
@@ -286,6 +298,18 @@ function activityVideoFromCatalog(video, current = {}) {
     return { ...current, id: video.id, title: video.title, provider: "youtube", videoId: video.videoId, embedUrl: video.embedUrl, durationMs: video.durationMs };
   }
   return { ...current, id: video.id, title: video.title, ...(current.provider ? { provider: "uga" } : {}), kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
+}
+
+function activityVideoFromLibrary(asset, playable, current = {}) {
+  const projection = { ...current, id: playable.id, title: asset.title, kind: playable.kind, durationMs: playable.durationMs ?? null };
+  if (playable.provider) projection.provider = playable.provider;
+  if (playable.videoId) { projection.videoId = playable.videoId; projection.embedUrl = playable.embedUrl; }
+  if (playable.url) projection.url = playable.url;
+  if (playable.manifestUrl) projection.manifestUrl = playable.manifestUrl;
+  if (playable.originUrl) projection.sourceUrl = playable.originUrl;
+  if (playable.proxyUrl) projection.proxyUrl = playable.proxyUrl;
+  if (playable.storageKey) projection.storageKey = playable.storageKey;
+  return projection;
 }
 
 function integerTime(value, label, durationMs = Infinity) {
@@ -772,6 +796,28 @@ async function handleApi(request, response, url) {
     if (!playable) return sendJson(response, 404, { error: "Playable vidéo introuvable." });
     try { return sendJson(response, 200, { playable: resolveLibraryPlayable({ assetId: playable.assetId, playableId }, VIDEO_LIBRARY) }); }
     catch (error) { return sendJson(response, 409, { error: error.message }); }
+  }
+  const activityVideoRefMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)\/video-ref$/);
+  if (activityVideoRefMatch) {
+    if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
+    const id = decodeURIComponent(activityVideoRefMatch[1]);
+    const store = await readActivities();
+    const index = store.activities.findIndex(activity => activity && activity.id === id);
+    if (index < 0) return sendJson(response, 404, { error: "Activité introuvable." });
+    let payload;
+    try { payload = JSON.parse(await readRequestBody(request)); }
+    catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
+    try {
+      const playable = resolveLibraryPlayable(payload, VIDEO_LIBRARY);
+      const asset = VIDEO_LIBRARY.assets.find(item => item.id === payload.assetId);
+      const next = { ...store.activities[index], videoRef: { schemaVersion: "0.1", assetId: payload.assetId, playableId: payload.playableId } };
+      next.video = activityVideoFromLibrary(asset, playable, next.video);
+      validateActivityIntegrity(next);
+      store.activities[index] = next;
+      store.updatedAt = new Date().toISOString();
+      await persistActivities(store);
+      return sendJson(response, 200, activityResponse(store, next));
+    } catch (error) { return sendJson(response, 400, { error: error.message || "Association vidéo invalide." }); }
   }
   if (url.pathname === "/api/proto05/language-catalog") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });

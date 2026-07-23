@@ -72,3 +72,16 @@ test("la Library ajoutée reste disponible après redémarrage du serveur", asyn
     assert.ok(persisted.assets.some(asset => asset.id === created.body.asset.id));
   } finally { await server.cleanup(); }
 });
+
+test("associe un asset Library à une activité sur une copie", async () => {
+  const store = JSON.parse(fs.readFileSync(activitiesFile, "utf8"));
+  const server = await startTemporaryProto05Server(store);
+  try {
+    const created = await jsonRequest(server.baseUrl, "/api/proto05/library/assets", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ title: "Asset sélectionnable", source: { kind: "local-file", storageKey: "library/selectable.mp4", mimeType: "video/mp4" } }) });
+    const asset = created.body.asset;
+    const selected = await jsonRequest(server.baseUrl, "/api/proto05/activities/proto05-augmented-video-01/video-ref", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ assetId: asset.id, playableId: asset.defaultPlayableId }) });
+    assert.equal(selected.response.status, 200);
+    assert.equal(selected.body.activity.videoRef.assetId, asset.id);
+    assert.equal(selected.body.activity.video.id, asset.defaultPlayableId);
+  } finally { await server.cleanup(); }
+});
