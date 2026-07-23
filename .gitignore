@@ -53,3 +53,5 @@ prototypes/00-ic-hub/server/data/runs.json
 **/*.temp
 **/*.swp
 **/*~
+
+/temp/
