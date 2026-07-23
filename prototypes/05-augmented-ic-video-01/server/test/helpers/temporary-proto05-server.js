@@ -82,7 +82,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
     }
   }
   fs.writeFileSync(videoCatalogFile, `${JSON.stringify(videoCatalog, null, 2)}\n`, "utf8");
-  for (const file of ["teacher.html", "teacher-create.html", "teacher-videos.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
+  for (const file of ["teacher.html", "teacher-create.html", "teacher-videos.html", "teacher-anonymization.html", "teacher-anonymization-advanced.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));
   }
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");

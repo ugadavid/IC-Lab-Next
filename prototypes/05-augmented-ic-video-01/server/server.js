@@ -5,7 +5,7 @@ const path = require("node:path");
 const os = require("node:os");
 const crypto = require("node:crypto");
 const dns = require("node:dns").promises;
-const { spawn } = require("node:child_process");
+const { spawn, spawnSync } = require("node:child_process");
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 const {
@@ -231,6 +231,21 @@ async function serveLibraryMedia(request, response, url) {
     if (!stream.destroyed) stream.destroy();
   }
   return true;
+}
+
+async function servePreparationMedia(request, response, url) {
+  const match = url.pathname.match(/^\/api\/proto05\/library\/hls-preparations\/([^/]+)\/media$/);
+  if (!match) return false;
+  if (!['GET', 'HEAD'].includes(request.method)) { sendJson(response, 405, { error: 'Méthode non autorisée.' }, { allow: 'GET, HEAD' }); return true; }
+  const job = ACTIVE_HLS_PREPARATIONS.get(decodeURIComponent(match[1]));
+  if (!job?.outputPath) { sendJson(response, 404, { error: 'Préparation HLS introuvable ou expirée.' }); return true; }
+  let stat; try { stat = await fs.stat(job.outputPath); if (!stat.isFile()) throw new Error(); } catch { sendJson(response, 404, { error: 'Fichier temporaire introuvable.' }); return true; }
+  let start = 0, end = stat.size - 1, status = 200;
+  const range = request.headers.range;
+  if (range) { const rangeMatch = /^bytes=(\d*)-(\d*)$/.exec(range); if (!rangeMatch) { response.writeHead(416, { 'content-range': `bytes */${stat.size}` }); response.end(); return true; } if (rangeMatch[1]) start = Number(rangeMatch[1]); if (rangeMatch[2]) end = Number(rangeMatch[2]); else end = Math.min(start + 1024 * 1024 - 1, stat.size - 1); if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start > end || start >= stat.size) { response.writeHead(416, { 'content-range': `bytes */${stat.size}` }); response.end(); return true; } end = Math.min(end, stat.size - 1); status = 206; }
+  const headers = { 'content-type': 'video/mp4', 'accept-ranges': 'bytes', 'content-length': end - start + 1, 'cache-control': 'no-store' }; if (status === 206) headers['content-range'] = `bytes ${start}-${end}/${stat.size}`;
+  if (request.aborted || response.destroyed) return true; response.writeHead(status, headers); if (request.method === 'HEAD') { response.end(); return true; }
+  const stream = fsSync.createReadStream(job.outputPath, { start, end }); const abort = () => { if (!stream.destroyed) stream.destroy(); }; request.once('aborted', abort); response.once('close', abort); try { await pipeline(stream, response); } catch (error) { if (!(request.aborted || response.destroyed || ['ERR_STREAM_PREMATURE_CLOSE', 'ECONNRESET', 'EPIPE'].includes(error?.code))) throw error; } finally { request.removeListener('aborted', abort); response.removeListener('close', abort); if (!stream.destroyed) stream.destroy(); } return true;
 }
 function loadLanguageCatalog() {
   const parsed = JSON.parse(fsSync.readFileSync(LANGUAGE_CATALOG_FILE, "utf8"));
@@ -1003,33 +1018,284 @@ function findFfmpeg() {
   return "ffmpeg";
 }
 
+function powerShellQuote(value) {
+  return `'${String(value).replace(/'/g, "''")}'`;
+}
+
+function ffmpegPowerShellCommand(executable, args, cwd, logPath) {
+  const quotedArgs = args.map(powerShellQuote).join(", ");
+  return `$ffmpegExe = ${powerShellQuote(executable)}\n$workDir = ${powerShellQuote(cwd)}\n$logPath = ${powerShellQuote(logPath)}\nSet-Location -LiteralPath $workDir\n$ffmpegArgs = @(${quotedArgs})\n& $ffmpegExe @ffmpegArgs 2>&1 | Tee-Object -FilePath $logPath\n$LASTEXITCODE`;
+}
+
+function publicFfmpegRuntime(job) {
+  if (!job.ffmpegRuntime) return null;
+  const runtime = job.ffmpegRuntime;
+  return { executable: runtime.executable, cwd: runtime.cwd, args: runtime.args, commands: runtime.commands || [], commandPowerShell: runtime.commandPowerShell, logPath: runtime.logPath || null, startedAt: runtime.startedAt || null, endedAt: runtime.endedAt || null, pid: runtime.pid || null, exitCode: runtime.exitCode ?? null, lastMediaTimeMs: runtime.lastMediaTimeMs ?? null, outputSizeBytes: runtime.outputSizeBytes ?? null, inputPath: runtime.inputPath || null, outputPath: runtime.outputPath || null, stdout: runtime.stdout || "", stderr: runtime.stderr || "", error: runtime.error || null, env: runtime.env || {} };
+}
+
 function publicHlsPreparationJob(job) {
-  return { id: job.id, assetId: job.assetId, playableId: job.playableId, sourceId: job.sourceId, status: job.status, progress: job.progress, createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, metadata: job.metadata || null, log: job.log.slice(-20) };
+  return { id: job.id, assetId: job.assetId, playableId: job.playableId, sourceId: job.sourceId, status: job.status, progress: job.progress, createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, metadata: job.metadata || null, masks: job.masks || null, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, log: job.log.slice(-20) };
+}
+
+function derivationStatusCode(status) {
+  const value = String(status || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  if (value === "completed" || value.includes("termin")) return "completed";
+  if (value === "failed" || value.includes("echou")) return "failed";
+  if (value === "cancelled" || value.includes("annul")) return "cancelled";
+  if (value === "expired" || value.includes("expir")) return "expired";
+  if (value.includes("validation")) return "validation";
+  if (value.includes("annulation")) return "cancelling";
+  if (value.includes("anonym") || value === "running") return "running";
+  return value || "unknown";
 }
 
 function publicHlsDerivationJob(job) {
-  return { id: job.id, preparationJobId: job.preparationJobId, assetId: job.assetId, playableId: job.playableId || null, status: job.status, progress: job.progress, createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, metadata: job.metadata || null, log: job.log.slice(-20) };
+  return { id: job.id, preparationJobId: job.preparationJobId, assetId: job.assetId, playableId: job.playableId || null, mode: job.mode || "fixed", status: job.status, statusCode: derivationStatusCode(job.status), progress: job.progress, timeoutMs: HLS_DERIVATION_TIMEOUT_MS, blurProfile: job.blurProfile || job.metadata?.blur?.id || "standard", metadata: job.metadata || null, ffmpeg: publicFfmpegRuntime(job), createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, log: job.log.slice(-20) };
 }
 
 function defaultAnonymizationMasks(value) {
   const masks = value === undefined ? [{ x: 0, y: 0, width: 0.2, height: 0.2 }] : value;
+  const identifiers = new Set();
   if (!Array.isArray(masks) || !masks.length || masks.length > 20) throw new Error("Les masques d’anonymisation doivent être une liste non vide de 1 à 20 zones.");
   return masks.map((mask, index) => {
     if (!mask || typeof mask !== "object") throw new Error(`Le masque ${index + 1} est invalide.`);
     const values = ["x", "y", "width", "height"].map(key => Number(mask[key]));
     if (values.some(item => !Number.isFinite(item)) || values[0] < 0 || values[1] < 0 || values[2] <= 0 || values[3] <= 0 || values[0] + values[2] > 1 || values[1] + values[3] > 1) throw new Error(`Le masque ${index + 1} doit rester dans l’image avec des ratios compris entre 0 et 1.`);
-    return { x: values[0], y: values[1], width: values[2], height: values[3] };
+    const id = typeof mask.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(mask.id) ? mask.id : `mask-${index + 1}`;
+    if (identifiers.has(id)) throw new Error(`Identifiant de masque dupliqué : ${id}.`);
+    identifiers.add(id);
+    return { id, x: values[0], y: values[1], width: values[2], height: values[3] };
   });
 }
 
-function ffmpegDrawboxFilter(masks) {
-  return masks.map(mask => `drawbox=x=iw*${mask.x}:y=ih*${mask.y}:w=iw*${mask.width}:h=ih*${mask.height}:color=black@1:t=fill`).join(",");
+const ANONYMIZATION_BLUR_PROFILES = Object.freeze({
+  light: Object.freeze({ id: "light", label: "Léger", filter: "boxblur", lumaRadius: 2, lumaPower: 1 }),
+  standard: Object.freeze({ id: "standard", label: "Standard", filter: "boxblur", lumaRadius: 4, lumaPower: 1 }),
+  strong: Object.freeze({ id: "strong", label: "Fort", filter: "boxblur", lumaRadius: 6, lumaPower: 1 })
+});
+
+function anonymizationBlurProfile(value) {
+  const key = typeof value === "string" ? value : "standard";
+  const profile = ANONYMIZATION_BLUR_PROFILES[key];
+  if (!profile) throw new Error("La puissance du flou doit être légère, standard ou forte.");
+  return profile;
+}
+
+function ffmpegBlurFilter(masks, blurProfile = anonymizationBlurProfile()) {
+  const labels = masks.map((_, index) => `[source${index}]`).join("");
+  const graph = [`[0:v]split=${masks.length + 1}[base]${labels}`];
+  masks.forEach((mask, index) => {
+    const x = `trunc(iw*${mask.x}/2)*2`;
+    const y = `trunc(ih*${mask.y}/2)*2`;
+    const width = `trunc(iw*${mask.width}/2)*2`;
+    const height = `trunc(ih*${mask.height}/2)*2`;
+    graph.push(`[source${index}]crop=x='${x}':y='${y}':w='${width}':h='${height}',boxblur=luma_radius=${blurProfile.lumaRadius}:luma_power=${blurProfile.lumaPower}[blurred${index}]`);
+  });
+  let current = "base";
+  masks.forEach((mask, index) => {
+    const output = index === masks.length - 1 ? "outv" : `composite${index}`;
+    const x = `trunc(main_w*${mask.x}/2)*2`;
+    const y = `trunc(main_h*${mask.y}/2)*2`;
+    graph.push(`[${current}][blurred${index}]overlay=x='${x}':y='${y}':eof_action=pass[${output}]`);
+    current = output;
+  });
+  return graph.join(";");
+}
+
+function temporalMaskConfiguration(value) {
+  if (!Array.isArray(value) || !value.length || value.length > 20) throw new Error("Les masques temporels doivent être une liste non vide de 1 à 20 zones.");
+  const ids = new Set();
+  return value.map((mask, index) => {
+    if (!mask || typeof mask !== "object") throw new Error(`Le masque temporel ${index + 1} est invalide.`);
+    const id = typeof mask.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(mask.id) ? mask.id : `mask-${index + 1}`;
+    if (ids.has(id)) throw new Error(`Identifiant de masque dupliqué : ${id}.`); ids.add(id);
+    const startMs = Number(mask.startMs), endMs = Number(mask.endMs);
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs < 0 || endMs <= startMs) throw new Error(`La plage temporelle du masque ${id} est invalide.`);
+    if (!Array.isArray(mask.keyframes) || !mask.keyframes.length || mask.keyframes.length > 100) throw new Error(`Le masque ${id} doit posséder au moins une image-clé.`);
+    let previous = -1;
+    const keyframes = mask.keyframes.map((keyframe, keyIndex) => {
+      const time = Number(keyframe.time), values = ["x", "y", "width", "height"].map(key => Number(keyframe[key]));
+      if (!Number.isFinite(time) || time < startMs || time > endMs || time < previous) throw new Error(`L’image-clé ${keyIndex + 1} du masque ${id} est invalide.`);
+      if (time < previous) throw new Error(`L’image-clé ${keyIndex + 1} du masque ${id} est invalide.`);
+      previous = time;
+      if (values.some(item => !Number.isFinite(item)) || values[0] < 0 || values[1] < 0 || values[2] <= 0 || values[3] <= 0 || values[0] + values[2] > 1 || values[1] + values[3] > 1) throw new Error(`L’image-clé ${keyIndex + 1} du masque ${id} sort de l’image.`);
+      return { time, x: values[0], y: values[1], width: values[2], height: values[3] };
+    });
+    return { id, startMs, endMs, keyframes };
+  });
+}
+
+function temporalStepConfiguration(value, durationMs = null) {
+  if (!Array.isArray(value) || !value.length || value.length > 20) throw new Error("Les étapes temporelles doivent être une liste non vide de 1 à 20 étapes.");
+  const ids = new Set();
+  let previousStart = -1;
+  const steps = value.map((step, index) => {
+    if (!step || typeof step !== "object") throw new Error(`L’étape temporelle ${index + 1} est invalide.`);
+    const id = typeof step.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(step.id) ? step.id : `step-${index + 1}`;
+    if (ids.has(id)) throw new Error(`Identifiant d’étape dupliqué : ${id}.`);
+    ids.add(id);
+    const startMs = Number(step.startMs);
+    if (!Number.isFinite(startMs) || startMs < 0 || startMs < previousStart) throw new Error(`Le début de l’étape ${id} est invalide.`);
+    previousStart = startMs;
+    const requestedEnd = step.endMs === null || step.endMs === undefined || step.endMs === "" ? null : Number(step.endMs);
+    const endMs = requestedEnd === null ? (index === value.length - 1 && Number.isFinite(durationMs) ? durationMs : null) : requestedEnd;
+    if (endMs !== null && (!Number.isFinite(endMs) || endMs <= startMs)) throw new Error(`La fin de l’étape ${id} est invalide.`);
+    const masks = defaultAnonymizationMasks(step.masks);
+    return { id, startMs, endMs, masks };
+  });
+  for (let index = 0; index < steps.length - 1; index += 1) {
+    const current = steps[index], next = steps[index + 1];
+    if (current.endMs === null) current.endMs = next.startMs;
+    if (current.endMs !== next.startMs || current.endMs <= current.startMs) throw new Error(`Les plages des étapes ${current.id} et ${next.id} sont incohérentes.`);
+  }
+  const last = steps.at(-1);
+  if (last.endMs === null) last.endMs = last.startMs + 1;
+  if (last.endMs <= last.startMs) throw new Error(`La plage de l’étape ${last.id} est vide.`);
+  return steps;
+}
+
+function temporalStepsToMasks(steps) {
+  const byMask = new Map();
+  for (const step of steps) {
+    for (const mask of step.masks) {
+      const entry = byMask.get(mask.id) || { id: mask.id, startMs: step.startMs, endMs: step.endMs, keyframes: [] };
+      entry.startMs = Math.min(entry.startMs, step.startMs);
+      entry.endMs = Math.max(entry.endMs, step.endMs);
+      if (!entry.keyframes.some(keyframe => keyframe.time === step.startMs)) entry.keyframes.push({ time: step.startMs, x: mask.x, y: mask.y, width: mask.width, height: mask.height });
+      byMask.set(mask.id, entry);
+    }
+  }
+  return [...byMask.values()].map(mask => ({ ...mask, keyframes: mask.keyframes.sort((left, right) => left.time - right.time) }));
+}
+
+function temporalInterpolationExpression(keyframes, key) {
+  const values = keyframes.map(frame => ({ time: frame.time / 1000, value: frame[key] }));
+  let expression = String(values.at(-1).value);
+  for (let index = values.length - 2; index >= 0; index -= 1) {
+    const current = values[index], next = values[index + 1];
+    const slope = (next.value - current.value) / (next.time - current.time || 1);
+    const between = `${current.value}+(${slope})*(t-${current.time})`;
+    expression = `if(lt(t,${next.time}),${between},${expression})`;
+  }
+  return `if(lt(t,${values[0].time}),${values[0].value},${expression})`;
+}
+
+function ffmpegTemporalBlurFilter(masks, blurProfile = anonymizationBlurProfile()) {
+  const timeExpression = value => value.replace(/\bt\b/g, "T");
+  const regionConditions = masks.map(mask => {
+    const x = timeExpression(temporalInterpolationExpression(mask.keyframes, "x"));
+    const y = timeExpression(temporalInterpolationExpression(mask.keyframes, "y"));
+    const width = timeExpression(temporalInterpolationExpression(mask.keyframes, "width"));
+    const height = timeExpression(temporalInterpolationExpression(mask.keyframes, "height"));
+    return [`gte(X,W*(${x}))`, `lt(X,W*(${x}+${width}))`, `gte(Y,H*(${y}))`, `lt(Y,H*(${y}+${height}))`, `gte(T,${mask.startMs / 1000})`, `lte(T,${mask.endMs / 1000})`].join("*");
+  });
+  const region = regionConditions.length === 1 ? regionConditions[0] : `(${regionConditions.join(")+(")})`;
+  return `[0:v]split=2[temporalBase][temporalBlur];[temporalBlur]boxblur=luma_radius=${blurProfile.lumaRadius}:luma_power=${blurProfile.lumaPower}[temporalBlurred];[temporalBase][temporalBlurred]blend=all_expr='if(${region},B,A)'[outv]`;
+}
+
+function ffmpegTemporalLocalFilter(masks, blurProfile = anonymizationBlurProfile(), videoInfo = null) {
+  const margin = Math.max(4, Math.ceil(blurProfile.lumaRadius * 2));
+  const labels = masks.map((_, index) => `[source${index}]`).join("");
+  const graph = [`[0:v]split=${masks.length + 1}[base]${labels}`];
+  const cropOrigin = (value, axis) => videoInfo ? Math.max(0, Math.floor(((axis === "iw" ? videoInfo.width : videoInfo.height) * value - margin) / 2) * 2) : `max(0,trunc((${axis}*${value}-${margin})/2)*2)`;
+  masks.forEach((mask, index) => {
+    const x = cropOrigin(mask.x, "iw"), y = cropOrigin(mask.y, "ih");
+    const exactX = videoInfo ? Math.floor(videoInfo.width * mask.x / 2) * 2 : `trunc(iw*${mask.x}/2)*2`;
+    const exactY = videoInfo ? Math.floor(videoInfo.height * mask.y / 2) * 2 : `trunc(ih*${mask.y}/2)*2`;
+    const exactWidth = videoInfo ? Math.floor(videoInfo.width * mask.width / 2) * 2 : `trunc(iw*${mask.width}/2)*2`;
+    const exactHeight = videoInfo ? Math.floor(videoInfo.height * mask.height / 2) * 2 : `trunc(ih*${mask.height}/2)*2`;
+    const expandedWidth = videoInfo ? Math.min(videoInfo.width - x, Math.ceil((videoInfo.width * mask.width + margin * 2) / 2) * 2) : `min(iw-${x},trunc((iw*${mask.width}+${margin * 2})/2)*2)`;
+    const expandedHeight = videoInfo ? Math.min(videoInfo.height - y, Math.ceil((videoInfo.height * mask.height + margin * 2) / 2) * 2) : `min(ih-${y},trunc((ih*${mask.height}+${margin * 2})/2)*2)`;
+    const relativeX = videoInfo ? exactX - x : `(${exactX})-(${x})`;
+    const relativeY = videoInfo ? exactY - y : `(${exactY})-(${y})`;
+    graph.push(`[source${index}]crop=x='${x}':y='${y}':w='${expandedWidth}':h='${expandedHeight}',boxblur=luma_radius=${blurProfile.lumaRadius}:luma_power=${blurProfile.lumaPower}[expanded${index}];[expanded${index}]crop=x='${relativeX}':y='${relativeY}':w='${exactWidth}':h='${exactHeight}'[blurred${index}]`);
+  });
+  let current = "base";
+  masks.forEach((mask, index) => {
+    const x = videoInfo ? Math.floor(videoInfo.width * mask.x / 2) * 2 : cropOrigin(mask.x, "main_w");
+    const y = videoInfo ? Math.floor(videoInfo.height * mask.y / 2) * 2 : cropOrigin(mask.y, "main_h");
+    const output = index === masks.length - 1 ? "outv" : `localComposite${index}`;
+    graph.push(`[${current}][blurred${index}]overlay=x='${x}':y='${y}':eof_action=pass[${output}]`);
+    current = output;
+  });
+  return graph.join(";");
+}
+
+function ffprobeVideoInfo(ffmpeg, filePath) {
+  const executable = path.basename(ffmpeg).toLowerCase().startsWith("ffmpeg")
+    ? path.join(path.dirname(ffmpeg), path.basename(ffmpeg).replace(/^ffmpeg/i, "ffprobe"))
+    : "ffprobe";
+  const result = spawnSync(executable, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,r_frame_rate,start_time,nb_frames", "-of", "json", filePath], { encoding: "utf8", windowsHide: true, timeout: 10000 });
+  if (result.error || result.status !== 0) throw new Error("Impossible de lire les paramètres vidéo préparés.");
+  const stream = JSON.parse(String(result.stdout || "{}")).streams?.[0];
+  const match = String(stream?.r_frame_rate || "").match(/^(\d+)\/(\d+)$/);
+  const fps = match ? Number(match[1]) / Number(match[2]) : 0;
+  if (!stream || !Number.isFinite(fps) || fps <= 0) throw new Error("La cadence vidéo préparée est invalide.");
+  const nbFrames = Number(stream.nb_frames);
+  return { width: Number(stream.width), height: Number(stream.height), fps, nbFrames: Number.isFinite(nbFrames) && nbFrames > 0 ? Math.floor(nbFrames) : null, startTime: Number.isFinite(Number(stream.start_time)) ? Number(stream.start_time) : 0 };
+}
+
+function concatFilePath(filePath) {
+  return String(filePath).replace(/\\/g, "/").replace(/'/g, "'\\''");
+}
+
+async function runTemporalLocalPipeline(job, prepJob, context) {
+  const { ffmpeg, blur, runtime, logStream } = context;
+  const info = ffprobeVideoInfo(ffmpeg, prepJob.outputPath);
+  const segmentsDirectory = path.join(job.workspace, "segments");
+  await fs.mkdir(segmentsDirectory, { recursive: true });
+  const commands = runtime.commands || (runtime.commands = []);
+  const runStage = async (stage, args, outputPath, progress) => {
+    const command = { stage, executable: ffmpeg, cwd: runtime.cwd, args, startedAt: new Date().toISOString(), endedAt: null, pid: null, exitCode: null, outputPath };
+    commands.push(command);
+    const child = spawn(ffmpeg, args, { cwd: runtime.cwd, windowsHide: true });
+    job.process = child; command.pid = child.pid || null; runtime.pid = command.pid; runtime.args = args; runtime.commandPowerShell = ffmpegPowerShellCommand(ffmpeg, args, runtime.cwd, runtime.logPath);
+    child.stdout.setEncoding("utf8"); child.stderr.setEncoding("utf8");
+    child.stdout.on("data", chunk => { const text = String(chunk); runtime.stdout += text; logStream.write(`[${stage} stdout] ${text}`); });
+    child.stderr.on("data", chunk => { const text = String(chunk); runtime.stderr += text; logStream.write(`[${stage} stderr] ${text}`); job.log.push(text.trim().slice(-500)); job.progress = Math.max(job.progress, progress); job.updatedAt = new Date().toISOString(); });
+    await new Promise((resolve, reject) => { child.once("error", error => { runtime.error = error.message; command.endedAt = new Date().toISOString(); reject(error); }); child.once("close", code => { command.exitCode = code; command.endedAt = new Date().toISOString(); runtime.exitCode = code; runtime.endedAt = command.endedAt; code === 0 ? resolve() : reject(job.cancelRequested ? new Error("Dérivation annulée.") : new Error(`FFmpeg a échoué (étape ${stage}, code ${code}).`)); }); });
+    job.process = null; runtime.pid = null;
+  };
+  const list = [];
+  const steps = job.temporalSteps || [];
+  if (!steps.length) throw new Error("Aucune étape temporelle à dériver.");
+  for (let index = 0; index < steps.length; index += 1) {
+    const step = steps[index];
+    const endMs = Number(step.endMs);
+    const startMs = Number(step.startMs);
+    const startFrame = Math.max(0, Math.ceil(startMs / 1000 * info.fps - 1e-9));
+    const requestedEndFrame = Math.max(startFrame + 1, Math.ceil(endMs / 1000 * info.fps - 1e-9));
+    const endFrame = info.nbFrames ? Math.min(requestedEndFrame, info.nbFrames) : requestedEndFrame;
+    const frames = endFrame - startFrame;
+    const seekSeconds = startFrame === 0 ? 0 : info.startTime + ((startFrame - 1) / info.fps) + 0.001;
+    const segmentPath = path.join(segmentsDirectory, `segment-${String(index + 1).padStart(3, "0")}.mp4`);
+    const filter = ffmpegTemporalLocalFilter(step.masks, blur, info);
+    const args = ["-hide_banner", "-y", "-i", prepJob.outputPath, "-ss", String(seekSeconds), "-frames:v", String(frames), "-filter_complex", filter, "-map", "[outv]", "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-fps_mode", "passthrough", "-video_track_timescale", "90000", segmentPath];
+    await runStage(`segment-${index + 1}`, args, segmentPath, 35 + Math.round((index / steps.length) * 35));
+    list.push(`file '${concatFilePath(segmentPath)}'`);
+  }
+  const listPath = path.join(job.workspace, "segments.txt");
+  await fs.writeFile(listPath, `${list.join("\n")}\n`, "utf8");
+  const videoPath = path.join(job.workspace, "video-concat.mp4");
+  await runStage("concat", ["-hide_banner", "-y", "-f", "concat", "-safe", "0", "-i", listPath, "-c:v", "copy", "-an", videoPath], videoPath, 72);
+  const audioCodec = ffprobeAudioCodec(ffmpeg, prepJob.outputPath) === "aac" ? "copy" : "aac";
+  const args = ["-hide_banner", "-y", "-i", videoPath, "-i", prepJob.outputPath, "-map", "0:v:0", "-map", "1:a?", "-c:v", "copy", "-c:a", audioCodec, "-movflags", "+faststart", job.outputPath];
+  await runStage("remux", args, job.outputPath, 78);
+  runtime.audioCodec = audioCodec; runtime.outputPath = job.outputPath; runtime.outputSizeBytes = (await fs.stat(job.outputPath)).size;
 }
 
 function ffmpegVersion(ffmpeg) {
   const result = require("node:child_process").spawnSync(ffmpeg, ["-version"], { encoding: "utf8", windowsHide: true, timeout: 10000 });
   if (result.error || result.status !== 0) throw new Error("FFmpeg est absent ou inaccessible.");
   return String(result.stdout || "").split(/\r?\n/, 1)[0] || "ffmpeg";
+}
+
+function ffprobeAudioCodec(ffmpeg, filePath) {
+  const executable = path.basename(ffmpeg).toLowerCase().startsWith("ffmpeg")
+    ? path.join(path.dirname(ffmpeg), path.basename(ffmpeg).replace(/^ffmpeg/i, "ffprobe"))
+    : "ffprobe";
+  const result = spawnSync(executable, ["-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name", "-of", "default=nw=1:nk=1", filePath], { encoding: "utf8", windowsHide: true, timeout: 10000 });
+  return result.error || result.status !== 0 ? null : String(result.stdout || "").trim().toLowerCase() || null;
 }
 
 async function validateMediaFileWithFfmpeg(ffmpeg, filePath) {
@@ -1055,8 +1321,7 @@ async function persistDerivedPlayable(job, prepJob) {
   const existing = VIDEO_LIBRARY.playables.find(playable => playable.sha256 === hash && playable.provenance?.derivation);
   if (existing) {
     const existingAsset = VIDEO_LIBRARY.assets.find(asset => asset.id === existing.assetId);
-    await removePreparationWorkspace(prepJob); prepJob.status = "expired"; prepJob.updatedAt = new Date().toISOString();
-    return { duplicate: true, assetId: existing.assetId, playableId: existing.id, asset: existingAsset ? libraryAssetDetails(existingAsset) : null, sha256: hash };
+    return { duplicate: true, assetId: existing.assetId, playableId: existing.id, asset: existingAsset ? libraryAssetDetails(existingAsset) : null, sha256: hash, storageKey: existing.storageKey || null, mediaUrl: existing.url || null };
   }
   const storageKey = `${hash.slice(0, 16)}-anonymized.mp4`;
   const targetPath = safeLibraryMediaPath(storageKey);
@@ -1068,31 +1333,45 @@ async function persistDerivedPlayable(job, prepJob) {
   const sourceId = `source-${assetId}`;
   const playableId = `video-${assetId}`;
   const sourceOrigin = prepJob.metadata?.sourceUrl || prepJob.sourceUrl;
-  const provenance = { kind: "derived-anonymized", sourceOriginUrl: sourceOrigin, sourceAssetId: prepJob.assetId, sourcePreparationJobId: prepJob.id, method: job.method, masks: job.masks, ffmpeg: job.metadata.ffmpeg, createdAt: new Date().toISOString(), status: "completed", sha256: hash, sizeBytes: stat.size };
+  const provenance = { kind: "derived-anonymized", sourceOriginUrl: sourceOrigin, sourceAssetId: prepJob.assetId, sourcePreparationJobId: prepJob.id, mode: job.mode || "fixed", method: job.method, masks: job.masks, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, interpolation: job.temporalMasks ? "linear-between-keyframes-clamped-at-bounds" : null, blur: job.metadata.blur, filter: job.metadata.filter, ffmpeg: job.metadata.ffmpeg, ffmpegArgs: job.metadata.ffmpegArgs, createdAt: new Date().toISOString(), status: "completed", sha256: hash, sizeBytes: stat.size };
   const source = { id: sourceId, assetId, title: "Version anonymisée dérivée", kind: "local-file", provider: "proto05-derived", storageKey, url: `/api/proto05/library/media/${encodeURIComponent(storageKey)}`, copiedUrl: `/api/proto05/library/media/${encodeURIComponent(storageKey)}`, mimeType: "video/mp4", sizeBytes: stat.size, sha256: hash, checksum: hash, authorized: true, availability: "available", provenance };
   const playable = { id: playableId, assetId, sourceId, kind: "local-file", provider: "proto05-derived", status: "available", availability: "available", mimeType: "video/mp4", storageKey, url: source.url, manifestUrl: null, sha256: hash, sizeBytes: stat.size, provenance: { derivation: provenance } };
   const asset = { id: assetId, title: "Version anonymisée dérivée", status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance, metadata: { fileName: storageKey, mimeType: "video/mp4", sizeBytes: stat.size, sha256: hash }, rights: {} };
   const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY)); nextLibrary.updatedAt = new Date().toISOString(); nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
   try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
   catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
-  await removePreparationWorkspace(prepJob); prepJob.status = "expired"; prepJob.updatedAt = new Date().toISOString();
-  return { duplicate: false, assetId, playableId, asset: libraryAssetDetails(asset), sha256: hash };
+  return { duplicate: false, assetId, playableId, asset: libraryAssetDetails(asset), sha256: hash, storageKey, mediaUrl: source.url };
 }
 
 async function runHlsDerivation(job, prepJob) {
   job.status = "anonymisation"; job.progress = 35; job.updatedAt = new Date().toISOString();
-  let child; let sizeMonitor; const timeout = setTimeout(() => { job.timeout = true; try { child?.kill(); } catch {} }, HLS_DERIVATION_TIMEOUT_MS);
+  let child; let sizeMonitor; const timeout = setTimeout(() => { job.timeout = true; try { job.process?.kill(); child?.kill(); } catch {} }, HLS_DERIVATION_TIMEOUT_MS);
   try {
     await fs.mkdir(HLS_DERIVATION_ROOT, { recursive: true }); job.workspace = await fs.mkdtemp(path.join(HLS_DERIVATION_ROOT, `${job.id}-`)); job.outputPath = path.join(job.workspace, "derived.mp4");
-    const ffmpeg = findFfmpeg(); const version = ffmpegVersion(ffmpeg); job.metadata = { ffmpeg: version, method: job.method, masks: job.masks, inputFileName: "work.mp4" };
-    const args = ["-hide_banner", "-y", "-i", prepJob.outputPath, "-vf", ffmpegDrawboxFilter(job.masks), "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "aac", "-movflags", "+faststart", job.outputPath];
-    child = spawn(ffmpeg, args, { windowsHide: true }); job.process = child; child.stderr.setEncoding("utf8"); child.stderr.on("data", chunk => { job.log.push(String(chunk).trim().slice(-500)); job.progress = Math.max(job.progress, 60); job.updatedAt = new Date().toISOString(); }); child.on("error", error => { job.spawnError = error; });
-    sizeMonitor = setInterval(async () => { if (!job.outputPath || !child || child.exitCode !== null) return; try { const current = await fs.stat(job.outputPath); if (current.size > HLS_PREPARATION_MAX_BYTES) { job.sizeLimit = true; child.kill(); } } catch {} }, 250);
-    await new Promise((resolve, reject) => child.once("close", code => code === 0 ? resolve() : reject(job.timeout ? new Error("La dérivation a dépassé le délai maximal.") : job.sizeLimit ? new Error("La dérivation dépasse la taille maximale autorisée.") : job.cancelRequested ? new Error("Dérivation annulée.") : job.spawnError || new Error(`FFmpeg a échoué (code ${code}).`))));
+    const ffmpeg = findFfmpeg(); const version = ffmpegVersion(ffmpeg); const blur = anonymizationBlurProfile(job.blurProfile); const filter = job.mode === "temporal" ? ffmpegTemporalBlurFilter(job.temporalMasks, blur) : ffmpegBlurFilter(job.masks, blur); const audioCodec = ffprobeAudioCodec(ffmpeg, prepJob.outputPath) === "aac" ? "copy" : "aac"; const args = ["-hide_banner", "-y", "-i", prepJob.outputPath, "-filter_complex", filter, "-map", "[outv]", "-map", "0:a?", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", audioCodec, "-movflags", "+faststart", job.outputPath]; job.metadata = { ffmpeg: version, method: job.method, mode: job.mode || "fixed", masks: job.masks, temporalMasks: job.temporalMasks || null, blur, filter, ffmpegArgs: args, audioCodec, inputFileName: "work.mp4" };
+    const ffmpegLogPath = path.join(HLS_DERIVATION_ROOT, `${job.id}.ffmpeg.log`);
+    const runtime = { executable: ffmpeg, cwd: process.cwd(), args, commandPowerShell: ffmpegPowerShellCommand(ffmpeg, args, process.cwd(), ffmpegLogPath), commands: [], logPath: ffmpegLogPath, startedAt: new Date().toISOString(), endedAt: null, pid: null, exitCode: null, lastMediaTimeMs: null, outputSizeBytes: 0, inputPath: prepJob.outputPath, outputPath: job.outputPath, stdout: "", stderr: "", error: null, env: { FFMPEG_PATH: process.env.FFMPEG_PATH || null, PROTO05_HLS_DERIVATION_TIMEOUT_MS: process.env.PROTO05_HLS_DERIVATION_TIMEOUT_MS || null } };
+    job.ffmpegRuntime = runtime;
+    const ffmpegLogStream = fsSync.createWriteStream(ffmpegLogPath, { flags: "w", encoding: "utf8" });
+    if (job.mode === "temporal" && Array.isArray(job.temporalSteps) && job.temporalSteps.length) {
+      job.metadata = { ffmpeg: version, method: job.method, mode: "temporal", strategy: "local-regions-by-step", temporalSteps: job.temporalSteps, blur, audioCodec: null, inputFileName: "work.mp4" };
+      await runTemporalLocalPipeline(job, prepJob, { ffmpeg, blur, runtime, logStream: ffmpegLogStream });
+      ffmpegLogStream.end();
+      job.status = "validation"; job.progress = 80; await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath); const result = await persistDerivedPlayable(job, prepJob); await removeDerivationWorkspace(job); job.result = result; job.assetId = result.assetId; job.playableId = result.playableId; job.status = "terminé"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString(); job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
+      return;
+    }
+    const detectedDuration = String(prepJob.metadata?.detectedTime || "").match(/^(\d+):(\d{2}):(\d{2})(?:[.,](\d+))?$/);
+    const detectedDurationMs = detectedDuration ? ((Number(detectedDuration[1]) * 3600 + Number(detectedDuration[2]) * 60 + Number(detectedDuration[3])) * 1000 + Number(`0.${detectedDuration[4] || "0"}`) * 1000) : null;
+    const expectedDurationMs = Number(job.temporalSteps?.at(-1)?.endMs) || Number(prepJob.metadata?.durationMs) || detectedDurationMs;
+    const ffmpegTimeMs = value => { const match = String(value).match(/time=(\d+):(\d{2}):(\d{2})(?:[.,](\d+))?/g)?.at(-1)?.match(/time=(\d+):(\d{2}):(\d{2})(?:[.,](\d+))?/); return match ? ((Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3])) * 1000 + Number(`0.${match[4] || "0"}`) * 1000) : null; };
+    child = spawn(ffmpeg, args, { cwd: runtime.cwd, windowsHide: true }); job.process = child; runtime.pid = child.pid || null; child.stdout.setEncoding("utf8"); child.stderr.setEncoding("utf8"); child.stdout.on("data", chunk => { const text = String(chunk); runtime.stdout += text; ffmpegLogStream.write(`[stdout] ${text}`); }); child.stderr.on("data", chunk => { const text = String(chunk); runtime.stderr += text; ffmpegLogStream.write(`[stderr] ${text}`); const currentMs = ffmpegTimeMs(text); if (currentMs !== null) runtime.lastMediaTimeMs = currentMs; job.log.push(text.trim().slice(-500)); job.progress = expectedDurationMs && currentMs !== null ? Math.max(job.progress, Math.min(78, 35 + Math.round((currentMs / expectedDurationMs) * 43))) : Math.max(job.progress, 60); job.updatedAt = new Date().toISOString(); }); child.on("error", error => { job.spawnError = error; runtime.error = error.message; }); child.on("close", () => ffmpegLogStream.end());
+    sizeMonitor = setInterval(async () => { if (!job.outputPath || !child || child.exitCode !== null) return; try { const current = await fs.stat(job.outputPath); runtime.outputSizeBytes = current.size; if (current.size > HLS_PREPARATION_MAX_BYTES) { job.sizeLimit = true; child.kill(); } } catch {} }, 250);
+    await new Promise((resolve, reject) => child.once("close", code => { runtime.exitCode = code; runtime.endedAt = new Date().toISOString(); if (code === 0) return resolve(); reject(job.timeout ? new Error("La dérivation a dépassé le délai maximal.") : job.sizeLimit ? new Error("La dérivation dépasse la taille maximale autorisée.") : job.cancelRequested ? new Error("Dérivation annulée.") : job.spawnError || new Error(`FFmpeg a échoué (code ${code}).`)); }));
     job.status = "validation"; job.progress = 80; await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath); const result = await persistDerivedPlayable(job, prepJob); await removeDerivationWorkspace(job); job.result = result; job.assetId = result.assetId; job.playableId = result.playableId; job.status = "terminé"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString(); job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
   } catch (error) {
     job.error = job.cancelRequested ? "Dérivation annulée." : error.message; await removeDerivationWorkspace(job); job.status = job.cancelRequested ? "annulé" : "échoué"; job.progress = 0; job.updatedAt = new Date().toISOString();
-    if (prepJob.status !== "expired") { await removePreparationWorkspace(prepJob); prepJob.status = "expired"; prepJob.updatedAt = new Date().toISOString(); }
+    // Une préparation valide reste réutilisable pour tester un autre profil.
+    // Son nettoyage est assuré par l’expiration normale du job de préparation.
   } finally { clearTimeout(timeout); if (sizeMonitor) clearInterval(sizeMonitor); delete job.process; delete job.pid; delete job.timeout; delete job.sizeLimit; if (job.status === "terminé") job.updatedAt = new Date().toISOString(); }
 }
 
@@ -1233,11 +1512,26 @@ async function handleApi(request, response, url) {
     try {
       const payload = JSON.parse(await readRequestBody(request));
       const resolved = await hlsPreparationSource(payload.assetId, payload.playableId, payload.sourceId);
-      const job = { id: `hls-prep-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, assetId: resolved.asset.id, playableId: resolved.playable.id, sourceId: resolved.source.id, status: "queued", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: { sourceUrl: resolved.manifest, sourceTitle: resolved.source.title || resolved.asset.title }, error: null, log: [], cancelRequested: false };
+      const job = { id: `hls-prep-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, assetId: resolved.asset.id, playableId: resolved.playable.id, sourceId: resolved.source.id, status: "queued", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: { sourceUrl: resolved.manifest, sourceTitle: resolved.source.title || resolved.asset.title }, masks: defaultAnonymizationMasks(), temporalMasks: null, error: null, log: [], cancelRequested: false };
       ACTIVE_HLS_PREPARATIONS.set(job.id, job);
       void runHlsPreparation(job, resolved.manifest);
       return sendJson(response, 202, { job: publicHlsPreparationJob(job) });
     } catch (error) { return sendJson(response, 400, { error: error.message || "Préparation HLS impossible." }); }
+  }
+  if (url.pathname === "/api/proto05/library/hls-temporal-derivations") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    try {
+      const payload = JSON.parse(await readRequestBody(request));
+      const prepJob = ACTIVE_HLS_PREPARATIONS.get(String(payload.preparationJobId || ""));
+      if (!prepJob || prepJob.status !== "completed" || !prepJob.outputPath) throw new Error("La préparation HLS est introuvable, expirée ou incomplète.");
+      const temporalSteps = payload.steps || payload.temporalSteps;
+      const normalizedSteps = temporalSteps ? temporalStepConfiguration(temporalSteps, prepJob.metadata?.durationMs) : null;
+      const temporalMasks = normalizedSteps ? temporalStepsToMasks(normalizedSteps) : temporalMaskConfiguration(payload.masks);
+      const blur = anonymizationBlurProfile(payload.blurProfile);
+      const job = { id: `hls-temporal-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, preparationJobId: prepJob.id, assetId: prepJob.assetId, status: "prêt", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: null, error: null, log: [], cancelRequested: false, mode: "temporal", method: "ffmpeg-boxblur-temporal-steps", masks: temporalMasks.map(mask => mask.keyframes[0]), temporalMasks, temporalSteps: normalizedSteps, blurProfile: blur.id };
+      ACTIVE_HLS_DERIVATIONS.set(job.id, job); void runHlsDerivation(job, prepJob);
+      return sendJson(response, 202, { job: publicHlsDerivationJob(job) });
+    } catch (error) { return sendJson(response, 400, { error: error.message || "Dérivation temporelle impossible." }); }
   }
   if (url.pathname === "/api/proto05/library/hls-derivations") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
@@ -1245,8 +1539,10 @@ async function handleApi(request, response, url) {
       const payload = JSON.parse(await readRequestBody(request));
       const prepJob = ACTIVE_HLS_PREPARATIONS.get(String(payload.preparationJobId || ""));
       if (!prepJob || prepJob.status !== "completed" || !prepJob.outputPath) throw new Error("La préparation HLS est introuvable, expirée ou incomplète.");
-      const masks = defaultAnonymizationMasks(payload.masks);
-      const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, preparationJobId: prepJob.id, assetId: prepJob.assetId, status: "prêt", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: null, error: null, log: [], cancelRequested: false, method: "ffmpeg-drawbox-rectangles", masks };
+      const masks = defaultAnonymizationMasks(payload.masks === undefined ? prepJob.masks : payload.masks);
+      prepJob.masks = masks;
+const blur = anonymizationBlurProfile(payload.blurProfile);
+const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, preparationJobId: prepJob.id, assetId: prepJob.assetId, status: "prêt", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: null, error: null, log: [], cancelRequested: false, method: "ffmpeg-boxblur-rectangles", masks, blurProfile: blur.id };
       ACTIVE_HLS_DERIVATIONS.set(job.id, job); void runHlsDerivation(job, prepJob);
       return sendJson(response, 202, { job: publicHlsDerivationJob(job) });
     } catch (error) { return sendJson(response, 400, { error: error.message || "Dérivation anonymisée impossible." }); }
@@ -1264,8 +1560,12 @@ async function handleApi(request, response, url) {
     const job = ACTIVE_HLS_PREPARATIONS.get(decodeURIComponent(hlsPreparationMatch[1]));
     if (!job) return sendJson(response, 404, { error: "Préparation HLS introuvable ou expirée." });
     if (request.method === "GET") return sendJson(response, 200, { job: publicHlsPreparationJob(job) });
+    if (request.method === "PUT") {
+      try { const payload = JSON.parse(await readRequestBody(request)); if (payload.masks !== undefined) job.masks = defaultAnonymizationMasks(payload.masks); if (payload.temporalMasks !== undefined) job.temporalMasks = temporalMaskConfiguration(payload.temporalMasks); if (payload.temporalSteps !== undefined || payload.steps !== undefined) { job.temporalSteps = temporalStepConfiguration(payload.temporalSteps || payload.steps, job.metadata?.durationMs); job.temporalMasks = temporalStepsToMasks(job.temporalSteps); } if (payload.masks === undefined && payload.temporalMasks === undefined && payload.temporalSteps === undefined && payload.steps === undefined) throw new Error("Aucune configuration de masque fournie."); job.updatedAt = new Date().toISOString(); return sendJson(response, 200, { job: publicHlsPreparationJob(job) }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Masques invalides." }); }
+    }
     if (request.method === "DELETE") { await cancelHlsPreparation(job); return sendJson(response, 202, { job: publicHlsPreparationJob(job) }); }
-    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, DELETE" });
+    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, PUT, DELETE" });
   }
   if (url.pathname === "/api/proto05/library/import-local") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
@@ -1514,6 +1814,15 @@ async function serveStatic(request, response, url) {
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
   }
+  if (/^\/teacher\/anonymization\/[^/]+$/.test(url.pathname)) {
+    const target = path.join(ROOT_DIR, "teacher-anonymization.html"); const file = await fs.readFile(target);
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
+    return request.method === "HEAD" ? response.end() : response.end(file);
+  }
+  if (/^\/teacher\/anonymization-advanced\/[^/]+$/.test(url.pathname)) {
+    const target = path.join(ROOT_DIR, "teacher-anonymization-advanced.html"); const file = await fs.readFile(target);
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }); response.end(file); return true;
+  }
   if (/^\/teacher\/author\/[^/]+$/.test(url.pathname)) {
     const target = path.join(ROOT_DIR, "teacher-author.html"); const file = await fs.readFile(target);
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
@@ -1552,6 +1861,7 @@ async function serveStatic(request, response, url) {
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   try {
+    if (await servePreparationMedia(request, response, url)) return;
     if (await serveLibraryMedia(request, response, url)) return;
     if (await handleHlsGateway(request, response, url)) return;
     if (url.pathname.startsWith("/api/")) return await handleApi(request, response, url);

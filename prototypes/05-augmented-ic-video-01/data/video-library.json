@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-23T12:59:13.670Z",
+  "updatedAt": "2026-07-23T21:18:29.402Z",
   "assets": [
     {
       "id": "media-proto05-video-proto05-uga-37004",
@@ -108,6 +108,824 @@
         "durationMs": null
       },
       "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-e4bde20ecc6a40759c994e0d",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-e4bde20ecc6a40759c994e0d"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-e4bde20ecc6a40759c994e0d"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-e4bde20ecc6a40759c994e0d",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784818010277-57cc4b0f",
+        "method": "ffmpeg-drawbox-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0.07,
+            "y": 0.1,
+            "width": 0.29,
+            "height": 0.29
+          },
+          {
+            "id": "mask-2",
+            "x": 0.36,
+            "y": 0.1,
+            "width": 0.28,
+            "height": 0.29
+          },
+          {
+            "id": "mask-3",
+            "x": 0.64,
+            "y": 0.1,
+            "width": 0.29,
+            "height": 0.29
+          }
+        ],
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-23T14:51:39.750Z",
+        "status": "completed",
+        "sha256": "e4bde20ecc6a40759c994e0d530bc29afc1f14e82a7bfc88270ece2ce8213f5b",
+        "sizeBytes": 27138750
+      },
+      "metadata": {
+        "fileName": "e4bde20ecc6a4075-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 27138750,
+        "sha256": "e4bde20ecc6a40759c994e0d530bc29afc1f14e82a7bfc88270ece2ce8213f5b"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-41393a2fec32b45ccffa4420",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-41393a2fec32b45ccffa4420"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-41393a2fec32b45ccffa4420"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-41393a2fec32b45ccffa4420",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784819757314-26a48989",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0.15608248667074137,
+            "y": 0.15525408624241954,
+            "width": 0.1194413550528417,
+            "height": 0.23113193135158094
+          },
+          {
+            "id": "mask-2",
+            "x": 0.6852626397589244,
+            "y": 0.1837557465948115,
+            "width": 0.2,
+            "height": 0.2
+          },
+          {
+            "id": "mask-3",
+            "x": 0.4092204293706758,
+            "y": 0.43266363032834765,
+            "width": 0.2,
+            "height": 0.2
+          }
+        ],
+        "blur": {
+          "filter": "boxblur",
+          "lumaRadius": 14,
+          "lumaPower": 2
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.15608248667074137/2)*2':y='trunc(ih*0.15525408624241954/2)*2':w='trunc(iw*0.1194413550528417/2)*2':h='trunc(ih*0.23113193135158094/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.6852626397589244/2)*2':y='trunc(ih*0.1837557465948115/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.4092204293706758/2)*2':y='trunc(ih*0.43266363032834765/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.15608248667074137/2)*2':y='trunc(main_h*0.15525408624241954/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.6852626397589244/2)*2':y='trunc(main_h*0.1837557465948115/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.4092204293706758/2)*2':y='trunc(main_h*0.43266363032834765/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784819757314-26a48989-sKSauT\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.15608248667074137/2)*2':y='trunc(ih*0.15525408624241954/2)*2':w='trunc(iw*0.1194413550528417/2)*2':h='trunc(ih*0.23113193135158094/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.6852626397589244/2)*2':y='trunc(ih*0.1837557465948115/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.4092204293706758/2)*2':y='trunc(ih*0.43266363032834765/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.15608248667074137/2)*2':y='trunc(main_h*0.15525408624241954/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.6852626397589244/2)*2':y='trunc(main_h*0.1837557465948115/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.4092204293706758/2)*2':y='trunc(main_h*0.43266363032834765/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784819800157-dd9cbacc-7VAFou\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:17:08.524Z",
+        "status": "completed",
+        "sha256": "41393a2fec32b45ccffa44200c725c1503df03bbc08c8bdd3ac13f4d3ade11ca",
+        "sizeBytes": 30745302
+      },
+      "metadata": {
+        "fileName": "41393a2fec32b45c-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 30745302,
+        "sha256": "41393a2fec32b45ccffa44200c725c1503df03bbc08c8bdd3ac13f4d3ade11ca"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-ce9376fcd4b7758691dfc4a6",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-ce9376fcd4b7758691dfc4a6"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-ce9376fcd4b7758691dfc4a6"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-ce9376fcd4b7758691dfc4a6",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784820517603-a55235eb",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0.09569824403565978,
+            "y": 0.1328405844621861,
+            "width": 0.1413389489627323,
+            "height": 0.25826404803276837
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3853321401348031,
+            "y": 0.08565425725110186,
+            "width": 0.20737491226338456,
+            "height": 0.3016404586194953
+          },
+          {
+            "id": "mask-3",
+            "x": 0.745326553532239,
+            "y": 0.13048127701170914,
+            "width": 0.20231106063835813,
+            "height": 0.25799310068419673
+          }
+        ],
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 6,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.09569824403565978/2)*2':y='trunc(ih*0.1328405844621861/2)*2':w='trunc(iw*0.1413389489627323/2)*2':h='trunc(ih*0.25826404803276837/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3853321401348031/2)*2':y='trunc(ih*0.08565425725110186/2)*2':w='trunc(iw*0.20737491226338456/2)*2':h='trunc(ih*0.3016404586194953/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.745326553532239/2)*2':y='trunc(ih*0.13048127701170914/2)*2':w='trunc(iw*0.20231106063835813/2)*2':h='trunc(ih*0.25799310068419673/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.09569824403565978/2)*2':y='trunc(main_h*0.1328405844621861/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3853321401348031/2)*2':y='trunc(main_h*0.08565425725110186/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.745326553532239/2)*2':y='trunc(main_h*0.13048127701170914/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784820517603-a55235eb-RCyv0v\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.09569824403565978/2)*2':y='trunc(ih*0.1328405844621861/2)*2':w='trunc(iw*0.1413389489627323/2)*2':h='trunc(ih*0.25826404803276837/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3853321401348031/2)*2':y='trunc(ih*0.08565425725110186/2)*2':w='trunc(iw*0.20737491226338456/2)*2':h='trunc(ih*0.3016404586194953/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.745326553532239/2)*2':y='trunc(ih*0.13048127701170914/2)*2':w='trunc(iw*0.20231106063835813/2)*2':h='trunc(ih*0.25799310068419673/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.09569824403565978/2)*2':y='trunc(main_h*0.1328405844621861/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3853321401348031/2)*2':y='trunc(main_h*0.08565425725110186/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.745326553532239/2)*2':y='trunc(main_h*0.13048127701170914/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784820579643-b5ad899c-R6nFqe\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:30:07.180Z",
+        "status": "completed",
+        "sha256": "ce9376fcd4b7758691dfc4a6b0cb074397022edc13ce73471306e6c11893a0a6",
+        "sizeBytes": 29604406
+      },
+      "metadata": {
+        "fileName": "ce9376fcd4b77586-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 29604406,
+        "sha256": "ce9376fcd4b7758691dfc4a6b0cb074397022edc13ce73471306e6c11893a0a6"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-5d624b6d72597eb046aa68d9",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-5d624b6d72597eb046aa68d9"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-5d624b6d72597eb046aa68d9"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-5d624b6d72597eb046aa68d9",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784820710059-2761d000",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.053803485168609444,
+            "width": 0.2887951074461887,
+            "height": 0.33738226142944205
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3368920330050057,
+            "y": 0.05635264206470142,
+            "width": 0.2810303841704629,
+            "height": 0.33365344270804137
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6666828713923374,
+            "y": 0.05871196571531882,
+            "width": 0.2889931472490872,
+            "height": 0.3289347954068066
+          }
+        ],
+        "blur": {
+          "id": "standard",
+          "label": "Standard",
+          "filter": "boxblur",
+          "lumaRadius": 14,
+          "lumaPower": 2
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.053803485168609444/2)*2':w='trunc(iw*0.2887951074461887/2)*2':h='trunc(ih*0.33738226142944205/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.3368920330050057/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.2810303841704629/2)*2':h='trunc(ih*0.33365344270804137/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.6666828713923374/2)*2':y='trunc(ih*0.05871196571531882/2)*2':w='trunc(iw*0.2889931472490872/2)*2':h='trunc(ih*0.3289347954068066/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.053803485168609444/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3368920330050057/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6666828713923374/2)*2':y='trunc(main_h*0.05871196571531882/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784820710059-2761d000-nWg8u3\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.053803485168609444/2)*2':w='trunc(iw*0.2887951074461887/2)*2':h='trunc(ih*0.33738226142944205/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.3368920330050057/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.2810303841704629/2)*2':h='trunc(ih*0.33365344270804137/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.6666828713923374/2)*2':y='trunc(ih*0.05871196571531882/2)*2':w='trunc(iw*0.2889931472490872/2)*2':h='trunc(ih*0.3289347954068066/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.053803485168609444/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3368920330050057/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6666828713923374/2)*2':y='trunc(main_h*0.05871196571531882/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784820766714-577bea31-zuaFsU\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:33:18.371Z",
+        "status": "completed",
+        "sha256": "5d624b6d72597eb046aa68d982bebb079318325ea96b576bb5bcbfedb4a0da5d",
+        "sizeBytes": 28308371
+      },
+      "metadata": {
+        "fileName": "5d624b6d72597eb0-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 28308371,
+        "sha256": "5d624b6d72597eb046aa68d982bebb079318325ea96b576bb5bcbfedb4a0da5d"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-fb05ca1fc85c147730eee7b8",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-fb05ca1fc85c147730eee7b8"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-fb05ca1fc85c147730eee7b8"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-fb05ca1fc85c147730eee7b8",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.056162792619086424,
+            "width": 0.24300926075103418,
+            "height": 0.33376217805055935
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3335742256870065,
+            "y": 0.05144416151799204,
+            "width": 0.3307976397428862,
+            "height": 0.33938953982853126
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6680100380602677,
+            "y": 0.05635264206470142,
+            "width": 0.3319899619397323,
+            "height": 0.3360127663586588
+          }
+        ],
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=2:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=2:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=2:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=2:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=2:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=2:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821906109-2581f59b-tkxcce\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:52:15.421Z",
+        "status": "completed",
+        "sha256": "fb05ca1fc85c147730eee7b8df2763cd806c8de0bcd0ec8d7d9765c69b72d523",
+        "sizeBytes": 30015953
+      },
+      "metadata": {
+        "fileName": "fb05ca1fc85c1477-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 30015953,
+        "sha256": "fb05ca1fc85c147730eee7b8df2763cd806c8de0bcd0ec8d7d9765c69b72d523"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-713daf00adddf1abdf47e4fe",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-713daf00adddf1abdf47e4fe"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-713daf00adddf1abdf47e4fe"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-713daf00adddf1abdf47e4fe",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.056162792619086424,
+            "width": 0.24300926075103418,
+            "height": 0.33376217805055935
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3335742256870065,
+            "y": 0.05144416151799204,
+            "width": 0.3307976397428862,
+            "height": 0.33938953982853126
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6680100380602677,
+            "y": 0.05635264206470142,
+            "width": 0.3319899619397323,
+            "height": 0.3360127663586588
+          }
+        ],
+        "blur": {
+          "id": "standard",
+          "label": "Standard",
+          "filter": "boxblur",
+          "lumaRadius": 4,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=4:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=4:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=4:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=4:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821959575-79247d65-8ZM1VA\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:53:08.978Z",
+        "status": "completed",
+        "sha256": "713daf00adddf1abdf47e4febce1079bc98f3e03620026efbd9771aaacfbb267",
+        "sizeBytes": 29276623
+      },
+      "metadata": {
+        "fileName": "713daf00adddf1ab-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 29276623,
+        "sha256": "713daf00adddf1abdf47e4febce1079bc98f3e03620026efbd9771aaacfbb267"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-d8f5f0f7949422b8cef030fc"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-d8f5f0f7949422b8cef030fc"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.056162792619086424,
+            "width": 0.24300926075103418,
+            "height": 0.33376217805055935
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3335742256870065,
+            "y": 0.05144416151799204,
+            "width": 0.3307976397428862,
+            "height": 0.33938953982853126
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6680100380602677,
+            "y": 0.05635264206470142,
+            "width": 0.3319899619397323,
+            "height": 0.3360127663586588
+          }
+        ],
+        "blur": {
+          "id": "strong",
+          "label": "Fort",
+          "filter": "boxblur",
+          "lumaRadius": 6,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821995177-332b75db-osX66T\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:53:45.352Z",
+        "status": "completed",
+        "sha256": "d8f5f0f7949422b8cef030fc8cd848fc9383d7a5e5d025c89d58ce997fc2dc6b",
+        "sizeBytes": 28882934
+      },
+      "metadata": {
+        "fileName": "d8f5f0f7949422b8-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 28882934,
+        "sha256": "d8f5f0f7949422b8cef030fc8cd848fc9383d7a5e5d025c89d58ce997fc2dc6b"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-b58b98549ae94f4bacf10050",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-b58b98549ae94f4bacf10050"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-b58b98549ae94f4bacf10050"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-b58b98549ae94f4bacf10050",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784830461370-5aff62fb",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0,
+            "y": 0,
+            "width": 0.2,
+            "height": 0.2
+          },
+          {
+            "time": 28177,
+            "x": 0.55,
+            "y": 0.1,
+            "width": 0.2,
+            "height": 0.2
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              },
+              {
+                "time": 28177,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 28177,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 28177,
+                "x": 0.55,
+                "y": 0.1,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 28177,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 28177,
+            "endMs": 939238,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              },
+              {
+                "id": "mask-2",
+                "x": 0.55,
+                "y": 0.1,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=2[temporalBase0][temporalBlur0];[temporalBlur0]boxblur=luma_radius=2:luma_power=1[temporalBlur0b];[temporalBase0][temporalBlur0b]blend=all_expr='if(gte(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(T,0)*lte(T,939.238),B,A)'[temporalComposite0];[temporalComposite0]split=2[temporalBase1][temporalBlur1];[temporalBlur1]boxblur=luma_radius=2:luma_power=1[temporalBlur1b];[temporalBase1][temporalBlur1b]blend=all_expr='if(gte(X,W*(if(lt(T,28.177),0.55,0.55)))*lt(X,W*(if(lt(T,28.177),0.55,0.55)+if(lt(T,28.177),0.2,0.2)))*gte(Y,H*(if(lt(T,28.177),0.1,0.1)))*lt(Y,H*(if(lt(T,28.177),0.1,0.1)+if(lt(T,28.177),0.2,0.2)))*gte(T,28.177)*lte(T,939.238),B,A)'[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784830461370-5aff62fb-sEWPmq\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=2[temporalBase0][temporalBlur0];[temporalBlur0]boxblur=luma_radius=2:luma_power=1[temporalBlur0b];[temporalBase0][temporalBlur0b]blend=all_expr='if(gte(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(T,0)*lte(T,939.238),B,A)'[temporalComposite0];[temporalComposite0]split=2[temporalBase1][temporalBlur1];[temporalBlur1]boxblur=luma_radius=2:luma_power=1[temporalBlur1b];[temporalBase1][temporalBlur1b]blend=all_expr='if(gte(X,W*(if(lt(T,28.177),0.55,0.55)))*lt(X,W*(if(lt(T,28.177),0.55,0.55)+if(lt(T,28.177),0.2,0.2)))*gte(Y,H*(if(lt(T,28.177),0.1,0.1)))*lt(Y,H*(if(lt(T,28.177),0.1,0.1)+if(lt(T,28.177),0.2,0.2)))*gte(T,28.177)*lte(T,939.238),B,A)'[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-temporal-derivation-1784830512394-9e298e1f-gYzHTx\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T18:29:17.794Z",
+        "status": "completed",
+        "sha256": "b58b98549ae94f4bacf100505abb346940bad56b8e0ded3674a4a006db699850",
+        "sizeBytes": 32220934
+      },
+      "metadata": {
+        "fileName": "b58b98549ae94f4b-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 32220934,
+        "sha256": "b58b98549ae94f4bacf100505abb346940bad56b8e0ded3674a4a006db699850"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-86883fdff00c654a5c29ea75",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-86883fdff00c654a5c29ea75"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-86883fdff00c654a5c29ea75"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-86883fdff00c654a5c29ea75",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784841412133-0e2d9405",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0,
+            "y": 0,
+            "width": 0.2,
+            "height": 0.2
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              },
+              {
+                "time": 15422,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 15422,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 15422,
+            "endMs": 939238,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-23T21:18:29.402Z",
+        "status": "completed",
+        "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
+        "sizeBytes": 29275705
+      },
+      "metadata": {
+        "fileName": "86883fdff00c654a-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 29275705,
+        "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c"
+      },
+      "rights": {}
     }
   ],
   "sources": [
@@ -203,6 +1021,797 @@
         "sha256": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37",
         "sizeBytes": 20896964
       }
+    },
+    {
+      "id": "source-media-proto05-anonymized-e4bde20ecc6a40759c994e0d",
+      "assetId": "media-proto05-anonymized-e4bde20ecc6a40759c994e0d",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "e4bde20ecc6a4075-anonymized.mp4",
+      "url": "/api/proto05/library/media/e4bde20ecc6a4075-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/e4bde20ecc6a4075-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 27138750,
+      "sha256": "e4bde20ecc6a40759c994e0d530bc29afc1f14e82a7bfc88270ece2ce8213f5b",
+      "checksum": "e4bde20ecc6a40759c994e0d530bc29afc1f14e82a7bfc88270ece2ce8213f5b",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784818010277-57cc4b0f",
+        "method": "ffmpeg-drawbox-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0.07,
+            "y": 0.1,
+            "width": 0.29,
+            "height": 0.29
+          },
+          {
+            "id": "mask-2",
+            "x": 0.36,
+            "y": 0.1,
+            "width": 0.28,
+            "height": 0.29
+          },
+          {
+            "id": "mask-3",
+            "x": 0.64,
+            "y": 0.1,
+            "width": 0.29,
+            "height": 0.29
+          }
+        ],
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-23T14:51:39.750Z",
+        "status": "completed",
+        "sha256": "e4bde20ecc6a40759c994e0d530bc29afc1f14e82a7bfc88270ece2ce8213f5b",
+        "sizeBytes": 27138750
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-41393a2fec32b45ccffa4420",
+      "assetId": "media-proto05-anonymized-41393a2fec32b45ccffa4420",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "41393a2fec32b45c-anonymized.mp4",
+      "url": "/api/proto05/library/media/41393a2fec32b45c-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/41393a2fec32b45c-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 30745302,
+      "sha256": "41393a2fec32b45ccffa44200c725c1503df03bbc08c8bdd3ac13f4d3ade11ca",
+      "checksum": "41393a2fec32b45ccffa44200c725c1503df03bbc08c8bdd3ac13f4d3ade11ca",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784819757314-26a48989",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0.15608248667074137,
+            "y": 0.15525408624241954,
+            "width": 0.1194413550528417,
+            "height": 0.23113193135158094
+          },
+          {
+            "id": "mask-2",
+            "x": 0.6852626397589244,
+            "y": 0.1837557465948115,
+            "width": 0.2,
+            "height": 0.2
+          },
+          {
+            "id": "mask-3",
+            "x": 0.4092204293706758,
+            "y": 0.43266363032834765,
+            "width": 0.2,
+            "height": 0.2
+          }
+        ],
+        "blur": {
+          "filter": "boxblur",
+          "lumaRadius": 14,
+          "lumaPower": 2
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.15608248667074137/2)*2':y='trunc(ih*0.15525408624241954/2)*2':w='trunc(iw*0.1194413550528417/2)*2':h='trunc(ih*0.23113193135158094/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.6852626397589244/2)*2':y='trunc(ih*0.1837557465948115/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.4092204293706758/2)*2':y='trunc(ih*0.43266363032834765/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.15608248667074137/2)*2':y='trunc(main_h*0.15525408624241954/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.6852626397589244/2)*2':y='trunc(main_h*0.1837557465948115/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.4092204293706758/2)*2':y='trunc(main_h*0.43266363032834765/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784819757314-26a48989-sKSauT\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.15608248667074137/2)*2':y='trunc(ih*0.15525408624241954/2)*2':w='trunc(iw*0.1194413550528417/2)*2':h='trunc(ih*0.23113193135158094/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.6852626397589244/2)*2':y='trunc(ih*0.1837557465948115/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.4092204293706758/2)*2':y='trunc(ih*0.43266363032834765/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.15608248667074137/2)*2':y='trunc(main_h*0.15525408624241954/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.6852626397589244/2)*2':y='trunc(main_h*0.1837557465948115/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.4092204293706758/2)*2':y='trunc(main_h*0.43266363032834765/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784819800157-dd9cbacc-7VAFou\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:17:08.524Z",
+        "status": "completed",
+        "sha256": "41393a2fec32b45ccffa44200c725c1503df03bbc08c8bdd3ac13f4d3ade11ca",
+        "sizeBytes": 30745302
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-ce9376fcd4b7758691dfc4a6",
+      "assetId": "media-proto05-anonymized-ce9376fcd4b7758691dfc4a6",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "ce9376fcd4b77586-anonymized.mp4",
+      "url": "/api/proto05/library/media/ce9376fcd4b77586-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/ce9376fcd4b77586-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 29604406,
+      "sha256": "ce9376fcd4b7758691dfc4a6b0cb074397022edc13ce73471306e6c11893a0a6",
+      "checksum": "ce9376fcd4b7758691dfc4a6b0cb074397022edc13ce73471306e6c11893a0a6",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784820517603-a55235eb",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0.09569824403565978,
+            "y": 0.1328405844621861,
+            "width": 0.1413389489627323,
+            "height": 0.25826404803276837
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3853321401348031,
+            "y": 0.08565425725110186,
+            "width": 0.20737491226338456,
+            "height": 0.3016404586194953
+          },
+          {
+            "id": "mask-3",
+            "x": 0.745326553532239,
+            "y": 0.13048127701170914,
+            "width": 0.20231106063835813,
+            "height": 0.25799310068419673
+          }
+        ],
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 6,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.09569824403565978/2)*2':y='trunc(ih*0.1328405844621861/2)*2':w='trunc(iw*0.1413389489627323/2)*2':h='trunc(ih*0.25826404803276837/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3853321401348031/2)*2':y='trunc(ih*0.08565425725110186/2)*2':w='trunc(iw*0.20737491226338456/2)*2':h='trunc(ih*0.3016404586194953/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.745326553532239/2)*2':y='trunc(ih*0.13048127701170914/2)*2':w='trunc(iw*0.20231106063835813/2)*2':h='trunc(ih*0.25799310068419673/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.09569824403565978/2)*2':y='trunc(main_h*0.1328405844621861/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3853321401348031/2)*2':y='trunc(main_h*0.08565425725110186/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.745326553532239/2)*2':y='trunc(main_h*0.13048127701170914/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784820517603-a55235eb-RCyv0v\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.09569824403565978/2)*2':y='trunc(ih*0.1328405844621861/2)*2':w='trunc(iw*0.1413389489627323/2)*2':h='trunc(ih*0.25826404803276837/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3853321401348031/2)*2':y='trunc(ih*0.08565425725110186/2)*2':w='trunc(iw*0.20737491226338456/2)*2':h='trunc(ih*0.3016404586194953/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.745326553532239/2)*2':y='trunc(ih*0.13048127701170914/2)*2':w='trunc(iw*0.20231106063835813/2)*2':h='trunc(ih*0.25799310068419673/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.09569824403565978/2)*2':y='trunc(main_h*0.1328405844621861/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3853321401348031/2)*2':y='trunc(main_h*0.08565425725110186/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.745326553532239/2)*2':y='trunc(main_h*0.13048127701170914/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784820579643-b5ad899c-R6nFqe\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:30:07.180Z",
+        "status": "completed",
+        "sha256": "ce9376fcd4b7758691dfc4a6b0cb074397022edc13ce73471306e6c11893a0a6",
+        "sizeBytes": 29604406
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-5d624b6d72597eb046aa68d9",
+      "assetId": "media-proto05-anonymized-5d624b6d72597eb046aa68d9",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "5d624b6d72597eb0-anonymized.mp4",
+      "url": "/api/proto05/library/media/5d624b6d72597eb0-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/5d624b6d72597eb0-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 28308371,
+      "sha256": "5d624b6d72597eb046aa68d982bebb079318325ea96b576bb5bcbfedb4a0da5d",
+      "checksum": "5d624b6d72597eb046aa68d982bebb079318325ea96b576bb5bcbfedb4a0da5d",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784820710059-2761d000",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.053803485168609444,
+            "width": 0.2887951074461887,
+            "height": 0.33738226142944205
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3368920330050057,
+            "y": 0.05635264206470142,
+            "width": 0.2810303841704629,
+            "height": 0.33365344270804137
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6666828713923374,
+            "y": 0.05871196571531882,
+            "width": 0.2889931472490872,
+            "height": 0.3289347954068066
+          }
+        ],
+        "blur": {
+          "id": "standard",
+          "label": "Standard",
+          "filter": "boxblur",
+          "lumaRadius": 14,
+          "lumaPower": 2
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.053803485168609444/2)*2':w='trunc(iw*0.2887951074461887/2)*2':h='trunc(ih*0.33738226142944205/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.3368920330050057/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.2810303841704629/2)*2':h='trunc(ih*0.33365344270804137/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.6666828713923374/2)*2':y='trunc(ih*0.05871196571531882/2)*2':w='trunc(iw*0.2889931472490872/2)*2':h='trunc(ih*0.3289347954068066/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.053803485168609444/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3368920330050057/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6666828713923374/2)*2':y='trunc(main_h*0.05871196571531882/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784820710059-2761d000-nWg8u3\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.053803485168609444/2)*2':w='trunc(iw*0.2887951074461887/2)*2':h='trunc(ih*0.33738226142944205/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.3368920330050057/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.2810303841704629/2)*2':h='trunc(ih*0.33365344270804137/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.6666828713923374/2)*2':y='trunc(ih*0.05871196571531882/2)*2':w='trunc(iw*0.2889931472490872/2)*2':h='trunc(ih*0.3289347954068066/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.053803485168609444/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3368920330050057/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6666828713923374/2)*2':y='trunc(main_h*0.05871196571531882/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784820766714-577bea31-zuaFsU\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:33:18.371Z",
+        "status": "completed",
+        "sha256": "5d624b6d72597eb046aa68d982bebb079318325ea96b576bb5bcbfedb4a0da5d",
+        "sizeBytes": 28308371
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-fb05ca1fc85c147730eee7b8",
+      "assetId": "media-proto05-anonymized-fb05ca1fc85c147730eee7b8",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "fb05ca1fc85c1477-anonymized.mp4",
+      "url": "/api/proto05/library/media/fb05ca1fc85c1477-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/fb05ca1fc85c1477-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 30015953,
+      "sha256": "fb05ca1fc85c147730eee7b8df2763cd806c8de0bcd0ec8d7d9765c69b72d523",
+      "checksum": "fb05ca1fc85c147730eee7b8df2763cd806c8de0bcd0ec8d7d9765c69b72d523",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.056162792619086424,
+            "width": 0.24300926075103418,
+            "height": 0.33376217805055935
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3335742256870065,
+            "y": 0.05144416151799204,
+            "width": 0.3307976397428862,
+            "height": 0.33938953982853126
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6680100380602677,
+            "y": 0.05635264206470142,
+            "width": 0.3319899619397323,
+            "height": 0.3360127663586588
+          }
+        ],
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=2:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=2:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=2:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=2:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=2:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=2:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821906109-2581f59b-tkxcce\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:52:15.421Z",
+        "status": "completed",
+        "sha256": "fb05ca1fc85c147730eee7b8df2763cd806c8de0bcd0ec8d7d9765c69b72d523",
+        "sizeBytes": 30015953
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-713daf00adddf1abdf47e4fe",
+      "assetId": "media-proto05-anonymized-713daf00adddf1abdf47e4fe",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "713daf00adddf1ab-anonymized.mp4",
+      "url": "/api/proto05/library/media/713daf00adddf1ab-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/713daf00adddf1ab-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 29276623,
+      "sha256": "713daf00adddf1abdf47e4febce1079bc98f3e03620026efbd9771aaacfbb267",
+      "checksum": "713daf00adddf1abdf47e4febce1079bc98f3e03620026efbd9771aaacfbb267",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.056162792619086424,
+            "width": 0.24300926075103418,
+            "height": 0.33376217805055935
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3335742256870065,
+            "y": 0.05144416151799204,
+            "width": 0.3307976397428862,
+            "height": 0.33938953982853126
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6680100380602677,
+            "y": 0.05635264206470142,
+            "width": 0.3319899619397323,
+            "height": 0.3360127663586588
+          }
+        ],
+        "blur": {
+          "id": "standard",
+          "label": "Standard",
+          "filter": "boxblur",
+          "lumaRadius": 4,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=4:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=4:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=4:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=4:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821959575-79247d65-8ZM1VA\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:53:08.978Z",
+        "status": "completed",
+        "sha256": "713daf00adddf1abdf47e4febce1079bc98f3e03620026efbd9771aaacfbb267",
+        "sizeBytes": 29276623
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
+      "assetId": "media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "d8f5f0f7949422b8-anonymized.mp4",
+      "url": "/api/proto05/library/media/d8f5f0f7949422b8-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/d8f5f0f7949422b8-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 28882934,
+      "sha256": "d8f5f0f7949422b8cef030fc8cd848fc9383d7a5e5d025c89d58ce997fc2dc6b",
+      "checksum": "d8f5f0f7949422b8cef030fc8cd848fc9383d7a5e5d025c89d58ce997fc2dc6b",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+        "method": "ffmpeg-boxblur-rectangles",
+        "masks": [
+          {
+            "id": "mask-1",
+            "x": 0,
+            "y": 0.056162792619086424,
+            "width": 0.24300926075103418,
+            "height": 0.33376217805055935
+          },
+          {
+            "id": "mask-2",
+            "x": 0.3335742256870065,
+            "y": 0.05144416151799204,
+            "width": 0.3307976397428862,
+            "height": 0.33938953982853126
+          },
+          {
+            "id": "mask-3",
+            "x": 0.6680100380602677,
+            "y": 0.05635264206470142,
+            "width": 0.3319899619397323,
+            "height": 0.3360127663586588
+          }
+        ],
+        "blur": {
+          "id": "strong",
+          "label": "Fort",
+          "filter": "boxblur",
+          "lumaRadius": 6,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821995177-332b75db-osX66T\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T15:53:45.352Z",
+        "status": "completed",
+        "sha256": "d8f5f0f7949422b8cef030fc8cd848fc9383d7a5e5d025c89d58ce997fc2dc6b",
+        "sizeBytes": 28882934
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-b58b98549ae94f4bacf10050",
+      "assetId": "media-proto05-anonymized-b58b98549ae94f4bacf10050",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "b58b98549ae94f4b-anonymized.mp4",
+      "url": "/api/proto05/library/media/b58b98549ae94f4b-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/b58b98549ae94f4b-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 32220934,
+      "sha256": "b58b98549ae94f4bacf100505abb346940bad56b8e0ded3674a4a006db699850",
+      "checksum": "b58b98549ae94f4bacf100505abb346940bad56b8e0ded3674a4a006db699850",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784830461370-5aff62fb",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0,
+            "y": 0,
+            "width": 0.2,
+            "height": 0.2
+          },
+          {
+            "time": 28177,
+            "x": 0.55,
+            "y": 0.1,
+            "width": 0.2,
+            "height": 0.2
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              },
+              {
+                "time": 28177,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 28177,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 28177,
+                "x": 0.55,
+                "y": 0.1,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 28177,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 28177,
+            "endMs": 939238,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              },
+              {
+                "id": "mask-2",
+                "x": 0.55,
+                "y": 0.1,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "filter": "[0:v]split=2[temporalBase0][temporalBlur0];[temporalBlur0]boxblur=luma_radius=2:luma_power=1[temporalBlur0b];[temporalBase0][temporalBlur0b]blend=all_expr='if(gte(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(T,0)*lte(T,939.238),B,A)'[temporalComposite0];[temporalComposite0]split=2[temporalBase1][temporalBlur1];[temporalBlur1]boxblur=luma_radius=2:luma_power=1[temporalBlur1b];[temporalBase1][temporalBlur1b]blend=all_expr='if(gte(X,W*(if(lt(T,28.177),0.55,0.55)))*lt(X,W*(if(lt(T,28.177),0.55,0.55)+if(lt(T,28.177),0.2,0.2)))*gte(Y,H*(if(lt(T,28.177),0.1,0.1)))*lt(Y,H*(if(lt(T,28.177),0.1,0.1)+if(lt(T,28.177),0.2,0.2)))*gte(T,28.177)*lte(T,939.238),B,A)'[outv]",
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "ffmpegArgs": [
+          "-hide_banner",
+          "-y",
+          "-i",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784830461370-5aff62fb-sEWPmq\\work.mp4",
+          "-filter_complex",
+          "[0:v]split=2[temporalBase0][temporalBlur0];[temporalBlur0]boxblur=luma_radius=2:luma_power=1[temporalBlur0b];[temporalBase0][temporalBlur0b]blend=all_expr='if(gte(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(T,0)*lte(T,939.238),B,A)'[temporalComposite0];[temporalComposite0]split=2[temporalBase1][temporalBlur1];[temporalBlur1]boxblur=luma_radius=2:luma_power=1[temporalBlur1b];[temporalBase1][temporalBlur1b]blend=all_expr='if(gte(X,W*(if(lt(T,28.177),0.55,0.55)))*lt(X,W*(if(lt(T,28.177),0.55,0.55)+if(lt(T,28.177),0.2,0.2)))*gte(Y,H*(if(lt(T,28.177),0.1,0.1)))*lt(Y,H*(if(lt(T,28.177),0.1,0.1)+if(lt(T,28.177),0.2,0.2)))*gte(T,28.177)*lte(T,939.238),B,A)'[outv]",
+          "-map",
+          "[outv]",
+          "-map",
+          "0:a?",
+          "-c:v",
+          "libx264",
+          "-preset",
+          "veryfast",
+          "-crf",
+          "23",
+          "-c:a",
+          "aac",
+          "-movflags",
+          "+faststart",
+          "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-temporal-derivation-1784830512394-9e298e1f-gYzHTx\\derived.mp4"
+        ],
+        "createdAt": "2026-07-23T18:29:17.794Z",
+        "status": "completed",
+        "sha256": "b58b98549ae94f4bacf100505abb346940bad56b8e0ded3674a4a006db699850",
+        "sizeBytes": 32220934
+      }
+    },
+    {
+      "id": "source-media-proto05-anonymized-86883fdff00c654a5c29ea75",
+      "assetId": "media-proto05-anonymized-86883fdff00c654a5c29ea75",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "86883fdff00c654a-anonymized.mp4",
+      "url": "/api/proto05/library/media/86883fdff00c654a-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/86883fdff00c654a-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 29275705,
+      "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
+      "checksum": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784841412133-0e2d9405",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0,
+            "y": 0,
+            "width": 0.2,
+            "height": 0.2
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              },
+              {
+                "time": 15422,
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 15422,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 15422,
+            "endMs": 939238,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.2,
+                "height": 0.2
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-23T21:18:29.402Z",
+        "status": "completed",
+        "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
+        "sizeBytes": 29275705
+      }
     }
   ],
   "playables": [
@@ -283,6 +1892,806 @@
       "fileName": "video_toto_1080p.mp4",
       "sizeBytes": 20896964,
       "sha256": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37"
+    },
+    {
+      "id": "video-media-proto05-anonymized-e4bde20ecc6a40759c994e0d",
+      "assetId": "media-proto05-anonymized-e4bde20ecc6a40759c994e0d",
+      "sourceId": "source-media-proto05-anonymized-e4bde20ecc6a40759c994e0d",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "e4bde20ecc6a4075-anonymized.mp4",
+      "url": "/api/proto05/library/media/e4bde20ecc6a4075-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "e4bde20ecc6a40759c994e0d530bc29afc1f14e82a7bfc88270ece2ce8213f5b",
+      "sizeBytes": 27138750,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784818010277-57cc4b0f",
+          "method": "ffmpeg-drawbox-rectangles",
+          "masks": [
+            {
+              "id": "mask-1",
+              "x": 0.07,
+              "y": 0.1,
+              "width": 0.29,
+              "height": 0.29
+            },
+            {
+              "id": "mask-2",
+              "x": 0.36,
+              "y": 0.1,
+              "width": 0.28,
+              "height": 0.29
+            },
+            {
+              "id": "mask-3",
+              "x": 0.64,
+              "y": 0.1,
+              "width": 0.29,
+              "height": 0.29
+            }
+          ],
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "createdAt": "2026-07-23T14:51:39.750Z",
+          "status": "completed",
+          "sha256": "e4bde20ecc6a40759c994e0d530bc29afc1f14e82a7bfc88270ece2ce8213f5b",
+          "sizeBytes": 27138750
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-41393a2fec32b45ccffa4420",
+      "assetId": "media-proto05-anonymized-41393a2fec32b45ccffa4420",
+      "sourceId": "source-media-proto05-anonymized-41393a2fec32b45ccffa4420",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "41393a2fec32b45c-anonymized.mp4",
+      "url": "/api/proto05/library/media/41393a2fec32b45c-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "41393a2fec32b45ccffa44200c725c1503df03bbc08c8bdd3ac13f4d3ade11ca",
+      "sizeBytes": 30745302,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784819757314-26a48989",
+          "method": "ffmpeg-boxblur-rectangles",
+          "masks": [
+            {
+              "id": "mask-1",
+              "x": 0.15608248667074137,
+              "y": 0.15525408624241954,
+              "width": 0.1194413550528417,
+              "height": 0.23113193135158094
+            },
+            {
+              "id": "mask-2",
+              "x": 0.6852626397589244,
+              "y": 0.1837557465948115,
+              "width": 0.2,
+              "height": 0.2
+            },
+            {
+              "id": "mask-3",
+              "x": 0.4092204293706758,
+              "y": 0.43266363032834765,
+              "width": 0.2,
+              "height": 0.2
+            }
+          ],
+          "blur": {
+            "filter": "boxblur",
+            "lumaRadius": 14,
+            "lumaPower": 2
+          },
+          "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.15608248667074137/2)*2':y='trunc(ih*0.15525408624241954/2)*2':w='trunc(iw*0.1194413550528417/2)*2':h='trunc(ih*0.23113193135158094/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.6852626397589244/2)*2':y='trunc(ih*0.1837557465948115/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.4092204293706758/2)*2':y='trunc(ih*0.43266363032834765/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.15608248667074137/2)*2':y='trunc(main_h*0.15525408624241954/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.6852626397589244/2)*2':y='trunc(main_h*0.1837557465948115/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.4092204293706758/2)*2':y='trunc(main_h*0.43266363032834765/2)*2':eof_action=pass[outv]",
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "ffmpegArgs": [
+            "-hide_banner",
+            "-y",
+            "-i",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784819757314-26a48989-sKSauT\\work.mp4",
+            "-filter_complex",
+            "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.15608248667074137/2)*2':y='trunc(ih*0.15525408624241954/2)*2':w='trunc(iw*0.1194413550528417/2)*2':h='trunc(ih*0.23113193135158094/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.6852626397589244/2)*2':y='trunc(ih*0.1837557465948115/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.4092204293706758/2)*2':y='trunc(ih*0.43266363032834765/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.15608248667074137/2)*2':y='trunc(main_h*0.15525408624241954/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.6852626397589244/2)*2':y='trunc(main_h*0.1837557465948115/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.4092204293706758/2)*2':y='trunc(main_h*0.43266363032834765/2)*2':eof_action=pass[outv]",
+            "-map",
+            "[outv]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "23",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784819800157-dd9cbacc-7VAFou\\derived.mp4"
+          ],
+          "createdAt": "2026-07-23T15:17:08.524Z",
+          "status": "completed",
+          "sha256": "41393a2fec32b45ccffa44200c725c1503df03bbc08c8bdd3ac13f4d3ade11ca",
+          "sizeBytes": 30745302
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-ce9376fcd4b7758691dfc4a6",
+      "assetId": "media-proto05-anonymized-ce9376fcd4b7758691dfc4a6",
+      "sourceId": "source-media-proto05-anonymized-ce9376fcd4b7758691dfc4a6",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "ce9376fcd4b77586-anonymized.mp4",
+      "url": "/api/proto05/library/media/ce9376fcd4b77586-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "ce9376fcd4b7758691dfc4a6b0cb074397022edc13ce73471306e6c11893a0a6",
+      "sizeBytes": 29604406,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784820517603-a55235eb",
+          "method": "ffmpeg-boxblur-rectangles",
+          "masks": [
+            {
+              "id": "mask-1",
+              "x": 0.09569824403565978,
+              "y": 0.1328405844621861,
+              "width": 0.1413389489627323,
+              "height": 0.25826404803276837
+            },
+            {
+              "id": "mask-2",
+              "x": 0.3853321401348031,
+              "y": 0.08565425725110186,
+              "width": 0.20737491226338456,
+              "height": 0.3016404586194953
+            },
+            {
+              "id": "mask-3",
+              "x": 0.745326553532239,
+              "y": 0.13048127701170914,
+              "width": 0.20231106063835813,
+              "height": 0.25799310068419673
+            }
+          ],
+          "blur": {
+            "id": "light",
+            "label": "Léger",
+            "filter": "boxblur",
+            "lumaRadius": 6,
+            "lumaPower": 1
+          },
+          "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.09569824403565978/2)*2':y='trunc(ih*0.1328405844621861/2)*2':w='trunc(iw*0.1413389489627323/2)*2':h='trunc(ih*0.25826404803276837/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3853321401348031/2)*2':y='trunc(ih*0.08565425725110186/2)*2':w='trunc(iw*0.20737491226338456/2)*2':h='trunc(ih*0.3016404586194953/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.745326553532239/2)*2':y='trunc(ih*0.13048127701170914/2)*2':w='trunc(iw*0.20231106063835813/2)*2':h='trunc(ih*0.25799310068419673/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.09569824403565978/2)*2':y='trunc(main_h*0.1328405844621861/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3853321401348031/2)*2':y='trunc(main_h*0.08565425725110186/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.745326553532239/2)*2':y='trunc(main_h*0.13048127701170914/2)*2':eof_action=pass[outv]",
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "ffmpegArgs": [
+            "-hide_banner",
+            "-y",
+            "-i",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784820517603-a55235eb-RCyv0v\\work.mp4",
+            "-filter_complex",
+            "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0.09569824403565978/2)*2':y='trunc(ih*0.1328405844621861/2)*2':w='trunc(iw*0.1413389489627323/2)*2':h='trunc(ih*0.25826404803276837/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3853321401348031/2)*2':y='trunc(ih*0.08565425725110186/2)*2':w='trunc(iw*0.20737491226338456/2)*2':h='trunc(ih*0.3016404586194953/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.745326553532239/2)*2':y='trunc(ih*0.13048127701170914/2)*2':w='trunc(iw*0.20231106063835813/2)*2':h='trunc(ih*0.25799310068419673/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0.09569824403565978/2)*2':y='trunc(main_h*0.1328405844621861/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3853321401348031/2)*2':y='trunc(main_h*0.08565425725110186/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.745326553532239/2)*2':y='trunc(main_h*0.13048127701170914/2)*2':eof_action=pass[outv]",
+            "-map",
+            "[outv]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "23",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784820579643-b5ad899c-R6nFqe\\derived.mp4"
+          ],
+          "createdAt": "2026-07-23T15:30:07.180Z",
+          "status": "completed",
+          "sha256": "ce9376fcd4b7758691dfc4a6b0cb074397022edc13ce73471306e6c11893a0a6",
+          "sizeBytes": 29604406
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-5d624b6d72597eb046aa68d9",
+      "assetId": "media-proto05-anonymized-5d624b6d72597eb046aa68d9",
+      "sourceId": "source-media-proto05-anonymized-5d624b6d72597eb046aa68d9",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "5d624b6d72597eb0-anonymized.mp4",
+      "url": "/api/proto05/library/media/5d624b6d72597eb0-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "5d624b6d72597eb046aa68d982bebb079318325ea96b576bb5bcbfedb4a0da5d",
+      "sizeBytes": 28308371,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784820710059-2761d000",
+          "method": "ffmpeg-boxblur-rectangles",
+          "masks": [
+            {
+              "id": "mask-1",
+              "x": 0,
+              "y": 0.053803485168609444,
+              "width": 0.2887951074461887,
+              "height": 0.33738226142944205
+            },
+            {
+              "id": "mask-2",
+              "x": 0.3368920330050057,
+              "y": 0.05635264206470142,
+              "width": 0.2810303841704629,
+              "height": 0.33365344270804137
+            },
+            {
+              "id": "mask-3",
+              "x": 0.6666828713923374,
+              "y": 0.05871196571531882,
+              "width": 0.2889931472490872,
+              "height": 0.3289347954068066
+            }
+          ],
+          "blur": {
+            "id": "standard",
+            "label": "Standard",
+            "filter": "boxblur",
+            "lumaRadius": 14,
+            "lumaPower": 2
+          },
+          "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.053803485168609444/2)*2':w='trunc(iw*0.2887951074461887/2)*2':h='trunc(ih*0.33738226142944205/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.3368920330050057/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.2810303841704629/2)*2':h='trunc(ih*0.33365344270804137/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.6666828713923374/2)*2':y='trunc(ih*0.05871196571531882/2)*2':w='trunc(iw*0.2889931472490872/2)*2':h='trunc(ih*0.3289347954068066/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.053803485168609444/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3368920330050057/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6666828713923374/2)*2':y='trunc(main_h*0.05871196571531882/2)*2':eof_action=pass[outv]",
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "ffmpegArgs": [
+            "-hide_banner",
+            "-y",
+            "-i",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784820710059-2761d000-nWg8u3\\work.mp4",
+            "-filter_complex",
+            "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.053803485168609444/2)*2':w='trunc(iw*0.2887951074461887/2)*2':h='trunc(ih*0.33738226142944205/2)*2',boxblur=luma_radius=14:luma_power=2[blurred0];[source1]crop=x='trunc(iw*0.3368920330050057/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.2810303841704629/2)*2':h='trunc(ih*0.33365344270804137/2)*2',boxblur=luma_radius=14:luma_power=2[blurred1];[source2]crop=x='trunc(iw*0.6666828713923374/2)*2':y='trunc(ih*0.05871196571531882/2)*2':w='trunc(iw*0.2889931472490872/2)*2':h='trunc(ih*0.3289347954068066/2)*2',boxblur=luma_radius=14:luma_power=2[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.053803485168609444/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3368920330050057/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6666828713923374/2)*2':y='trunc(main_h*0.05871196571531882/2)*2':eof_action=pass[outv]",
+            "-map",
+            "[outv]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "23",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784820766714-577bea31-zuaFsU\\derived.mp4"
+          ],
+          "createdAt": "2026-07-23T15:33:18.371Z",
+          "status": "completed",
+          "sha256": "5d624b6d72597eb046aa68d982bebb079318325ea96b576bb5bcbfedb4a0da5d",
+          "sizeBytes": 28308371
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-fb05ca1fc85c147730eee7b8",
+      "assetId": "media-proto05-anonymized-fb05ca1fc85c147730eee7b8",
+      "sourceId": "source-media-proto05-anonymized-fb05ca1fc85c147730eee7b8",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "fb05ca1fc85c1477-anonymized.mp4",
+      "url": "/api/proto05/library/media/fb05ca1fc85c1477-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "fb05ca1fc85c147730eee7b8df2763cd806c8de0bcd0ec8d7d9765c69b72d523",
+      "sizeBytes": 30015953,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+          "method": "ffmpeg-boxblur-rectangles",
+          "masks": [
+            {
+              "id": "mask-1",
+              "x": 0,
+              "y": 0.056162792619086424,
+              "width": 0.24300926075103418,
+              "height": 0.33376217805055935
+            },
+            {
+              "id": "mask-2",
+              "x": 0.3335742256870065,
+              "y": 0.05144416151799204,
+              "width": 0.3307976397428862,
+              "height": 0.33938953982853126
+            },
+            {
+              "id": "mask-3",
+              "x": 0.6680100380602677,
+              "y": 0.05635264206470142,
+              "width": 0.3319899619397323,
+              "height": 0.3360127663586588
+            }
+          ],
+          "blur": {
+            "id": "light",
+            "label": "Léger",
+            "filter": "boxblur",
+            "lumaRadius": 2,
+            "lumaPower": 1
+          },
+          "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=2:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=2:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=2:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "ffmpegArgs": [
+            "-hide_banner",
+            "-y",
+            "-i",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+            "-filter_complex",
+            "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=2:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=2:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=2:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+            "-map",
+            "[outv]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "23",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821906109-2581f59b-tkxcce\\derived.mp4"
+          ],
+          "createdAt": "2026-07-23T15:52:15.421Z",
+          "status": "completed",
+          "sha256": "fb05ca1fc85c147730eee7b8df2763cd806c8de0bcd0ec8d7d9765c69b72d523",
+          "sizeBytes": 30015953
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-713daf00adddf1abdf47e4fe",
+      "assetId": "media-proto05-anonymized-713daf00adddf1abdf47e4fe",
+      "sourceId": "source-media-proto05-anonymized-713daf00adddf1abdf47e4fe",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "713daf00adddf1ab-anonymized.mp4",
+      "url": "/api/proto05/library/media/713daf00adddf1ab-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "713daf00adddf1abdf47e4febce1079bc98f3e03620026efbd9771aaacfbb267",
+      "sizeBytes": 29276623,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+          "method": "ffmpeg-boxblur-rectangles",
+          "masks": [
+            {
+              "id": "mask-1",
+              "x": 0,
+              "y": 0.056162792619086424,
+              "width": 0.24300926075103418,
+              "height": 0.33376217805055935
+            },
+            {
+              "id": "mask-2",
+              "x": 0.3335742256870065,
+              "y": 0.05144416151799204,
+              "width": 0.3307976397428862,
+              "height": 0.33938953982853126
+            },
+            {
+              "id": "mask-3",
+              "x": 0.6680100380602677,
+              "y": 0.05635264206470142,
+              "width": 0.3319899619397323,
+              "height": 0.3360127663586588
+            }
+          ],
+          "blur": {
+            "id": "standard",
+            "label": "Standard",
+            "filter": "boxblur",
+            "lumaRadius": 4,
+            "lumaPower": 1
+          },
+          "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=4:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=4:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "ffmpegArgs": [
+            "-hide_banner",
+            "-y",
+            "-i",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+            "-filter_complex",
+            "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=4:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=4:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+            "-map",
+            "[outv]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "23",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821959575-79247d65-8ZM1VA\\derived.mp4"
+          ],
+          "createdAt": "2026-07-23T15:53:08.978Z",
+          "status": "completed",
+          "sha256": "713daf00adddf1abdf47e4febce1079bc98f3e03620026efbd9771aaacfbb267",
+          "sizeBytes": 29276623
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
+      "assetId": "media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
+      "sourceId": "source-media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "d8f5f0f7949422b8-anonymized.mp4",
+      "url": "/api/proto05/library/media/d8f5f0f7949422b8-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "d8f5f0f7949422b8cef030fc8cd848fc9383d7a5e5d025c89d58ce997fc2dc6b",
+      "sizeBytes": 28882934,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784821842843-499cecfa",
+          "method": "ffmpeg-boxblur-rectangles",
+          "masks": [
+            {
+              "id": "mask-1",
+              "x": 0,
+              "y": 0.056162792619086424,
+              "width": 0.24300926075103418,
+              "height": 0.33376217805055935
+            },
+            {
+              "id": "mask-2",
+              "x": 0.3335742256870065,
+              "y": 0.05144416151799204,
+              "width": 0.3307976397428862,
+              "height": 0.33938953982853126
+            },
+            {
+              "id": "mask-3",
+              "x": 0.6680100380602677,
+              "y": 0.05635264206470142,
+              "width": 0.3319899619397323,
+              "height": 0.3360127663586588
+            }
+          ],
+          "blur": {
+            "id": "strong",
+            "label": "Fort",
+            "filter": "boxblur",
+            "lumaRadius": 6,
+            "lumaPower": 1
+          },
+          "filter": "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "ffmpegArgs": [
+            "-hide_banner",
+            "-y",
+            "-i",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784821842843-499cecfa-dyZjnt\\work.mp4",
+            "-filter_complex",
+            "[0:v]split=4[base][source0][source1][source2];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0.056162792619086424/2)*2':w='trunc(iw*0.24300926075103418/2)*2':h='trunc(ih*0.33376217805055935/2)*2',boxblur=luma_radius=6:luma_power=1[blurred0];[source1]crop=x='trunc(iw*0.3335742256870065/2)*2':y='trunc(ih*0.05144416151799204/2)*2':w='trunc(iw*0.3307976397428862/2)*2':h='trunc(ih*0.33938953982853126/2)*2',boxblur=luma_radius=6:luma_power=1[blurred1];[source2]crop=x='trunc(iw*0.6680100380602677/2)*2':y='trunc(ih*0.05635264206470142/2)*2':w='trunc(iw*0.3319899619397323/2)*2':h='trunc(ih*0.3360127663586588/2)*2',boxblur=luma_radius=6:luma_power=1[blurred2];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0.056162792619086424/2)*2':eof_action=pass[composite0];[composite0][blurred1]overlay=x='trunc(main_w*0.3335742256870065/2)*2':y='trunc(main_h*0.05144416151799204/2)*2':eof_action=pass[composite1];[composite1][blurred2]overlay=x='trunc(main_w*0.6680100380602677/2)*2':y='trunc(main_h*0.05635264206470142/2)*2':eof_action=pass[outv]",
+            "-map",
+            "[outv]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "23",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1784821995177-332b75db-osX66T\\derived.mp4"
+          ],
+          "createdAt": "2026-07-23T15:53:45.352Z",
+          "status": "completed",
+          "sha256": "d8f5f0f7949422b8cef030fc8cd848fc9383d7a5e5d025c89d58ce997fc2dc6b",
+          "sizeBytes": 28882934
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-b58b98549ae94f4bacf10050",
+      "assetId": "media-proto05-anonymized-b58b98549ae94f4bacf10050",
+      "sourceId": "source-media-proto05-anonymized-b58b98549ae94f4bacf10050",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "b58b98549ae94f4b-anonymized.mp4",
+      "url": "/api/proto05/library/media/b58b98549ae94f4b-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "b58b98549ae94f4bacf100505abb346940bad56b8e0ded3674a4a006db699850",
+      "sizeBytes": 32220934,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784830461370-5aff62fb",
+          "mode": "temporal",
+          "method": "ffmpeg-boxblur-temporal-steps",
+          "masks": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0,
+              "width": 0.2,
+              "height": 0.2
+            },
+            {
+              "time": 28177,
+              "x": 0.55,
+              "y": 0.1,
+              "width": 0.2,
+              "height": 0.2
+            }
+          ],
+          "temporalMasks": [
+            {
+              "id": "mask-1",
+              "startMs": 0,
+              "endMs": 939238,
+              "keyframes": [
+                {
+                  "time": 0,
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                },
+                {
+                  "time": 28177,
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                }
+              ]
+            },
+            {
+              "id": "mask-2",
+              "startMs": 28177,
+              "endMs": 939238,
+              "keyframes": [
+                {
+                  "time": 28177,
+                  "x": 0.55,
+                  "y": 0.1,
+                  "width": 0.2,
+                  "height": 0.2
+                }
+              ]
+            }
+          ],
+          "temporalSteps": [
+            {
+              "id": "step-1",
+              "startMs": 0,
+              "endMs": 28177,
+              "masks": [
+                {
+                  "id": "mask-1",
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                }
+              ]
+            },
+            {
+              "id": "step-2",
+              "startMs": 28177,
+              "endMs": 939238,
+              "masks": [
+                {
+                  "id": "mask-1",
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                },
+                {
+                  "id": "mask-2",
+                  "x": 0.55,
+                  "y": 0.1,
+                  "width": 0.2,
+                  "height": 0.2
+                }
+              ]
+            }
+          ],
+          "interpolation": "linear-between-keyframes-clamped-at-bounds",
+          "blur": {
+            "id": "light",
+            "label": "Léger",
+            "filter": "boxblur",
+            "lumaRadius": 2,
+            "lumaPower": 1
+          },
+          "filter": "[0:v]split=2[temporalBase0][temporalBlur0];[temporalBlur0]boxblur=luma_radius=2:luma_power=1[temporalBlur0b];[temporalBase0][temporalBlur0b]blend=all_expr='if(gte(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(T,0)*lte(T,939.238),B,A)'[temporalComposite0];[temporalComposite0]split=2[temporalBase1][temporalBlur1];[temporalBlur1]boxblur=luma_radius=2:luma_power=1[temporalBlur1b];[temporalBase1][temporalBlur1b]blend=all_expr='if(gte(X,W*(if(lt(T,28.177),0.55,0.55)))*lt(X,W*(if(lt(T,28.177),0.55,0.55)+if(lt(T,28.177),0.2,0.2)))*gte(Y,H*(if(lt(T,28.177),0.1,0.1)))*lt(Y,H*(if(lt(T,28.177),0.1,0.1)+if(lt(T,28.177),0.2,0.2)))*gte(T,28.177)*lte(T,939.238),B,A)'[outv]",
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "ffmpegArgs": [
+            "-hide_banner",
+            "-y",
+            "-i",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1784830461370-5aff62fb-sEWPmq\\work.mp4",
+            "-filter_complex",
+            "[0:v]split=2[temporalBase0][temporalBlur0];[temporalBlur0]boxblur=luma_radius=2:luma_power=1[temporalBlur0b];[temporalBase0][temporalBlur0b]blend=all_expr='if(gte(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(X,W*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))))*lt(Y,H*(if(lt(T,0),0,if(lt(T,28.177),0+(0)*(T-0),0))+if(lt(T,0),0.2,if(lt(T,28.177),0.2+(0)*(T-0),0.2))))*gte(T,0)*lte(T,939.238),B,A)'[temporalComposite0];[temporalComposite0]split=2[temporalBase1][temporalBlur1];[temporalBlur1]boxblur=luma_radius=2:luma_power=1[temporalBlur1b];[temporalBase1][temporalBlur1b]blend=all_expr='if(gte(X,W*(if(lt(T,28.177),0.55,0.55)))*lt(X,W*(if(lt(T,28.177),0.55,0.55)+if(lt(T,28.177),0.2,0.2)))*gte(Y,H*(if(lt(T,28.177),0.1,0.1)))*lt(Y,H*(if(lt(T,28.177),0.1,0.1)+if(lt(T,28.177),0.2,0.2)))*gte(T,28.177)*lte(T,939.238),B,A)'[outv]",
+            "-map",
+            "[outv]",
+            "-map",
+            "0:a?",
+            "-c:v",
+            "libx264",
+            "-preset",
+            "veryfast",
+            "-crf",
+            "23",
+            "-c:a",
+            "aac",
+            "-movflags",
+            "+faststart",
+            "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-temporal-derivation-1784830512394-9e298e1f-gYzHTx\\derived.mp4"
+          ],
+          "createdAt": "2026-07-23T18:29:17.794Z",
+          "status": "completed",
+          "sha256": "b58b98549ae94f4bacf100505abb346940bad56b8e0ded3674a4a006db699850",
+          "sizeBytes": 32220934
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-86883fdff00c654a5c29ea75",
+      "assetId": "media-proto05-anonymized-86883fdff00c654a5c29ea75",
+      "sourceId": "source-media-proto05-anonymized-86883fdff00c654a5c29ea75",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "86883fdff00c654a-anonymized.mp4",
+      "url": "/api/proto05/library/media/86883fdff00c654a-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
+      "sizeBytes": 29275705,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784841412133-0e2d9405",
+          "mode": "temporal",
+          "method": "ffmpeg-boxblur-temporal-steps",
+          "masks": [
+            {
+              "time": 0,
+              "x": 0,
+              "y": 0,
+              "width": 0.2,
+              "height": 0.2
+            }
+          ],
+          "temporalMasks": [
+            {
+              "id": "mask-1",
+              "startMs": 0,
+              "endMs": 939238,
+              "keyframes": [
+                {
+                  "time": 0,
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                },
+                {
+                  "time": 15422,
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                }
+              ]
+            }
+          ],
+          "temporalSteps": [
+            {
+              "id": "step-1",
+              "startMs": 0,
+              "endMs": 15422,
+              "masks": [
+                {
+                  "id": "mask-1",
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                }
+              ]
+            },
+            {
+              "id": "step-2",
+              "startMs": 15422,
+              "endMs": 939238,
+              "masks": [
+                {
+                  "id": "mask-1",
+                  "x": 0,
+                  "y": 0,
+                  "width": 0.2,
+                  "height": 0.2
+                }
+              ]
+            }
+          ],
+          "interpolation": "linear-between-keyframes-clamped-at-bounds",
+          "blur": {
+            "id": "light",
+            "label": "Léger",
+            "filter": "boxblur",
+            "lumaRadius": 2,
+            "lumaPower": 1
+          },
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "createdAt": "2026-07-23T21:18:29.402Z",
+          "status": "completed",
+          "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
+          "sizeBytes": 29275705
+        }
+      }
     }
   ]
 }
