@@ -73,7 +73,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
   const knownVideoIds = new Set(videoCatalog.videos.map(video => video.id));
   for (const activity of store.activities || []) {
-    if (activity.video?.id && !knownVideoIds.has(activity.video.id)) {
+    if (activity.video?.id && activity.video.provider !== "local" && !knownVideoIds.has(activity.video.id)) {
       const proxyUrl = "/api/hls/uga-37004/livestream.m3u8";
       activity.video.proxyUrl = proxyUrl;
       videoCatalog.videos.push({ id: activity.video.id, title: activity.video.title || "Fixture vidÃ©o", provider: "uga", sourceUrl: "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8", proxyUrl, durationMs: activity.video.durationMs ?? null, authorized: true });
@@ -81,7 +81,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
     }
   }
   fs.writeFileSync(videoCatalogFile, `${JSON.stringify(videoCatalog, null, 2)}\n`, "utf8");
-  for (const file of ["teacher.html", "teacher-create.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
+  for (const file of ["teacher.html", "teacher-create.html", "teacher-videos.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));
   }
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
@@ -120,6 +120,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
 
   return {
     baseUrl,
+    stderr: () => stderr,
     dataFile,
     videoLibraryFile,
     languageCatalogFile,

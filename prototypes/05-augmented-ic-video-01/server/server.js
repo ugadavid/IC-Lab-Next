@@ -19,7 +19,7 @@ const {
 } = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.26";
+const VERSION = "0.1.27";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -164,6 +164,8 @@ function safeLibraryMediaPath(storageKey) {
 async function serveLibraryMedia(request, response, url) {
   const prefix = "/api/proto05/library/media/";
   if (!url.pathname.startsWith(prefix)) return false;
+  const canSendMediaError = () => !request.aborted && !response.headersSent && !response.destroyed;
+  response._proto05Request = request;
   if (!["GET", "HEAD"].includes(request.method)) {
     sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, HEAD" });
     return true;
@@ -196,9 +198,24 @@ async function serveLibraryMedia(request, response, url) {
   }
   const headers = { "content-type": contentType, "accept-ranges": "bytes", "content-length": end - start + 1, "cache-control": "private, max-age=3600" };
   if (status === 206) headers["content-range"] = `bytes ${start}-${end}/${stat.size}`;
+  if (request.aborted || response.destroyed) return true;
   response.writeHead(status, headers);
   if (request.method === "HEAD") return response.end();
-  return await pipeline(fsSync.createReadStream(file, { start, end }), response);
+  const stream = fsSync.createReadStream(file, { start, end });
+  const abortStream = () => { if (!stream.destroyed) stream.destroy(); };
+  request.once("aborted", abortStream);
+  response.once("close", abortStream);
+  try {
+    await pipeline(stream, response);
+  } catch (error) {
+    const expectedAbort = request.aborted || response.destroyed || ["ERR_STREAM_PREMATURE_CLOSE", "ECONNRESET", "EPIPE"].includes(error?.code);
+    if (!expectedAbort) throw error;
+  } finally {
+    request.removeListener("aborted", abortStream);
+    response.removeListener("close", abortStream);
+    if (!stream.destroyed) stream.destroy();
+  }
+  return true;
 }
 function loadLanguageCatalog() {
   const parsed = JSON.parse(fsSync.readFileSync(LANGUAGE_CATALOG_FILE, "utf8"));
@@ -217,6 +234,7 @@ const LANGUAGE_CATALOG_BY_ID = new Map(LANGUAGE_CATALOG.map(language => [languag
 let writeQueue = Promise.resolve();
 
 function sendJson(response, status, payload, headers = {}) {
+  if (response.headersSent || response.destroyed || response._proto05Request?.aborted) return false;
   const body = JSON.stringify(payload, null, 2);
   response.writeHead(status, { "content-type": "application/json; charset=utf-8", ...headers });
   response.end(body);
@@ -329,7 +347,7 @@ function readRequestBody(request, limit = 64 * 1024) {
 
 function validateMetadataPatch(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
-  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId"]);
+  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "videoRef"]);
   const unknown = Object.keys(payload).filter(key => !allowed.has(key));
   if (unknown.length) throw new Error(`Champ non autorisé : ${unknown.join(", ")}.`);
   for (const key of ["title", "description", "instruction", "pedagogicalQuestion"]) {
@@ -339,6 +357,10 @@ function validateMetadataPatch(payload) {
   }
   if (payload.videoId !== undefined && (typeof payload.videoId !== "string" || !VIDEO_CATALOG.some(video => video.id === payload.videoId && video.authorized))) {
     throw new Error("La vidéo sélectionnée n’est pas autorisée.");
+  }
+  if (payload.videoRef !== undefined) {
+    if (!payload.videoRef || typeof payload.videoRef !== "object" || Array.isArray(payload.videoRef)) throw new Error("videoRef doit être un objet.");
+    if (typeof payload.videoRef.assetId !== "string" || typeof payload.videoRef.playableId !== "string") throw new Error("videoRef doit contenir assetId et playableId.");
   }
   return payload;
 }
@@ -554,6 +576,14 @@ function draftActivity(videoId, metadata = {}) {
   if (!video) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
   return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: activityVideoFromCatalog(video), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+}
+
+function draftActivityFromVideoRef(videoRef, metadata = {}) {
+  const playable = resolveLibraryPlayable(videoRef, VIDEO_LIBRARY);
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === videoRef.assetId);
+  if (!asset) throw new Error("Asset vidÃ©o introuvable.");
+  const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activitÃ©", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", videoRef: { schemaVersion: "0.1", assetId: asset.id, playableId: playable.id }, video: activityVideoFromLibrary(asset, playable), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
 }
 
 function uniqueCopyActivityId(activities) {
@@ -781,6 +811,66 @@ function libraryAssetDetails(asset) {
   };
 }
 
+function safeImportedFileName(value) {
+  const raw = typeof value === "string" ? value : "";
+  const decoded = (() => { try { return decodeURIComponent(raw); } catch { return raw; } })();
+  const name = path.basename(decoded).replace(/[\u0000-\u001f<>:"/\\|?*]+/g, "-").trim();
+  if (!name || name === "." || name === ".." || name.length > 180) throw new Error("Le nom du fichier vidéo est invalide.");
+  if (!/\.(mp4|m4v|webm|mov|ogv|ogg)$/i.test(name)) throw new Error("Le fichier doit avoir une extension vidéo prise en charge.");
+  return name;
+}
+
+async function importLocalLibraryMedia(request, url) {
+  const fileName = safeImportedFileName(request.headers["x-proto05-file-name"]);
+  const contentType = String(request.headers["content-type"] || "").split(";", 1)[0].toLowerCase();
+  if (!(contentType.startsWith("video/") || /\.(mp4|m4v|webm|mov|ogv|ogg)$/i.test(fileName))) throw new Error("Le contenu doit Ãªtre une vidÃ©o locale.");
+  const title = (url.searchParams.get("title") || fileName).trim().slice(0, 500);
+  await fs.mkdir(VIDEO_LIBRARY_MEDIA_DIR, { recursive: true });
+  const temporaryPath = path.join(VIDEO_LIBRARY_MEDIA_DIR, `.${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.upload.tmp`);
+  const output = fsSync.createWriteStream(temporaryPath, { flags: "wx" });
+  const hash = crypto.createHash("sha256");
+  let sizeBytes = 0;
+  try {
+    for await (const chunk of request) {
+      sizeBytes += chunk.length;
+      if (sizeBytes > 1024 * 1024 * 1024) throw new Error("La vidÃ©o dÃ©passe la taille maximale autorisÃ©e (1 Go).");
+      hash.update(chunk);
+      if (!output.write(chunk)) await new Promise((resolve, reject) => { output.once("drain", resolve); output.once("error", reject); });
+    }
+    await new Promise((resolve, reject) => output.end(error => error ? reject(error) : resolve()));
+  } catch (error) {
+    output.destroy();
+    try { await fs.unlink(temporaryPath); } catch {}
+    throw error;
+  }
+  if (!sizeBytes) { try { await fs.unlink(temporaryPath); } catch {}; throw new Error("Le fichier vidÃ©o est vide."); }
+  const sha256 = hash.digest("hex");
+  const duplicateSource = VIDEO_LIBRARY.sources.find(source => source.kind === "local-file" && (source.sha256 === sha256 || source.checksum === sha256 || source.provenance?.sha256 === sha256));
+  if (duplicateSource) {
+    try { await fs.unlink(temporaryPath); } catch {}
+    const duplicateAsset = VIDEO_LIBRARY.assets.find(asset => asset.id === duplicateSource.assetId);
+    const duplicatePlayable = VIDEO_LIBRARY.playables.find(playable => playable.sourceId === duplicateSource.id);
+    return { duplicate: true, asset: duplicateAsset ? libraryAssetDetails(duplicateAsset) : null, assetId: duplicateAsset?.id || null, playableId: duplicatePlayable?.id || null };
+  }
+  const assetId = `media-proto05-local-${sha256.slice(0, 24)}`;
+  const sourceId = `source-${assetId}`;
+  const playableId = `video-${assetId}`;
+  const storageKey = `${sha256.slice(0, 16)}-${fileName}`;
+  const targetPath = safeLibraryMediaPath(storageKey);
+  const importedAt = new Date().toISOString();
+  await fs.rename(temporaryPath, targetPath);
+  const provenance = { kind: "managed-local-copy", source: "browser-file-selection", originalFileName: fileName, importedAt, sha256, sizeBytes };
+  const source = { id: sourceId, assetId, title, kind: "local-file", provider: "local", storageKey, url: `/api/proto05/library/media/${encodeURIComponent(storageKey)}`, mimeType: contentType || "application/octet-stream", durationMs: null, sizeBytes, sha256, checksum: sha256, authorized: true, availability: "available", provenance };
+  const playable = { id: playableId, assetId, sourceId, kind: "local-file", provider: "local", status: "available", availability: "available", durationMs: null, mimeType: source.mimeType, storageKey, url: source.url, manifestUrl: null, fileName, sizeBytes, sha256 };
+  const asset = { id: assetId, title, status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance, metadata: { fileName, sizeBytes, sha256, mimeType: source.mimeType, durationMs: null }, rights: {} };
+  const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
+  nextLibrary.updatedAt = importedAt;
+  nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
+  try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
+  catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
+  return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
+}
+
 function catalogEntryFromInput(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
   if (typeof payload.provider !== "string" || !["youtube", "uga"].includes(payload.provider)) throw new Error("Le type doit être YouTube ou HLS UGA.");
@@ -830,6 +920,15 @@ async function handleApi(request, response, url) {
     try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
     catch (error) { console.error(`[data] Library vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement de la Library impossible." }); }
     return sendJson(response, 201, { asset: libraryAssetDetails(created.asset) });
+  }
+  if (url.pathname === "/api/proto05/library/import-local") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
+    try {
+      const result = await importLocalLibraryMedia(request, url);
+      return sendJson(response, result.duplicate ? 409 : 201, result);
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message || "Import local impossible." });
+    }
   }
   const libraryAssetMatch = url.pathname.match(/^\/api\/proto05\/library\/assets\/([^/]+)$/);
   if (libraryAssetMatch) {
@@ -934,7 +1033,7 @@ async function handleApi(request, response, url) {
     catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
     const store = await readActivities();
     let activity;
-    try { activity = draftActivity(payload.videoId, payload); validateActivityIntegrity(activity); }
+    try { activity = payload.videoRef ? draftActivityFromVideoRef(payload.videoRef, payload) : draftActivity(payload.videoId, payload); validateActivityIntegrity(activity); }
     catch (error) { return sendJson(response, 400, { error: error.message }); }
     store.activities.push(activity); store.updatedAt = new Date().toISOString();
     try { await persistActivities(store); } catch { return sendJson(response, 500, { error: "Création JSON impossible." }); }

@@ -20,6 +20,15 @@
     </div>
     <p id="status" class="status" role="status" aria-live="polite"></p>
   </section>
+  <section class="panel" aria-labelledby="local-import-title">
+    <div class="summary"><h2 id="local-import-title">Ajouter une vidéo locale</h2><span class="meta">Une copie gérée est créée dans le Proto05</span></div>
+    <p class="hint">Le fichier original reste à son emplacement. Son empreinte est calculée pour refuser les doublons.</p>
+    <form id="localImportForm" class="form-grid">
+      <div><label for="localImportTitle">Titre</label><input id="localImportTitle" maxlength="500" placeholder="Titre de la vidéo"></div>
+      <div><label for="localImportFile">Fichier vidéo</label><input id="localImportFile" type="file" accept="video/*,.mp4,.m4v,.webm,.mov,.ogv,.ogg" required></div>
+      <div class="actions"><button type="submit">Importer la copie locale</button></div>
+    </form>
+  </section>
   <section class="panel" aria-labelledby="add-title">
     <div class="summary"><h2 id="add-title">Ajouter un asset déclaratif</h2><span class="meta">Aucun fichier n’est importé</span></div>
     <form id="addForm">
@@ -53,6 +62,7 @@ $('search').addEventListener('input',render);$('filter').addEventListener('chang
 $('addForm').addEventListener('submit',async event=>{event.preventDefault();setStatus('Ajout en cours…');const kind=$('sourceKind').value;const source=kind==='local-file'?{kind,storageKey:$('storageKey').value}:{kind,url:$('sourceValue').value};try{const response=await fetch('/api/proto05/library/assets',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:$('assetTitle').value,source})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Asset invalide.');$('assetTitle').value='';$('sourceValue').value='';$('storageKey').value='';state.assets.push(data.asset);state.selectedAssetId=data.asset.id;render();setStatus('Asset déclaratif ajouté.','ok')}catch(error){setStatus(error.message,'error')}});load().catch(error=>setStatus(error.message,'error'));
 </script>
 <script>
+document.getElementById('localImportForm').addEventListener('submit', async event=>{event.preventDefault();const file=document.getElementById('localImportFile').files[0];if(!file){setStatus('Sélectionnez un fichier vidéo.','error');return}const title=document.getElementById('localImportTitle').value.trim()||file.name;setStatus('Copie locale en cours…');try{const response=await fetch(`/api/proto05/library/import-local?title=${encodeURIComponent(title)}`,{method:'POST',headers:{'content-type':file.type||'application/octet-stream','x-proto05-file-name':encodeURIComponent(file.name)},body:file});const data=await response.json();if(response.status===409){if(data.asset){const index=state.assets.findIndex(asset=>asset.id===data.asset.id);if(index>=0)state.assets[index]=data.asset;else state.assets.push(data.asset);state.selectedAssetId=data.asset.id;render()}setStatus(`Doublon détecté : ${data.asset?.title||data.assetId||'asset existant'} conservé.`,'ok');return}if(!response.ok)throw new Error(data.error||'Import local impossible.');state.assets.push(data.asset);state.selectedAssetId=data.asset.id;document.getElementById('localImportForm').reset();render();setStatus('Copie locale importée et disponible dans la Library.','ok')}catch(error){setStatus(error.message,'error')}});
 (async function(){
   let localPlayable=null;
   try{

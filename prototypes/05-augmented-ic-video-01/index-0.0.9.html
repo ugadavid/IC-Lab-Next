@@ -987,7 +987,7 @@
     let allOverlays = [];
 
     function buildActivityView(activity) {
-      if (!activity || !Array.isArray(activity.segments) || !Array.isArray(activity.layers) || !activity.video || !(activity.video.proxyUrl || activity.video.provider === "youtube")) {
+      if (!activity || !Array.isArray(activity.segments) || !Array.isArray(activity.layers) || !activity.video || !(activity.video.proxyUrl || activity.video.url || activity.video.storageKey || activity.video.provider === "youtube")) {
         throw new Error("Le JSON de l’activité est incomplet.");
       }
       document.querySelector("h1").textContent = activity.title || "Vidéo augmentée d’intercompréhension";

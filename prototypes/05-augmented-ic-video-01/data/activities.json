@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-23T12:24:31.036Z",
+  "updatedAt": "2026-07-23T13:02:27.316Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -878,14 +878,14 @@
       "instruction": "Une consigne",
       "pedagogicalQuestion": "Une question pédagogique",
       "video": {
-        "id": "video-proto05-local-video-37004-1080p",
-        "title": "Vidéo augmentée IC — copie locale gérée",
+        "id": "video-media-proto05-local-37db64d0529dda8c85791283",
+        "title": "Test_0",
         "kind": "local-file",
         "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
         "durationMs": null,
         "provider": "local",
-        "url": "/api/proto05/library/media/video_37004_1080p.mp4",
-        "storageKey": "video_37004_1080p.mp4"
+        "url": "/api/proto05/library/media/37db64d0529dda8c-video_toto_1080p.mp4",
+        "storageKey": "37db64d0529dda8c-video_toto_1080p.mp4"
       },
       "transcription": {
         "id": "transcription-proto05-draft-1784219853222-b9e6a5",
@@ -909,8 +909,8 @@
       "overlays": [],
       "videoRef": {
         "schemaVersion": "0.1",
-        "assetId": "media-proto05-local-video-37004-1080p",
-        "playableId": "video-proto05-local-video-37004-1080p"
+        "assetId": "media-proto05-local-37db64d0529dda8c85791283",
+        "playableId": "video-media-proto05-local-37db64d0529dda8c85791283"
       }
     },
     {
@@ -2559,6 +2559,49 @@
           "layer-proto05-copy-1784304228900-10fb33-6",
           "layer-proto05-copy-1784304228900-10fb33-7"
         ],
+        "allowLearnerToggle": true
+      }
+    },
+    {
+      "id": "proto05-draft-1784811747316-88a00c",
+      "version": "0.1.0",
+      "status": "draft",
+      "title": "tesT1",
+      "description": "popo",
+      "instruction": "",
+      "pedagogicalQuestion": "",
+      "videoRef": {
+        "schemaVersion": "0.1",
+        "assetId": "media-proto05-local-37db64d0529dda8c85791283",
+        "playableId": "video-media-proto05-local-37db64d0529dda8c85791283"
+      },
+      "video": {
+        "id": "video-media-proto05-local-37db64d0529dda8c85791283",
+        "title": "Test_0",
+        "kind": "local-file",
+        "durationMs": null,
+        "provider": "local",
+        "url": "/api/proto05/library/media/37db64d0529dda8c-video_toto_1080p.mp4",
+        "storageKey": "37db64d0529dda8c-video_toto_1080p.mp4"
+      },
+      "transcription": {
+        "id": "transcription-proto05-draft-1784811747316-88a00c",
+        "languageId": null,
+        "segmentIds": []
+      },
+      "segments": [],
+      "speakers": [],
+      "languages": [],
+      "languageIntervals": [],
+      "layers": [],
+      "phenomena": [],
+      "teacherAnnotations": [],
+      "overlays": [],
+      "layerConfiguration": {
+        "id": "layer-config-proto05-draft-1784811747316-88a00c",
+        "defaultVisibleLayerIds": [],
+        "learnerVisibleLayerIds": [],
+        "teacherVisibleLayerIds": [],
         "allowLearnerToggle": true
       }
     }

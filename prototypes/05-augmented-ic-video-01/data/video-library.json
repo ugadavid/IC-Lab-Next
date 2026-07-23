@@ -1,49 +1,112 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": null,
+  "updatedAt": "2026-07-23T12:59:13.670Z",
   "assets": [
     {
       "id": "media-proto05-video-proto05-uga-37004",
-      "title": "Vid\u00e9o augment\u00e9e IC \u2014 source UGA",
+      "title": "Vidéo augmentée IC — source UGA",
       "status": "active",
-      "sourceIds": ["source-video-proto05-uga-37004"],
-      "playableIds": ["video-proto05-uga-37004"],
+      "sourceIds": [
+        "source-video-proto05-uga-37004"
+      ],
+      "playableIds": [
+        "video-proto05-uga-37004"
+      ],
       "defaultPlayableId": "video-proto05-uga-37004",
-      "provenance": {"kind": "catalog-migration", "catalogId": "video-proto05-uga-37004"},
+      "provenance": {
+        "kind": "catalog-migration",
+        "catalogId": "video-proto05-uga-37004"
+      },
       "rights": {}
     },
     {
       "id": "media-proto05-local-video-37004-1080p",
-      "title": "Vid\u00e9o augment\u00e9e IC \u2014 copie locale g\u00e9r\u00e9e",
+      "title": "Vidéo augmentée IC — copie locale gérée",
       "status": "active",
-      "sourceIds": ["source-proto05-local-video-37004-1080p"],
-      "playableIds": ["video-proto05-local-video-37004-1080p"],
+      "sourceIds": [
+        "source-proto05-local-video-37004-1080p"
+      ],
+      "playableIds": [
+        "video-proto05-local-video-37004-1080p"
+      ],
       "defaultPlayableId": "video-proto05-local-video-37004-1080p",
       "provenance": {
         "kind": "managed-local-copy",
         "originalPath": "J:\\2026\\UGA\\M2\\Stage-Memoire\\Applications\\IC-Lab-Next\\temp\\video_37004_1080p.mp4",
-        "copiedPath": "data/video-library-media/video_37004_1080p.mp4"
+        "copiedPath": "data/video-library-media/video_37004_1080p.mp4",
+        "originalFileName": "video_37004_1080p.mp4",
+        "sizeBytes": 270502622,
+        "sha256": "1583a15ec897dc283e946a85e8ea4bef81f262ba08ba89c5d06b8c9a95425aa2"
+      },
+      "metadata": {
+        "fileName": "video_37004_1080p.mp4",
+        "sizeBytes": 270502622,
+        "sha256": "1583a15ec897dc283e946a85e8ea4bef81f262ba08ba89c5d06b8c9a95425aa2",
+        "mimeType": "video/mp4",
+        "durationMs": null
       },
       "rights": {}
     },
     {
       "id": "media-proto05-video-proto05-youtube-fg4h0-v3otk",
-      "title": "Vid\u00e9o de test \u2014 YouTube contr\u00f4l\u00e9",
+      "title": "Vidéo de test — YouTube contrôlé",
       "status": "active",
-      "sourceIds": ["source-video-proto05-youtube-fg4h0-v3otk"],
-      "playableIds": ["video-proto05-youtube-fg4h0-v3otk"],
+      "sourceIds": [
+        "source-video-proto05-youtube-fg4h0-v3otk"
+      ],
+      "playableIds": [
+        "video-proto05-youtube-fg4h0-v3otk"
+      ],
       "defaultPlayableId": "video-proto05-youtube-fg4h0-v3otk",
-      "provenance": {"kind": "catalog-migration", "catalogId": "video-proto05-youtube-fg4h0-v3otk"},
+      "provenance": {
+        "kind": "catalog-migration",
+        "catalogId": "video-proto05-youtube-fg4h0-v3otk"
+      },
       "rights": {}
     },
     {
       "id": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
-      "title": "Intercompr\u00e9hension Catalan-Fran\u00e7ais",
+      "title": "Intercompréhension Catalan-Français",
       "status": "active",
-      "sourceIds": ["source-video-proto05-youtube-ev9rfkfhfa0"],
-      "playableIds": ["video-proto05-youtube-ev9rfkfhfa0"],
+      "sourceIds": [
+        "source-video-proto05-youtube-ev9rfkfhfa0"
+      ],
+      "playableIds": [
+        "video-proto05-youtube-ev9rfkfhfa0"
+      ],
       "defaultPlayableId": "video-proto05-youtube-ev9rfkfhfa0",
-      "provenance": {"kind": "catalog-migration", "catalogId": "video-proto05-youtube-ev9rfkfhfa0"},
+      "provenance": {
+        "kind": "catalog-migration",
+        "catalogId": "video-proto05-youtube-ev9rfkfhfa0"
+      },
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-local-37db64d0529dda8c85791283",
+      "title": "Test_0",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-local-37db64d0529dda8c85791283"
+      ],
+      "playableIds": [
+        "video-media-proto05-local-37db64d0529dda8c85791283"
+      ],
+      "defaultPlayableId": "video-media-proto05-local-37db64d0529dda8c85791283",
+      "provenance": {
+        "kind": "managed-local-copy",
+        "source": "browser-file-selection",
+        "originalFileName": "video_toto_1080p.mp4",
+        "importedAt": "2026-07-23T12:59:13.670Z",
+        "sha256": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37",
+        "sizeBytes": 20896964
+      },
+      "metadata": {
+        "fileName": "video_toto_1080p.mp4",
+        "sizeBytes": 20896964,
+        "sha256": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37",
+        "mimeType": "video/mp4",
+        "durationMs": null
+      },
       "rights": {}
     }
   ],
@@ -51,7 +114,7 @@
     {
       "id": "source-video-proto05-uga-37004",
       "assetId": "media-proto05-video-proto05-uga-37004",
-      "title": "Vid\u00e9o augment\u00e9e IC \u2014 source UGA",
+      "title": "Vidéo augmentée IC — source UGA",
       "kind": "hls",
       "provider": "uga",
       "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
@@ -61,12 +124,14 @@
       "durationMs": 939217,
       "authorized": true,
       "availability": "available",
-      "provenance": {"catalogId": "video-proto05-uga-37004"}
+      "provenance": {
+        "catalogId": "video-proto05-uga-37004"
+      }
     },
     {
       "id": "source-video-proto05-youtube-fg4h0-v3otk",
       "assetId": "media-proto05-video-proto05-youtube-fg4h0-v3otk",
-      "title": "Vid\u00e9o de test \u2014 YouTube contr\u00f4l\u00e9",
+      "title": "Vidéo de test — YouTube contrôlé",
       "kind": "youtube-embed",
       "provider": "youtube",
       "videoId": "FG4h0_v3oTk",
@@ -74,12 +139,14 @@
       "durationMs": null,
       "authorized": true,
       "availability": "available",
-      "provenance": {"catalogId": "video-proto05-youtube-fg4h0-v3otk"}
+      "provenance": {
+        "catalogId": "video-proto05-youtube-fg4h0-v3otk"
+      }
     },
     {
       "id": "source-video-proto05-youtube-ev9rfkfhfa0",
       "assetId": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
-      "title": "Intercompr\u00e9hension Catalan-Fran\u00e7ais",
+      "title": "Intercompréhension Catalan-Français",
       "kind": "youtube-embed",
       "provider": "youtube",
       "videoId": "eV9RFKFhfa0",
@@ -87,12 +154,14 @@
       "durationMs": null,
       "authorized": true,
       "availability": "available",
-      "provenance": {"catalogId": "video-proto05-youtube-ev9rfkfhfa0"}
+      "provenance": {
+        "catalogId": "video-proto05-youtube-ev9rfkfhfa0"
+      }
     },
     {
       "id": "source-proto05-local-video-37004-1080p",
       "assetId": "media-proto05-local-video-37004-1080p",
-      "title": "Vid\u00e9o augment\u00e9e IC \u2014 copie locale g\u00e9r\u00e9e",
+      "title": "Vidéo augmentée IC — copie locale gérée",
       "kind": "local-file",
       "provider": "local",
       "storageKey": "video_37004_1080p.mp4",
@@ -100,9 +169,39 @@
       "durationMs": null,
       "authorized": true,
       "availability": "available",
+      "sizeBytes": 270502622,
+      "sha256": "1583a15ec897dc283e946a85e8ea4bef81f262ba08ba89c5d06b8c9a95425aa2",
+      "checksum": "1583a15ec897dc283e946a85e8ea4bef81f262ba08ba89c5d06b8c9a95425aa2",
       "provenance": {
         "kind": "managed-local-copy",
+        "originalFileName": "video_37004_1080p.mp4",
+        "sizeBytes": 270502622,
+        "sha256": "1583a15ec897dc283e946a85e8ea4bef81f262ba08ba89c5d06b8c9a95425aa2",
         "originalPath": "J:\\2026\\UGA\\M2\\Stage-Memoire\\Applications\\IC-Lab-Next\\temp\\video_37004_1080p.mp4"
+      }
+    },
+    {
+      "id": "source-media-proto05-local-37db64d0529dda8c85791283",
+      "assetId": "media-proto05-local-37db64d0529dda8c85791283",
+      "title": "Test_0",
+      "kind": "local-file",
+      "provider": "local",
+      "storageKey": "37db64d0529dda8c-video_toto_1080p.mp4",
+      "url": "/api/proto05/library/media/37db64d0529dda8c-video_toto_1080p.mp4",
+      "mimeType": "video/mp4",
+      "durationMs": null,
+      "sizeBytes": 20896964,
+      "sha256": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37",
+      "checksum": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "managed-local-copy",
+        "source": "browser-file-selection",
+        "originalFileName": "video_toto_1080p.mp4",
+        "importedAt": "2026-07-23T12:59:13.670Z",
+        "sha256": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37",
+        "sizeBytes": 20896964
       }
     }
   ],
@@ -163,7 +262,27 @@
       "mimeType": "video/mp4",
       "storageKey": "video_37004_1080p.mp4",
       "url": "/api/proto05/library/media/video_37004_1080p.mp4",
-      "manifestUrl": null
+      "manifestUrl": null,
+      "fileName": "video_37004_1080p.mp4",
+      "sizeBytes": 270502622,
+      "sha256": "1583a15ec897dc283e946a85e8ea4bef81f262ba08ba89c5d06b8c9a95425aa2"
+    },
+    {
+      "id": "video-media-proto05-local-37db64d0529dda8c85791283",
+      "assetId": "media-proto05-local-37db64d0529dda8c85791283",
+      "sourceId": "source-media-proto05-local-37db64d0529dda8c85791283",
+      "kind": "local-file",
+      "provider": "local",
+      "status": "available",
+      "availability": "available",
+      "durationMs": null,
+      "mimeType": "video/mp4",
+      "storageKey": "37db64d0529dda8c-video_toto_1080p.mp4",
+      "url": "/api/proto05/library/media/37db64d0529dda8c-video_toto_1080p.mp4",
+      "manifestUrl": null,
+      "fileName": "video_toto_1080p.mp4",
+      "sizeBytes": 20896964,
+      "sha256": "37db64d0529dda8c857912835278a599f888818f754de03baf1c03072c89ca37"
     }
   ]
 }
