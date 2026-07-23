@@ -20,6 +20,15 @@
     </div>
     <p id="status" class="status" role="status" aria-live="polite"></p>
   </section>
+  <section class="panel" aria-labelledby="remote-copy-title">
+    <div class="summary"><h2 id="remote-copy-title">Copier une vidéo depuis une URL directe</h2><span class="meta">HTTP(S), hors manifestes HLS</span></div>
+    <p class="hint">La source distante est vérifiée puis copiée dans le stockage géré Proto05. Une redirection vers une adresse privée ou interne est refusée.</p>
+    <form id="remoteCopyForm" class="form-grid">
+      <div><label for="remoteCopyTitle">Titre</label><input id="remoteCopyTitle" maxlength="500" placeholder="Titre de la vidéo"></div>
+      <div><label for="remoteCopyUrl">URL vidéo directe</label><input id="remoteCopyUrl" type="url" required placeholder="https://exemple.test/video.mp4" autocomplete="off" spellcheck="false"></div>
+      <div class="actions"><button type="submit">Copier depuis l’URL</button><button type="button" id="cancelRemoteCopy" class="secondary" hidden>Annuler le téléchargement</button></div>
+    </form>
+  </section>
   <section class="panel" aria-labelledby="local-import-title">
     <div class="summary"><h2 id="local-import-title">Ajouter une vidéo locale</h2><span class="meta">Une copie gérée est créée dans le Proto05</span></div>
     <p class="hint">Le fichier original reste à son emplacement. Son empreinte est calculée pour refuser les doublons.</p>
@@ -63,6 +72,10 @@ $('addForm').addEventListener('submit',async event=>{event.preventDefault();setS
 </script>
 <script>
 document.getElementById('localImportForm').addEventListener('submit', async event=>{event.preventDefault();const file=document.getElementById('localImportFile').files[0];if(!file){setStatus('Sélectionnez un fichier vidéo.','error');return}const title=document.getElementById('localImportTitle').value.trim()||file.name;setStatus('Copie locale en cours…');try{const response=await fetch(`/api/proto05/library/import-local?title=${encodeURIComponent(title)}`,{method:'POST',headers:{'content-type':file.type||'application/octet-stream','x-proto05-file-name':encodeURIComponent(file.name)},body:file});const data=await response.json();if(response.status===409){if(data.asset){const index=state.assets.findIndex(asset=>asset.id===data.asset.id);if(index>=0)state.assets[index]=data.asset;else state.assets.push(data.asset);state.selectedAssetId=data.asset.id;render()}setStatus(`Doublon détecté : ${data.asset?.title||data.assetId||'asset existant'} conservé.`,'ok');return}if(!response.ok)throw new Error(data.error||'Import local impossible.');state.assets.push(data.asset);state.selectedAssetId=data.asset.id;document.getElementById('localImportForm').reset();render();setStatus('Copie locale importée et disponible dans la Library.','ok')}catch(error){setStatus(error.message,'error')}});
+let remoteCopyController=null;
+document.getElementById('cancelRemoteCopy').addEventListener('click',()=>{remoteCopyController?.abort()});
+document.getElementById('remoteCopyForm').addEventListener('submit',async event=>{event.preventDefault();remoteCopyController=new AbortController();document.getElementById('cancelRemoteCopy').hidden=false;setStatus('Téléchargement contrôlé en cours…');try{const response=await fetch('/api/proto05/library/copy-direct',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:document.getElementById('remoteCopyTitle').value,url:document.getElementById('remoteCopyUrl').value}),signal:remoteCopyController.signal});const data=await response.json();if(response.status===409){if(data.asset){const index=state.assets.findIndex(asset=>asset.id===data.asset.id);if(index>=0)state.assets[index]=data.asset;else state.assets.push(data.asset);state.selectedAssetId=data.asset.id;render()}setStatus(`Doublon détecté : ${data.asset?.title||data.assetId||'asset existant'} conservé.`,'ok');return}if(!response.ok)throw new Error(data.error||'Copie distante impossible.');state.assets.push(data.asset);state.selectedAssetId=data.asset.id;document.getElementById('remoteCopyForm').reset();render();setStatus('Copie distante disponible dans la Library.','ok')}catch(error){if(error.name==='AbortError')setStatus('Téléchargement annulé.','error');else setStatus(error.message,'error')}finally{remoteCopyController=null;document.getElementById('cancelRemoteCopy').hidden=true}});
+function decorateLibraryMetadata(){document.querySelectorAll('[data-asset-card]').forEach(card=>{if(card.querySelector('.library-provenance'))return;const asset=state.assets.find(item=>item.id===card.dataset.assetCard);if(!asset)return;const meta=asset.metadata||{};const source=asset.sources?.[0]||{};const info=document.createElement('p');info.className='meta library-provenance';const values=[];if(meta.sha256)values.push(`SHA-256 : ${meta.sha256}`);if(meta.sizeBytes)values.push(`Taille : ${meta.sizeBytes} octets`);if(source.originUrl)values.push(`Provenance : ${source.originUrl}`);if(source.finalUrl&&source.finalUrl!==source.originUrl)values.push(`Finale : ${source.finalUrl}`);info.textContent=values.join(' · ');const actions=card.querySelector('.actions');if(values.length&&actions)card.insertBefore(info,actions)});}
 (async function(){
   let localPlayable=null;
   try{
@@ -86,6 +99,12 @@ document.getElementById('localImportForm').addEventListener('submit', async even
   mountPreview();
   new MutationObserver(mountPreview).observe(document.querySelector('#assets'),{childList:true,subtree:true});
 })();
+</script>
+<script>
+function decorateLibraryMetadataSafe(){document.querySelectorAll('[data-asset-card]').forEach(card=>{if(card.querySelector('.library-provenance'))return;const asset=state.assets.find(item=>item.id===card.dataset.assetCard);if(!asset)return;const meta=asset.metadata||{};const source=asset.sources?.[0]||{};const values=[];if(meta.sha256)values.push(`SHA-256 : ${meta.sha256}`);if(meta.sizeBytes)values.push(`Taille : ${meta.sizeBytes} octets`);if(source.originUrl)values.push(`Provenance : ${source.originUrl}`);if(source.finalUrl&&source.finalUrl!==source.originUrl)values.push(`Finale : ${source.finalUrl}`);if(values.length){const info=document.createElement('p');info.className='meta library-provenance';info.textContent=values.join(' · ');card.appendChild(info)}})}
+new MutationObserver(decorateLibraryMetadataSafe).observe(document.querySelector('#assets'),{childList:true,subtree:true});decorateLibraryMetadataSafe();
+function addLibraryLocalPreviewButtons(){document.querySelectorAll('[data-asset-card] .preview').forEach(shell=>{const playableId=shell.id.replace(/^preview-/,'');const card=shell.closest('[data-asset-card]');const actions=shell.previousElementSibling;if(!card||!actions||actions.querySelector('.local-preview-button'))return;const asset=state.assets.find(item=>item.id===card.dataset.assetCard);const playable=asset?.playables.find(item=>item.id===playableId);if(!playable?.url||playable.provider!=='local')return;const button=document.createElement('button');button.type='button';button.className='secondary local-preview-button';button.textContent='Aperçu';button.onclick=()=>preview(asset.id,playable.id);actions.appendChild(button)})}
+new MutationObserver(addLibraryLocalPreviewButtons).observe(document.querySelector('#assets'),{childList:true,subtree:true});addLibraryLocalPreviewButtons();
 </script>
 </body>
 </html>

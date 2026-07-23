@@ -3,6 +3,7 @@ const fs = require("node:fs/promises");
 const fsSync = require("node:fs");
 const path = require("node:path");
 const crypto = require("node:crypto");
+const dns = require("node:dns").promises;
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 const {
@@ -19,7 +20,7 @@ const {
 } = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.27";
+const VERSION = "0.1.28";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -27,6 +28,8 @@ const DATA_FILE = path.join(DATA_DIR, "activities.json");
 const VIDEO_CATALOG_FILE = path.join(DATA_DIR, "video-catalog.json");
 const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
 const VIDEO_LIBRARY_MEDIA_DIR = path.join(DATA_DIR, "video-library-media");
+const REMOTE_COPY_MAX_BYTES = Number(process.env.PROTO05_REMOTE_COPY_MAX_BYTES || 1024 * 1024 * 1024);
+const REMOTE_COPY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_COPY_TIMEOUT_MS || 120000);
 const INDEX_FILE = "index-0.0.9.html";
 const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
@@ -871,6 +874,114 @@ async function importLocalLibraryMedia(request, url) {
   return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
 }
 
+function isPrivateAddress(address) {
+  const value = String(address || "").toLowerCase();
+  if (value === "localhost" || value === "::1" || value === "0.0.0.0") return true;
+  if (/^127\./.test(value) || /^10\./.test(value) || /^192\.168\./.test(value) || /^169\.254\./.test(value)) return true;
+  const octets = value.split(".").map(Number);
+  if (octets.length === 4 && octets.every(Number.isInteger)) return octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31;
+  return value === "::" || value.startsWith("fc") || value.startsWith("fd") || value.startsWith("fe80:") || value.startsWith("::ffff:127.") || value.startsWith("::ffff:10.") || value.startsWith("::ffff:192.168.");
+}
+
+async function validateRemoteCopyUrl(value) {
+  let current;
+  try { current = new URL(String(value || "")); } catch { throw new Error("L’URL directe est invalide."); }
+  if (!["http:", "https:"].includes(current.protocol)) throw new Error("L’URL directe doit utiliser HTTP ou HTTPS.");
+  if (current.username || current.password || /\.m3u8$/i.test(current.pathname)) throw new Error("L’URL doit désigner un média direct, pas un manifeste HLS.");
+  const addresses = await dns.lookup(current.hostname, { all: true });
+  if (!addresses.length || (process.env.PROTO05_TEST_ALLOW_PRIVATE_REMOTE !== "1" && addresses.some(item => isPrivateAddress(item.address)))) throw new Error("L’URL ne doit pas viser une adresse privée ou interne.");
+  return current;
+}
+
+function remoteCopyFileName(url, contentDisposition) {
+  const match = /filename\*?=(?:UTF-8''|\"|')?([^\"';]+)/i.exec(contentDisposition || "");
+  const candidate = match?.[1] || path.basename(url.pathname) || "video.mp4";
+  const decoded = (() => { try { return decodeURIComponent(candidate); } catch { return candidate; } })();
+  const name = path.basename(decoded).replace(/[\u0000-\u001f<>:"/\\|?*]+/g, "-").trim();
+  if (!name || name === "." || name === ".." || name.length > 180) return "video.mp4";
+  return /\.[A-Za-z0-9]{2,8}$/.test(name) ? name : `${name}.mp4`;
+}
+
+async function copyDirectLibraryMedia(request, url) {
+  const payload = JSON.parse(await readRequestBody(request));
+  const originalUrl = await validateRemoteCopyUrl(payload.url);
+  const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim().slice(0, 500) : remoteCopyFileName(originalUrl);
+  const existingByUrl = VIDEO_LIBRARY.sources.find(source => source.kind === "direct-url" && (source.url === originalUrl.toString() || source.originUrl === originalUrl.toString()));
+  if (existingByUrl) {
+    const asset = VIDEO_LIBRARY.assets.find(item => item.id === existingByUrl.assetId);
+    const playable = VIDEO_LIBRARY.playables.find(item => item.sourceId === existingByUrl.id);
+    if (asset && playable) return { duplicate: true, reason: "url", asset: libraryAssetDetails(asset), assetId: asset.id, playableId: playable.id };
+  }
+  await fs.mkdir(VIDEO_LIBRARY_MEDIA_DIR, { recursive: true });
+  const temporaryPath = path.join(VIDEO_LIBRARY_MEDIA_DIR, `.${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.remote.tmp`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(new Error("Le téléchargement a dépassé le délai maximal.")), REMOTE_COPY_TIMEOUT_MS);
+  const abortDownload = () => controller.abort(new Error("Téléchargement annulé par le client."));
+  request.once("aborted", abortDownload);
+  let response;
+  let output;
+  try {
+    response = await fetch(originalUrl, { redirect: "manual", signal: controller.signal });
+    const redirects = [];
+    for (let hop = 0; response.status >= 300 && response.status < 400; hop += 1) {
+      if (hop >= 5) throw new Error("Trop de redirections.");
+      const location = response.headers.get("location");
+      if (!location) throw new Error("Redirection sans destination.");
+      const nextUrl = await validateRemoteCopyUrl(new URL(location, originalUrl));
+      redirects.push(nextUrl.toString());
+      response = await fetch(nextUrl, { redirect: "manual", signal: controller.signal });
+    }
+    if (!response.ok) throw new Error(`Réponse HTTP distante invalide : ${response.status}.`);
+    const contentType = (response.headers.get("content-type") || "").split(";", 1)[0].toLowerCase();
+    if (!contentType.startsWith("video/") || contentType === "application/vnd.apple.mpegurl") throw new Error("La réponse distante n’est pas une vidéo directe.");
+    const announcedSize = Number(response.headers.get("content-length"));
+    if (Number.isSafeInteger(announcedSize) && announcedSize > REMOTE_COPY_MAX_BYTES) throw new Error("La vidéo distante dépasse la taille maximale autorisée.");
+    if (!response.body) throw new Error("La réponse distante ne contient aucun flux.");
+    output = fsSync.createWriteStream(temporaryPath, { flags: "wx" });
+    const hash = crypto.createHash("sha256");
+    let sizeBytes = 0;
+    for await (const chunk of response.body) {
+      sizeBytes += chunk.length;
+      if (sizeBytes > REMOTE_COPY_MAX_BYTES) throw new Error("La vidéo distante dépasse la taille maximale autorisée.");
+      hash.update(chunk);
+      if (!output.write(chunk)) await new Promise((resolve, reject) => { output.once("drain", resolve); output.once("error", reject); });
+    }
+    await new Promise((resolve, reject) => output.end(error => error ? reject(error) : resolve()));
+    if (!sizeBytes) throw new Error("La réponse distante est vide.");
+    const sha256 = hash.digest("hex");
+    const existingByHash = VIDEO_LIBRARY.playables.find(playable => playable.provider === "local" && playable.sha256 === sha256);
+    if (existingByHash) {
+      try { await fs.unlink(temporaryPath); } catch {}
+      const asset = VIDEO_LIBRARY.assets.find(item => item.id === existingByHash.assetId);
+      return { duplicate: true, reason: "hash", asset: asset ? libraryAssetDetails(asset) : null, assetId: asset?.id || null, playableId: existingByHash.id };
+    }
+    const storageKey = `${sha256.slice(0, 16)}-${remoteCopyFileName(originalUrl, response.headers.get("content-disposition"))}`;
+    const targetPath = safeLibraryMediaPath(storageKey);
+    await fs.rename(temporaryPath, targetPath);
+    const importedAt = new Date().toISOString();
+    const assetId = `media-proto05-remote-${sha256.slice(0, 24)}`;
+    const sourceId = `source-${assetId}`;
+    const playableId = `video-${assetId}`;
+    const provenance = { kind: "managed-remote-copy", originalUrl: originalUrl.toString(), finalUrl: response.url || originalUrl.toString(), redirects, importedAt, sha256, sizeBytes, contentType };
+    const source = { id: sourceId, assetId, title, kind: "direct-url", provider: "direct", url: originalUrl.toString(), originUrl: originalUrl.toString(), finalUrl: response.url || originalUrl.toString(), copiedStorageKey: storageKey, copiedUrl: `/api/proto05/library/media/${encodeURIComponent(storageKey)}`, mimeType: contentType, durationMs: null, authorized: true, availability: "available", provenance };
+    const playable = { id: playableId, assetId, sourceId, kind: "local-file", provider: "local", status: "available", availability: "available", durationMs: null, mimeType: contentType, storageKey, url: source.copiedUrl, manifestUrl: null, originUrl: originalUrl.toString(), sha256, sizeBytes };
+    const asset = { id: assetId, title, status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance, metadata: { originalUrl: originalUrl.toString(), finalUrl: response.url || originalUrl.toString(), redirects, sizeBytes, sha256, mimeType: contentType, durationMs: null }, rights: {} };
+    const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
+    nextLibrary.updatedAt = importedAt; nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
+    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
+    catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
+    return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
+  } catch (error) {
+    try { output?.destroy(); } catch {}
+    try { await fs.unlink(temporaryPath); } catch {}
+    if (controller.signal.aborted && request.aborted) return { cancelled: true };
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+    request.removeListener("aborted", abortDownload);
+  }
+}
+
 function catalogEntryFromInput(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
   if (typeof payload.provider !== "string" || !["youtube", "uga"].includes(payload.provider)) throw new Error("Le type doit être YouTube ou HLS UGA.");
@@ -920,6 +1031,16 @@ async function handleApi(request, response, url) {
     try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
     catch (error) { console.error(`[data] Library vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement de la Library impossible." }); }
     return sendJson(response, 201, { asset: libraryAssetDetails(created.asset) });
+  }
+  if (url.pathname === "/api/proto05/library/copy-direct") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
+    try {
+      const result = await copyDirectLibraryMedia(request, url);
+      if (result.cancelled) return true;
+      return sendJson(response, result.duplicate ? 409 : 201, result);
+    } catch (error) {
+      return sendJson(response, request.aborted ? 499 : 400, { error: error.message || "Copie distante impossible." });
+    }
   }
   if (url.pathname === "/api/proto05/library/import-local") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
