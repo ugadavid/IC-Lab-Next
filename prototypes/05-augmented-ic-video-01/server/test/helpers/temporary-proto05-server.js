@@ -49,7 +49,7 @@ async function waitForHealth(baseUrl, child, stderr) {
   throw new Error("Le serveur de test Proto05 nâ€™a pas rÃ©pondu au healthcheck.");
 }
 
-async function startTemporaryProto05Server(store, prefix = "proto05-server-test-") {
+async function startTemporaryProto05Server(store, prefix = "proto05-server-test-", options = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
   const prototypeDirectory = path.join(root, "prototype");
   const temporaryServerDirectory = path.join(prototypeDirectory, "server");
@@ -69,6 +69,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   fs.copyFileSync(path.join(serverDirectory, "library-contract.js"), path.join(temporaryServerDirectory, "library-contract.js"));
   fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
   fs.copyFileSync(sourceVideoLibraryFile, videoLibraryFile);
+  if (options.videoLibrary) fs.writeFileSync(videoLibraryFile, `${JSON.stringify(options.videoLibrary, null, 2)}\n`, "utf8");
   fs.cpSync(sourceVideoLibraryMediaDirectory, temporaryVideoLibraryMediaDirectory, { recursive: true });
   const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
   const knownVideoIds = new Set(videoCatalog.videos.map(video => video.id));

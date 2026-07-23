@@ -2,8 +2,10 @@ const http = require("node:http");
 const fs = require("node:fs/promises");
 const fsSync = require("node:fs");
 const path = require("node:path");
+const os = require("node:os");
 const crypto = require("node:crypto");
 const dns = require("node:dns").promises;
+const { spawn } = require("node:child_process");
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 const {
@@ -20,7 +22,7 @@ const {
 } = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.28";
+const VERSION = "0.1.29";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -30,6 +32,12 @@ const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
 const VIDEO_LIBRARY_MEDIA_DIR = path.join(DATA_DIR, "video-library-media");
 const REMOTE_COPY_MAX_BYTES = Number(process.env.PROTO05_REMOTE_COPY_MAX_BYTES || 1024 * 1024 * 1024);
 const REMOTE_COPY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_COPY_TIMEOUT_MS || 120000);
+const HLS_PREPARATION_ROOT = path.join(os.tmpdir(), "proto05-hls-preparations");
+const HLS_PREPARATION_TIMEOUT_MS = Number(process.env.PROTO05_HLS_PREPARATION_TIMEOUT_MS || 15 * 60 * 1000);
+const HLS_PREPARATION_TTL_MS = Number(process.env.PROTO05_HLS_PREPARATION_TTL_MS || 30 * 60 * 1000);
+const HLS_PREPARATION_MAX_BYTES = Number(process.env.PROTO05_HLS_PREPARATION_MAX_BYTES || 2 * 1024 * 1024 * 1024);
+const HLS_PREPARATION_MAX_DURATION_SECONDS = Number(process.env.PROTO05_HLS_PREPARATION_MAX_DURATION_SECONDS || 2 * 60 * 60);
+const ACTIVE_HLS_PREPARATIONS = new Map();
 const INDEX_FILE = "index-0.0.9.html";
 const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
@@ -883,11 +891,11 @@ function isPrivateAddress(address) {
   return value === "::" || value.startsWith("fc") || value.startsWith("fd") || value.startsWith("fe80:") || value.startsWith("::ffff:127.") || value.startsWith("::ffff:10.") || value.startsWith("::ffff:192.168.");
 }
 
-async function validateRemoteCopyUrl(value) {
+async function validateRemoteCopyUrl(value, options = {}) {
   let current;
   try { current = new URL(String(value || "")); } catch { throw new Error("L’URL directe est invalide."); }
   if (!["http:", "https:"].includes(current.protocol)) throw new Error("L’URL directe doit utiliser HTTP ou HTTPS.");
-  if (current.username || current.password || /\.m3u8$/i.test(current.pathname)) throw new Error("L’URL doit désigner un média direct, pas un manifeste HLS.");
+  if (current.username || current.password || (!options.allowHls && /\.m3u8$/i.test(current.pathname))) throw new Error("L’URL doit désigner un média direct, pas un manifeste HLS.");
   const addresses = await dns.lookup(current.hostname, { all: true });
   if (!addresses.length || (process.env.PROTO05_TEST_ALLOW_PRIVATE_REMOTE !== "1" && addresses.some(item => isPrivateAddress(item.address)))) throw new Error("L’URL ne doit pas viser une adresse privée ou interne.");
   return current;
@@ -982,6 +990,86 @@ async function copyDirectLibraryMedia(request, url) {
   }
 }
 
+function findFfmpeg() {
+  const configured = process.env.FFMPEG_PATH;
+  if (configured) {
+    if (!fsSync.existsSync(configured)) throw new Error("FFmpeg configuré mais inaccessible.");
+    return configured;
+  }
+  return "ffmpeg";
+}
+
+function publicHlsPreparationJob(job) {
+  return { id: job.id, assetId: job.assetId, playableId: job.playableId, sourceId: job.sourceId, status: job.status, progress: job.progress, createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, metadata: job.metadata || null, log: job.log.slice(-20) };
+}
+
+async function hlsPreparationSource(assetId, playableId, sourceId) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId);
+  const source = VIDEO_LIBRARY.sources.find(item => item.id === sourceId && item.assetId === assetId);
+  if (!asset || !playable || !source || source.kind !== "hls" || playable.kind !== "hls") throw new Error("Seules les sources HLS de la Library peuvent être préparées.");
+  const manifest = source.originUrl || source.sourceUrl || source.manifestUrl;
+  if (!manifest) throw new Error("Le manifeste HLS de la source est invalide.");
+  const validatedManifest = await validateRemoteCopyUrl(manifest, { allowHls: true });
+  if (!/\.m3u8$/i.test(validatedManifest.pathname)) throw new Error("Le manifeste HLS de la source est invalide.");
+  return { asset, playable, source, manifest: validatedManifest.toString() };
+}
+
+async function removePreparationWorkspace(job) {
+  if (job.workspace) { try { await fs.rm(job.workspace, { recursive: true, force: true }); } catch {} }
+  job.workspace = null; job.outputPath = null;
+}
+
+async function runHlsPreparation(job, manifest) {
+  job.status = "running"; job.progress = 1; job.updatedAt = new Date().toISOString();
+  let child;
+  let sizeMonitor;
+  const timeout = setTimeout(() => { job.timeout = true; try { child?.kill(); } catch {} }, HLS_PREPARATION_TIMEOUT_MS);
+  try {
+    await fs.mkdir(HLS_PREPARATION_ROOT, { recursive: true });
+    job.workspace = await fs.mkdtemp(path.join(HLS_PREPARATION_ROOT, `${job.id}-`));
+    job.outputPath = path.join(job.workspace, "work.mp4");
+    const ffmpeg = findFfmpeg();
+    const args = ["-hide_banner", "-y", "-protocol_whitelist", "file,http,https,tcp,tls,crypto", "-i", manifest, "-map", "0:v:0?", "-map", "0:a:0?", "-c", "copy", "-t", String(HLS_PREPARATION_MAX_DURATION_SECONDS), "-movflags", "+faststart", job.outputPath];
+    child = spawn(ffmpeg, args, { windowsHide: true });
+    job.process = child;
+    job.pid = child.pid || null;
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", chunk => { for (const line of String(chunk).split(/\r?\n/).filter(Boolean)) { job.log.push(line.slice(-500)); const time = /time=(\d+):(\d+):(\d+(?:\.\d+)?)/.exec(line); if (time) job.metadata = { ...(job.metadata || {}), detectedTime: `${time[1]}:${time[2]}:${time[3]}` }; } job.updatedAt = new Date().toISOString(); });
+    child.on("error", error => { job.spawnError = error; });
+    sizeMonitor = setInterval(async () => {
+      if (!job.outputPath || !child || child.exitCode !== null) return;
+      try { const current = await fs.stat(job.outputPath); if (current.size > HLS_PREPARATION_MAX_BYTES) { job.sizeLimit = true; child.kill(); } } catch {}
+    }, 250);
+    await new Promise((resolve, reject) => child.once("close", code => code === 0 ? resolve() : reject(job.timeout ? new Error("La préparation HLS a dépassé le délai maximal.") : job.spawnError || new Error(`FFmpeg a échoué (code ${code}).`))));
+    const stat = await fs.stat(job.outputPath);
+    if (!stat.isFile() || stat.size === 0) throw new Error("FFmpeg n’a produit aucun fichier exploitable.");
+    if (stat.size > HLS_PREPARATION_MAX_BYTES || job.sizeLimit) throw new Error("La préparation HLS dépasse la taille maximale autorisée.");
+    job.status = "completed"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_PREPARATION_TTL_MS).toISOString(); job.metadata = { ...(job.metadata || {}), fileName: "work.mp4", sizeBytes: stat.size, workspaceId: path.basename(job.workspace), mimeType: "video/mp4" };
+  } catch (error) {
+    job.error = job.cancelRequested ? "Préparation annulée." : error.message;
+    await removePreparationWorkspace(job);
+    job.status = job.cancelRequested ? "cancelled" : "failed"; job.progress = 0; job.updatedAt = new Date().toISOString();
+    await removePreparationWorkspace(job);
+  } finally {
+    clearTimeout(timeout); if (sizeMonitor) clearInterval(sizeMonitor); delete job.pid; delete job.process; delete job.spawnError; delete job.timeout; delete job.sizeLimit;
+    if (job.status === "completed") job.updatedAt = new Date().toISOString();
+  }
+}
+
+async function cancelHlsPreparation(job) {
+  if (!job || !["queued", "running"].includes(job.status)) return job;
+  job.cancelRequested = true; job.status = "cancelling"; job.updatedAt = new Date().toISOString();
+  if (job.process?.kill) job.process.kill();
+  return job;
+}
+
+function cleanupExpiredHlsPreparations() {
+  const now = Date.now();
+  for (const [id, job] of ACTIVE_HLS_PREPARATIONS) if (job.expiresAt && Date.parse(job.expiresAt) <= now && !["queued", "running", "cancelling"].includes(job.status)) { void removePreparationWorkspace(job); ACTIVE_HLS_PREPARATIONS.delete(id); }
+}
+setInterval(cleanupExpiredHlsPreparations, 60 * 1000).unref();
+
 function catalogEntryFromInput(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
   if (typeof payload.provider !== "string" || !["youtube", "uga"].includes(payload.provider)) throw new Error("Le type doit être YouTube ou HLS UGA.");
@@ -1041,6 +1129,25 @@ async function handleApi(request, response, url) {
     } catch (error) {
       return sendJson(response, request.aborted ? 499 : 400, { error: error.message || "Copie distante impossible." });
     }
+  }
+  if (url.pathname === "/api/proto05/library/hls-preparations") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
+    try {
+      const payload = JSON.parse(await readRequestBody(request));
+      const resolved = await hlsPreparationSource(payload.assetId, payload.playableId, payload.sourceId);
+      const job = { id: `hls-prep-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, assetId: resolved.asset.id, playableId: resolved.playable.id, sourceId: resolved.source.id, status: "queued", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: { sourceUrl: resolved.manifest, sourceTitle: resolved.source.title || resolved.asset.title }, error: null, log: [], cancelRequested: false };
+      ACTIVE_HLS_PREPARATIONS.set(job.id, job);
+      void runHlsPreparation(job, resolved.manifest);
+      return sendJson(response, 202, { job: publicHlsPreparationJob(job) });
+    } catch (error) { return sendJson(response, 400, { error: error.message || "Préparation HLS impossible." }); }
+  }
+  const hlsPreparationMatch = url.pathname.match(/^\/api\/proto05\/library\/hls-preparations\/([^/]+)$/);
+  if (hlsPreparationMatch) {
+    const job = ACTIVE_HLS_PREPARATIONS.get(decodeURIComponent(hlsPreparationMatch[1]));
+    if (!job) return sendJson(response, 404, { error: "Préparation HLS introuvable ou expirée." });
+    if (request.method === "GET") return sendJson(response, 200, { job: publicHlsPreparationJob(job) });
+    if (request.method === "DELETE") { await cancelHlsPreparation(job); return sendJson(response, 202, { job: publicHlsPreparationJob(job) }); }
+    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, DELETE" });
   }
   if (url.pathname === "/api/proto05/library/import-local") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
