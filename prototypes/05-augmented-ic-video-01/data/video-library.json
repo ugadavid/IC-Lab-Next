@@ -1,0 +1,125 @@
+{
+  "schemaVersion": "0.1",
+  "updatedAt": null,
+  "assets": [
+    {
+      "id": "media-proto05-video-proto05-uga-37004",
+      "title": "Vid\u00e9o augment\u00e9e IC \u2014 source UGA",
+      "status": "active",
+      "sourceIds": ["source-video-proto05-uga-37004"],
+      "playableIds": ["video-proto05-uga-37004"],
+      "defaultPlayableId": "video-proto05-uga-37004",
+      "provenance": {"kind": "catalog-migration", "catalogId": "video-proto05-uga-37004"},
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-video-proto05-youtube-fg4h0-v3otk",
+      "title": "Vid\u00e9o de test \u2014 YouTube contr\u00f4l\u00e9",
+      "status": "active",
+      "sourceIds": ["source-video-proto05-youtube-fg4h0-v3otk"],
+      "playableIds": ["video-proto05-youtube-fg4h0-v3otk"],
+      "defaultPlayableId": "video-proto05-youtube-fg4h0-v3otk",
+      "provenance": {"kind": "catalog-migration", "catalogId": "video-proto05-youtube-fg4h0-v3otk"},
+      "rights": {}
+    },
+    {
+      "id": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
+      "title": "Intercompr\u00e9hension Catalan-Fran\u00e7ais",
+      "status": "active",
+      "sourceIds": ["source-video-proto05-youtube-ev9rfkfhfa0"],
+      "playableIds": ["video-proto05-youtube-ev9rfkfhfa0"],
+      "defaultPlayableId": "video-proto05-youtube-ev9rfkfhfa0",
+      "provenance": {"kind": "catalog-migration", "catalogId": "video-proto05-youtube-ev9rfkfhfa0"},
+      "rights": {}
+    }
+  ],
+  "sources": [
+    {
+      "id": "source-video-proto05-uga-37004",
+      "assetId": "media-proto05-video-proto05-uga-37004",
+      "title": "Vid\u00e9o augment\u00e9e IC \u2014 source UGA",
+      "kind": "hls",
+      "provider": "uga",
+      "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+      "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
+      "manifestUrl": "/api/hls/uga-37004/livestream.m3u8",
+      "mimeType": "application/vnd.apple.mpegurl",
+      "durationMs": 939217,
+      "authorized": true,
+      "availability": "available",
+      "provenance": {"catalogId": "video-proto05-uga-37004"}
+    },
+    {
+      "id": "source-video-proto05-youtube-fg4h0-v3otk",
+      "assetId": "media-proto05-video-proto05-youtube-fg4h0-v3otk",
+      "title": "Vid\u00e9o de test \u2014 YouTube contr\u00f4l\u00e9",
+      "kind": "youtube-embed",
+      "provider": "youtube",
+      "videoId": "FG4h0_v3oTk",
+      "embedUrl": "https://www.youtube.com/embed/FG4h0_v3oTk?si=O4Rv_ybx21escKID",
+      "durationMs": null,
+      "authorized": true,
+      "availability": "available",
+      "provenance": {"catalogId": "video-proto05-youtube-fg4h0-v3otk"}
+    },
+    {
+      "id": "source-video-proto05-youtube-ev9rfkfhfa0",
+      "assetId": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
+      "title": "Intercompr\u00e9hension Catalan-Fran\u00e7ais",
+      "kind": "youtube-embed",
+      "provider": "youtube",
+      "videoId": "eV9RFKFhfa0",
+      "embedUrl": "https://www.youtube.com/embed/eV9RFKFhfa0?si=b0uIF3FV83dTrIIF",
+      "durationMs": null,
+      "authorized": true,
+      "availability": "available",
+      "provenance": {"catalogId": "video-proto05-youtube-ev9rfkfhfa0"}
+    }
+  ],
+  "playables": [
+    {
+      "id": "video-proto05-uga-37004",
+      "assetId": "media-proto05-video-proto05-uga-37004",
+      "sourceId": "source-video-proto05-uga-37004",
+      "kind": "hls",
+      "provider": "uga",
+      "status": "available",
+      "availability": "available",
+      "durationMs": 939217,
+      "mimeType": "application/vnd.apple.mpegurl",
+      "url": "/api/hls/uga-37004/livestream.m3u8",
+      "manifestUrl": "/api/hls/uga-37004/livestream.m3u8",
+      "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8"
+    },
+    {
+      "id": "video-proto05-youtube-fg4h0-v3otk",
+      "assetId": "media-proto05-video-proto05-youtube-fg4h0-v3otk",
+      "sourceId": "source-video-proto05-youtube-fg4h0-v3otk",
+      "kind": "youtube-embed",
+      "provider": "youtube",
+      "status": "available",
+      "availability": "available",
+      "durationMs": null,
+      "mimeType": null,
+      "videoId": "FG4h0_v3oTk",
+      "embedUrl": "https://www.youtube.com/embed/FG4h0_v3oTk?si=O4Rv_ybx21escKID",
+      "url": "https://www.youtube.com/embed/FG4h0_v3oTk?si=O4Rv_ybx21escKID",
+      "manifestUrl": null
+    },
+    {
+      "id": "video-proto05-youtube-ev9rfkfhfa0",
+      "assetId": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
+      "sourceId": "source-video-proto05-youtube-ev9rfkfhfa0",
+      "kind": "youtube-embed",
+      "provider": "youtube",
+      "status": "available",
+      "availability": "available",
+      "durationMs": null,
+      "mimeType": null,
+      "videoId": "eV9RFKFhfa0",
+      "embedUrl": "https://www.youtube.com/embed/eV9RFKFhfa0?si=b0uIF3FV83dTrIIF",
+      "url": "https://www.youtube.com/embed/eV9RFKFhfa0?si=b0uIF3FV83dTrIIF",
+      "manifestUrl": null
+    }
+  ]
+}

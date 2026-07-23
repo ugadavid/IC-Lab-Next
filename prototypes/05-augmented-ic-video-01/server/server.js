@@ -9,14 +9,23 @@ const {
   mediaRefForCatalogEntry,
   resolveVideoRef
 } = require("./media-contract");
+const {
+  libraryFromCatalog,
+  mergeCatalogIntoLibrary,
+  validateLibraryShape,
+  normalizeLibrarySourceInput,
+  playableFromSource,
+  resolveLibraryPlayable
+} = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.23";
+const VERSION = "0.1.24";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "activities.json");
 const VIDEO_CATALOG_FILE = path.join(DATA_DIR, "video-catalog.json");
+const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
 const INDEX_FILE = "index-0.0.9.html";
 const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
@@ -114,6 +123,33 @@ function loadVideoCatalog() {
 }
 
 let VIDEO_CATALOG = loadVideoCatalog();
+
+function safeVideoLibraryFile() {
+  const root = path.resolve(DATA_DIR);
+  const file = path.resolve(VIDEO_LIBRARY_FILE);
+  if (file !== root && !file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de Library vidéo invalide.");
+  return file;
+}
+
+function loadVideoLibrary() {
+  const file = safeVideoLibraryFile();
+  let library;
+  if (!fsSync.existsSync(file)) {
+    library = libraryFromCatalog(VIDEO_CATALOG);
+    fsSync.writeFileSync(file, `${JSON.stringify(library, null, 2)}\n`, "utf8");
+  } else {
+    library = JSON.parse(fsSync.readFileSync(file, "utf8"));
+  }
+  const merged = mergeCatalogIntoLibrary(validateLibraryShape(library), VIDEO_CATALOG);
+  if (JSON.stringify(merged) !== JSON.stringify(library)) {
+    const backup = `${file}.bak`;
+    try { fsSync.copyFileSync(file, backup); } catch {}
+    fsSync.writeFileSync(file, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
+  }
+  return validateLibraryShape(merged);
+}
+
+let VIDEO_LIBRARY = loadVideoLibrary();
 function loadLanguageCatalog() {
   const parsed = JSON.parse(fsSync.readFileSync(LANGUAGE_CATALOG_FILE, "utf8"));
   if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.languages)) throw new Error("Référentiel partagé des langues invalide.");
@@ -201,7 +237,11 @@ function activityVideoRef(activity) {
 function resolveActivityVideo(activity) {
   validateActivityVideoReference(activity);
   const videoRef = activityVideoRef(activity);
-  return { videoRef, source: resolveVideoRef(videoRef, VIDEO_CATALOG) };
+  try {
+    return { videoRef, source: resolveLibraryPlayable(videoRef, VIDEO_LIBRARY) };
+  } catch (libraryError) {
+    return { videoRef, source: resolveVideoRef(videoRef, VIDEO_CATALOG) };
+  }
 }
 
 function activityForResponse(activity) {
@@ -605,6 +645,68 @@ async function persistVideoCatalog(videos) {
   return operation;
 }
 
+async function persistVideoLibrary(library) {
+  const operation = writeQueue.then(async () => {
+    const file = safeVideoLibraryFile();
+    const backup = `${file}.bak`;
+    const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
+    await fs.copyFile(file, backup);
+    try {
+      await fs.writeFile(temp, `${JSON.stringify(library, null, 2)}\n`, "utf8");
+      await fs.rename(temp, file);
+    } finally {
+      try { await fs.unlink(temp); } catch {}
+    }
+  });
+  writeQueue = operation.catch(() => {});
+  return operation;
+}
+
+function libraryAssetFromInput(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
+  const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim().slice(0, 500) : "Asset vidéo Proto05";
+  const assetId = `media-proto05-asset-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+  const sourceId = `source-${assetId}`;
+  const playableId = `playable-${assetId}`;
+  const sourceInput = payload.source || payload;
+  const source = normalizeLibrarySourceInput(sourceInput, {
+    validateHls(value) {
+      const checked = validateUgaLink(value);
+      return {
+        provider: "uga",
+        sourceUrl: checked.sourceUrl,
+        proxyUrl: checked.proxyUrl,
+        url: checked.proxyUrl,
+        manifestUrl: checked.proxyUrl,
+        mimeType: sourceInput.mimeType || "application/vnd.apple.mpegurl",
+        availability: "declared"
+      };
+    }
+  });
+  const storedSource = { ...source, id: sourceId, assetId, title, provenance: { kind: "manual-library-add" } };
+  const playable = playableFromSource(storedSource, assetId, playableId);
+  if (storedSource.kind === "direct-url") playable.status = "pending";
+  const asset = {
+    id: assetId,
+    title,
+    status: "active",
+    sourceIds: [sourceId],
+    playableIds: [playableId],
+    defaultPlayableId: playableId,
+    provenance: { kind: "manual-library-add" },
+    rights: {}
+  };
+  return { asset, source: storedSource, playable };
+}
+
+function libraryAssetDetails(asset) {
+  return {
+    ...asset,
+    sources: VIDEO_LIBRARY.sources.filter(source => source.assetId === asset.id),
+    playables: VIDEO_LIBRARY.playables.filter(playable => playable.assetId === asset.id)
+  };
+}
+
 function catalogEntryFromInput(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
   if (typeof payload.provider !== "string" || !["youtube", "uga"].includes(payload.provider)) throw new Error("Le type doit être YouTube ou HLS UGA.");
@@ -637,6 +739,39 @@ async function handleApi(request, response, url) {
     try { await persistVideoCatalog(nextCatalog); VIDEO_CATALOG = nextCatalog; }
     catch (error) { console.error(`[data] catalogue vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement du catalogue impossible." }); }
     return sendJson(response, 201, { video: entry });
+  }
+  if (url.pathname === "/api/proto05/library/assets") {
+    if (request.method === "GET") {
+      return sendJson(response, 200, { schemaVersion: VIDEO_LIBRARY.schemaVersion, updatedAt: VIDEO_LIBRARY.updatedAt || null, assets: VIDEO_LIBRARY.assets.map(libraryAssetDetails) });
+    }
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, POST" });
+    let created;
+    try { created = libraryAssetFromInput(JSON.parse(await readRequestBody(request))); }
+    catch (error) { return sendJson(response, 400, { error: error.message || "Asset vidéo invalide." }); }
+    const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
+    nextLibrary.updatedAt = new Date().toISOString();
+    nextLibrary.assets.push(created.asset);
+    nextLibrary.sources.push(created.source);
+    nextLibrary.playables.push(created.playable);
+    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
+    catch (error) { console.error(`[data] Library vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement de la Library impossible." }); }
+    return sendJson(response, 201, { asset: libraryAssetDetails(created.asset) });
+  }
+  const libraryAssetMatch = url.pathname.match(/^\/api\/proto05\/library\/assets\/([^/]+)$/);
+  if (libraryAssetMatch) {
+    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
+    const asset = VIDEO_LIBRARY.assets.find(item => item.id === decodeURIComponent(libraryAssetMatch[1]));
+    if (!asset) return sendJson(response, 404, { error: "Asset vidéo introuvable." });
+    return sendJson(response, 200, { asset: libraryAssetDetails(asset) });
+  }
+  const libraryPlayableMatch = url.pathname.match(/^\/api\/proto05\/library\/playables\/([^/]+)$/);
+  if (libraryPlayableMatch) {
+    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
+    const playableId = decodeURIComponent(libraryPlayableMatch[1]);
+    const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId);
+    if (!playable) return sendJson(response, 404, { error: "Playable vidéo introuvable." });
+    try { return sendJson(response, 200, { playable: resolveLibraryPlayable({ assetId: playable.assetId, playableId }, VIDEO_LIBRARY) }); }
+    catch (error) { return sendJson(response, 409, { error: error.message }); }
   }
   if (url.pathname === "/api/proto05/language-catalog") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });

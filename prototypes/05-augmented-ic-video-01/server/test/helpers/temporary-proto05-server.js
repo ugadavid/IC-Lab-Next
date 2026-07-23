@@ -10,6 +10,7 @@ const serverDirectory = path.resolve(__dirname, "..", "..");
 const sourcePrototypeDirectory = path.resolve(serverDirectory, "..");
 const sourceLanguageCatalogFile = path.resolve(sourcePrototypeDirectory, "..", "..", "shared", "reference-data", "languages.json");
 const sourceVideoCatalogFile = path.join(sourcePrototypeDirectory, "data", "video-catalog.json");
+const sourceVideoLibraryFile = path.join(sourcePrototypeDirectory, "data", "video-library.json");
 
 async function freePort() {
   const server = http.createServer();
@@ -59,10 +60,13 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const serverFile = path.join(temporaryServerDirectory, "server.js");
   const dataFile = path.join(temporaryDataDirectory, "activities.json");
   const videoCatalogFile = path.join(temporaryDataDirectory, "video-catalog.json");
+  const videoLibraryFile = path.join(temporaryDataDirectory, "video-library.json");
   const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
   fs.copyFileSync(path.join(serverDirectory, "media-contract.js"), path.join(temporaryServerDirectory, "media-contract.js"));
+  fs.copyFileSync(path.join(serverDirectory, "library-contract.js"), path.join(temporaryServerDirectory, "library-contract.js"));
   fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
+  fs.copyFileSync(sourceVideoLibraryFile, videoLibraryFile);
   const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
   const knownVideoIds = new Set(videoCatalog.videos.map(video => video.id));
   for (const activity of store.activities || []) {
@@ -91,13 +95,17 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const port = await freePort();
   const baseUrl = `http://127.0.0.1:${port}`;
   let stderr = "";
-  const child = spawn(process.execPath, [serverFile], {
-    cwd: temporaryServerDirectory,
-    env: { ...process.env, PORT: String(port), PROTO05_LANGUAGE_CATALOG_FILE: languageCatalogFile },
-    windowsHide: true
-  });
-  child.stderr.setEncoding("utf8");
-  child.stderr.on("data", chunk => { stderr += chunk; });
+  let child;
+  const startChild = () => {
+    child = spawn(process.execPath, [serverFile], {
+      cwd: temporaryServerDirectory,
+      env: { ...process.env, PORT: String(port), PROTO05_LANGUAGE_CATALOG_FILE: languageCatalogFile },
+      windowsHide: true
+    });
+    child.stderr.setEncoding("utf8");
+    child.stderr.on("data", chunk => { stderr += chunk; });
+  };
+  startChild();
 
   try {
     await waitForHealth(baseUrl, child, () => stderr);
@@ -110,8 +118,10 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   return {
     baseUrl,
     dataFile,
+    videoLibraryFile,
     languageCatalogFile,
     root,
+    async restart() { await stopChild(child); stderr = ""; startChild(); await waitForHealth(baseUrl, child, () => stderr); },
     async stop() { await stopChild(child); },
     async cleanup() {
       await stopChild(child);
