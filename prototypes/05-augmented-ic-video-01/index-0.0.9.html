@@ -1110,7 +1110,7 @@
         if (!response.ok) { const error = new Error(response.status === 404 ? "Cette activité est inconnue." : `Réponse serveur ${response.status}.`); error.kind = response.status === 404 ? "not-found" : "network"; throw error; }
         const payload = await response.json();
         buildActivityView(payload.activity);
-        hlsUrl = activityData.video.proxyUrl || "#";
+        hlsUrl = activityData.videoSource?.url || activityData.video.proxyUrl || "#";
         streamLink.href = hlsUrl;
         activeSegmentIndex = 0;
         activeLayers.clear();
@@ -1120,7 +1120,7 @@
         renderTranscript();
         renderTimeline();
         renderObservations();
-        loadVideo(activityData.video);
+        loadVideo(activityData.videoSource || activityData.video);
         if (segments.length) activateSegment(0, false);
         else {
           activeTime.textContent = "Cette activité ne contient encore aucun segment.";

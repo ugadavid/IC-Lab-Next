@@ -5,9 +5,13 @@ const path = require("node:path");
 const crypto = require("node:crypto");
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
+const {
+  mediaRefForCatalogEntry,
+  resolveVideoRef
+} = require("./media-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.22";
+const VERSION = "0.1.23";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -182,6 +186,27 @@ function validateActivityVideoReference(activity) {
   if (!catalogEntry) throw new Error("Une activité référence une source vidéo absente ou non validée.");
   if (catalogEntry.provider === "youtube" && (video.provider !== "youtube" || video.videoId !== catalogEntry.videoId || video.embedUrl !== catalogEntry.embedUrl)) throw new Error("Une activité référence une source YouTube incohérente.");
   if (catalogEntry.provider === "uga" && video.proxyUrl !== catalogEntry.proxyUrl) throw new Error("Une activité référence une source HLS incohérente.");
+}
+
+function activityVideoRef(activity) {
+  const entry = VIDEO_CATALOG.find(item => item.id === activity?.video?.id && item.authorized);
+  if (!entry) throw new Error("Impossible de construire videoRef pour cette activitÃ©.");
+  if (activity?.videoRef) {
+    if (activity.videoRef.playableId !== entry.id) throw new Error("videoRef ne correspond pas Ã  activity.video.");
+    return activity.videoRef;
+  }
+  return mediaRefForCatalogEntry(entry);
+}
+
+function resolveActivityVideo(activity) {
+  validateActivityVideoReference(activity);
+  const videoRef = activityVideoRef(activity);
+  return { videoRef, source: resolveVideoRef(videoRef, VIDEO_CATALOG) };
+}
+
+function activityForResponse(activity) {
+  const resolved = resolveActivityVideo(activity);
+  return { ...activity, videoRef: resolved.videoRef, videoSource: resolved.source };
 }
 
 function readRequestBody(request, limit = 64 * 1024) {
@@ -389,12 +414,17 @@ function validateSharedLanguageSelection(languages) {
 
 function validateAuthoringPatch(payload, current) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
-  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "overlays", "layerConfiguration"]);
+  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "videoRef", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "overlays", "layerConfiguration"]);
   const unknown = Object.keys(payload).filter(key => !allowed.has(key));
   if (unknown.length) throw new Error(`Champ non autorisé : ${unknown.join(", ")}.`);
   validateMetadataPatch(Object.fromEntries(Object.entries(payload).filter(([key]) => ["title", "description", "instruction", "pedagogicalQuestion", "videoId"].includes(key))));
   const next = { ...current };
   for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "overlays", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
+  if (payload.videoRef !== undefined) {
+    const resolved = resolveActivityVideo({ ...next, videoRef: payload.videoRef });
+    if (resolved.videoRef.playableId !== next.video?.id) throw new Error("videoRef doit correspondre à la vidéo de l’activité.");
+    next.videoRef = resolved.videoRef;
+  }
   next.transcription = { ...(current.transcription || {}), segmentIds: (next.segments || []).map(segment => segment.id) };
   if (payload.videoId !== undefined) {
     const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId && entry.authorized);
@@ -589,7 +619,7 @@ function catalogEntryFromInput(payload) {
 }
 
 function activityResponse(store, activity) {
-  return { schemaVersion: store.schemaVersion || "0.1", updatedAt: store.updatedAt || null, activity };
+  return { schemaVersion: store.schemaVersion || "0.1", updatedAt: store.updatedAt || null, activity: activityForResponse(activity) };
 }
 
 async function handleApi(request, response, url) {
@@ -611,6 +641,20 @@ async function handleApi(request, response, url) {
   if (url.pathname === "/api/proto05/language-catalog") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
     return sendJson(response, 200, { languages: LANGUAGE_CATALOG });
+  }
+  const resolutionMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)\/video-resolution$/);
+  if (resolutionMatch) {
+    if (request.method !== "GET") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "GET" });
+    const id = decodeURIComponent(resolutionMatch[1]);
+    const store = await readActivities();
+    const activity = store.activities.find(entry => entry && entry.id === id);
+    if (!activity) return sendJson(response, 404, { error: "ActivitÃ© introuvable." });
+    try {
+      const resolved = resolveActivityVideo(activity);
+      return sendJson(response, 200, { activityId: id, videoRef: resolved.videoRef, source: resolved.source });
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message || "Source vidÃ©o introuvable." });
+    }
   }
   const duplicateMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)\/duplicate$/);
   if (duplicateMatch) {

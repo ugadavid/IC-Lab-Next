@@ -61,6 +61,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const videoCatalogFile = path.join(temporaryDataDirectory, "video-catalog.json");
   const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
+  fs.copyFileSync(path.join(serverDirectory, "media-contract.js"), path.join(temporaryServerDirectory, "media-contract.js"));
   fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
   const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
   const knownVideoIds = new Set(videoCatalog.videos.map(video => video.id));

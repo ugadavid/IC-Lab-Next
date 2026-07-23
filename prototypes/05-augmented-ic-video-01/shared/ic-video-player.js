@@ -58,8 +58,8 @@
       else facade.emit("error");
     }
     async function load(video) {
-      reset(); currentProvider = video.provider || (video.proxyUrl ? "uga" : null);
-      if (currentProvider === "uga" && video.proxyUrl) { attachNative(video.proxyUrl); return; }
+      reset(); const hlsSource = video.url || video.proxyUrl; currentProvider = video.provider || (hlsSource ? "uga" : null);
+      if (currentProvider === "uga" && hlsSource) { attachNative(hlsSource); return; }
       if (currentProvider !== "youtube" || !video.videoId || !video.embedUrl) throw new Error("La source vidéo n’est pas autorisée.");
       const YT = await loadYouTubeApi();
       container.classList.add("youtube-active");

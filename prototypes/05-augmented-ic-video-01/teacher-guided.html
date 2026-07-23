@@ -291,4 +291,22 @@ details.guided-collapsible[open] > summary{border-bottom:1px solid #e3e8ef;paddi
   applyActions();
 })();
 </script>
+<script src="/shared/ic-video-player.js"></script>
+<script>
+(function(){
+  async function attachGuidedVideo(){
+    if(!state.activity||!window.upgradeICVideoElement)return;
+    if(window.__guidedVideoPlayer?.destroy)window.__guidedVideoPlayer.destroy();
+    if(typeof hls!=='undefined'&&hls){hls.destroy();hls=null}
+    const source=state.activity.videoSource||state.activity.video;
+    window.__guidedVideoPlayer=await window.upgradeICVideoElement(video,source);
+    if(!video.__guidedClockBound){
+      video.__guidedClockBound=true;
+      video.addEventListener('timeupdate',()=>{sharedTimeline?.setCurrentTime(video.currentTime*1000);$('#clock').textContent=`${mm(video.currentTime*1000)} / ${mm((video.duration||duration()/1000)*1000)}`});
+    }
+  }
+  window.attachVideo=attachGuidedVideo;
+  if(state.activity)attachGuidedVideo().catch(error=>$('#status').textContent=error.message);
+})();
+</script>
 </body></html>
