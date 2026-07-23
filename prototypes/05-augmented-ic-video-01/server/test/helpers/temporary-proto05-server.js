@@ -1,4 +1,4 @@
-"use strict";
+﻿"use strict";
 
 const fs = require("node:fs");
 const http = require("node:http");
@@ -11,6 +11,7 @@ const sourcePrototypeDirectory = path.resolve(serverDirectory, "..");
 const sourceLanguageCatalogFile = path.resolve(sourcePrototypeDirectory, "..", "..", "shared", "reference-data", "languages.json");
 const sourceVideoCatalogFile = path.join(sourcePrototypeDirectory, "data", "video-catalog.json");
 const sourceVideoLibraryFile = path.join(sourcePrototypeDirectory, "data", "video-library.json");
+const sourceVideoLibraryMediaDirectory = path.join(sourcePrototypeDirectory, "data", "video-library-media");
 
 async function freePort() {
   const server = http.createServer();
@@ -38,14 +39,14 @@ async function stopChild(child) {
 async function waitForHealth(baseUrl, child, stderr) {
   const deadline = Date.now() + 4000;
   while (Date.now() < deadline) {
-    if (child.exitCode !== null) throw new Error(`Le serveur de test Proto05 s’est arrêté prématurément. ${stderr()}`);
+    if (child.exitCode !== null) throw new Error(`Le serveur de test Proto05 sâ€™est arrÃªtÃ© prÃ©maturÃ©ment. ${stderr()}`);
     try {
       const response = await fetch(`${baseUrl}/api/health`);
       if (response.ok) return;
     } catch {}
     await new Promise(resolve => setTimeout(resolve, 30));
   }
-  throw new Error("Le serveur de test Proto05 n’a pas répondu au healthcheck.");
+  throw new Error("Le serveur de test Proto05 nâ€™a pas rÃ©pondu au healthcheck.");
 }
 
 async function startTemporaryProto05Server(store, prefix = "proto05-server-test-") {
@@ -61,19 +62,21 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const dataFile = path.join(temporaryDataDirectory, "activities.json");
   const videoCatalogFile = path.join(temporaryDataDirectory, "video-catalog.json");
   const videoLibraryFile = path.join(temporaryDataDirectory, "video-library.json");
+  const temporaryVideoLibraryMediaDirectory = path.join(temporaryDataDirectory, "video-library-media");
   const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
   fs.copyFileSync(path.join(serverDirectory, "media-contract.js"), path.join(temporaryServerDirectory, "media-contract.js"));
   fs.copyFileSync(path.join(serverDirectory, "library-contract.js"), path.join(temporaryServerDirectory, "library-contract.js"));
   fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
   fs.copyFileSync(sourceVideoLibraryFile, videoLibraryFile);
+  fs.cpSync(sourceVideoLibraryMediaDirectory, temporaryVideoLibraryMediaDirectory, { recursive: true });
   const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
   const knownVideoIds = new Set(videoCatalog.videos.map(video => video.id));
   for (const activity of store.activities || []) {
     if (activity.video?.id && !knownVideoIds.has(activity.video.id)) {
       const proxyUrl = "/api/hls/uga-37004/livestream.m3u8";
       activity.video.proxyUrl = proxyUrl;
-      videoCatalog.videos.push({ id: activity.video.id, title: activity.video.title || "Fixture vidéo", provider: "uga", sourceUrl: "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8", proxyUrl, durationMs: activity.video.durationMs ?? null, authorized: true });
+      videoCatalog.videos.push({ id: activity.video.id, title: activity.video.title || "Fixture vidÃ©o", provider: "uga", sourceUrl: "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8", proxyUrl, durationMs: activity.video.durationMs ?? null, authorized: true });
       knownVideoIds.add(activity.video.id);
     }
   }
@@ -83,7 +86,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   }
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
   fs.mkdirSync(temporarySharedDirectory, { recursive: true });
-  for (const file of ["ic-timeline.js", "ic-timeline.css"]) {
+  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, "shared", file), path.join(temporarySharedDirectory, file));
   }
   fs.copyFileSync(path.join(sourcePrototypeDirectory, "guided-overlays.js"), path.join(prototypeDirectory, "guided-overlays.js"));
@@ -92,7 +95,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   fs.writeFileSync(path.join(temporaryHlsDirectory, "hls.min.js"), "window.Hls={isSupported:()=>false};\n", "utf8");
   fs.writeFileSync(dataFile, `${JSON.stringify(store, null, 2)}\n`, "utf8");
 
-  const port = await freePort();
+  const port = Number(process.env.PROTO05_TEST_PORT) || await freePort();
   const baseUrl = `http://127.0.0.1:${port}`;
   let stderr = "";
   let child;
@@ -131,3 +134,4 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
 }
 
 module.exports = { startTemporaryProto05Server };
+

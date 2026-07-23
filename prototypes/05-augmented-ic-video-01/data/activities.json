@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-17T20:42:14.983Z",
+  "updatedAt": "2026-07-23T12:24:31.036Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -878,11 +878,14 @@
       "instruction": "Une consigne",
       "pedagogicalQuestion": "Une question pédagogique",
       "video": {
-        "id": "video-proto05-uga-37004",
-        "title": "Vidéo augmentée IC — source UGA",
-        "kind": "hls",
+        "id": "video-proto05-local-video-37004-1080p",
+        "title": "Vidéo augmentée IC — copie locale gérée",
+        "kind": "local-file",
         "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
-        "durationMs": 939217
+        "durationMs": null,
+        "provider": "local",
+        "url": "/api/proto05/library/media/video_37004_1080p.mp4",
+        "storageKey": "video_37004_1080p.mp4"
       },
       "transcription": {
         "id": "transcription-proto05-draft-1784219853222-b9e6a5",
@@ -903,7 +906,12 @@
         "teacherVisibleLayerIds": [],
         "allowLearnerToggle": true
       },
-      "overlays": []
+      "overlays": [],
+      "videoRef": {
+        "schemaVersion": "0.1",
+        "assetId": "media-proto05-local-video-37004-1080p",
+        "playableId": "video-proto05-local-video-37004-1080p"
+      }
     },
     {
       "id": "proto05-draft-1784230655360-d1182f",

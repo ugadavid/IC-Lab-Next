@@ -55,3 +55,4 @@ prototypes/00-ic-hub/server/data/runs.json
 **/*~
 
 /temp/
+/prototypes/05-augmented-ic-video-01/data/video-library-media/

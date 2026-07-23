@@ -52,5 +52,30 @@ function updateSourceFields(){const local=$('sourceKind').value==='local-file';$
 $('search').addEventListener('input',render);$('filter').addEventListener('change',render);$('activity').addEventListener('change',render);$('sourceKind').addEventListener('change',updateSourceFields);updateSourceFields();
 $('addForm').addEventListener('submit',async event=>{event.preventDefault();setStatus('Ajout en cours…');const kind=$('sourceKind').value;const source=kind==='local-file'?{kind,storageKey:$('storageKey').value}:{kind,url:$('sourceValue').value};try{const response=await fetch('/api/proto05/library/assets',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({title:$('assetTitle').value,source})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Asset invalide.');$('assetTitle').value='';$('sourceValue').value='';$('storageKey').value='';state.assets.push(data.asset);state.selectedAssetId=data.asset.id;render();setStatus('Asset déclaratif ajouté.','ok')}catch(error){setStatus(error.message,'error')}});load().catch(error=>setStatus(error.message,'error'));
 </script>
+<script>
+(async function(){
+  let localPlayable=null;
+  try{
+    const response=await fetch('/api/proto05/library/assets');
+    const payload=await response.json();
+    const asset=(payload.assets||[]).find(item=>item.sources?.some(source=>source.kind==='local-file'));
+    localPlayable=asset?.playables?.find(item=>item.provider==='local'&&item.url);
+  }catch{}
+  if(!localPlayable)return;
+  const mountPreview=()=>{
+    const shell=document.getElementById('preview-'+localPlayable.id);
+    const actions=shell?.previousElementSibling;
+    if(!shell||!actions||actions.querySelector('.local-preview-button'))return;
+    const button=document.createElement('button');button.type='button';button.className='secondary local-preview-button';button.textContent='Aperçu';actions.append(button);
+    button.onclick=async()=>{
+      shell.hidden=false;const mount=shell.querySelector('.preview-mount');mount.replaceChildren();
+      try{const player=window.createICVideoPlayer({container:mount});await player.load(localPlayable);document.querySelector('#status').textContent='Aperçu local chargé.';document.querySelector('#status').className='status ok'}
+      catch(error){document.querySelector('#status').textContent='Aperçu local indisponible : '+error.message;document.querySelector('#status').className='status error'}
+    };
+  };
+  mountPreview();
+  new MutationObserver(mountPreview).observe(document.querySelector('#assets'),{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>

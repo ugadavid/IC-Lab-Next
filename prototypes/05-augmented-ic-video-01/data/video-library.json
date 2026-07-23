@@ -13,6 +13,20 @@
       "rights": {}
     },
     {
+      "id": "media-proto05-local-video-37004-1080p",
+      "title": "Vid\u00e9o augment\u00e9e IC \u2014 copie locale g\u00e9r\u00e9e",
+      "status": "active",
+      "sourceIds": ["source-proto05-local-video-37004-1080p"],
+      "playableIds": ["video-proto05-local-video-37004-1080p"],
+      "defaultPlayableId": "video-proto05-local-video-37004-1080p",
+      "provenance": {
+        "kind": "managed-local-copy",
+        "originalPath": "J:\\2026\\UGA\\M2\\Stage-Memoire\\Applications\\IC-Lab-Next\\temp\\video_37004_1080p.mp4",
+        "copiedPath": "data/video-library-media/video_37004_1080p.mp4"
+      },
+      "rights": {}
+    },
+    {
       "id": "media-proto05-video-proto05-youtube-fg4h0-v3otk",
       "title": "Vid\u00e9o de test \u2014 YouTube contr\u00f4l\u00e9",
       "status": "active",
@@ -74,6 +88,22 @@
       "authorized": true,
       "availability": "available",
       "provenance": {"catalogId": "video-proto05-youtube-ev9rfkfhfa0"}
+    },
+    {
+      "id": "source-proto05-local-video-37004-1080p",
+      "assetId": "media-proto05-local-video-37004-1080p",
+      "title": "Vid\u00e9o augment\u00e9e IC \u2014 copie locale g\u00e9r\u00e9e",
+      "kind": "local-file",
+      "provider": "local",
+      "storageKey": "video_37004_1080p.mp4",
+      "mimeType": "video/mp4",
+      "durationMs": null,
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "managed-local-copy",
+        "originalPath": "J:\\2026\\UGA\\M2\\Stage-Memoire\\Applications\\IC-Lab-Next\\temp\\video_37004_1080p.mp4"
+      }
     }
   ],
   "playables": [
@@ -119,6 +149,20 @@
       "videoId": "eV9RFKFhfa0",
       "embedUrl": "https://www.youtube.com/embed/eV9RFKFhfa0?si=b0uIF3FV83dTrIIF",
       "url": "https://www.youtube.com/embed/eV9RFKFhfa0?si=b0uIF3FV83dTrIIF",
+      "manifestUrl": null
+    },
+    {
+      "id": "video-proto05-local-video-37004-1080p",
+      "assetId": "media-proto05-local-video-37004-1080p",
+      "sourceId": "source-proto05-local-video-37004-1080p",
+      "kind": "local-file",
+      "provider": "local",
+      "status": "available",
+      "availability": "available",
+      "durationMs": null,
+      "mimeType": "video/mp4",
+      "storageKey": "video_37004_1080p.mp4",
+      "url": "/api/proto05/library/media/video_37004_1080p.mp4",
       "manifestUrl": null
     }
   ]

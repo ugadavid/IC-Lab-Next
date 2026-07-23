@@ -23,6 +23,20 @@ test("video-library.json est initialisée avec les structures persistantes", () 
   assert.ok(library.playables.some(playable => playable.id === "video-proto05-uga-37004"));
 });
 
+test("sert la copie locale contrÃ´lÃ©e avec une rÃ©ponse partielle", async () => {
+  const server = await startTemporaryProto05Server(JSON.parse(fs.readFileSync(activitiesFile, "utf8")));
+  try {
+    const playable = await jsonRequest(server.baseUrl, "/api/proto05/library/playables/video-proto05-local-video-37004-1080p");
+    assert.equal(playable.response.status, 200);
+    assert.equal(playable.body.playable.provider, "local");
+    assert.equal(playable.body.playable.url, "/api/proto05/library/media/video_37004_1080p.mp4");
+    const media = await fetch(`${server.baseUrl}${playable.body.playable.url}`, { headers: { range: "bytes=0-15" } });
+    assert.equal(media.status, 206);
+    assert.equal(media.headers.get("content-type"), "video/mp4");
+    assert.equal((await media.arrayBuffer()).byteLength, 16);
+  } finally { await server.cleanup(); }
+});
+
 test("ajoute une source locale, directe et HLS par la route Library", async () => {
   const server = await startTemporaryProto05Server(JSON.parse(fs.readFileSync(activitiesFile, "utf8")));
   try {

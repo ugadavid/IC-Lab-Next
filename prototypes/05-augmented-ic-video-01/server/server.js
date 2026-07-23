@@ -19,13 +19,14 @@ const {
 } = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.25";
+const VERSION = "0.1.26";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "activities.json");
 const VIDEO_CATALOG_FILE = path.join(DATA_DIR, "video-catalog.json");
 const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
+const VIDEO_LIBRARY_MEDIA_DIR = path.join(DATA_DIR, "video-library-media");
 const INDEX_FILE = "index-0.0.9.html";
 const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
@@ -41,6 +42,7 @@ const STATIC_TYPES = Object.freeze({
   ".jpeg": "image/jpeg",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  ".mp4": "video/mp4",
   ".mp3": "audio/mpeg",
   ".pdf": "application/pdf",
   ".m3u8": "application/vnd.apple.mpegurl",
@@ -150,6 +152,54 @@ function loadVideoLibrary() {
 }
 
 let VIDEO_LIBRARY = loadVideoLibrary();
+
+function safeLibraryMediaPath(storageKey) {
+  if (typeof storageKey !== "string" || !storageKey || storageKey.startsWith("/") || storageKey.includes("\\") || storageKey.split("/").some(part => !part || part === "." || part === "..")) throw new Error("Clé de média locale invalide.");
+  const root = path.resolve(VIDEO_LIBRARY_MEDIA_DIR);
+  const file = path.resolve(root, storageKey);
+  if (!file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de média local refusé.");
+  return file;
+}
+
+async function serveLibraryMedia(request, response, url) {
+  const prefix = "/api/proto05/library/media/";
+  if (!url.pathname.startsWith(prefix)) return false;
+  if (!["GET", "HEAD"].includes(request.method)) {
+    sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, HEAD" });
+    return true;
+  }
+  let storageKey;
+  try { storageKey = decodeURIComponent(url.pathname.slice(prefix.length)); }
+  catch { sendJson(response, 400, { error: "Clé de média locale invalide." }); return true; }
+  let file;
+  try { file = safeLibraryMediaPath(storageKey); }
+  catch (error) { sendJson(response, 404, { error: error.message }); return true; }
+  let stat;
+  try { stat = await fs.stat(file); if (!stat.isFile()) throw new Error("not file"); }
+  catch { sendJson(response, 404, { error: "Copie locale introuvable." }); return true; }
+  const extension = path.extname(file).toLowerCase();
+  const contentType = STATIC_TYPES[extension] || "application/octet-stream";
+  const range = request.headers.range;
+  let start = 0;
+  let end = stat.size - 1;
+  let status = 200;
+  if (range) {
+    const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+    if (!match) { response.writeHead(416, { "content-range": `bytes */${stat.size}` }); response.end(); return true; }
+    if (match[1]) start = Number(match[1]);
+    if (match[2]) end = Number(match[2]);
+    else end = Math.min(start + 1024 * 1024 - 1, stat.size - 1);
+    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start < 0 || start > end || start >= stat.size) {
+      response.writeHead(416, { "content-range": `bytes */${stat.size}` }); response.end(); return true;
+    }
+    end = Math.min(end, stat.size - 1); status = 206;
+  }
+  const headers = { "content-type": contentType, "accept-ranges": "bytes", "content-length": end - start + 1, "cache-control": "private, max-age=3600" };
+  if (status === 206) headers["content-range"] = `bytes ${start}-${end}/${stat.size}`;
+  response.writeHead(status, headers);
+  if (request.method === "HEAD") return response.end();
+  return await pipeline(fsSync.createReadStream(file, { start, end }), response);
+}
 function loadLanguageCatalog() {
   const parsed = JSON.parse(fsSync.readFileSync(LANGUAGE_CATALOG_FILE, "utf8"));
   if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.languages)) throw new Error("Référentiel partagé des langues invalide.");
@@ -1057,6 +1107,7 @@ async function serveStatic(request, response, url) {
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   try {
+    if (await serveLibraryMedia(request, response, url)) return;
     if (await handleHlsGateway(request, response, url)) return;
     if (url.pathname.startsWith("/api/")) return await handleApi(request, response, url);
     return await serveStatic(request, response, url);

@@ -43,23 +43,23 @@
       emit(type) { listeners.get(type)?.forEach(handler => handler()); }
     };
     function reset() { clearInterval(timeTicker); timeTicker = null; hls?.destroy(); hls = null; youtubePlayer?.destroy(); youtubePlayer = null; nativeVideo?.remove(); nativeVideo = null; container.classList.remove("youtube-active"); container.replaceChildren(); }
-    function attachNative(source) {
+    function attachNative(source, useHls = true) {
       nativeVideo = document.createElement("video");
       nativeVideo.controls = true; nativeVideo.preload = "metadata"; nativeVideo.className = "video";
       ["loadstart", "loadedmetadata", "durationchange", "canplay", "timeupdate", "playing", "pause", "waiting", "stalled", "error"].forEach(type => nativeVideo.addEventListener(type, () => facade.emit(type)));
       container.append(nativeVideo);
-      if (window.Hls && Hls.isSupported()) {
+      if (useHls && window.Hls && Hls.isSupported()) {
         hls = new Hls();
         hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(source));
         hls.on(Hls.Events.MANIFEST_PARSED, () => facade.emit("canplay"));
         hls.on(Hls.Events.ERROR, (_event, data) => { if (data.fatal) facade.emit("error"); else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) facade.emit("waiting"); });
         hls.attachMedia(nativeVideo);
-      } else if (nativeVideo.canPlayType("application/vnd.apple.mpegurl")) { nativeVideo.src = source; nativeVideo.load(); }
+      } else if (!useHls || nativeVideo.canPlayType("application/vnd.apple.mpegurl")) { nativeVideo.src = source; nativeVideo.load(); }
       else facade.emit("error");
     }
     async function load(video) {
       reset(); const hlsSource = video.url || video.proxyUrl; currentProvider = video.provider || (hlsSource ? "uga" : null);
-      if (currentProvider === "uga" && hlsSource) { attachNative(hlsSource); return; }
+      if ((currentProvider === "uga" || currentProvider === "local" || currentProvider === "direct") && hlsSource) { attachNative(hlsSource, currentProvider === "uga"); return; }
       if (currentProvider !== "youtube" || !video.videoId || !video.embedUrl) throw new Error("La source vidéo n’est pas autorisée.");
       const YT = await loadYouTubeApi();
       container.classList.add("youtube-active");
