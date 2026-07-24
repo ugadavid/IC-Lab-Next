@@ -851,10 +851,23 @@ function libraryAssetFromInput(payload) {
 }
 
 function libraryAssetDetails(asset) {
+  const sources = VIDEO_LIBRARY.sources.filter(source => source.assetId === asset.id);
+  const playables = VIDEO_LIBRARY.playables.filter(playable => playable.assetId === asset.id);
+  const localCandidates = playables.map(playable => {
+    const source = sources.find(item => item.id === playable.sourceId);
+    const storageKey = localStorageKeyForPlayable(playable, source);
+    if (!storageKey) return null;
+    try {
+      const file = safeLibraryMediaPath(storageKey);
+      const stat = fsSync.statSync(file);
+      return stat.isFile() ? { storageKey, sizeBytes: stat.size } : null;
+    } catch { return null; }
+  }).filter(Boolean);
   return {
     ...asset,
-    sources: VIDEO_LIBRARY.sources.filter(source => source.assetId === asset.id),
-    playables: VIDEO_LIBRARY.playables.filter(playable => playable.assetId === asset.id),
+    sources,
+    playables,
+    deletion: { canDeleteFile: localCandidates.length === 1, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
     folders: VIDEO_LIBRARY.folders || [],
     tags: VIDEO_LIBRARY.tags || []
   };
@@ -872,6 +885,94 @@ function normalizedLibraryName(value) {
 
 function libraryMutationCopy() {
   return JSON.parse(JSON.stringify(VIDEO_LIBRARY));
+}
+
+function localStorageKeyForPlayable(playable, source) {
+  return playable?.location?.storageKey || playable?.storageKey || source?.location?.storageKey || source?.storageKey || null;
+}
+
+function libraryAssetDeletionPlan(assetId, activities) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  if (!asset) throw new Error("Asset vidéo introuvable.");
+  const sources = (VIDEO_LIBRARY.sources || []).filter(source => source.assetId === assetId || (asset.sourceIds || []).includes(source.id));
+  const playables = (VIDEO_LIBRARY.playables || []).filter(playable => playable.assetId === assetId || (asset.playableIds || []).includes(playable.id));
+  const sourceIds = new Set(sources.map(source => source.id));
+  const playableIds = new Set(playables.map(playable => playable.id));
+  const activityDependencies = (activities || []).filter(activity => {
+    const ref = activity?.videoRef || {};
+    const video = activity?.video || {};
+    return ref.assetId === assetId || playableIds.has(ref.playableId) || playableIds.has(video.id) || sourceIds.has(video.sourceId) || video.storageKey && playables.some(playable => localStorageKeyForPlayable(playable, sources.find(source => source.id === playable.sourceId)) === video.storageKey);
+  }).map(activity => ({ id: activity.id, title: activity.title || activity.id }));
+  const derivationDependencies = (VIDEO_LIBRARY.assets || []).filter(other => other.id !== assetId && (other.parentAssetId === assetId || other.provenance?.parentAssetId === assetId || other.provenance?.historical?.sourceAssetId === assetId)).map(other => ({ id: other.id, title: other.title || other.id }));
+  const treatmentDependencies = (VIDEO_LIBRARY.treatments || []).filter(treatment => treatment.assetId === assetId || playableIds.has(treatment.playableId) || sourceIds.has(treatment.sourceId)).map(treatment => ({ id: treatment.id, status: treatment.status || null }));
+  const localFiles = playables.map(playable => {
+    const source = sources.find(item => item.id === playable.sourceId);
+    const storageKey = localStorageKeyForPlayable(playable, source);
+    if (!storageKey) return null;
+    let file;
+    try { file = safeLibraryMediaPath(storageKey); } catch { return { storageKey, invalid: true }; }
+    return { storageKey, file, playableId: playable.id };
+  }).filter(Boolean);
+  const localStorageKeys = new Set(localFiles.map(item => item.storageKey));
+  const sharedObjects = (VIDEO_LIBRARY.assets || []).filter(other => other.id !== assetId && ((other.sourceIds || []).some(id => sourceIds.has(id)) || (other.playableIds || []).some(id => playableIds.has(id)) || (VIDEO_LIBRARY.playables || []).filter(playable => playable.assetId === other.id).some(playable => localStorageKeys.has(localStorageKeyForPlayable(playable, (VIDEO_LIBRARY.sources || []).find(source => source.id === playable.sourceId)))))).map(other => ({ id: other.id, title: other.title || other.id }));
+  return { asset, sources, playables, activityDependencies, derivationDependencies, treatmentDependencies, sharedObjects, localFiles };
+}
+
+function deletionConflict(plan, physical) {
+  const conflicts = [];
+  if (plan.activityDependencies.length) conflicts.push({ type: "activities", items: plan.activityDependencies });
+  if (plan.derivationDependencies.length) conflicts.push({ type: "derivations", items: plan.derivationDependencies });
+  if (plan.treatmentDependencies.length) conflicts.push({ type: "treatments", items: plan.treatmentDependencies });
+  if (physical && plan.sharedObjects.length) conflicts.push({ type: "shared-references", items: plan.sharedObjects });
+  return conflicts;
+}
+
+async function removeLibraryAsset(assetId, { physical = false } = {}) {
+  const activities = (await readActivities()).activities || [];
+  const plan = libraryAssetDeletionPlan(assetId, activities);
+  const conflicts = deletionConflict(plan, physical);
+  if (conflicts.length) {
+    const error = new Error("La vidéo est encore utilisée par des activités ou des ressources dépendantes.");
+    error.statusCode = 409;
+    error.conflicts = conflicts;
+    throw error;
+  }
+  let physicalFile = null;
+  if (physical) {
+    if (plan.localFiles.length !== 1 || plan.localFiles[0].invalid) {
+      const error = new Error("Le fichier local référencé est absent, ambigu ou invalide.");
+      error.statusCode = 409;
+      throw error;
+    }
+    physicalFile = plan.localFiles[0];
+    const stat = await fs.stat(physicalFile.file).catch(() => null);
+    if (!stat || !stat.isFile()) {
+      const error = new Error("Le fichier local référencé est introuvable ou n’est pas un fichier.");
+      error.statusCode = 409;
+      throw error;
+    }
+  }
+  const nextLibrary = libraryMutationCopy();
+  nextLibrary.assets = nextLibrary.assets.filter(item => item.id !== assetId);
+  nextLibrary.sources = nextLibrary.sources.filter(source => !plan.sources.some(item => item.id === source.id));
+  nextLibrary.playables = nextLibrary.playables.filter(playable => !plan.playables.some(item => item.id === playable.id));
+  let transactionBackup = null;
+  try {
+    if (physicalFile) {
+      transactionBackup = path.join(os.tmpdir(), `proto05-library-delete-${process.pid}-${Date.now()}-${crypto.randomBytes(4).toString("hex")}.bak`);
+      await fs.copyFile(physicalFile.file, transactionBackup);
+      await fs.unlink(physicalFile.file);
+    }
+    await persistLibraryMutation(nextLibrary);
+    return { assetId, removedFromLibrary: true, deletedFile: Boolean(physicalFile), storageKey: physicalFile?.storageKey || null };
+  } catch (error) {
+    if (physicalFile && transactionBackup) {
+      try { await fs.copyFile(transactionBackup, physicalFile.file); } catch (restoreError) { error.message += ` Restauration du fichier impossible : ${restoreError.message}`; }
+    }
+    throw error;
+  } finally {
+    if (transactionBackup) { try { await fs.unlink(transactionBackup); } catch {} }
+  }
 }
 
 async function persistLibraryMutation(nextLibrary) {
@@ -1638,6 +1739,16 @@ async function handleApi(request, response, url) {
     if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
     try { const assetId = decodeURIComponent(classificationRoute[1]); const payload = JSON.parse(await readRequestBody(request)); const classification = classificationFromInput(assetId, payload); const nextLibrary = libraryMutationCopy(); const asset = nextLibrary.assets.find(item => item.id === assetId); asset.folderId = classification.folderId; asset.tagIds = classification.tagIds; await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { asset: libraryAssetDetails(asset) }); }
     catch (error) { return sendJson(response, 400, { error: error.message || "Classement impossible." }); }
+  }
+  const libraryAssetDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)(\/physical)?$/.exec(url.pathname);
+  if (libraryAssetDeleteMatch) {
+    if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
+    try {
+      const result = await removeLibraryAsset(decodeURIComponent(libraryAssetDeleteMatch[1]), { physical: Boolean(libraryAssetDeleteMatch[2]) });
+      return sendJson(response, 200, result);
+    } catch (error) {
+      return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression impossible.", conflicts: error.conflicts || [] });
+    }
   }
   if (url.pathname === "/api/proto05/library/assets") {
     if (request.method === "GET") {
