@@ -159,3 +159,30 @@ Le proxy HLS n’est pas dupliqué ici : les seules sources autorisées sont
 relayées vers le proxy HLS strict d’IC-Hub (`8790`). Cette dépendance résiduelle
 est temporaire et documentée ; la page autonome reste sans URL distante
 arbitraire ni SSRF.
+
+## Migration documentaire 0.1 → Library canonique
+
+La migration 0.1 est volontairement dormante et ne remplace aucun fichier
+fonctionnel. Elle est séparée en trois modules :
+
+- `media-library-migration.js` : cœur pur
+  `migrateLegacyMediaLibrary({ legacyDocument, availabilitySnapshot, options })` ;
+- `media-library-availability.js` : collecteur local borné aux `storageKey`
+  explicitement fournis, sans hash, analyse ou parcours global ;
+- `media-library-dry-run.js` : orchestrateur exigeant un répertoire de sortie
+  temporaire explicite et vide.
+
+Le cœur conserve les identifiants historiques valides, trie les collections par
+identifiant et produit le schéma `1.0` sans persister `sourceIds` ni
+`playableIds`. Les dates par défaut sont fournies par l’appelant; aucune horloge
+ou valeur aléatoire n’est utilisée. La disponibilité locale absente devient
+`missing-local` avec `missing-file`. Les familles et traitements insuffisamment
+prouvés restent diagnostiqués, sans parent ni historique inventé.
+
+L’orchestrateur écrit uniquement des artefacts isolés de migration à blanc,
+appelle `validateMediaLibrary` du contrat 099 et expose séparément
+`valid`, `readable`, `writeEligible`, `requiresUnknownFieldPreservation`, la
+preuve de non-mutation et la preuve de déterminisme. Il n’est importé par aucune
+route, aucun démarrage de serveur et aucun parcours utilisateur. La migration
+réelle, le remplacement du catalogue et le branchement fonctionnel restent
+interdits jusqu’à validation dédiée.
