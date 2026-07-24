@@ -20,9 +20,15 @@ const {
   playableFromSource,
   resolveLibraryPlayable
 } = require("./library-contract");
+const {
+  readCanonicalMediaLibrary,
+  projectCanonicalLibrary,
+  canonicalFromRuntime,
+  assertWritableCanonical
+} = require("./media-library-runtime");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.31";
+const VERSION = "0.1.32";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -148,22 +154,14 @@ function safeVideoLibraryFile() {
   return file;
 }
 
+let CANONICAL_LIBRARY = null;
+
 function loadVideoLibrary() {
   const file = safeVideoLibraryFile();
-  let library;
-  if (!fsSync.existsSync(file)) {
-    library = libraryFromCatalog(VIDEO_CATALOG);
-    fsSync.writeFileSync(file, `${JSON.stringify(library, null, 2)}\n`, "utf8");
-  } else {
-    library = JSON.parse(fsSync.readFileSync(file, "utf8"));
-  }
-  const merged = mergeCatalogIntoLibrary(validateLibraryShape(library), VIDEO_CATALOG);
-  if (JSON.stringify(merged) !== JSON.stringify(library)) {
-    const backup = `${file}.bak`;
-    try { fsSync.copyFileSync(file, backup); } catch {}
-    fsSync.writeFileSync(file, `${JSON.stringify(merged, null, 2)}\n`, "utf8");
-  }
-  return validateLibraryShape(merged);
+  if (!fsSync.existsSync(file)) throw new Error("Library vidéo canonique introuvable.");
+  const loaded = readCanonicalMediaLibrary(file);
+  CANONICAL_LIBRARY = loaded.canonical;
+  return validateLibraryShape(projectCanonicalLibrary(CANONICAL_LIBRARY));
 }
 
 let VIDEO_LIBRARY = loadVideoLibrary();
@@ -779,15 +777,34 @@ async function persistVideoCatalog(videos) {
   return operation;
 }
 
+async function renameWithWindowsRetries(source, target, options = {}) {
+  const attempts = Number.isInteger(options.attempts) ? options.attempts : 5;
+  const delayMs = Number.isInteger(options.delayMs) ? options.delayMs : 40;
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      await fs.rename(source, target);
+      return;
+    } catch (error) {
+      lastError = error;
+      if (!['EPERM', 'EBUSY'].includes(error?.code) || attempt === attempts - 1) throw error;
+      await new Promise(resolve => setTimeout(resolve, delayMs * (attempt + 1)));
+    }
+  }
+  throw lastError;
+}
+
 async function persistVideoLibrary(library) {
   const operation = writeQueue.then(async () => {
     const file = safeVideoLibraryFile();
+    const canonical = assertWritableCanonical(canonicalFromRuntime(library, CANONICAL_LIBRARY));
     const backup = `${file}.bak`;
     const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
     await fs.copyFile(file, backup);
     try {
-      await fs.writeFile(temp, `${JSON.stringify(library, null, 2)}\n`, "utf8");
-      await fs.rename(temp, file);
+      await fs.writeFile(temp, `${JSON.stringify(canonical, null, 2)}\n`, "utf8");
+      await renameWithWindowsRetries(temp, file);
+      CANONICAL_LIBRARY = canonical;
     } finally {
       try { await fs.unlink(temp); } catch {}
     }
@@ -837,8 +854,59 @@ function libraryAssetDetails(asset) {
   return {
     ...asset,
     sources: VIDEO_LIBRARY.sources.filter(source => source.assetId === asset.id),
-    playables: VIDEO_LIBRARY.playables.filter(playable => playable.assetId === asset.id)
+    playables: VIDEO_LIBRARY.playables.filter(playable => playable.assetId === asset.id),
+    folders: VIDEO_LIBRARY.folders || [],
+    tags: VIDEO_LIBRARY.tags || []
   };
+}
+
+function libraryName(value, fallback) {
+  const name = typeof value === "string" ? value.trim().slice(0, 200) : "";
+  if (!name) throw new Error(fallback);
+  return name;
+}
+
+function normalizedLibraryName(value) {
+  return String(value || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function libraryMutationCopy() {
+  return JSON.parse(JSON.stringify(VIDEO_LIBRARY));
+}
+
+async function persistLibraryMutation(nextLibrary) {
+  nextLibrary.updatedAt = new Date().toISOString();
+  validateLibraryShape(nextLibrary);
+  await persistVideoLibrary(nextLibrary);
+  VIDEO_LIBRARY = nextLibrary;
+}
+
+function libraryFolderFromInput(payload) {
+  const name = libraryName(payload?.name, "Le nom du dossier est obligatoire.");
+  if ((VIDEO_LIBRARY.folders || []).some(folder => folder.name.localeCompare(name, "fr", { sensitivity: "base" }) === 0)) throw new Error("Ce dossier existe déjà.");
+  const id = `folder-proto05-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+  const now = new Date().toISOString();
+  return { id, name, parentFolderId: null, sortOrder: VIDEO_LIBRARY.folders?.length || 0, createdAt: now, updatedAt: now };
+}
+
+function libraryTagFromInput(payload) {
+  const name = libraryName(payload?.name, "Le nom du tag est obligatoire.");
+  const normalizedName = normalizedLibraryName(name);
+  if (!normalizedName) throw new Error("Le nom du tag est invalide.");
+  if ((VIDEO_LIBRARY.tags || []).some(tag => tag.normalizedName === normalizedName)) throw new Error("Ce tag existe déjà.");
+  const id = `tag-proto05-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+  const now = new Date().toISOString();
+  return { id, name, normalizedName, createdAt: now, updatedAt: now };
+}
+
+function classificationFromInput(assetId, payload) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  if (!asset) throw new Error("Asset vidéo introuvable.");
+  const folderId = payload && Object.prototype.hasOwnProperty.call(payload, "folderId") ? payload.folderId : asset.folderId || null;
+  if (folderId !== null && !(VIDEO_LIBRARY.folders || []).some(folder => folder.id === folderId)) throw new Error("Dossier introuvable.");
+  const tagIds = Array.isArray(payload?.tagIds) ? [...new Set(payload.tagIds)] : (Array.isArray(asset.tagIds) ? [...asset.tagIds] : []);
+  if (tagIds.some(tagId => !(VIDEO_LIBRARY.tags || []).some(tag => tag.id === tagId))) throw new Error("Tag introuvable.");
+  return { folderId, tagIds };
 }
 
 function safeImportedFileName(value) {
@@ -1525,9 +1593,55 @@ async function handleApi(request, response, url) {
     catch (error) { console.error(`[data] catalogue vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement du catalogue impossible." }); }
     return sendJson(response, 201, { video: entry });
   }
+  const folderRoute = /^\/api\/proto05\/library\/folders(?:\/([^/]+))?$/.exec(url.pathname);
+  if (folderRoute) {
+    if (request.method === "POST" && !folderRoute[1]) {
+      try { const folder = libraryFolderFromInput(JSON.parse(await readRequestBody(request))); const nextLibrary = libraryMutationCopy(); nextLibrary.folders = [...(nextLibrary.folders || []), folder]; await persistLibraryMutation(nextLibrary); return sendJson(response, 201, { folder }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Dossier invalide." }); }
+    }
+    if (!folderRoute[1]) return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    const folderId = decodeURIComponent(folderRoute[1]);
+    const folder = (VIDEO_LIBRARY.folders || []).find(item => item.id === folderId);
+    if (!folder) return sendJson(response, 404, { error: "Dossier introuvable." });
+    if (request.method === "PATCH") {
+      try { const payload = JSON.parse(await readRequestBody(request)); const name = libraryName(payload.name, "Le nom du dossier est obligatoire."); if ((VIDEO_LIBRARY.folders || []).some(item => item.id !== folderId && item.name.localeCompare(name, "fr", { sensitivity: "base" }) === 0)) throw new Error("Ce dossier existe déjà."); const nextLibrary = libraryMutationCopy(); const target = nextLibrary.folders.find(item => item.id === folderId); target.name = name; target.updatedAt = new Date().toISOString(); await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { folder: target }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Renommage impossible." }); }
+    }
+    if (request.method === "DELETE") {
+      try { const detachedAssetCount = VIDEO_LIBRARY.assets.filter(asset => asset.folderId === folderId).length; const nextLibrary = libraryMutationCopy(); nextLibrary.folders = nextLibrary.folders.filter(item => item.id !== folderId); nextLibrary.assets = nextLibrary.assets.map(asset => asset.folderId === folderId ? { ...asset, folderId: null } : asset); await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { folderId, detachedAssetCount }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Suppression impossible." }); }
+    }
+    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PATCH, DELETE" });
+  }
+  const tagRoute = /^\/api\/proto05\/library\/tags(?:\/([^/]+))?$/.exec(url.pathname);
+  if (tagRoute) {
+    if (request.method === "POST" && !tagRoute[1]) {
+      try { const tag = libraryTagFromInput(JSON.parse(await readRequestBody(request))); const nextLibrary = libraryMutationCopy(); nextLibrary.tags = [...(nextLibrary.tags || []), tag]; await persistLibraryMutation(nextLibrary); return sendJson(response, 201, { tag }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Tag invalide." }); }
+    }
+    if (!tagRoute[1]) return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    const tagId = decodeURIComponent(tagRoute[1]);
+    const tag = (VIDEO_LIBRARY.tags || []).find(item => item.id === tagId);
+    if (!tag) return sendJson(response, 404, { error: "Tag introuvable." });
+    if (request.method === "PATCH") {
+      try { const payload = JSON.parse(await readRequestBody(request)); const name = libraryName(payload.name, "Le nom du tag est obligatoire."); const normalizedName = normalizedLibraryName(name); if (!normalizedName) throw new Error("Le nom du tag est invalide."); if ((VIDEO_LIBRARY.tags || []).some(item => item.id !== tagId && item.normalizedName === normalizedName)) throw new Error("Ce tag existe déjà."); const nextLibrary = libraryMutationCopy(); const target = nextLibrary.tags.find(item => item.id === tagId); target.name = name; target.normalizedName = normalizedName; target.updatedAt = new Date().toISOString(); await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { tag: target }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Renommage impossible." }); }
+    }
+    if (request.method === "DELETE") {
+      try { const nextLibrary = libraryMutationCopy(); nextLibrary.tags = nextLibrary.tags.filter(item => item.id !== tagId); nextLibrary.assets = nextLibrary.assets.map(asset => ({ ...asset, tagIds: (asset.tagIds || []).filter(id => id !== tagId) })); await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { tagId }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Suppression impossible." }); }
+    }
+    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PATCH, DELETE" });
+  }
+  const classificationRoute = /^\/api\/proto05\/library\/assets\/([^/]+)\/classification$/.exec(url.pathname);
+  if (classificationRoute) {
+    if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
+    try { const assetId = decodeURIComponent(classificationRoute[1]); const payload = JSON.parse(await readRequestBody(request)); const classification = classificationFromInput(assetId, payload); const nextLibrary = libraryMutationCopy(); const asset = nextLibrary.assets.find(item => item.id === assetId); asset.folderId = classification.folderId; asset.tagIds = classification.tagIds; await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { asset: libraryAssetDetails(asset) }); }
+    catch (error) { return sendJson(response, 400, { error: error.message || "Classement impossible." }); }
+  }
   if (url.pathname === "/api/proto05/library/assets") {
     if (request.method === "GET") {
-      return sendJson(response, 200, { schemaVersion: VIDEO_LIBRARY.schemaVersion, updatedAt: VIDEO_LIBRARY.updatedAt || null, assets: VIDEO_LIBRARY.assets.map(libraryAssetDetails) });
+      return sendJson(response, 200, { schemaVersion: VIDEO_LIBRARY.schemaVersion, updatedAt: VIDEO_LIBRARY.updatedAt || null, assets: VIDEO_LIBRARY.assets.map(libraryAssetDetails), folders: VIDEO_LIBRARY.folders || [], tags: VIDEO_LIBRARY.tags || [] });
     }
     if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, POST" });
     let created;

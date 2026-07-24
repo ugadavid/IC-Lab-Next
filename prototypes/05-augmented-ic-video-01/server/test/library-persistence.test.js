@@ -16,7 +16,7 @@ async function jsonRequest(baseUrl, pathname, options) {
 
 test("video-library.json est initialisée avec les structures persistantes", () => {
   const library = JSON.parse(fs.readFileSync(libraryFile, "utf8"));
-  assert.equal(library.schemaVersion, "0.1");
+  assert.equal(library.schemaVersion, "1.0");
   assert.ok(library.assets.length >= 3);
   assert.ok(library.sources.some(source => source.kind === "hls"));
   assert.ok(library.sources.some(source => source.kind === "youtube-embed"));

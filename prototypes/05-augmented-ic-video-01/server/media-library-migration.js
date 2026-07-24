@@ -292,6 +292,7 @@ function migrateLegacyMediaLibrary({ legacyDocument, availabilitySnapshot = { ob
       assetId: assetIdMap.get(playable.assetId),
       sourceId: sourceTarget.id,
       kind,
+      provider: source.provider || null,
       availability: availability.availability,
       availabilityReason: availability.availabilityReason,
       location,

@@ -47,10 +47,23 @@ function customLibrary(manifestUrl) {
   const assetId = "media-proto05-test-hls-preparation";
   const sourceId = "source-proto05-test-hls-preparation";
   const playableId = "video-proto05-test-hls-preparation";
-  library.assets.push({ id: assetId, title: "HLS de test temporaire", status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance: { kind: "test-only" }, rights: {} });
-  library.sources.push({ id: sourceId, assetId, title: "HLS de test temporaire", kind: "hls", provider: "test", originUrl: manifestUrl, manifestUrl, mimeType: "application/vnd.apple.mpegurl", durationMs: null, authorized: true, availability: "available", provenance: { kind: "test-only" } });
-  library.playables.push({ id: playableId, assetId, sourceId, kind: "hls", provider: "test", status: "available", availability: "available", durationMs: null, mimeType: "application/vnd.apple.mpegurl", url: manifestUrl, manifestUrl });
+  library.assets.push({ id: assetId, title: "HLS de test temporaire", lifecycle: "active", status: "active", folderId: null, parentAssetId: null, familyRootAssetId: assetId, derivationTypes: [], tagIds: [], technicalMetadata: {}, defaultPlayableId: playableId, provenance: { kind: "test-only" }, rights: {}, createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" });
+  library.sources.push({ id: sourceId, assetId, title: "HLS de test temporaire", kind: "hls", provider: "test", origin: { originUrl: manifestUrl, manifestUrl }, originUrl: manifestUrl, manifestUrl, mimeType: "application/vnd.apple.mpegurl", transport: "hls", createdAt: "2026-01-01T00:00:00.000Z", durationMs: null, authorized: true, availability: "available", provenance: { kind: "test-only" } });
+  library.playables.push({ id: playableId, assetId, sourceId, kind: "hls", provider: "test", availability: "available", availabilityReason: null, location: { url: manifestUrl, manifestUrl }, url: manifestUrl, manifestUrl, provenance: {}, technicalMetadata: { durationMs: null, width: null, height: null, frameRate: null, videoCodec: null, audioCodec: null, hasAudio: null, mimeType: "application/vnd.apple.mpegurl", sizeBytes: null, sha256: null, analyzedAt: null, analyzer: null, analyzerVersion: null, error: null }, createdAt: "2026-01-01T00:00:00.000Z", updatedAt: "2026-01-01T00:00:00.000Z" });
   return library;
+}
+
+function persistedPlayableUrl(playable) {
+  const location = playable.location || {};
+  return location.url || playable.url || (location.storageKey ? `/api/proto05/library/media/${encodeURIComponent(location.storageKey)}` : undefined);
+}
+
+function persistedPlayableStorageKey(playable) {
+  return playable.location?.storageKey || playable.storageKey;
+}
+
+function persistedAssetProvenance(asset) {
+  return { ...(asset.provenance?.historical || {}), ...(asset.provenance || {}) };
 }
 
 async function waitForJob(baseUrl, id, timeoutMs = 30000) {
@@ -161,16 +174,17 @@ test("préparation HLS temporaire, métadonnées, annulation et nettoyage", asyn
   const derivedAsset = derivedLibrary.assets.find(asset => asset.id === derived.assetId);
   const derivedPlayable = derivedLibrary.playables.find(playable => playable.id === derived.playableId);
   assert.ok(derivedAsset && derivedPlayable);
-  assert.equal(derived.metadata.mediaUrl, derivedPlayable.url);
-  assert.equal(derivedAsset.provenance.method, "ffmpeg-boxblur-rectangles");
-  assert.equal(derivedAsset.provenance.blur.filter, "boxblur");
-  assert.equal(derivedAsset.provenance.blur.id, "standard");
-  assert.equal(derivedAsset.provenance.blur.lumaRadius, 4);
-  assert.match(derivedAsset.provenance.filter, /boxblur=luma_radius=4:luma_power=1/);
-  assert.ok(derivedAsset.provenance.ffmpegArgs.includes("-filter_complex"));
-  assert.deepEqual(derivedAsset.provenance.masks, editedMasks);
-  assert.equal(derivedAsset.provenance.sourcePreparationJobId, started.job.id);
-  assert.equal(fs.existsSync(path.join(server.root, "prototype", "data", "video-library-media", derivedPlayable.storageKey)), true);
+  assert.equal(derived.metadata.mediaUrl, persistedPlayableUrl(derivedPlayable));
+  const derivedProvenance = persistedAssetProvenance(derivedAsset);
+  assert.equal(derivedProvenance.method, "ffmpeg-boxblur-rectangles");
+  assert.equal(derivedProvenance.blur.filter, "boxblur");
+  assert.equal(derivedProvenance.blur.id, "standard");
+  assert.equal(derivedProvenance.blur.lumaRadius, 4);
+  assert.match(derivedProvenance.filter, /boxblur=luma_radius=4:luma_power=1/);
+  assert.ok(derivedProvenance.ffmpegArgs.includes("-filter_complex"));
+  assert.deepEqual(derivedProvenance.masks, editedMasks);
+  assert.equal(derivedProvenance.sourcePreparationJobId, started.job.id);
+  assert.equal(fs.existsSync(path.join(server.root, "prototype", "data", "video-library-media", persistedPlayableStorageKey(derivedPlayable))), true);
   const secondStarted = await (await fetch(`${server.baseUrl}/api/proto05/library/hls-derivations`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ preparationJobId: started.job.id, masks: editedMasks, blurProfile: "strong" }) })).json();
   assert.equal(secondStarted.job.blurProfile, "strong");
   let secondDerived;
@@ -186,7 +200,7 @@ test("préparation HLS temporaire, métadonnées, annulation et nettoyage", asyn
   assert.equal(secondDerived.metadata.blur.id, "strong");
   assert.equal(secondDerived.metadata.blur.lumaRadius, 6);
   assert.ok(fs.existsSync(path.join(os.tmpdir(), "proto05-hls-preparations", workspace, "work.mp4")));
-  const mediaResponse = await fetch(`${server.baseUrl}${derivedPlayable.url}`, { headers: { range: "bytes=0-31" } });
+  const mediaResponse = await fetch(`${server.baseUrl}${persistedPlayableUrl(derivedPlayable)}`, { headers: { range: "bytes=0-31" } });
   assert.ok([200, 206].includes(mediaResponse.status));
   assert.match(mediaResponse.headers.get("content-type") || "", /video\/mp4/);
   await server.restart();
@@ -240,8 +254,8 @@ test("dérivation locale accepte une fixture sans audio, rationnelle, courte et 
   assert.equal(derived.status, "terminé", derived.error || "dérivation sans audio échouée");
   const storedLibrary = JSON.parse(fs.readFileSync(server.videoLibraryFile, "utf8"));
   const playable = storedLibrary.playables.find(item => item.id === derived.playableId);
-  assert.ok(playable?.storageKey);
-  const outputPath = path.join(server.root, "prototype", "data", "video-library-media", playable.storageKey);
+  assert.ok(persistedPlayableStorageKey(playable));
+  const outputPath = path.join(server.root, "prototype", "data", "video-library-media", persistedPlayableStorageKey(playable));
   const probe = spawnSync(ffmpegPath.replace(/ffmpeg(?:\.exe)?$/i, "ffprobe.exe"), ["-v", "error", "-show_entries", "stream=codec_type,nb_frames,avg_frame_rate", "-of", "json", outputPath], { encoding: "utf8", windowsHide: true });
   assert.equal(probe.status, 0, probe.stderr);
   const streams = JSON.parse(probe.stdout).streams || [];
