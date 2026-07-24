@@ -22,6 +22,32 @@ suppression et les sauvegardes de métadonnées ou d’atelier auteur. Elles
 utilisent les validations du prototype ; la sauvegarde JSON est atomique,
 séquencée et précédée d’un fichier `.bak` UTF-8.
 
+## Contrat canonique de la Library vidéo
+
+Le contrat fonctionnel cible est décrit dans
+`../MEDIA_LIBRARY_MODEL.md`. Sa représentation JavaScript et son validateur
+pur se trouvent dans `media-library-schema.js`.
+
+Le validateur s’utilise sans accès réseau ou système de fichiers :
+
+```js
+const { validateMediaLibrary, assertMediaLibrary } = require('./media-library-schema');
+const result = validateMediaLibrary(value);
+if (!result.valid) throw new Error('MediaLibrary invalide');
+if (!result.writeEligible) throw new Error('Écriture à traiter par un parcours de migration explicite');
+assertMediaLibrary(value);
+```
+
+Il contrôle la structure, les références, le lignage, les dossiers, les tags,
+les playables, la disponibilité et les traitements persistants. Il ne vérifie
+pas l’existence physique des fichiers et n’est pas branché sur la Library 0.1,
+ses routes ou ses écritures. Une version mineure future peut être lisible avec
+un avertissement (`readable: true`) mais reste non éligible à la réécriture
+(`writeEligible: false`) tant que les champs inconnus ne peuvent pas être
+préservés sans perte. `assertMediaLibrary` vérifie uniquement la validité
+structurelle ; son succès n’autorise pas à lui seul une écriture. `MEDIA_LIBRARY_MODEL.md`
+reste la référence fonctionnelle.
+
 ## Locuteurs propres à chaque activité (0.1.16)
 
 Les locuteurs restent dans `activity.speakers` et ne proviennent d’aucun

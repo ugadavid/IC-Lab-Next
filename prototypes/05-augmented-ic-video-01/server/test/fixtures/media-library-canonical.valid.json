@@ -1,0 +1,195 @@
+{
+  "schemaVersion": "1.0",
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "assets": [
+    {
+      "id": "asset-root",
+      "title": "Média synthétique distant",
+      "lifecycle": "active",
+      "folderId": "folder-child",
+      "defaultPlayableId": "playable-local-copy",
+      "parentAssetId": null,
+      "familyRootAssetId": "asset-root",
+      "derivationTypes": [],
+      "tagIds": ["tag-corpus"],
+      "provenance": { "creationType": "remote-copy", "createdAt": "2026-01-01T00:00:00.000Z" },
+      "technicalMetadata": { "durationMs": null, "status": "unknown" },
+      "rights": {},
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "asset-derived",
+      "title": "Média anonymisé synthétique",
+      "lifecycle": "active",
+      "folderId": null,
+      "defaultPlayableId": "playable-derived",
+      "parentAssetId": "asset-root",
+      "familyRootAssetId": "asset-root",
+      "derivationTypes": ["anonymization"],
+      "tagIds": ["tag-corpus", "tag-review"],
+      "provenance": { "creationType": "derivation", "parentAssetId": "asset-root", "familyRootAssetId": "asset-root", "treatmentId": "treatment-complete" },
+      "technicalMetadata": { "durationMs": 1000, "status": "current" },
+      "rights": {},
+      "createdAt": "2026-01-01T00:01:00.000Z",
+      "updatedAt": "2026-01-01T00:01:00.000Z"
+    },
+    {
+      "id": "asset-derived-child",
+      "title": "Dérivé du dérivé synthétique",
+      "lifecycle": "active",
+      "folderId": null,
+      "defaultPlayableId": "playable-derived-child",
+      "parentAssetId": "asset-derived",
+      "familyRootAssetId": "asset-root",
+      "derivationTypes": ["anonymization"],
+      "tagIds": [],
+      "provenance": { "creationType": "derivation", "parentAssetId": "asset-derived", "familyRootAssetId": "asset-root", "treatmentId": "treatment-failed" },
+      "technicalMetadata": { "durationMs": null, "status": "unknown" },
+      "rights": {},
+      "createdAt": "2026-01-01T00:02:00.000Z",
+      "updatedAt": "2026-01-01T00:02:00.000Z"
+    }
+  ],
+  "sources": [
+    {
+      "id": "source-remote",
+      "assetId": "asset-root",
+      "kind": "direct-url",
+      "provider": "direct",
+      "origin": { "originUrl": "https://media.example.test/source.mp4" },
+      "transport": "https",
+      "mimeType": "video/mp4",
+      "provenance": { "creationType": "remote-copy" },
+      "createdAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "source-derived",
+      "assetId": "asset-derived",
+      "kind": "derived-output",
+      "provider": "proto05-derived",
+      "origin": { "parentAssetId": "asset-root" },
+      "transport": "file",
+      "mimeType": "video/mp4",
+      "provenance": { "creationType": "derivation", "treatmentId": "treatment-complete" },
+      "createdAt": "2026-01-01T00:01:00.000Z"
+    },
+    {
+      "id": "source-derived-child",
+      "assetId": "asset-derived-child",
+      "kind": "derived-output",
+      "provider": "proto05-derived",
+      "origin": { "parentAssetId": "asset-derived" },
+      "transport": "file",
+      "mimeType": "video/mp4",
+      "provenance": { "creationType": "derivation", "treatmentId": "treatment-failed" },
+      "createdAt": "2026-01-01T00:02:00.000Z"
+    }
+  ],
+  "playables": [
+    {
+      "id": "playable-remote",
+      "assetId": "asset-root",
+      "sourceId": "source-remote",
+      "kind": "direct-url",
+      "availability": "unknown",
+      "availabilityReason": null,
+      "location": { "url": "https://media.example.test/source.mp4" },
+      "technicalMetadata": { "mimeType": "video/mp4", "status": "unknown" },
+      "provenance": {},
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "playable-local-copy",
+      "assetId": "asset-root",
+      "sourceId": "source-remote",
+      "kind": "local-file",
+      "availability": "available",
+      "availabilityReason": null,
+      "location": { "storageKey": "managed/source-copy.mp4" },
+      "technicalMetadata": { "mimeType": "video/mp4", "sizeBytes": 10, "status": "current" },
+      "provenance": { "creationType": "remote-copy" },
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "updatedAt": "2026-01-01T00:00:00.000Z"
+    },
+    {
+      "id": "playable-derived",
+      "assetId": "asset-derived",
+      "sourceId": "source-derived",
+      "kind": "local-file",
+      "availability": "missing-local",
+      "availabilityReason": "missing-file",
+      "location": { "storageKey": "derived/derived.mp4" },
+      "technicalMetadata": { "mimeType": "video/mp4", "status": "current" },
+      "provenance": { "treatmentId": "treatment-complete" },
+      "createdAt": "2026-01-01T00:01:00.000Z",
+      "updatedAt": "2026-01-01T00:01:00.000Z"
+    },
+    {
+      "id": "playable-derived-child",
+      "assetId": "asset-derived-child",
+      "sourceId": "source-derived-child",
+      "kind": "local-file",
+      "availability": "available",
+      "availabilityReason": null,
+      "location": { "storageKey": "derived/child.mp4" },
+      "technicalMetadata": { "mimeType": "video/mp4", "status": "unknown" },
+      "provenance": { "treatmentId": "treatment-failed" },
+      "createdAt": "2026-01-01T00:02:00.000Z",
+      "updatedAt": "2026-01-01T00:02:00.000Z"
+    }
+  ],
+  "treatments": [
+    {
+      "id": "treatment-complete",
+      "type": "anonymization",
+      "sourceAssetId": "asset-root",
+      "sourcePlayableId": "playable-local-copy",
+      "sourcePreparationId": null,
+      "outputAssetId": "asset-derived",
+      "outputPlayableId": "playable-derived",
+      "status": "completed",
+      "progress": 100,
+      "createdAt": "2026-01-01T00:01:00.000Z",
+      "startedAt": "2026-01-01T00:01:01.000Z",
+      "finishedAt": "2026-01-01T00:01:02.000Z",
+      "error": null,
+      "parameters": { "blurProfile": "standard" },
+      "engine": "proto05",
+      "engineVersion": "0.1.31",
+      "ffmpegVersion": null,
+      "runtimeJobId": null,
+      "diagnostics": {}
+    },
+    {
+      "id": "treatment-failed",
+      "type": "anonymization",
+      "sourceAssetId": "asset-derived",
+      "sourcePlayableId": "playable-derived",
+      "sourcePreparationId": null,
+      "outputAssetId": null,
+      "outputPlayableId": null,
+      "status": "failed",
+      "progress": 40,
+      "createdAt": "2026-01-01T00:02:00.000Z",
+      "startedAt": "2026-01-01T00:02:01.000Z",
+      "finishedAt": "2026-01-01T00:02:02.000Z",
+      "error": { "code": "FFMPEG_FAILED", "message": "Synthetic failure" },
+      "parameters": {},
+      "engine": "proto05",
+      "engineVersion": "0.1.31",
+      "ffmpegVersion": null,
+      "runtimeJobId": null,
+      "diagnostics": {}
+    }
+  ],
+  "folders": [
+    { "id": "folder-root", "name": "Corpus", "parentFolderId": null, "sortOrder": 0, "createdAt": "2026-01-01T00:00:00.000Z", "updatedAt": "2026-01-01T00:00:00.000Z" },
+    { "id": "folder-child", "name": "Exemples", "parentFolderId": "folder-root", "sortOrder": 0, "createdAt": "2026-01-01T00:00:00.000Z", "updatedAt": "2026-01-01T00:00:00.000Z" }
+  ],
+  "tags": [
+    { "id": "tag-corpus", "name": "Corpus", "normalizedName": "corpus", "createdAt": "2026-01-01T00:00:00.000Z", "updatedAt": "2026-01-01T00:00:00.000Z" },
+    { "id": "tag-review", "name": "À vérifier", "normalizedName": "a-verifier", "createdAt": "2026-01-01T00:00:00.000Z", "updatedAt": "2026-01-01T00:00:00.000Z" }
+  ]
+}
