@@ -28,7 +28,7 @@ const {
 } = require("./media-library-runtime");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.32";
+const VERSION = "0.1.33";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -850,7 +850,7 @@ function libraryAssetFromInput(payload) {
   return { asset, source: storedSource, playable };
 }
 
-function libraryAssetDetails(asset) {
+function libraryAssetDetails(asset, usage = null) {
   const sources = VIDEO_LIBRARY.sources.filter(source => source.assetId === asset.id);
   const playables = VIDEO_LIBRARY.playables.filter(playable => playable.assetId === asset.id);
   const localCandidates = playables.map(playable => {
@@ -868,6 +868,7 @@ function libraryAssetDetails(asset) {
     sources,
     playables,
     deletion: { canDeleteFile: localCandidates.length === 1, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
+    ...(usage ? { usage } : {}),
     folders: VIDEO_LIBRARY.folders || [],
     tags: VIDEO_LIBRARY.tags || []
   };
@@ -891,6 +892,17 @@ function localStorageKeyForPlayable(playable, source) {
   return playable?.location?.storageKey || playable?.storageKey || source?.location?.storageKey || source?.storageKey || null;
 }
 
+function activityDependencyRelations(activity, assetId, sourceIds, playableIds, playables, sources) {
+  const ref = activity?.videoRef || {};
+  const video = activity?.video || {};
+  const relations = [];
+  if (ref.assetId === assetId || video.assetId === assetId) relations.push("asset");
+  if (playableIds.has(ref.playableId) || playableIds.has(video.id)) relations.push("playable");
+  if (sourceIds.has(ref.sourceId) || sourceIds.has(video.sourceId)) relations.push("source");
+  if (video.storageKey && playables.some(playable => localStorageKeyForPlayable(playable, sources.find(source => source.id === playable.sourceId)) === video.storageKey)) relations.push("storage-key");
+  return [...new Set(relations)];
+}
+
 function libraryAssetDeletionPlan(assetId, activities) {
   const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
   if (!asset) throw new Error("Asset vidéo introuvable.");
@@ -898,11 +910,21 @@ function libraryAssetDeletionPlan(assetId, activities) {
   const playables = (VIDEO_LIBRARY.playables || []).filter(playable => playable.assetId === assetId || (asset.playableIds || []).includes(playable.id));
   const sourceIds = new Set(sources.map(source => source.id));
   const playableIds = new Set(playables.map(playable => playable.id));
-  const activityDependencies = (activities || []).filter(activity => {
-    const ref = activity?.videoRef || {};
-    const video = activity?.video || {};
-    return ref.assetId === assetId || playableIds.has(ref.playableId) || playableIds.has(video.id) || sourceIds.has(video.sourceId) || video.storageKey && playables.some(playable => localStorageKeyForPlayable(playable, sources.find(source => source.id === playable.sourceId)) === video.storageKey);
-  }).map(activity => ({ id: activity.id, title: activity.title || activity.id }));
+  const activityDependenciesById = new Map();
+  (activities || []).forEach((activity, index) => {
+    const relations = activityDependencyRelations(activity, assetId, sourceIds, playableIds, playables, sources);
+    if (!relations.length) return;
+    const id = typeof activity?.id === "string" && activity.id.trim() ? activity.id.trim() : `activite-inconnue-${index + 1}`;
+    const title = typeof activity?.title === "string" && activity.title.trim() ? activity.title.trim() : "Activité sans titre";
+    const existing = activityDependenciesById.get(id);
+    if (existing) {
+      existing.relations = [...new Set([...existing.relations, ...relations])];
+      if (existing.title === "Activité sans titre" && title !== existing.title) existing.title = title;
+    } else {
+      activityDependenciesById.set(id, { id, title, relations });
+    }
+  });
+  const activityDependencies = [...activityDependenciesById.values()];
   const derivationDependencies = (VIDEO_LIBRARY.assets || []).filter(other => other.id !== assetId && (other.parentAssetId === assetId || other.provenance?.parentAssetId === assetId || other.provenance?.historical?.sourceAssetId === assetId)).map(other => ({ id: other.id, title: other.title || other.id }));
   const treatmentDependencies = (VIDEO_LIBRARY.treatments || []).filter(treatment => treatment.assetId === assetId || playableIds.has(treatment.playableId) || sourceIds.has(treatment.sourceId)).map(treatment => ({ id: treatment.id, status: treatment.status || null }));
   const localFiles = playables.map(playable => {
@@ -925,6 +947,25 @@ function deletionConflict(plan, physical) {
   if (plan.treatmentDependencies.length) conflicts.push({ type: "treatments", items: plan.treatmentDependencies });
   if (physical && plan.sharedObjects.length) conflicts.push({ type: "shared-references", items: plan.sharedObjects });
   return conflicts;
+}
+
+function libraryUsageSummary(plan) {
+  const catalogConflicts = deletionConflict(plan, false);
+  const physicalConflicts = deletionConflict(plan, true);
+  return {
+    whetherUsed: physicalConflicts.length > 0,
+    activityCount: plan.activityDependencies.length,
+    activities: plan.activityDependencies,
+    otherDependencies: {
+      derivations: plan.derivationDependencies,
+      treatments: plan.treatmentDependencies,
+      sharedReferences: plan.sharedObjects
+    },
+    blocking: {
+      catalogRemoval: catalogConflicts.length > 0,
+      physicalDeletion: physicalConflicts.length > 0
+    }
+  };
 }
 
 async function removeLibraryAsset(assetId, { physical = false } = {}) {
@@ -1752,7 +1793,12 @@ async function handleApi(request, response, url) {
   }
   if (url.pathname === "/api/proto05/library/assets") {
     if (request.method === "GET") {
-      return sendJson(response, 200, { schemaVersion: VIDEO_LIBRARY.schemaVersion, updatedAt: VIDEO_LIBRARY.updatedAt || null, assets: VIDEO_LIBRARY.assets.map(libraryAssetDetails), folders: VIDEO_LIBRARY.folders || [], tags: VIDEO_LIBRARY.tags || [] });
+      const activities = (await readActivities()).activities || [];
+      const assets = VIDEO_LIBRARY.assets.map(asset => {
+        const plan = libraryAssetDeletionPlan(asset.id, activities);
+        return libraryAssetDetails(asset, libraryUsageSummary(plan));
+      });
+      return sendJson(response, 200, { schemaVersion: VIDEO_LIBRARY.schemaVersion, updatedAt: VIDEO_LIBRARY.updatedAt || null, assets, folders: VIDEO_LIBRARY.folders || [], tags: VIDEO_LIBRARY.tags || [] });
     }
     if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, POST" });
     let created;
