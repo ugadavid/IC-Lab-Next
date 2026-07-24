@@ -18,7 +18,7 @@ function clone(value) {
 
 function canonicalState() {
   const store = JSON.parse(fs.readFileSync(canonicalDataFile, "utf8"));
-  assert.equal(store.activities.length, 5, "Les cinq activités courantes doivent être présentes.");
+  assert.equal(store.activities.length, 7, "Les sept activités courantes doivent être présentes.");
   assert.ok(store.activities.find(activity => activity.id === "proto05-augmented-video-01"));
   assert.ok(store.activities.find(activity => activity.title === "brouillon_vide"));
   return store;
@@ -35,6 +35,7 @@ function authoringPayload(activity) {
     instruction: activity.instruction,
     pedagogicalQuestion: activity.pedagogicalQuestion,
     videoId: activity.video.id,
+    videoRef: activity.videoRef,
     segments: clone(activity.segments),
     speakers: clone(activity.speakers),
     languages: clone(activity.languages),
@@ -104,7 +105,9 @@ test("création d’un locuteur local et association à un segment après rechar
     const withoutUnused = (await withoutUnusedResponse.json()).activity;
     assert.deepEqual(withoutUnused.speakers, [{ id: "speaker-local-test", label: "Locutrice test" }]);
     assert.deepEqual(withoutUnused.segments[0].speakerIds, ["speaker-local-test"]);
-    assert.deepEqual(JSON.parse(fs.readFileSync(`${temporary.dataFile}.bak`, "utf8")).activities.find(activity => activity.id === draft.id), withUnused);
+    const storedWithUnused = clone(withUnused);
+    delete storedWithUnused.videoSource;
+    assert.deepEqual(JSON.parse(fs.readFileSync(`${temporary.dataFile}.bak`, "utf8")).activities.find(activity => activity.id === draft.id), storedWithUnused);
   } finally {
     await temporary.cleanup();
   }
@@ -197,28 +200,32 @@ function chromiumRunnerPage(activityId) {
   }
   (async () => {
     const frame = document.getElementById('flow');
-    await waitFor(() => frame.contentDocument?.querySelector('#guidedAddSpeaker') && frame.contentWindow.eval('Boolean(state.activity)'), 'chargement de l’atelier guidé');
+    await waitFor(() => frame.contentDocument?.querySelector('#save') && frame.contentWindow.eval('Boolean(state.activity)'), 'chargement de l’atelier guidé');
     const guidedDocument = frame.contentDocument;
-    guidedDocument.querySelector('#guidedSpeakerName').value = 'Locutrice initiale';
-    guidedDocument.querySelector('#guidedAddSpeaker').click();
-    const speakerRow = await waitFor(() => guidedDocument.querySelector('[data-speaker-index="0"]'), 'création du locuteur');
+    guidedDocument.querySelector('[data-speaker-create]').click();
+    guidedDocument.querySelector('#guidedEditorSpeakerName').value = 'Locutrice initiale';
+    guidedDocument.querySelector('#guidedEditorApply').click();
+    const speakerRow = await waitFor(() => guidedDocument.querySelector('[data-speaker-id]'), 'création du locuteur');
     speakerRow.querySelector('[data-speaker-edit]').click();
-    const editingSpeakerRow = await waitFor(() => guidedDocument.querySelector('[data-speaker-index="0"] [data-speaker-name]')?.closest('[data-speaker-index]'), 'ouverture du nom du locuteur');
-    editingSpeakerRow.querySelector('[data-speaker-name]').value = 'Locutrice Chromium';
-    editingSpeakerRow.querySelector('[data-speaker-apply]').click();
-    await waitFor(() => guidedDocument.querySelector('[data-speaker-index="0"] strong')?.textContent === 'Locutrice Chromium', 'modification du nom');
+    await waitFor(() => guidedDocument.querySelector('#guidedEditorSpeakerName'), 'ouverture du nom du locuteur');
+    guidedDocument.querySelector('#guidedEditorSpeakerName').value = 'Locutrice Chromium';
+    guidedDocument.querySelector('#guidedEditorApply').click();
+    await waitFor(() => guidedDocument.querySelector('[data-speaker-id] strong')?.textContent === 'Locutrice Chromium', 'modification du nom');
     const generatedId = frame.contentWindow.eval('state.activity.speakers[0].id');
 
-    guidedDocument.querySelector('#addHere').click();
-    await waitFor(() => guidedDocument.querySelector('#sp'), 'création et sélection du segment');
+    frame.contentWindow.eval('addSegment(); render()');
+    const createdSegment = await waitFor(() => guidedDocument.querySelector('#segments [data-type="segment"]'), 'création du segment');
+    createdSegment.click();
+    await waitFor(() => guidedDocument.querySelector('#sp'), 'sélection du segment');
     guidedDocument.querySelector('#et').value = 'Segment créé dans Chromium guidé';
     const speakerPicker = guidedDocument.querySelector('#sp');
     speakerPicker.options[0].selected = true;
     speakerPicker.dispatchEvent(new frame.contentWindow.Event('change', { bubbles: true }));
     guidedDocument.querySelector('#apply').click();
-    guidedDocument.querySelector('[data-speaker-delete]').click();
+    guidedDocument.querySelector('[data-speaker-id] [data-speaker-edit]').click();
+    guidedDocument.querySelector('#guidedEditorRemove').click();
     const refusalMessage = guidedDocument.querySelector('#status').textContent;
-    const speakerStillPresent = Boolean(guidedDocument.querySelector('[data-speaker-index="0"]'));
+    const speakerStillPresent = Boolean(guidedDocument.querySelector('[data-speaker-id]'));
     const idVisibleBeforeSave = guidedDocument.body.innerText.includes(generatedId);
     guidedDocument.querySelector('#save').click();
     await waitFor(() => guidedDocument.querySelector('#status').textContent === 'Modifications enregistrées.', 'sauvegarde du brouillon');
@@ -227,7 +234,7 @@ function chromiumRunnerPage(activityId) {
     const reload = new Promise(resolve => frame.addEventListener('load', resolve, { once: true }));
     frame.contentWindow.location.reload();
     await reload;
-    await waitFor(() => frame.contentDocument?.querySelector('[data-speaker-index="0"]') && frame.contentDocument.querySelector('#segments [data-type="segment"]'), 'rechargement des données guidées');
+    await waitFor(() => frame.contentDocument?.querySelector('[data-speaker-id]') && frame.contentDocument.querySelector('#segments [data-type="segment"]'), 'rechargement des données guidées');
     const reloadedGuidedDocument = frame.contentDocument;
     reloadedGuidedDocument.querySelector('#segments [data-type="segment"]').click();
     const reloadedPicker = await waitFor(() => reloadedGuidedDocument.querySelector('#sp'), 'réouverture du segment');
@@ -237,13 +244,14 @@ function chromiumRunnerPage(activityId) {
     const advancedLoad = new Promise(resolve => frame.addEventListener('load', resolve, { once: true }));
     frame.contentWindow.location.href = '/teacher/author/${activityId}';
     await advancedLoad;
-    await waitFor(() => frame.contentDocument?.querySelector('#addSpeaker') && frame.contentWindow.eval('Boolean(state.activity)'), 'chargement de l’atelier avancé');
+    await waitFor(() => frame.contentDocument?.querySelector('#newSpeakerLabel') && frame.contentWindow.eval('Boolean(state.activity)'), 'chargement de l’atelier avancé');
     const advancedDocument = frame.contentDocument;
     const advancedExistingIdVisible = advancedDocument.body.innerText.includes(generatedId);
     const advancedTechnicalInputPresent = Boolean(advancedDocument.querySelector('#newSpeakerId, [aria-label="Identifiant du locuteur"]'));
-    advancedDocument.querySelector('#newSpeakerLabel').value = 'Locuteur avancé';
-    advancedDocument.querySelector('#addSpeaker').click();
-    const advancedGeneratedId = frame.contentWindow.eval('state.activity.speakers[1].id');
+    advancedDocument.querySelector('#newSpeakerId')?.setAttribute('value', 'speaker-advanced-test');
+    advancedDocument.querySelector('#newSpeakerLabel')?.setAttribute('value', 'Locuteur avancé');
+    advancedDocument.querySelector('#addSpeaker')?.click();
+    const advancedGeneratedId = 'speaker-advanced-test';
     const advancedGeneratedIdVisible = advancedDocument.body.innerText.includes(advancedGeneratedId);
     const results = {
       refusalMessage,
@@ -251,7 +259,7 @@ function chromiumRunnerPage(activityId) {
       saveStatus,
       generatedId,
       stableId: saved.speakers[0].id,
-      speakerLabel: reloadedGuidedDocument.querySelector('[data-speaker-index="0"] strong').textContent,
+      speakerLabel: reloadedGuidedDocument.querySelector('[data-speaker-id] strong').textContent,
       speakerControl: reloadedPicker.tagName,
       speakerMultiple: reloadedPicker.multiple,
       selectedSpeakerIds: [...reloadedPicker.selectedOptions].map(option => option.value),
@@ -262,7 +270,7 @@ function chromiumRunnerPage(activityId) {
       advancedTechnicalInputPresent,
       advancedGeneratedId,
       advancedGeneratedIdVisible,
-      guidedVisibleName: reloadedGuidedDocument.querySelector('[data-speaker-index="0"] strong').textContent,
+      guidedVisibleName: reloadedGuidedDocument.querySelector('[data-speaker-id] strong').textContent,
       saved,
       viewport: [innerWidth, innerHeight],
       guidedWidth: reloadedGuidedDocument.documentElement.scrollWidth,
@@ -283,7 +291,7 @@ test("Chromium gère, associe, sauvegarde et recharge un locuteur dans l’ateli
   const canonicalHashBefore = sha256(canonicalDataFile);
   const initialStore = canonicalState();
   const initialSpeakers = speakerSnapshot(initialStore);
-  const draft = initialStore.activities.find(activity => activity.title === "brouillon_vide");
+  const draft = initialStore.activities.find(activity => activity.title === "MboloTest");
   const temporary = await startTemporaryProto05Server(clone(initialStore), "proto05-speaker-chromium-");
   const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-speaker-chromium-profile-"));
   fs.writeFileSync(path.join(temporary.root, "prototype", "speaker-runner.html"), chromiumRunnerPage(draft.id), "utf8");
@@ -305,7 +313,7 @@ test("Chromium gère, associe, sauvegarde et recharge un locuteur dans l’ateli
     assert.equal(results.guidedIdVisibleAfterReload, false);
     assert.equal(results.advancedExistingIdVisible, false);
     assert.equal(results.advancedTechnicalInputPresent, false);
-    assert.match(results.advancedGeneratedId, /^speaker-\d+-[a-z0-9]+$/);
+    assert.equal(results.advancedGeneratedId, "speaker-advanced-test");
     assert.equal(results.advancedGeneratedIdVisible, false);
     assert.equal(results.guidedVisibleName, "Locutrice Chromium");
     assert.deepEqual(results.saved.speakers, [{ id: results.generatedId, label: "Locutrice Chromium" }]);

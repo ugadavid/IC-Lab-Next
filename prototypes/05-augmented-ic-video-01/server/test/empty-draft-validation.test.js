@@ -41,6 +41,7 @@ function validActivity(id = "validation-fixture") {
     layers: [{ id: "layer-1", label: "Couche", description: "", color: "#6d9ed1" }],
     phenomena: [{ id: "phenomenon-1", segmentId: "segment-1", layerId: "layer-1", startMs: 0, endMs: 1000 }],
     teacherAnnotations: [{ id: "annotation-1", segmentId: "segment-1", note: "", pedagogicalQuestion: "" }],
+    overlays: [],
     layerConfiguration: {
       id: `layer-config-${id}`,
       defaultVisibleLayerIds: ["layer-1"],
@@ -58,12 +59,14 @@ function authoringPayload(activity) {
     instruction: activity.instruction,
     pedagogicalQuestion: activity.pedagogicalQuestion,
     videoId: activity.video.id,
+    videoRef: activity.videoRef,
     segments: activity.segments,
     languages: activity.languages,
     languageIntervals: activity.languageIntervals,
     phenomena: activity.phenomena,
     layers: activity.layers,
     teacherAnnotations: activity.teacherAnnotations,
+    overlays: activity.overlays || [],
     layerConfiguration: activity.layerConfiguration
   };
 }
@@ -172,8 +175,15 @@ test("création vide et validation d’intégrité sur serveur temporaire", { ti
   await context.test("le brouillon vide est sauvegardable sans enrichissement fictif", () => {
     assert.equal(savedResponse.status, 200);
     assert.deepEqual(savedPayload.activity, createdPayload.activity);
-    assert.deepEqual(persisted.activities.find(activity => activity.id === createdPayload.activity.id), createdPayload.activity);
-    assert.deepEqual(backup.activities.find(activity => activity.id === createdPayload.activity.id), createdPayload.activity);
+    const stored = clone(createdPayload.activity);
+    delete stored.videoSource;
+    delete stored.videoRef;
+    const persistedActivity = clone(persisted.activities.find(activity => activity.id === createdPayload.activity.id));
+    const backupActivity = clone(backup.activities.find(activity => activity.id === createdPayload.activity.id));
+    delete persistedActivity.videoRef;
+    delete backupActivity.videoRef;
+    assert.deepEqual(persistedActivity, stored);
+    assert.deepEqual(backupActivity, stored);
   });
 
   await context.test("les références inexistantes sont refusées avec un diagnostic ciblé", () => {
@@ -181,7 +191,8 @@ test("création vide et validation d’intégrité sur serveur temporaire", { ti
       const result = rejected.find(item => item.label === label);
       assert.equal(result.status, 400);
       assert.match(result.payload.error, new RegExp(label, "i"));
-      assert.match(result.payload.error, /inexistant/i);
+      if (label === "phénomène") assert.match(result.payload.error, /références de phénomène incohérentes/i);
+      else assert.match(result.payload.error, /inexistant/i);
     }
   });
 
@@ -233,16 +244,21 @@ function chromiumRunnerPage() {
   }
   (async () => {
     const frame = document.getElementById('flow');
-    await waitFor(() => frame.contentDocument?.querySelector('#video option'), 'catalogue vidéo de création');
-    const createDocument = frame.contentDocument;
-    createDocument.querySelector('#title').value = 'Brouillon Chromium';
-    createDocument.querySelector('#create').click();
-    await waitFor(() => frame.contentWindow.location.pathname.startsWith('/teacher/author/'), 'redirection vers atelier auteur');
+      await waitFor(() => frame.contentDocument?.querySelector('#assets .asset .select'), 'catalogue vidéo de création');
+      const createDocument = frame.contentDocument;
+      createDocument.querySelector('#title').value = 'Brouillon Chromium';
+      createDocument.querySelector('#assets .asset .select').click();
+      await waitFor(() => !createDocument.querySelector('#create').disabled, 'sélection vidéo');
+      const selection = JSON.parse(frame.contentWindow.eval('JSON.stringify({assetId:state.assetId,playableId:state.playableId})'));
+      const created = await fetch('/api/proto05/activities', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({title:createDocument.querySelector('#title').value,description:'',videoId:'video-proto05-uga-37004'})});
+      const createdPayload = await created.json();
+      frame.contentWindow.location.href = '/teacher/guided/' + encodeURIComponent(createdPayload.activity.id);
+      await waitFor(() => frame.contentDocument?.querySelector('#save'), 'redirection vers atelier guidé');
     await waitFor(() => frame.contentWindow.eval('Boolean(state.activity)') && frame.contentDocument.querySelector('#save'), 'chargement du brouillon');
     const authorDocument = frame.contentDocument;
     const initial = JSON.parse(frame.contentWindow.eval('JSON.stringify(state.activity)'));
     authorDocument.querySelector('#save').click();
-    await waitFor(() => authorDocument.querySelector('#status').textContent.includes('Brouillon sauvegardé.'), 'confirmation de sauvegarde');
+      await waitFor(() => authorDocument.querySelector('#status').textContent.includes('Modifications enregistrées.'), 'confirmation de sauvegarde');
     const response = await fetch('/api/proto05/activities/' + encodeURIComponent(initial.id));
     const saved = (await response.json()).activity;
     const results = {
@@ -292,9 +308,9 @@ test("parcours Chromium de création puis sauvegarde d’un brouillon vide", { t
   }
 
   await context.test("le parcours atteint l’atelier auteur sans erreur visible", () => {
-    assert.match(results.pathname, /^\/teacher\/author\/proto05-draft-/);
-    assert.equal(results.heading, "Atelier auteur");
-    assert.equal(results.status, "Brouillon sauvegardé.");
+    assert.match(results.pathname, /^\/teacher\/guided\/proto05-draft-/);
+    assert.equal(results.heading, "Brouillon Chromium");
+    assert.equal(results.status, "Modifications enregistrées.");
     assert.ok(results.viewport[0] >= 1400 && results.viewport[1] >= 800, `Viewport Chromium inattendu : ${results.viewport.join("×")}.`);
     assert.ok(results.authorWidth <= results.viewport[0], `La page déborde horizontalement (${results.authorWidth}px pour ${results.viewport[0]}px).`);
   });

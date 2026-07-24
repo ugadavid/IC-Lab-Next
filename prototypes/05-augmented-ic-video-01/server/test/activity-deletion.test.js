@@ -16,9 +16,11 @@ const expectedIds = [
   "proto05-draft-1784218562686-f87014",
   "proto05-draft-1784219853222-b9e6a5",
   "proto05-draft-1784230655360-d1182f",
-  "proto05-copy-1784235824216-9f34df"
+  "proto05-copy-1784236861048-984dec",
+  "proto05-copy-1784304228900-10fb33",
+  "proto05-draft-1784811747316-88a00c"
 ];
-const deletionTargetId = "proto05-copy-1784235824216-9f34df";
+const deletionTargetId = "proto05-copy-1784236861048-984dec";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -39,7 +41,7 @@ test("DELETE supprime une seule activité sur une copie et crée la sauvegarde p
   const canonicalHashBefore = sha256(canonicalDataFile);
   const initialStore = clone(readCanonicalStore());
   const target = initialStore.activities.find(activity => activity.id === deletionTargetId);
-  assert.equal(target.title, "Copie de Vidéo augmentée d’intercompréhension");
+  assert.equal(target.title, "CopieCopie");
   const temporary = await startTemporaryProto05Server(initialStore, "proto05-deletion-api-");
 
   try {
@@ -50,7 +52,7 @@ test("DELETE supprime une seule activité sur une copie et crée la sauvegarde p
 
     assert.equal(response.status, 200);
     assert.deepEqual(payload.deleted, { id: target.id, title: target.title });
-    assert.equal(payload.activitiesRemaining, 4);
+    assert.equal(payload.activitiesRemaining, 6);
     assert.equal(after.activities.some(activity => activity.id === target.id), false);
     assertOtherActivitiesPreserved(initialStore, after, target.id);
     assert.deepEqual(backup, initialStore);
@@ -171,7 +173,7 @@ test("Chromium annule sans requête puis confirme la suppression depuis la bibli
     });
     assert.equal(results.disabledDuringRequest, true);
     assert.equal(results.deleteRequests, 1);
-    assert.equal(results.remainingCards, 4);
+    assert.equal(results.remainingCards, 6);
     assert.match(results.libraryStatus, /Activité supprimée.*Retour à la bibliothèque/);
     assert.equal(results.visibleError, "");
     assertOtherActivitiesPreserved(initialStore, after, target.id);

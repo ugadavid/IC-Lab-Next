@@ -187,15 +187,17 @@ test("la duplication reconstruit la relation depuis phenomena[].segmentId", { ti
 test("Original_copy reste intacte et toute écriture incohérente est refusée", { timeout: 15000 }, async () => {
   const canonicalHashBefore = sha256(canonicalDataFile);
   const store = canonicalStore();
-  const originalCopy = store.activities.find(activity => activity.title === "Original_copy");
-  assert.ok(originalCopy, "Original_copy doit être présente.");
+  const originalCopy = store.activities.find(activity => activity.id === "proto05-copy-1784236861048-984dec");
+  assert.ok(originalCopy, "La copie historique doit être présente.");
   const temporary = await startTemporaryProto05Server(clone(store), "proto05-phenomenon-invalid-");
   const temporaryHashBefore = sha256(temporary.dataFile);
   try {
+    const invalid = clone(originalCopy);
+    invalid.segments[0].phenomenonIds = ["phenomenon-missing"];
     const response = await fetch(`${temporary.baseUrl}/api/proto05/activities/${originalCopy.id}/authoring`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(authoringPayload(originalCopy))
+      body: JSON.stringify(authoringPayload(invalid))
     });
     assert.equal(response.status, 400);
     const payload = await response.json();
@@ -203,8 +205,9 @@ test("Original_copy reste intacte et toute écriture incohérente est refusée",
     assert.equal(sha256(temporary.dataFile), temporaryHashBefore);
 
     const duplicateResponse = await fetch(`${temporary.baseUrl}/api/proto05/activities/${originalCopy.id}/duplicate`, { method: "POST" });
-    assert.equal(duplicateResponse.status, 400);
-    assert.equal(sha256(temporary.dataFile), temporaryHashBefore);
+    assert.equal(duplicateResponse.status, 201);
+    const duplicate = (await duplicateResponse.json()).activity;
+    assert.ok(duplicate.phenomena.every(item => duplicate.segments.some(segment => segment.id === item.segmentId)));
   } finally {
     await temporary.cleanup();
   }

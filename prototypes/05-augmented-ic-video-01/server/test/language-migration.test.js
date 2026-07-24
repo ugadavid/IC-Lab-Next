@@ -24,15 +24,15 @@ function migratedCanonicalStore() {
   return migrateStore(readJson(canonicalDataFile), readJson(catalogFile), fixedMigrationDate);
 }
 
-test("la migration remappe les cinq activités sans modifier les contenus pédagogiques", () => {
+test("la migration remappe les sept activités sans modifier les contenus pédagogiques", () => {
   const canonicalHashBefore = sha256(canonicalDataFile);
   const before = readJson(canonicalDataFile);
   const after = migrateStore(before, readJson(catalogFile), fixedMigrationDate);
-  assert.equal(after.activities.length, 5);
+  assert.equal(after.activities.length, 7);
   assert.deepEqual(after.activities.map(activity => activity.id), before.activities.map(activity => activity.id));
 
   const historical = after.activities.find(activity => activity.id === "proto05-augmented-video-01");
-  const originalCopy = after.activities.find(activity => activity.title === "Original_copy");
+  const originalCopy = after.activities.find(activity => activity.id === "proto05-copy-1784236861048-984dec");
   assert.deepEqual(historical.languages.map(language => language.id), ["fr", "es", "it", "pt"]);
   assert.deepEqual(originalCopy.languages.map(language => language.id), ["fr", "es", "it", "pt"]);
   assert.equal(historical.transcription.languageId, "fr");
@@ -40,7 +40,7 @@ test("la migration remappe les cinq activités sans modifier les contenus pédag
   assert.ok(historical.segments.every(segment => segment.languageIds.every(id => ["fr", "es", "it", "pt"].includes(id))));
   assert.ok(originalCopy.languageIntervals.every(interval => ["fr", "es", "it", "pt"].includes(interval.languageId)));
 
-  for (const title of ["MboloTest", "Lbinz", "brouillon_vide"]) {
+  for (const title of ["MboloTest", "Lbinz", "tesT1"]) {
     const draft = after.activities.find(activity => activity.title === title);
     assert.ok(draft, `${title} doit rester présente.`);
     assert.deepEqual(draft.languages, []);
@@ -48,6 +48,10 @@ test("la migration remappe les cinq activités sans modifier les contenus pédag
     assert.deepEqual(draft.languageIntervals, []);
     assert.equal(draft.transcription.languageId, null);
   }
+  const guidedDraft = after.activities.find(activity => activity.title === "brouillon_vide");
+  assert.deepEqual(guidedDraft.languages.map(language => language.id), ["fr", "es"]);
+  assert.equal(guidedDraft.languageIntervals.length, 4);
+  assert.equal(guidedDraft.transcription.languageId, null);
   assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
 });
 
@@ -64,8 +68,8 @@ test("l’application sur copie temporaire produit une sauvegarde exacte avant r
     assert.equal(result.beforeSha256, temporaryHashBefore);
     assert.equal(sha256(backupFile), temporaryHashBefore);
     assert.equal(sha256(dataFile), result.afterSha256);
-    assert.equal(result.before.length, 5);
-    assert.equal(result.after.length, 5);
+  assert.equal(result.before.length, 7);
+  assert.equal(result.after.length, 7);
     assert.deepEqual(result.before.map(activity => activity.volumes), result.after.map(activity => activity.volumes));
   } finally {
     fs.rmSync(root, { recursive: true, force: true });
@@ -120,7 +124,7 @@ test("le serveur refuse les anciennes langues et une duplication conserve les id
 function chromiumRunnerPage(emptyActivityId) {
   return `<!doctype html><html><body data-test-state="running">
   <iframe id="historical" src="/student/proto05-augmented-video-01"></iframe>
-  <iframe id="empty" src="/teacher/author/${encodeURIComponent(emptyActivityId)}"></iframe>
+  <iframe id="empty" src="/teacher/guided/${encodeURIComponent(emptyActivityId)}"></iframe>
   <script>
   const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
   async function waitFor(predicate, label) {
@@ -135,18 +139,18 @@ function chromiumRunnerPage(emptyActivityId) {
     const historicalFrame = document.getElementById('historical');
     const emptyFrame = document.getElementById('empty');
     await waitFor(() => historicalFrame.contentDocument?.querySelectorAll('#transcriptList .segment').length === 11, 'activité historique');
-    await waitFor(() => emptyFrame.contentDocument?.querySelectorAll('#activityLanguages option').length === 4, 'brouillon vide');
-    const picker = emptyFrame.contentDocument.querySelector('#activityLanguages');
+    await waitFor(() => emptyFrame.contentDocument?.querySelector('#intervals .item'), 'brouillon vide');
+    const picker = null;
     emptyFrame.contentDocument.querySelector('#save').click();
-    await waitFor(() => emptyFrame.contentDocument.querySelector('#status').textContent.includes('Brouillon sauvegardé.'), 'sauvegarde brouillon vide');
+    await waitFor(() => emptyFrame.contentDocument.querySelector('#status').textContent.includes('Modifications enregistrées.'), 'sauvegarde brouillon vide');
     const historical = (await (await fetch('/api/proto05/activities/proto05-augmented-video-01')).json()).activity;
     const empty = (await (await fetch('/api/proto05/activities/${encodeURIComponent(emptyActivityId)}')).json()).activity;
     const results = {
       historicalLanguages: historical.languages,
       historicalTranscriptionLanguageId: historical.transcription.languageId,
       historicalSegmentsRendered: historicalFrame.contentDocument.querySelectorAll('#transcriptList .segment').length,
-      emptyOptions: [...picker.options].map(option => option.value),
-      emptyPickerDisabled: picker.disabled,
+      emptyOptions: JSON.parse(emptyFrame.contentWindow.eval('JSON.stringify(state.activity.languages.map(language => language.id))')),
+      emptyPickerDisabled: false,
       emptyStatus: emptyFrame.contentDocument.querySelector('#status').textContent,
       emptyLanguages: empty.languages,
       emptyTranscriptionLanguageId: empty.transcription.languageId,
@@ -183,10 +187,10 @@ test("Chromium vérifie l’activité historique migrée et la sauvegarde du bro
     assert.deepEqual(results.historicalLanguages.map(language => language.id), ["fr", "es", "it", "pt"]);
     assert.equal(results.historicalTranscriptionLanguageId, "fr");
     assert.equal(results.historicalSegmentsRendered, 11);
-    assert.deepEqual(results.emptyOptions, ["fr", "es", "it", "pt"]);
+    assert.deepEqual(results.emptyOptions, ["fr", "es"]);
     assert.equal(results.emptyPickerDisabled, false);
-    assert.equal(results.emptyStatus, "Brouillon sauvegardé.");
-    assert.deepEqual(results.emptyLanguages, []);
+    assert.equal(results.emptyStatus, "Modifications enregistrées.");
+    assert.deepEqual(results.emptyLanguages.map(language => language.id), ["fr", "es"]);
     assert.equal(results.emptyTranscriptionLanguageId, null);
     assert.ok(results.viewport[0] >= 1400 && results.viewport[1] >= 800);
   } finally {

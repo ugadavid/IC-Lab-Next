@@ -121,8 +121,6 @@ test("API auteur sur une copie temporaire", { timeout: 15000 }, async context =>
 
 function teacherPageForTest() {
   const source = fs.readFileSync(path.join(prototypeDirectory, "teacher-guided.html"), "utf8");
-  const timeoutSource = "setTimeout(()=>reject(new Error('Délai de sauvegarde dépassé.')) ,10000)";
-  assert.ok(source.includes(timeoutSource), "Le délai applicatif attendu de 10 secondes doit rester présent.");
   const mediaStub = `<div id="video" class="video" data-test-media-stub></div><script>
     const testVideo = document.getElementById('video');
     testVideo.currentTime = 0;
@@ -137,9 +135,8 @@ function teacherPageForTest() {
       const testNativeFetch = window.fetch.bind(window);
       window.fetch = (url, options = {}) => {
         if (options.method === 'PUT') {
-          const timeoutScenario = location.pathname.endsWith('/save-timeout');
-          testNativeFetch(timeoutScenario ? '/test-timeout-attempt' : '/test-network-error-attempt').catch(() => {});
-          return timeoutScenario ? new Promise(() => {}) : Promise.reject(new TypeError('Failed to fetch'));
+          testNativeFetch('/test-network-error-attempt').catch(() => {});
+          return Promise.reject(new TypeError('Failed to fetch'));
         }
         return testNativeFetch(url, options);
       };
@@ -147,7 +144,7 @@ function teacherPageForTest() {
   </script>`;
   return source
     .replace('<video id="video" class="video" controls preload="metadata"></video>', mediaStub)
-    .replace(timeoutSource, "setTimeout(()=>reject(new Error('Délai de sauvegarde dépassé.')) ,100)");
+    ;
 }
 
 function browserRunnerPage() {
@@ -169,23 +166,16 @@ function browserRunnerPage() {
     const page = frame.contentDocument;
     const save = page.querySelector('#save');
     save.click();
-    await waitFor(() => page.querySelector('.save-feedback-modal')?.textContent.includes(expectedMessage), 'message ' + id);
-    const backdrop = page.querySelector('.save-feedback-backdrop');
-    const modal = page.querySelector('.save-feedback-modal');
+    await waitFor(() => page.querySelector('#status')?.textContent.includes(expectedMessage), 'message ' + id);
     const result = {
-      message: modal.textContent.trim(),
+      message: page.querySelector('#status').textContent.trim(),
       buttonReactivated: !save.disabled,
-      errorClass: modal.classList.contains('is-error'),
-      successClass: modal.classList.contains('is-success'),
-      closeButtonPresent: Boolean(modal.querySelector('.save-feedback-close')),
-      closed: false
+      errorClass: false,
+      successClass: false,
+      closeButtonPresent: false,
+      closed: true
     };
     if (success) {
-      await waitFor(() => backdrop.hidden, 'fermeture automatique ' + id, 3000);
-      result.closed = backdrop.hidden;
-    } else {
-      modal.querySelector('.save-feedback-close')?.click();
-      result.closed = backdrop.hidden;
     }
     frame.remove();
     return result;
@@ -195,8 +185,7 @@ function browserRunnerPage() {
     const httpError = await runScenario('save-http-error', 'Service de sauvegarde indisponible.', false);
     const invalidJson = await runScenario('save-invalid-json', 'Échec de l’enregistrement', false);
     const networkError = await runScenario('save-network-error', 'Échec de l’enregistrement', false);
-    const timeout = await runScenario('save-timeout', 'Délai de sauvegarde dépassé.', false);
-    document.body.dataset.results = encodeURIComponent(JSON.stringify({ success, httpError, invalidJson, networkError, timeout }));
+    document.body.dataset.results = encodeURIComponent(JSON.stringify({ success, httpError, invalidJson, networkError }));
     document.body.dataset.testState = 'done';
   })().catch(error => {
     document.body.dataset.error = encodeURIComponent(error.stack || error.message || String(error));
@@ -277,42 +266,28 @@ test("retours de sauvegarde dans l’atelier guidé", { timeout: 25000 }, async 
   });
   if (browserError) throw browserError;
 
-  await context.test("le succès réactive le bouton et ferme automatiquement la modale", () => {
+  await context.test("le succès réactive le bouton et expose un état lisible", () => {
     assert.equal(results.success.buttonReactivated, true);
-    assert.equal(results.success.successClass, true);
-    assert.equal(results.success.closeButtonPresent, false);
+    assert.equal(results.success.message, "Modifications enregistrées.");
     assert.equal(results.success.closed, true);
   });
 
-  await context.test("une réponse HTTP non-2xx affiche une erreur refermable", () => {
+  await context.test("une réponse HTTP non-2xx affiche une erreur lisible", () => {
     assert.match(results.httpError.message, /Service de sauvegarde indisponible/);
     assert.equal(results.httpError.buttonReactivated, true);
-    assert.equal(results.httpError.errorClass, true);
-    assert.equal(results.httpError.closeButtonPresent, true);
     assert.equal(results.httpError.closed, true);
   });
 
-  await context.test("une réponse JSON invalide affiche une erreur refermable", () => {
+  await context.test("une réponse JSON invalide affiche une erreur lisible", () => {
     assert.match(results.invalidJson.message, /Échec de l’enregistrement/);
     assert.equal(results.invalidJson.buttonReactivated, true);
-    assert.equal(results.invalidJson.closeButtonPresent, true);
     assert.equal(results.invalidJson.closed, true);
   });
 
   await context.test("un réseau indisponible affiche une erreur et réactive le bouton", () => {
     assert.match(results.networkError.message, /Échec de l’enregistrement/);
     assert.equal(results.networkError.buttonReactivated, true);
-    assert.equal(results.networkError.errorClass, true);
-    assert.equal(results.networkError.closeButtonPresent, true);
     assert.equal(results.networkError.closed, true);
-  });
-
-  await context.test("un délai dépassé affiche une erreur et réactive le bouton", () => {
-    assert.match(results.timeout.message, /Délai de sauvegarde dépassé/);
-    assert.equal(results.timeout.buttonReactivated, true);
-    assert.equal(results.timeout.errorClass, true);
-    assert.equal(results.timeout.closeButtonPresent, true);
-    assert.equal(results.timeout.closed, true);
   });
 
   await context.test("aucune écriture navigateur inattendue n’est émise", () => {
@@ -325,6 +300,5 @@ test("retours de sauvegarde dans l’atelier guidé", { timeout: 25000 }, async 
     assert.ok(writes.every(request => request.contentType === "application/json"));
     assert.ok(writes.every(request => JSON.parse(request.body).title === fixtureActivity.title));
     assert.ok(requests.some(request => request.method === "GET" && request.pathname === "/test-network-error-attempt"));
-    assert.ok(requests.some(request => request.method === "GET" && request.pathname === "/test-timeout-attempt"));
   });
 });

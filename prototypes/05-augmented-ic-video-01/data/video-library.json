@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-23T21:18:29.402Z",
+  "updatedAt": "2026-07-24T07:05:31.666Z",
   "assets": [
     {
       "id": "media-proto05-video-proto05-uga-37004",
@@ -926,6 +926,164 @@
         "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c"
       },
       "rights": {}
+    },
+    {
+      "id": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
+      "title": "Version anonymisée dérivée",
+      "status": "active",
+      "sourceIds": [
+        "source-media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96"
+      ],
+      "playableIds": [
+        "video-media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96"
+      ],
+      "defaultPlayableId": "video-media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784876564856-595f0d47",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0.07196460606714251,
+            "y": 0.10100473411015137,
+            "width": 0.20397490214071723,
+            "height": 0.28834462772001224
+          },
+          {
+            "time": 0,
+            "x": 0.35634970882169176,
+            "y": 0.14760037790656427,
+            "width": 0.21577253014671677,
+            "height": 0.24285283346243108
+          },
+          {
+            "time": 0,
+            "x": 0.6430016517431302,
+            "y": 0.16139881549013066,
+            "width": 0.2771508052631483,
+            "height": 0.2301582908960064
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.07196460606714251,
+                "y": 0.10100473411015137,
+                "width": 0.20397490214071723,
+                "height": 0.28834462772001224
+              },
+              {
+                "time": 7293,
+                "x": 0,
+                "y": 0.05408996901289874,
+                "width": 0.9971476106515432,
+                "height": 0.9236255113126386
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 0,
+            "endMs": 7293,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.35634970882169176,
+                "y": 0.14760037790656427,
+                "width": 0.21577253014671677,
+                "height": 0.24285283346243108
+              }
+            ]
+          },
+          {
+            "id": "mask-3",
+            "startMs": 0,
+            "endMs": 7293,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.6430016517431302,
+                "y": 0.16139881549013066,
+                "width": 0.2771508052631483,
+                "height": 0.2301582908960064
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 7293,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.07196460606714251,
+                "y": 0.10100473411015137,
+                "width": 0.20397490214071723,
+                "height": 0.28834462772001224
+              },
+              {
+                "id": "mask-2",
+                "x": 0.35634970882169176,
+                "y": 0.14760037790656427,
+                "width": 0.21577253014671677,
+                "height": 0.24285283346243108
+              },
+              {
+                "id": "mask-3",
+                "x": 0.6430016517431302,
+                "y": 0.16139881549013066,
+                "width": 0.2771508052631483,
+                "height": 0.2301582908960064
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 7293,
+            "endMs": 939238,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0.05408996901289874,
+                "width": 0.9971476106515432,
+                "height": 0.9236255113126386
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-24T07:05:31.666Z",
+        "status": "completed",
+        "sha256": "1ae9eb2b32006bdcb57b0c9693ad07e3f4d60d0e97fd5a0a9ee52f42c40629e3",
+        "sizeBytes": 24158904
+      },
+      "metadata": {
+        "fileName": "1ae9eb2b32006bdc-anonymized.mp4",
+        "mimeType": "video/mp4",
+        "sizeBytes": 24158904,
+        "sha256": "1ae9eb2b32006bdcb57b0c9693ad07e3f4d60d0e97fd5a0a9ee52f42c40629e3"
+      },
+      "rights": {}
     }
   ],
   "sources": [
@@ -1812,6 +1970,161 @@
         "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
         "sizeBytes": 29275705
       }
+    },
+    {
+      "id": "source-media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
+      "assetId": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
+      "title": "Version anonymisée dérivée",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "storageKey": "1ae9eb2b32006bdc-anonymized.mp4",
+      "url": "/api/proto05/library/media/1ae9eb2b32006bdc-anonymized.mp4",
+      "copiedUrl": "/api/proto05/library/media/1ae9eb2b32006bdc-anonymized.mp4",
+      "mimeType": "video/mp4",
+      "sizeBytes": 24158904,
+      "sha256": "1ae9eb2b32006bdcb57b0c9693ad07e3f4d60d0e97fd5a0a9ee52f42c40629e3",
+      "checksum": "1ae9eb2b32006bdcb57b0c9693ad07e3f4d60d0e97fd5a0a9ee52f42c40629e3",
+      "authorized": true,
+      "availability": "available",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePreparationJobId": "hls-prep-1784876564856-595f0d47",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0.07196460606714251,
+            "y": 0.10100473411015137,
+            "width": 0.20397490214071723,
+            "height": 0.28834462772001224
+          },
+          {
+            "time": 0,
+            "x": 0.35634970882169176,
+            "y": 0.14760037790656427,
+            "width": 0.21577253014671677,
+            "height": 0.24285283346243108
+          },
+          {
+            "time": 0,
+            "x": 0.6430016517431302,
+            "y": 0.16139881549013066,
+            "width": 0.2771508052631483,
+            "height": 0.2301582908960064
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 939238,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.07196460606714251,
+                "y": 0.10100473411015137,
+                "width": 0.20397490214071723,
+                "height": 0.28834462772001224
+              },
+              {
+                "time": 7293,
+                "x": 0,
+                "y": 0.05408996901289874,
+                "width": 0.9971476106515432,
+                "height": 0.9236255113126386
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 0,
+            "endMs": 7293,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.35634970882169176,
+                "y": 0.14760037790656427,
+                "width": 0.21577253014671677,
+                "height": 0.24285283346243108
+              }
+            ]
+          },
+          {
+            "id": "mask-3",
+            "startMs": 0,
+            "endMs": 7293,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.6430016517431302,
+                "y": 0.16139881549013066,
+                "width": 0.2771508052631483,
+                "height": 0.2301582908960064
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 7293,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.07196460606714251,
+                "y": 0.10100473411015137,
+                "width": 0.20397490214071723,
+                "height": 0.28834462772001224
+              },
+              {
+                "id": "mask-2",
+                "x": 0.35634970882169176,
+                "y": 0.14760037790656427,
+                "width": 0.21577253014671677,
+                "height": 0.24285283346243108
+              },
+              {
+                "id": "mask-3",
+                "x": 0.6430016517431302,
+                "y": 0.16139881549013066,
+                "width": 0.2771508052631483,
+                "height": 0.2301582908960064
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 7293,
+            "endMs": 939238,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0.05408996901289874,
+                "width": 0.9971476106515432,
+                "height": 0.9236255113126386
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-24T07:05:31.666Z",
+        "status": "completed",
+        "sha256": "1ae9eb2b32006bdcb57b0c9693ad07e3f4d60d0e97fd5a0a9ee52f42c40629e3",
+        "sizeBytes": 24158904
+      }
     }
   ],
   "playables": [
@@ -2690,6 +3003,162 @@
           "status": "completed",
           "sha256": "86883fdff00c654a5c29ea75495f6cf4afc481adec64ca84f8fb7643fff04c3c",
           "sizeBytes": 29275705
+        }
+      }
+    },
+    {
+      "id": "video-media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
+      "assetId": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
+      "sourceId": "source-media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "status": "available",
+      "availability": "available",
+      "mimeType": "video/mp4",
+      "storageKey": "1ae9eb2b32006bdc-anonymized.mp4",
+      "url": "/api/proto05/library/media/1ae9eb2b32006bdc-anonymized.mp4",
+      "manifestUrl": null,
+      "sha256": "1ae9eb2b32006bdcb57b0c9693ad07e3f4d60d0e97fd5a0a9ee52f42c40629e3",
+      "sizeBytes": 24158904,
+      "provenance": {
+        "derivation": {
+          "kind": "derived-anonymized",
+          "sourceOriginUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+          "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+          "sourcePreparationJobId": "hls-prep-1784876564856-595f0d47",
+          "mode": "temporal",
+          "method": "ffmpeg-boxblur-temporal-steps",
+          "masks": [
+            {
+              "time": 0,
+              "x": 0.07196460606714251,
+              "y": 0.10100473411015137,
+              "width": 0.20397490214071723,
+              "height": 0.28834462772001224
+            },
+            {
+              "time": 0,
+              "x": 0.35634970882169176,
+              "y": 0.14760037790656427,
+              "width": 0.21577253014671677,
+              "height": 0.24285283346243108
+            },
+            {
+              "time": 0,
+              "x": 0.6430016517431302,
+              "y": 0.16139881549013066,
+              "width": 0.2771508052631483,
+              "height": 0.2301582908960064
+            }
+          ],
+          "temporalMasks": [
+            {
+              "id": "mask-1",
+              "startMs": 0,
+              "endMs": 939238,
+              "keyframes": [
+                {
+                  "time": 0,
+                  "x": 0.07196460606714251,
+                  "y": 0.10100473411015137,
+                  "width": 0.20397490214071723,
+                  "height": 0.28834462772001224
+                },
+                {
+                  "time": 7293,
+                  "x": 0,
+                  "y": 0.05408996901289874,
+                  "width": 0.9971476106515432,
+                  "height": 0.9236255113126386
+                }
+              ]
+            },
+            {
+              "id": "mask-2",
+              "startMs": 0,
+              "endMs": 7293,
+              "keyframes": [
+                {
+                  "time": 0,
+                  "x": 0.35634970882169176,
+                  "y": 0.14760037790656427,
+                  "width": 0.21577253014671677,
+                  "height": 0.24285283346243108
+                }
+              ]
+            },
+            {
+              "id": "mask-3",
+              "startMs": 0,
+              "endMs": 7293,
+              "keyframes": [
+                {
+                  "time": 0,
+                  "x": 0.6430016517431302,
+                  "y": 0.16139881549013066,
+                  "width": 0.2771508052631483,
+                  "height": 0.2301582908960064
+                }
+              ]
+            }
+          ],
+          "temporalSteps": [
+            {
+              "id": "step-1",
+              "startMs": 0,
+              "endMs": 7293,
+              "masks": [
+                {
+                  "id": "mask-1",
+                  "x": 0.07196460606714251,
+                  "y": 0.10100473411015137,
+                  "width": 0.20397490214071723,
+                  "height": 0.28834462772001224
+                },
+                {
+                  "id": "mask-2",
+                  "x": 0.35634970882169176,
+                  "y": 0.14760037790656427,
+                  "width": 0.21577253014671677,
+                  "height": 0.24285283346243108
+                },
+                {
+                  "id": "mask-3",
+                  "x": 0.6430016517431302,
+                  "y": 0.16139881549013066,
+                  "width": 0.2771508052631483,
+                  "height": 0.2301582908960064
+                }
+              ]
+            },
+            {
+              "id": "step-2",
+              "startMs": 7293,
+              "endMs": 939238,
+              "masks": [
+                {
+                  "id": "mask-1",
+                  "x": 0,
+                  "y": 0.05408996901289874,
+                  "width": 0.9971476106515432,
+                  "height": 0.9236255113126386
+                }
+              ]
+            }
+          ],
+          "interpolation": "linear-between-keyframes-clamped-at-bounds",
+          "blur": {
+            "id": "light",
+            "label": "Léger",
+            "filter": "boxblur",
+            "lumaRadius": 2,
+            "lumaPower": 1
+          },
+          "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+          "createdAt": "2026-07-24T07:05:31.666Z",
+          "status": "completed",
+          "sha256": "1ae9eb2b32006bdcb57b0c9693ad07e3f4d60d0e97fd5a0a9ee52f42c40629e3",
+          "sizeBytes": 24158904
         }
       }
     }

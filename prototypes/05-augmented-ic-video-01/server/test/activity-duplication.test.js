@@ -92,6 +92,7 @@ function emptyDraft(id, title, video) {
     layers: [],
     phenomena: [],
     teacherAnnotations: [],
+    overlays: [],
     layerConfiguration: {
       id: `layer-config-${id}`,
       defaultVisibleLayerIds: [],

@@ -22,7 +22,7 @@ const {
 } = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.29";
+const VERSION = "0.1.30";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -43,7 +43,7 @@ const HLS_DERIVATION_TIMEOUT_MS = Number(process.env.PROTO05_HLS_DERIVATION_TIME
 const HLS_DERIVATION_TTL_MS = Number(process.env.PROTO05_HLS_DERIVATION_TTL_MS || 30 * 60 * 1000);
 const ACTIVE_HLS_DERIVATIONS = new Map();
 const INDEX_FILE = "index-0.0.9.html";
-const HUB_HLS_ORIGIN = "http://127.0.0.1:8790";
+const UGA_HLS_MEDIA_ORIGIN = "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
 const HLS_PREFIX = "/api/hls/";
 const LANGUAGE_CATALOG_FILE = path.resolve(process.env.PROTO05_LANGUAGE_CATALOG_FILE || path.join(ROOT_DIR, "..", "..", "shared", "reference-data", "languages.json"));
@@ -1125,31 +1125,48 @@ function temporalMaskConfiguration(value) {
   });
 }
 
+function temporalMaskCollection(value, context = "La collection temporelle") {
+  if (!Array.isArray(value) || value.length > 20) throw new Error(`${context} doit contenir de 0 à 20 masques.`);
+  const ids = new Set();
+  return value.map((mask, index) => {
+    if (!mask || typeof mask !== "object") throw new Error(`${context} : le masque ${index + 1} est invalide.`);
+    const id = typeof mask.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(mask.id) ? mask.id : `mask-${index + 1}`;
+    if (ids.has(id)) throw new Error(`${context} : identifiant de masque dupliqué : ${id}.`);
+    ids.add(id);
+    const values = ["x", "y", "width", "height"].map(key => Number(mask[key]));
+    if (values.some(item => !Number.isFinite(item)) || values[0] < 0 || values[1] < 0 || values[2] <= 0 || values[3] <= 0 || values[0] + values[2] > 1 || values[1] + values[3] > 1) {
+      throw new Error(`${context} : le masque ${id} sort de l'image ou possède des dimensions invalides.`);
+    }
+    return { id, x: values[0], y: values[1], width: values[2], height: values[3] };
+  });
+}
+
 function temporalStepConfiguration(value, durationMs = null) {
   if (!Array.isArray(value) || !value.length || value.length > 20) throw new Error("Les étapes temporelles doivent être une liste non vide de 1 à 20 étapes.");
   const ids = new Set();
-  let previousStart = -1;
   const steps = value.map((step, index) => {
     if (!step || typeof step !== "object") throw new Error(`L’étape temporelle ${index + 1} est invalide.`);
     const id = typeof step.id === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(step.id) ? step.id : `step-${index + 1}`;
     if (ids.has(id)) throw new Error(`Identifiant d’étape dupliqué : ${id}.`);
     ids.add(id);
     const startMs = Number(step.startMs);
-    if (!Number.isFinite(startMs) || startMs < 0 || startMs < previousStart) throw new Error(`Le début de l’étape ${id} est invalide.`);
-    previousStart = startMs;
+    if (!Number.isFinite(startMs) || startMs < 0 || (Number.isFinite(durationMs) && startMs >= durationMs)) throw new Error(`Le début de l’étape ${id} est hors de la durée vidéo.`);
     const requestedEnd = step.endMs === null || step.endMs === undefined || step.endMs === "" ? null : Number(step.endMs);
-    const endMs = requestedEnd === null ? (index === value.length - 1 && Number.isFinite(durationMs) ? durationMs : null) : requestedEnd;
-    if (endMs !== null && (!Number.isFinite(endMs) || endMs <= startMs)) throw new Error(`La fin de l’étape ${id} est invalide.`);
-    const masks = defaultAnonymizationMasks(step.masks);
+    const endMs = requestedEnd === null ? null : requestedEnd;
+    if (endMs !== null && (!Number.isFinite(endMs) || endMs <= startMs || (Number.isFinite(durationMs) && endMs > durationMs))) throw new Error(`La fin de l’étape ${id} est hors de la durée vidéo.`);
+    const masks = step.masks === undefined ? defaultAnonymizationMasks() : temporalMaskCollection(step.masks, `L’étape ${id}`);
     return { id, startMs, endMs, masks };
-  });
+  }).sort((left, right) => left.startMs - right.startMs || left.id.localeCompare(right.id));
+  for (let index = 1; index < steps.length; index += 1) {
+    if (steps[index].startMs === steps[index - 1].startMs) throw new Error(`Deux étapes temporelles commencent à ${steps[index].startMs} ms ; une image ne peut appartenir qu’à une seule étape.`);
+  }
   for (let index = 0; index < steps.length - 1; index += 1) {
     const current = steps[index], next = steps[index + 1];
     if (current.endMs === null) current.endMs = next.startMs;
     if (current.endMs !== next.startMs || current.endMs <= current.startMs) throw new Error(`Les plages des étapes ${current.id} et ${next.id} sont incohérentes.`);
   }
   const last = steps.at(-1);
-  if (last.endMs === null) last.endMs = last.startMs + 1;
+  if (last.endMs === null) last.endMs = Number.isFinite(durationMs) ? durationMs : last.startMs + 1;
   if (last.endMs <= last.startMs) throw new Error(`La plage de l’étape ${last.id} est vide.`);
   return steps;
 }
@@ -1194,6 +1211,7 @@ function ffmpegTemporalBlurFilter(masks, blurProfile = anonymizationBlurProfile(
 }
 
 function ffmpegTemporalLocalFilter(masks, blurProfile = anonymizationBlurProfile(), videoInfo = null) {
+  if (!masks.length) return "[0:v]null[outv]";
   const margin = Math.max(4, Math.ceil(blurProfile.lumaRadius * 2));
   const labels = masks.map((_, index) => `[source${index}]`).join("");
   const graph = [`[0:v]split=${masks.length + 1}[base]${labels}`];
@@ -1225,14 +1243,31 @@ function ffprobeVideoInfo(ffmpeg, filePath) {
   const executable = path.basename(ffmpeg).toLowerCase().startsWith("ffmpeg")
     ? path.join(path.dirname(ffmpeg), path.basename(ffmpeg).replace(/^ffmpeg/i, "ffprobe"))
     : "ffprobe";
-  const result = spawnSync(executable, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,r_frame_rate,start_time,nb_frames", "-of", "json", filePath], { encoding: "utf8", windowsHide: true, timeout: 10000 });
+  const result = spawnSync(executable, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,r_frame_rate,start_time,nb_frames:format=duration", "-of", "json", filePath], { encoding: "utf8", windowsHide: true, timeout: 10000 });
   if (result.error || result.status !== 0) throw new Error("Impossible de lire les paramètres vidéo préparés.");
-  const stream = JSON.parse(String(result.stdout || "{}")).streams?.[0];
+  const payload = JSON.parse(String(result.stdout || "{}"));
+  const stream = payload.streams?.[0];
   const match = String(stream?.r_frame_rate || "").match(/^(\d+)\/(\d+)$/);
   const fps = match ? Number(match[1]) / Number(match[2]) : 0;
   if (!stream || !Number.isFinite(fps) || fps <= 0) throw new Error("La cadence vidéo préparée est invalide.");
   const nbFrames = Number(stream.nb_frames);
-  return { width: Number(stream.width), height: Number(stream.height), fps, nbFrames: Number.isFinite(nbFrames) && nbFrames > 0 ? Math.floor(nbFrames) : null, startTime: Number.isFinite(Number(stream.start_time)) ? Number(stream.start_time) : 0 };
+  const duration = Number(payload.format?.duration);
+  return { width: Number(stream.width), height: Number(stream.height), fps, nbFrames: Number.isFinite(nbFrames) && nbFrames > 0 ? Math.floor(nbFrames) : null, durationMs: Number.isFinite(duration) && duration >= 0 ? Math.round(duration * 1000) : null, startTime: Number.isFinite(Number(stream.start_time)) ? Number(stream.start_time) : 0 };
+}
+
+function validateTemporalStepsForVideo(steps, info) {
+  for (const step of steps) {
+    if (step.endMs <= step.startMs) throw new Error(`L’étape ${step.id} ne contient aucune image.`);
+    for (const mask of step.masks) {
+      const x = Math.floor(info.width * mask.x / 2) * 2;
+      const y = Math.floor(info.height * mask.y / 2) * 2;
+      const width = Math.floor(info.width * mask.width / 2) * 2;
+      const height = Math.floor(info.height * mask.height / 2) * 2;
+      if (x < 0 || y < 0 || width < 2 || height < 2 || x + width > info.width || y + height > info.height) {
+        throw new Error(`Le masque ${mask.id} de l’étape ${step.id} est trop petit ou sort des dimensions vidéo ${info.width}×${info.height}.`);
+      }
+    }
+  }
 }
 
 function concatFilePath(filePath) {
@@ -1259,6 +1294,7 @@ async function runTemporalLocalPipeline(job, prepJob, context) {
   const list = [];
   const steps = job.temporalSteps || [];
   if (!steps.length) throw new Error("Aucune étape temporelle à dériver.");
+  validateTemporalStepsForVideo(steps, info);
   for (let index = 0; index < steps.length; index += 1) {
     const step = steps[index];
     const endMs = Number(step.endMs);
@@ -1267,6 +1303,7 @@ async function runTemporalLocalPipeline(job, prepJob, context) {
     const requestedEndFrame = Math.max(startFrame + 1, Math.ceil(endMs / 1000 * info.fps - 1e-9));
     const endFrame = info.nbFrames ? Math.min(requestedEndFrame, info.nbFrames) : requestedEndFrame;
     const frames = endFrame - startFrame;
+    if (frames <= 0) throw new Error(`L’étape ${step.id} ne contient aucune image source.`);
     const seekSeconds = startFrame === 0 ? 0 : info.startTime + ((startFrame - 1) / info.fps) + 0.001;
     const segmentPath = path.join(segmentsDirectory, `segment-${String(index + 1).padStart(3, "0")}.mp4`);
     const filter = ffmpegTemporalLocalFilter(step.masks, blur, info);
@@ -1327,8 +1364,13 @@ async function persistDerivedPlayable(job, prepJob) {
   const targetPath = safeLibraryMediaPath(storageKey);
   const temporaryTarget = path.join(VIDEO_LIBRARY_MEDIA_DIR, `.${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.derived.tmp`);
   await fs.mkdir(VIDEO_LIBRARY_MEDIA_DIR, { recursive: true });
-  await fs.copyFile(job.outputPath, temporaryTarget);
-  await fs.rename(temporaryTarget, targetPath);
+  try {
+    await fs.copyFile(job.outputPath, temporaryTarget);
+    await fs.rename(temporaryTarget, targetPath);
+  } catch (error) {
+    try { await fs.unlink(temporaryTarget); } catch {}
+    throw error;
+  }
   const assetId = `media-proto05-anonymized-${hash.slice(0, 24)}`;
   const sourceId = `source-${assetId}`;
   const playableId = `video-${assetId}`;
@@ -1345,18 +1387,19 @@ async function persistDerivedPlayable(job, prepJob) {
 
 async function runHlsDerivation(job, prepJob) {
   job.status = "anonymisation"; job.progress = 35; job.updatedAt = new Date().toISOString();
-  let child; let sizeMonitor; const timeout = setTimeout(() => { job.timeout = true; try { job.process?.kill(); child?.kill(); } catch {} }, HLS_DERIVATION_TIMEOUT_MS);
+  let child; let sizeMonitor; let ffmpegLogStream; const timeout = setTimeout(() => { job.timeout = true; try { job.process?.kill(); child?.kill(); } catch {} }, HLS_DERIVATION_TIMEOUT_MS);
   try {
     await fs.mkdir(HLS_DERIVATION_ROOT, { recursive: true }); job.workspace = await fs.mkdtemp(path.join(HLS_DERIVATION_ROOT, `${job.id}-`)); job.outputPath = path.join(job.workspace, "derived.mp4");
     const ffmpeg = findFfmpeg(); const version = ffmpegVersion(ffmpeg); const blur = anonymizationBlurProfile(job.blurProfile); const filter = job.mode === "temporal" ? ffmpegTemporalBlurFilter(job.temporalMasks, blur) : ffmpegBlurFilter(job.masks, blur); const audioCodec = ffprobeAudioCodec(ffmpeg, prepJob.outputPath) === "aac" ? "copy" : "aac"; const args = ["-hide_banner", "-y", "-i", prepJob.outputPath, "-filter_complex", filter, "-map", "[outv]", "-map", "0:a?", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", audioCodec, "-movflags", "+faststart", job.outputPath]; job.metadata = { ffmpeg: version, method: job.method, mode: job.mode || "fixed", masks: job.masks, temporalMasks: job.temporalMasks || null, blur, filter, ffmpegArgs: args, audioCodec, inputFileName: "work.mp4" };
     const ffmpegLogPath = path.join(HLS_DERIVATION_ROOT, `${job.id}.ffmpeg.log`);
     const runtime = { executable: ffmpeg, cwd: process.cwd(), args, commandPowerShell: ffmpegPowerShellCommand(ffmpeg, args, process.cwd(), ffmpegLogPath), commands: [], logPath: ffmpegLogPath, startedAt: new Date().toISOString(), endedAt: null, pid: null, exitCode: null, lastMediaTimeMs: null, outputSizeBytes: 0, inputPath: prepJob.outputPath, outputPath: job.outputPath, stdout: "", stderr: "", error: null, env: { FFMPEG_PATH: process.env.FFMPEG_PATH || null, PROTO05_HLS_DERIVATION_TIMEOUT_MS: process.env.PROTO05_HLS_DERIVATION_TIMEOUT_MS || null } };
     job.ffmpegRuntime = runtime;
-    const ffmpegLogStream = fsSync.createWriteStream(ffmpegLogPath, { flags: "w", encoding: "utf8" });
+    ffmpegLogStream = fsSync.createWriteStream(ffmpegLogPath, { flags: "w", encoding: "utf8" });
     if (job.mode === "temporal" && Array.isArray(job.temporalSteps) && job.temporalSteps.length) {
       job.metadata = { ffmpeg: version, method: job.method, mode: "temporal", strategy: "local-regions-by-step", temporalSteps: job.temporalSteps, blur, audioCodec: null, inputFileName: "work.mp4" };
       await runTemporalLocalPipeline(job, prepJob, { ffmpeg, blur, runtime, logStream: ffmpegLogStream });
       ffmpegLogStream.end();
+      ffmpegLogStream = null;
       job.status = "validation"; job.progress = 80; await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath); const result = await persistDerivedPlayable(job, prepJob); await removeDerivationWorkspace(job); job.result = result; job.assetId = result.assetId; job.playableId = result.playableId; job.status = "terminé"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString(); job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
       return;
     }
@@ -1372,7 +1415,7 @@ async function runHlsDerivation(job, prepJob) {
     job.error = job.cancelRequested ? "Dérivation annulée." : error.message; await removeDerivationWorkspace(job); job.status = job.cancelRequested ? "annulé" : "échoué"; job.progress = 0; job.updatedAt = new Date().toISOString();
     // Une préparation valide reste réutilisable pour tester un autre profil.
     // Son nettoyage est assuré par l’expiration normale du job de préparation.
-  } finally { clearTimeout(timeout); if (sizeMonitor) clearInterval(sizeMonitor); delete job.process; delete job.pid; delete job.timeout; delete job.sizeLimit; if (job.status === "terminé") job.updatedAt = new Date().toISOString(); }
+  } finally { clearTimeout(timeout); if (sizeMonitor) clearInterval(sizeMonitor); if (ffmpegLogStream) ffmpegLogStream.end(); delete job.process; delete job.pid; delete job.timeout; delete job.sizeLimit; if (job.status === "terminé") job.updatedAt = new Date().toISOString(); }
 }
 
 async function cancelHlsDerivation(job) { if (!job || !["anonymisation", "validation"].includes(job.status)) return job; job.cancelRequested = true; job.status = "annulation"; job.updatedAt = new Date().toISOString(); if (job.process?.kill) job.process.kill(); return job; }
@@ -1422,7 +1465,9 @@ async function runHlsPreparation(job, manifest) {
     const stat = await fs.stat(job.outputPath);
     if (!stat.isFile() || stat.size === 0) throw new Error("FFmpeg n’a produit aucun fichier exploitable.");
     if (stat.size > HLS_PREPARATION_MAX_BYTES || job.sizeLimit) throw new Error("La préparation HLS dépasse la taille maximale autorisée.");
+    const info = ffprobeVideoInfo(ffmpeg, job.outputPath);
     job.status = "completed"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_PREPARATION_TTL_MS).toISOString(); job.metadata = { ...(job.metadata || {}), fileName: "work.mp4", sizeBytes: stat.size, workspaceId: path.basename(job.workspace), mimeType: "video/mp4" };
+    job.metadata = { ...job.metadata, durationMs: info.durationMs, width: info.width, height: info.height, fps: info.fps, nbFrames: info.nbFrames };
   } catch (error) {
     job.error = job.cancelRequested ? "Préparation annulée." : error.message;
     await removePreparationWorkspace(job);
@@ -1758,10 +1803,11 @@ async function handleHlsGateway(request, response, url) {
   for (const key of ["range", "if-range"]) if (request.headers[key]) headers[key] = request.headers[key];
   let upstream;
   try {
-    upstream = await fetch(new URL(url.pathname + url.search, HUB_HLS_ORIGIN), { method: request.method, headers, redirect: "manual", signal: controller.signal });
+    const relativeHlsPath = url.pathname.slice(`${HLS_PREFIX}uga-37004/`.length);
+    upstream = await fetch(new URL(relativeHlsPath + url.search, UGA_HLS_MEDIA_ORIGIN), { method: request.method, headers, redirect: "manual", signal: controller.signal });
   } catch (error) {
     if (!controller.signal.aborted) console.error(`[hls-gateway] ${error.message}`);
-    if (!response.headersSent) sendJson(response, 502, { error: "Le proxy HLS IC-Hub est indisponible." });
+    if (!response.headersSent) sendJson(response, 502, { error: "La source HLS UGA est indisponible." });
     return true;
   }
   if (upstream.status >= 300 && upstream.status < 400) {

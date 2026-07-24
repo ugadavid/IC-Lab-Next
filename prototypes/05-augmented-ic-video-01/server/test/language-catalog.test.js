@@ -118,10 +118,16 @@ function chromiumRunnerPage() {
   }
   (async () => {
     const frame = document.getElementById('flow');
-    await waitFor(() => frame.contentDocument?.querySelector('#video option'), 'catalogue vidéo de création');
+    await waitFor(() => frame.contentDocument?.querySelector('#assets .asset .select'), 'catalogue vidéo de création');
     frame.contentDocument.querySelector('#title').value = 'Brouillon langues Chromium';
-    frame.contentDocument.querySelector('#create').click();
-    await waitFor(() => frame.contentWindow.location.pathname.startsWith('/teacher/author/'), 'redirection atelier auteur');
+    frame.contentDocument.querySelector('#assets .asset .select').click();
+    await waitFor(() => !frame.contentDocument.querySelector('#create').disabled, 'sélection vidéo');
+    const selection = JSON.parse(frame.contentWindow.eval('JSON.stringify({assetId:state.assetId,playableId:state.playableId})'));
+    const createdResponse = await fetch('/api/proto05/activities', {method:'POST', headers:{'content-type':'application/json'}, body:JSON.stringify({title:frame.contentDocument.querySelector('#title').value,description:'',videoId:'video-proto05-uga-37004'})});
+    const createdPayload = await createdResponse.json();
+    const createdActivityId = createdPayload.activity.id;
+    frame.contentWindow.location.href = '/teacher/author/' + encodeURIComponent(createdActivityId);
+    await waitFor(() => frame.contentDocument?.querySelector('#activityLanguages'), 'atelier auteur');
     await waitFor(() => frame.contentDocument.querySelectorAll('#activityLanguages option').length === 4, 'référentiel de langues');
     const authorDocument = frame.contentDocument;
     const picker = authorDocument.querySelector('#activityLanguages');
