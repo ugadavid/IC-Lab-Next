@@ -244,7 +244,7 @@ function chromiumRunnerPage(activityId) {
     const advancedLoad = new Promise(resolve => frame.addEventListener('load', resolve, { once: true }));
     frame.contentWindow.location.href = '/teacher/author/${activityId}';
     await advancedLoad;
-    await waitFor(() => frame.contentDocument?.querySelector('#newSpeakerLabel') && frame.contentWindow.eval('Boolean(state.activity)'), 'chargement de l’atelier avancé');
+    await waitFor(() => frame.contentDocument?.querySelector('#newSpeakerLabel') && frame.contentWindow.eval('Boolean(state.activity)'), 'chargement de l’atelier guidé');
     const advancedDocument = frame.contentDocument;
     const advancedExistingIdVisible = advancedDocument.body.innerText.includes(generatedId);
     const advancedTechnicalInputPresent = Boolean(advancedDocument.querySelector('#newSpeakerId, [aria-label="Identifiant du locuteur"]'));

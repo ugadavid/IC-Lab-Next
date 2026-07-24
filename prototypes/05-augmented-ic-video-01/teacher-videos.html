@@ -139,9 +139,5 @@ setInterval(()=>{document.querySelectorAll('[data-derive-preparation]').forEach(
 <script>
 proto05AddMaskEditorAction=function(preparationButton,jobId){const actions=preparationButton?.parentElement;if(!actions||actions.querySelector('[data-edit-masks]'))return;const button=document.createElement('button');button.type='button';button.className='secondary';button.dataset.editMasks=jobId;button.textContent='Éditer les masques';button.onclick=()=>{location.href=`/teacher/anonymization/${encodeURIComponent(jobId)}`};actions.appendChild(button);const old=actions.querySelector('[data-derive-preparation]');if(old)old.hidden=true};
 </script>
-<script>
-function proto05AddAdvancedMaskAction(){document.querySelectorAll('[data-edit-masks]').forEach(button=>{const actions=button.parentElement;if(!actions||actions.querySelector('[data-edit-advanced-masks]'))return;const advanced=document.createElement('button');advanced.type='button';advanced.className='secondary';advanced.dataset.editAdvancedMasks=button.dataset.editMasks;advanced.textContent='Ouvrir l’atelier avancé';advanced.onclick=()=>{location.href=`/teacher/anonymization-advanced/${encodeURIComponent(button.dataset.editMasks)}`};actions.appendChild(advanced)})}
-setInterval(proto05AddAdvancedMaskAction,500);proto05AddAdvancedMaskAction();
-</script>
 </body>
 </html>

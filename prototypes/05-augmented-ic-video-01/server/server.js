@@ -22,7 +22,7 @@ const {
 } = require("./library-contract");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.30";
+const VERSION = "0.1.31";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -1864,10 +1864,6 @@ async function serveStatic(request, response, url) {
     const target = path.join(ROOT_DIR, "teacher-anonymization.html"); const file = await fs.readFile(target);
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
-  }
-  if (/^\/teacher\/anonymization-advanced\/[^/]+$/.test(url.pathname)) {
-    const target = path.join(ROOT_DIR, "teacher-anonymization-advanced.html"); const file = await fs.readFile(target);
-    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }); response.end(file); return true;
   }
   if (/^\/teacher\/author\/[^/]+$/.test(url.pathname)) {
     const target = path.join(ROOT_DIR, "teacher-author.html"); const file = await fs.readFile(target);

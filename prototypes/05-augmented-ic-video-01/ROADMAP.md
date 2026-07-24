@@ -35,6 +35,10 @@ La cible n’est pas seulement un moteur capable de produire une vidéo anonymis
 
 Les missions 088 à 093 ont profondément stabilisé la chaîne d’anonymisation de Proto05.
 
+Depuis la mission 096, l’atelier guidé est l’unique atelier canonique
+d’anonymisation. L’ancien atelier avancé temporel a été retiré ; l’espace
+général d’auteur avancé reste distinct et n’est pas concerné par cette décision.
+
 ### 3.1. Modèle temporel
 
 - Les masques sont organisés en collections associées à des étapes temporelles.

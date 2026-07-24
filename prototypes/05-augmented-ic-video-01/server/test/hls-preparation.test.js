@@ -123,13 +123,8 @@ test("préparation HLS temporaire, métadonnées, annulation et nettoyage", asyn
   const workspacePage = await fetch(`${server.baseUrl}/teacher/anonymization/${started.job.id}`);
   assert.equal(workspacePage.status, 200);
   assert.match(await workspacePage.text(), /Édition des masques/);
-  const advancedPage = await fetch(`${server.baseUrl}/teacher/anonymization-advanced/${started.job.id}`);
-  assert.equal(advancedPage.status, 200);
-  const advancedHtml = await advancedPage.text();
-  assert.match(advancedHtml, /Atelier avanc/);
-  assert.match(advancedHtml, /function applyTemporalRect\s*\(/);
-  assert.match(advancedHtml, /function finishDrag\s*\(/);
-  assert.doesNotMatch(advancedHtml, /applyTemporalRect\s*=\s*undefined/);
+  const removedAdvancedPage = await fetch(`${server.baseUrl}/teacher/anonymization-advanced/${started.job.id}`);
+  assert.equal(removedAdvancedPage.status, 404);
   const manualTimeConfiguration = [{ id: "manual-times", startMs: 0, endMs: 3100, keyframes: [{ time: 3000, x: 0.1, y: 0.1, width: 0.2, height: 0.2 }, { time: 3001, x: 0.2, y: 0.2, width: 0.2, height: 0.2 }] }];
   const savedManualTimes = await fetch(`${server.baseUrl}/api/proto05/library/hls-preparations/${started.job.id}`, { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({ temporalMasks: manualTimeConfiguration }) });
   assert.equal(savedManualTimes.status, 200);
@@ -254,22 +249,6 @@ test("dérivation locale accepte une fixture sans audio, rationnelle, courte et 
   assert.ok(Number(streams.find(stream => stream.codec_type === "video")?.nb_frames) > 0);
   assert.equal(fs.readFileSync(activitiesFile, "utf8"), activitiesBefore);
   assert.equal(fs.readFileSync(libraryFile, "utf8"), libraryBefore);
-});
-
-test("atelier avancé isole chaque geste par masque, image-clé et poignée", async t => {
-  const server = await startTemporaryProto05Server(JSON.parse(fs.readFileSync(activitiesFile, "utf8")));
-  t.after(() => server.cleanup());
-  const response = await fetch(`${server.baseUrl}/teacher/anonymization-advanced/test-multi-mask-job`);
-  assert.equal(response.status, 200);
-  const html = await response.text();
-  assert.match(html, /maskId:item\.id/);
-  assert.match(html, /keyframeId:selectedKey\.\__id/);
-  assert.match(html, /handle:handleName/);
-  assert.match(html, /gesture\.maskId!==item\.id/);
-  assert.match(html, /gesture\.keyframeId!==selectedKey\?\.\__id/);
-  assert.match(html, /rect\.style\.pointerEvents=isSelected&&selectedKey\?'auto':'none'/);
-  assert.match(html, /onpointercancel=\(\)=>finishMultiMaskDrag\(true\)/);
-  assert.match(html, /onlostpointercapture=\(\)=>\{if\(drag\)finishMultiMaskDrag\(true\)\}/);
 });
 
 test("atelier simple expose les étapes temporelles par collections", async t => {
