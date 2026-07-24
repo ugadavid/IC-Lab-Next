@@ -29,7 +29,9 @@
     let youtubePlayer = null;
     let currentProvider = null;
     let timeTicker = null;
+    let pendingLoadReject = null;
     const facade = {
+      lastError: null,
       get currentTime() { return currentProvider === "youtube" ? (youtubePlayer?.getCurrentTime?.() || 0) : (nativeVideo?.currentTime || 0); },
       set currentTime(value) { facade.seek(value); },
       get duration() { return currentProvider === "youtube" ? (youtubePlayer?.getDuration?.() || 0) : (nativeVideo?.duration || 0); },
@@ -40,26 +42,70 @@
       pause() { return currentProvider === "youtube" ? youtubePlayer?.pauseVideo() : nativeVideo?.pause(); },
       load() { nativeVideo?.load(); },
       seek(seconds) { if (currentProvider === "youtube") youtubePlayer?.seekTo(Math.max(0, seconds), true); else if (nativeVideo) nativeVideo.currentTime = Math.max(0, seconds); },
-      emit(type) { listeners.get(type)?.forEach(handler => handler()); }
+      emit(type, detail) { listeners.get(type)?.forEach(handler => handler(detail)); }
     };
-    function reset() { clearInterval(timeTicker); timeTicker = null; hls?.destroy(); hls = null; youtubePlayer?.destroy(); youtubePlayer = null; nativeVideo?.remove(); nativeVideo = null; container.classList.remove("youtube-active"); container.replaceChildren(); }
+    function reset() {
+      clearInterval(timeTicker); timeTicker = null;
+      if (pendingLoadReject) {
+        const error = new Error("Chargement annulé.");
+        error.name = "AbortError";
+        pendingLoadReject(error);
+        pendingLoadReject = null;
+      }
+      hls?.destroy(); hls = null; youtubePlayer?.destroy(); youtubePlayer = null;
+      nativeVideo?.remove(); nativeVideo = null; facade.lastError = null;
+      container.classList.remove("youtube-active"); container.replaceChildren();
+    }
     function attachNative(source, useHls = true) {
       nativeVideo = document.createElement("video");
       nativeVideo.controls = true; nativeVideo.preload = "metadata"; nativeVideo.className = "video";
       ["loadstart", "loadedmetadata", "durationchange", "canplay", "timeupdate", "playing", "pause", "waiting", "stalled", "error"].forEach(type => nativeVideo.addEventListener(type, () => facade.emit(type)));
       container.append(nativeVideo);
       if (useHls && window.Hls && Hls.isSupported()) {
-        hls = new Hls();
-        hls.on(Hls.Events.MEDIA_ATTACHED, () => hls.loadSource(source));
-        hls.on(Hls.Events.MANIFEST_PARSED, () => facade.emit("canplay"));
-        hls.on(Hls.Events.ERROR, (_event, data) => { if (data.fatal) facade.emit("error"); else if (data.type === Hls.ErrorTypes.NETWORK_ERROR) facade.emit("waiting"); });
-        hls.attachMedia(nativeVideo);
+        return new Promise((resolve, reject) => {
+          let settled = false;
+          const settle = (callback, value) => {
+            if (settled) return;
+            settled = true;
+            pendingLoadReject = null;
+            callback(value);
+          };
+          pendingLoadReject = error => settle(reject, error);
+          const instance = hls = new Hls();
+          instance.on(Hls.Events.MEDIA_ATTACHED, () => instance.loadSource(source));
+          instance.on(Hls.Events.MANIFEST_PARSED, () => {
+            facade.emit("canplay");
+            settle(resolve);
+          });
+          instance.on(Hls.Events.ERROR, (_event, data = {}) => {
+            if (!data.fatal) {
+              if (data.type === Hls.ErrorTypes.NETWORK_ERROR) facade.emit("waiting", data);
+              return;
+            }
+            const status = data.response?.code || data.networkDetails?.status;
+            const detail = data.details || data.type || "erreur inconnue";
+            const error = new Error(`Lecture HLS impossible (${detail}${status ? `, HTTP ${status}` : ""}).`);
+            error.hlsData = data;
+            facade.lastError = error;
+            facade.emit("error", error);
+            settle(reject, error);
+          });
+          instance.attachMedia(nativeVideo);
+        });
       } else if (!useHls || nativeVideo.canPlayType("application/vnd.apple.mpegurl")) { nativeVideo.src = source; nativeVideo.load(); }
-      else facade.emit("error");
+      else {
+        const error = new Error("La lecture HLS n’est pas prise en charge par ce navigateur.");
+        facade.lastError = error;
+        facade.emit("error", error);
+        return Promise.reject(error);
+      }
+      return Promise.resolve();
     }
     async function load(video) {
       reset(); const hlsSource = video.url || video.proxyUrl; currentProvider = video.provider || (hlsSource ? "uga" : null);
-      if ((currentProvider === "uga" || currentProvider === "local" || currentProvider === "direct") && hlsSource) { attachNative(hlsSource, currentProvider === "uga"); return; }
+      if ((currentProvider === "uga" || currentProvider === "local" || currentProvider === "direct") && hlsSource) {
+        return attachNative(hlsSource, currentProvider === "uga" || video.kind === "hls" || Boolean(video.manifestUrl));
+      }
       if (currentProvider !== "youtube" || !video.videoId || !video.embedUrl) throw new Error("La source vidéo n’est pas autorisée.");
       const YT = await loadYouTubeApi();
       container.classList.add("youtube-active");

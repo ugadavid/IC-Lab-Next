@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-07-24T20:04:29.530Z",
+  "updatedAt": "2026-07-24T20:54:14.168Z",
   "assets": [
     {
       "id": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
@@ -1217,6 +1217,50 @@
       "rights": {},
       "createdAt": "2026-07-24T07:05:31.666Z",
       "updatedAt": "2026-07-24T07:05:31.666Z"
+    },
+    {
+      "id": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "title": "yop",
+      "lifecycle": "active",
+      "folderId": null,
+      "defaultPlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "parentAssetId": null,
+      "familyRootAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "derivationTypes": [],
+      "tagIds": [],
+      "provenance": {
+        "creationType": "catalog-migration",
+        "provider": "direct",
+        "originalFileName": null,
+        "originReference": null,
+        "parentAssetId": null,
+        "familyRootAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "historical": {
+          "kind": "remote-reference",
+          "importedAt": "2026-07-24T20:54:14.167Z"
+        },
+        "kind": "remote-reference",
+        "importedAt": "2026-07-24T20:54:14.167Z"
+      },
+      "technicalMetadata": {
+        "durationMs": null,
+        "width": null,
+        "height": null,
+        "frameRate": null,
+        "videoCodec": null,
+        "audioCodec": null,
+        "hasAudio": null,
+        "mimeType": "application/vnd.apple.mpegurl",
+        "sizeBytes": null,
+        "sha256": null,
+        "analyzedAt": "2026-07-24T20:54:04.540Z",
+        "analyzer": null,
+        "analyzerVersion": null,
+        "error": null
+      },
+      "rights": {},
+      "createdAt": "2026-07-24T20:54:14.167Z",
+      "updatedAt": "2026-07-24T20:54:14.167Z"
     }
   ],
   "sources": [
@@ -2092,6 +2136,31 @@
         }
       },
       "createdAt": "2026-07-24T07:05:31.666Z"
+    },
+    {
+      "id": "source-media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "kind": "hls",
+      "provider": "direct",
+      "origin": {
+        "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+        "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+        "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+        "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+        "originalFileName": null
+      },
+      "transport": "hls",
+      "mimeType": "application/vnd.apple.mpegurl",
+      "provenance": {
+        "legacyId": "source-media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "historical": {
+          "kind": "remote-reference",
+          "importedAt": "2026-07-24T20:54:14.167Z"
+        },
+        "kind": "remote-reference",
+        "importedAt": "2026-07-24T20:54:14.167Z"
+      },
+      "createdAt": "2026-07-24T20:54:14.167Z"
     }
   ],
   "playables": [
@@ -2607,6 +2676,46 @@
       },
       "createdAt": "2026-07-24T07:05:31.666Z",
       "updatedAt": "2026-07-24T07:05:31.666Z"
+    },
+    {
+      "id": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "sourceId": "source-media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "kind": "hls",
+      "provider": "direct",
+      "availability": "unknown",
+      "availabilityReason": null,
+      "location": {
+        "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+        "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8"
+      },
+      "technicalMetadata": {
+        "durationMs": null,
+        "width": null,
+        "height": null,
+        "frameRate": null,
+        "videoCodec": null,
+        "audioCodec": null,
+        "hasAudio": null,
+        "mimeType": "application/vnd.apple.mpegurl",
+        "sizeBytes": null,
+        "sha256": null,
+        "analyzedAt": "2026-07-24T20:54:04.540Z",
+        "analyzer": null,
+        "analyzerVersion": null,
+        "error": null
+      },
+      "provenance": {
+        "legacyId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "historical": {
+          "kind": "remote-reference",
+          "importedAt": "2026-07-24T20:54:14.167Z"
+        },
+        "kind": "remote-reference",
+        "importedAt": "2026-07-24T20:54:14.167Z"
+      },
+      "createdAt": "2026-07-24T20:54:14.167Z",
+      "updatedAt": "2026-07-24T20:54:14.167Z"
     }
   ],
   "treatments": [],

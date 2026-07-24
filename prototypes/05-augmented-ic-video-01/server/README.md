@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.33
+# Serveur autonome du Prototype 05 — 0.1.34
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -16,6 +16,25 @@ Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `DELETE /api/proto05/activities/:id`.
 Les méthodes non prévues sont refusées (`405`) et les chemins traversants sont
 rejetés.
+
+## Références vidéo distantes (0.1.34)
+
+La Library peut analyser puis ajouter une référence HTTP(S) vers une vidéo
+directe ou un manifeste HLS, sans télécharger le média. L’analyse et la création
+sont deux opérations distinctes :
+
+- `POST /api/proto05/library/remote-reference/analyze` vérifie le protocole,
+  les résolutions DNS et redirections, la réponse HTTP et le format détecté ;
+- `POST /api/proto05/library/remote-reference/confirm` consomme le jeton
+  temporaire d’analyse et crée l’asset, la source et le playable via le writer
+  canonique.
+
+Les adresses locales, privées, réservées, link-local et les URL contenant des
+identifiants sont refusées. L’analyse est bornée en taille, en durée et en
+redirections. Elle ne renvoie ni playlist brute, ni en-têtes, cookies ou
+secrets. La query string de l’URL finale reste intacte lorsqu’elle est nécessaire
+à la lecture. Une référence distante ne possède pas de `storageKey` et ne
+propose donc jamais de suppression physique.
 
 Les écritures locales couvrent la création d’un brouillon, la duplication, la
 suppression et les sauvegardes de métadonnées ou d’atelier auteur. Elles

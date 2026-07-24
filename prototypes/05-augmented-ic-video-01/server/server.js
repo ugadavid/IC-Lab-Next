@@ -5,6 +5,7 @@ const path = require("node:path");
 const os = require("node:os");
 const crypto = require("node:crypto");
 const dns = require("node:dns").promises;
+const net = require("node:net");
 const { spawn, spawnSync } = require("node:child_process");
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
@@ -28,7 +29,7 @@ const {
 } = require("./media-library-runtime");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.33";
+const VERSION = "0.1.34";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -38,6 +39,12 @@ const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
 const VIDEO_LIBRARY_MEDIA_DIR = path.join(DATA_DIR, "video-library-media");
 const REMOTE_COPY_MAX_BYTES = Number(process.env.PROTO05_REMOTE_COPY_MAX_BYTES || 1024 * 1024 * 1024);
 const REMOTE_COPY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_COPY_TIMEOUT_MS || 120000);
+const REMOTE_REFERENCE_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_REFERENCE_TIMEOUT_MS || 8000);
+const REMOTE_REFERENCE_MAX_BYTES = Number(process.env.PROTO05_REMOTE_REFERENCE_MAX_BYTES || 256 * 1024);
+const REMOTE_REFERENCE_TOKEN_TTL_MS = Number(process.env.PROTO05_REMOTE_REFERENCE_TOKEN_TTL_MS || 10 * 60 * 1000);
+const REMOTE_REFERENCE_ANALYSES = new Map();
+const REMOTE_HLS_GATEWAY_PREFIX = "/api/proto05/library/remote-hls/";
+const REMOTE_HLS_GATEWAY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_HLS_GATEWAY_TIMEOUT_MS || 30000);
 const HLS_PREPARATION_ROOT = path.join(os.tmpdir(), "proto05-hls-preparations");
 const HLS_PREPARATION_TIMEOUT_MS = Number(process.env.PROTO05_HLS_PREPARATION_TIMEOUT_MS || 15 * 60 * 1000);
 const HLS_PREPARATION_TTL_MS = Number(process.env.PROTO05_HLS_PREPARATION_TTL_MS || 30 * 60 * 1000);
@@ -401,14 +408,15 @@ function activityVideoFromCatalog(video, current = {}) {
 }
 
 function activityVideoFromLibrary(asset, playable, current = {}) {
-  const projection = { ...current, id: playable.id, title: asset.title, kind: playable.kind, durationMs: playable.durationMs ?? null };
-  if (playable.provider) projection.provider = playable.provider;
-  if (playable.videoId) { projection.videoId = playable.videoId; projection.embedUrl = playable.embedUrl; }
-  if (playable.url) projection.url = playable.url;
-  if (playable.manifestUrl) projection.manifestUrl = playable.manifestUrl;
-  if (playable.originUrl) projection.sourceUrl = playable.originUrl;
-  if (playable.proxyUrl) projection.proxyUrl = playable.proxyUrl;
-  if (playable.storageKey) projection.storageKey = playable.storageKey;
+  const clientPlayable = playableForClient(playable);
+  const projection = { ...current, id: clientPlayable.id, title: asset.title, kind: clientPlayable.kind, durationMs: clientPlayable.durationMs ?? null };
+  if (clientPlayable.provider) projection.provider = clientPlayable.provider;
+  if (clientPlayable.videoId) { projection.videoId = clientPlayable.videoId; projection.embedUrl = clientPlayable.embedUrl; }
+  if (clientPlayable.url) projection.url = clientPlayable.url;
+  if (clientPlayable.manifestUrl) projection.manifestUrl = clientPlayable.manifestUrl;
+  if (clientPlayable.originUrl) projection.sourceUrl = clientPlayable.originUrl;
+  if (clientPlayable.proxyUrl) projection.proxyUrl = clientPlayable.proxyUrl;
+  if (clientPlayable.storageKey) projection.storageKey = clientPlayable.storageKey;
   return projection;
 }
 
@@ -866,11 +874,38 @@ function libraryAssetDetails(asset, usage = null) {
   return {
     ...asset,
     sources,
-    playables,
+    playables: playables.map(playableForClient),
     deletion: { canDeleteFile: localCandidates.length === 1, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
     ...(usage ? { usage } : {}),
     folders: VIDEO_LIBRARY.folders || [],
     tags: VIDEO_LIBRARY.tags || []
+  };
+}
+
+function remoteHlsManifestUrl(playable) {
+  if (playable?.kind !== "hls" || playable?.provider !== "direct") return null;
+  const value = playable.manifestUrl || playable.url;
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url : null;
+  } catch { return null; }
+}
+
+function remoteHlsGatewayUrl(playable) {
+  const manifest = remoteHlsManifestUrl(playable);
+  if (!manifest) return null;
+  const fileName = path.posix.basename(manifest.pathname) || "manifest.m3u8";
+  return `${REMOTE_HLS_GATEWAY_PREFIX}${encodeURIComponent(playable.id)}/${encodeURIComponent(fileName)}`;
+}
+
+function playableForClient(playable) {
+  const gatewayUrl = remoteHlsGatewayUrl(playable);
+  if (!gatewayUrl) return playable;
+  return {
+    ...playable,
+    originUrl: playable.originUrl || playable.manifestUrl || playable.url,
+    url: gatewayUrl,
+    manifestUrl: gatewayUrl
   };
 }
 
@@ -1112,22 +1147,249 @@ async function importLocalLibraryMedia(request, url) {
 }
 
 function isPrivateAddress(address) {
-  const value = String(address || "").toLowerCase();
-  if (value === "localhost" || value === "::1" || value === "0.0.0.0") return true;
-  if (/^127\./.test(value) || /^10\./.test(value) || /^192\.168\./.test(value) || /^169\.254\./.test(value)) return true;
-  const octets = value.split(".").map(Number);
-  if (octets.length === 4 && octets.every(Number.isInteger)) return octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31;
-  return value === "::" || value.startsWith("fc") || value.startsWith("fd") || value.startsWith("fe80:") || value.startsWith("::ffff:127.") || value.startsWith("::ffff:10.") || value.startsWith("::ffff:192.168.");
+  const value = String(address || "").toLowerCase().split("%", 1)[0];
+  if (net.isIPv4(value)) {
+    const [a, b, c] = value.split(".").map(Number);
+    return a === 0 || a === 10 || a === 127 || a >= 224
+      || (a === 100 && b >= 64 && b <= 127)
+      || (a === 169 && b === 254)
+      || (a === 172 && b >= 16 && b <= 31)
+      || (a === 192 && b === 0 && c === 0)
+      || (a === 192 && b === 0 && c === 2)
+      || (a === 192 && b === 88 && c === 99)
+      || (a === 192 && b === 168)
+      || (a === 198 && (b === 18 || b === 19))
+      || (a === 198 && b === 51 && c === 100)
+      || (a === 203 && b === 0 && c === 113);
+  }
+  if (!net.isIPv6(value)) return true;
+  if (value.startsWith("::ffff:")) {
+    const mapped = value.slice(7);
+    if (net.isIPv4(mapped)) return isPrivateAddress(mapped);
+    const parts = mapped.split(":");
+    if (parts.length === 2 && parts.every(part => /^[0-9a-f]{1,4}$/.test(part))) {
+      const high = Number.parseInt(parts[0], 16);
+      const low = Number.parseInt(parts[1], 16);
+      return isPrivateAddress(`${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`);
+    }
+    return true;
+  }
+  const [first = "", second = ""] = value.split(":");
+  const secondValue = Number.parseInt(second || "0", 16);
+  return value === "::" || value === "::1"
+    || value.startsWith("fc") || value.startsWith("fd")
+    || /^fe[89ab]/.test(value)
+    || value.startsWith("ff")
+    || value.startsWith("64:ff9b:")
+    || value.startsWith("100:")
+    || value.startsWith("2002:")
+    || (first === "2001" && (secondValue <= 0x01ff || secondValue === 0x0db8));
 }
 
 async function validateRemoteCopyUrl(value, options = {}) {
   let current;
   try { current = new URL(String(value || "")); } catch { throw new Error("L’URL directe est invalide."); }
   if (!["http:", "https:"].includes(current.protocol)) throw new Error("L’URL directe doit utiliser HTTP ou HTTPS.");
-  if (current.username || current.password || (!options.allowHls && /\.m3u8$/i.test(current.pathname))) throw new Error("L’URL doit désigner un média direct, pas un manifeste HLS.");
-  const addresses = await dns.lookup(current.hostname, { all: true });
-  if (!addresses.length || (process.env.PROTO05_TEST_ALLOW_PRIVATE_REMOTE !== "1" && addresses.some(item => isPrivateAddress(item.address)))) throw new Error("L’URL ne doit pas viser une adresse privée ou interne.");
+  if (current.username || current.password) throw new Error("L’URL ne doit pas contenir d’identifiants.");
+  if (!options.allowHls && /\.m3u8$/i.test(current.pathname)) throw new Error("L’URL doit désigner un média direct, pas un manifeste HLS.");
+  const hostname = current.hostname.replace(/^\[|\]$/g, "").toLowerCase();
+  if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local") || hostname.endsWith(".internal")) throw new Error("L’URL ne doit pas viser une adresse privée ou interne.");
+  let addresses;
+  try { addresses = await dns.lookup(hostname, { all: true }); }
+  catch { throw new Error("Le domaine distant est introuvable."); }
+  const testAllowedHosts = new Set(String(process.env.PROTO05_TEST_ALLOWED_REMOTE_HOSTS || "").split(",").map(item => item.trim()).filter(Boolean));
+  const allowPrivateForTest = process.env.PROTO05_TEST_ALLOW_PRIVATE_REMOTE === "1" || testAllowedHosts.has(hostname);
+  if (!addresses.length || (!allowPrivateForTest && addresses.some(item => isPrivateAddress(item.address)))) throw new Error("L’URL ne doit pas viser une adresse privée ou interne.");
   return current;
+}
+
+function remoteReferenceDuplicate(originalUrl, finalUrl) {
+  const candidates = new Set([originalUrl, finalUrl]);
+  const source = VIDEO_LIBRARY.sources.find(item => [
+    item.url, item.originUrl, item.sourceUrl, item.manifestUrl,
+    item.origin?.url, item.origin?.originUrl, item.origin?.sourceUrl, item.origin?.manifestUrl
+  ].filter(Boolean).some(value => candidates.has(value)));
+  if (!source) return null;
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === source.assetId);
+  const playable = VIDEO_LIBRARY.playables.find(item => item.sourceId === source.id);
+  return asset && playable ? { asset, playable } : null;
+}
+
+async function remoteReferenceFetch(startUrl, method, signal) {
+  let current = await validateRemoteCopyUrl(startUrl, { allowHls: true });
+  const redirects = [];
+  for (let hop = 0; hop <= 5; hop += 1) {
+    let response;
+    try {
+      response = await fetch(current, {
+        method,
+        redirect: "manual",
+        signal,
+        headers: method === "GET" ? { range: `bytes=0-${REMOTE_REFERENCE_MAX_BYTES}` } : undefined
+      });
+    } catch (error) {
+      if (signal.aborted) throw new Error("L’analyse distante a dépassé le délai maximal.");
+      throw new Error(`La ressource distante est inaccessible : ${error.message}`);
+    }
+    if (response.status < 300 || response.status >= 400) return { response, finalUrl: current, redirects };
+    if (hop === 5) throw new Error("La ressource distante comporte trop de redirections.");
+    const location = response.headers.get("location");
+    if (!location) throw new Error("La ressource distante renvoie une redirection sans destination.");
+    current = await validateRemoteCopyUrl(new URL(location, current), { allowHls: true });
+    redirects.push(current.toString());
+  }
+  throw new Error("La ressource distante comporte trop de redirections.");
+}
+
+async function boundedRemoteText(response) {
+  if (!response.body) throw new Error("La ressource distante est vide.");
+  const reader = response.body.getReader();
+  const chunks = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > REMOTE_REFERENCE_MAX_BYTES) throw new Error("La réponse distante dépasse la limite d’analyse.");
+      chunks.push(Buffer.from(value));
+    }
+  } finally {
+    try { await reader.cancel(); } catch {}
+  }
+  if (!size) throw new Error("La ressource distante est vide.");
+  return Buffer.concat(chunks).toString("utf8");
+}
+
+function hlsReferenceType(text) {
+  const normalized = String(text || "").replace(/^\uFEFF/, "").trim();
+  if (!normalized.startsWith("#EXTM3U")) return null;
+  if (/#EXT-X-STREAM-INF\s*:/i.test(normalized)) return "master";
+  if (/#EXTINF\s*:/i.test(normalized) || /#EXT-X-TARGETDURATION\s*:/i.test(normalized)) return "media";
+  return "invalid";
+}
+
+async function analyzeRemoteLibraryReference(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
+  const original = await validateRemoteCopyUrl(payload.url, { allowHls: true });
+  const title = typeof payload.title === "string" ? payload.title.trim().slice(0, 500) : "";
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REMOTE_REFERENCE_TIMEOUT_MS);
+  try {
+    let result = await remoteReferenceFetch(original, "HEAD", controller.signal);
+    if ([405, 501].includes(result.response.status)) result = await remoteReferenceFetch(original, "GET", controller.signal);
+    if (!result.response.ok) {
+      if ([401, 403].includes(result.response.status)) throw new Error("La ressource distante exige une authentification ou refuse l’accès.");
+      throw new Error(`Réponse HTTP distante invalide : ${result.response.status}.`);
+    }
+    let contentType = (result.response.headers.get("content-type") || "").split(";", 1)[0].trim().toLowerCase();
+    const directMime = contentType.startsWith("video/");
+    let kind = result.response.body === null && directMime ? "direct-url" : null;
+    let playlistType = null;
+    if (!kind) {
+      if (result.response.body === null || result.response.bodyUsed) result = await remoteReferenceFetch(result.finalUrl, "GET", controller.signal);
+      if (!result.response.ok) throw new Error(`Réponse HTTP distante invalide : ${result.response.status}.`);
+      contentType = (result.response.headers.get("content-type") || contentType).split(";", 1)[0].trim().toLowerCase();
+      if (contentType.startsWith("text/html")) throw new Error("La ressource distante est une page HTML, pas une vidéo.");
+      if (contentType.startsWith("video/")) {
+        kind = "direct-url";
+        try { await result.response.body?.cancel(); } catch {}
+      } else {
+        playlistType = hlsReferenceType(await boundedRemoteText(result.response));
+        if (!playlistType || playlistType === "invalid") throw new Error("La ressource distante n’est ni une vidéo directe ni un manifeste HLS valide.");
+        kind = "hls";
+        if (!contentType || contentType === "application/octet-stream" || contentType.startsWith("text/")) contentType = "application/vnd.apple.mpegurl";
+      }
+    }
+    const originalUrl = original.toString();
+    const finalUrl = result.finalUrl.toString();
+    const duplicate = remoteReferenceDuplicate(originalUrl, finalUrl);
+    const token = crypto.randomBytes(24).toString("base64url");
+    const analysis = {
+      token, title, originalUrl, finalUrl, redirects: result.redirects,
+      kind, playlistType, contentType: contentType || (kind === "hls" ? "application/vnd.apple.mpegurl" : "video/*"),
+      domain: result.finalUrl.hostname, analyzedAt: new Date().toISOString(),
+      expiresAt: Date.now() + REMOTE_REFERENCE_TOKEN_TTL_MS
+    };
+    REMOTE_REFERENCE_ANALYSES.set(token, analysis);
+    for (const [key, value] of REMOTE_REFERENCE_ANALYSES) if (value.expiresAt <= Date.now()) REMOTE_REFERENCE_ANALYSES.delete(key);
+    return {
+      token,
+      summary: {
+        kind, playlistType, contentType: analysis.contentType, domain: analysis.domain,
+        originalUrl, finalUrl, redirects: analysis.redirects,
+        warning: "Référence distante : aucun fichier n’est copié. La lecture dépendra de cette URL.",
+        duplicate: duplicate ? { assetId: duplicate.asset.id, title: duplicate.asset.title } : null
+      }
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function confirmRemoteLibraryReference(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
+  const token = typeof payload.token === "string" ? payload.token : "";
+  const analysis = REMOTE_REFERENCE_ANALYSES.get(token);
+  if (!analysis || analysis.expiresAt <= Date.now()) {
+    REMOTE_REFERENCE_ANALYSES.delete(token);
+    const error = new Error("Cette analyse a expiré. Analysez de nouveau l’URL.");
+    error.statusCode = 409;
+    throw error;
+  }
+  if (analysis.confirming) {
+    const error = new Error("Cette référence est déjà en cours d’ajout.");
+    error.statusCode = 409;
+    throw error;
+  }
+  analysis.confirming = true;
+  const duplicate = remoteReferenceDuplicate(analysis.originalUrl, analysis.finalUrl);
+  if (duplicate) {
+    REMOTE_REFERENCE_ANALYSES.delete(token);
+    return { duplicate: true, asset: libraryAssetDetails(duplicate.asset), assetId: duplicate.asset.id, playableId: duplicate.playable.id };
+  }
+  const createdAt = new Date().toISOString();
+  const identity = crypto.createHash("sha256").update(`${analysis.kind}\n${analysis.finalUrl}`).digest("hex").slice(0, 24);
+  const assetId = `media-proto05-remote-ref-${identity}`;
+  const sourceId = `source-${assetId}`;
+  const playableId = `video-${assetId}`;
+  const fallbackTitle = (() => {
+    try { return decodeURIComponent(path.basename(new URL(analysis.finalUrl).pathname)) || analysis.domain; }
+    catch { return analysis.domain; }
+  })();
+  const title = analysis.title || fallbackTitle || "Référence vidéo distante";
+  const provenance = { kind: "remote-reference", importedAt: createdAt };
+  const source = {
+    id: sourceId, assetId, title, kind: analysis.kind, provider: "direct",
+    originUrl: analysis.originalUrl, sourceUrl: analysis.originalUrl, url: analysis.finalUrl,
+    ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}),
+    mimeType: analysis.contentType, durationMs: null, authorized: true, availability: "unknown", provenance
+  };
+  const playable = {
+    id: playableId, assetId, sourceId, kind: analysis.kind, provider: "direct",
+    status: "pending", availability: "unknown", durationMs: null, mimeType: analysis.contentType,
+    url: analysis.finalUrl, ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}),
+    originUrl: analysis.originalUrl, provenance
+  };
+  const asset = {
+    id: assetId, title, status: "active", sourceIds: [sourceId], playableIds: [playableId],
+    defaultPlayableId: playableId, provenance,
+    metadata: { originalUrl: analysis.originalUrl, finalUrl: analysis.finalUrl, mimeType: analysis.contentType, durationMs: null, analyzedAt: analysis.analyzedAt },
+    rights: {}
+  };
+  const nextLibrary = libraryMutationCopy();
+  nextLibrary.assets.push(asset);
+  nextLibrary.sources.push(source);
+  nextLibrary.playables.push(playable);
+  try {
+    await persistLibraryMutation(nextLibrary);
+    REMOTE_REFERENCE_ANALYSES.delete(token);
+    return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
+  } catch (error) {
+    analysis.confirming = false;
+    error.statusCode = 500;
+    throw error;
+  }
 }
 
 function remoteCopyFileName(url, contentDisposition) {
@@ -1823,6 +2085,21 @@ async function handleApi(request, response, url) {
       return sendJson(response, request.aborted ? 499 : 400, { error: error.message || "Copie distante impossible." });
     }
   }
+  if (url.pathname === "/api/proto05/library/remote-reference/analyze") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    try { return sendJson(response, 200, await analyzeRemoteLibraryReference(JSON.parse(await readRequestBody(request)))); }
+    catch (error) { return sendJson(response, error.statusCode || 400, { error: error.message || "Analyse distante impossible." }); }
+  }
+  if (url.pathname === "/api/proto05/library/remote-reference/confirm") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    try {
+      const result = await confirmRemoteLibraryReference(JSON.parse(await readRequestBody(request)));
+      return sendJson(response, result.duplicate ? 409 : 201, result);
+    } catch (error) {
+      const status = error.statusCode || 400;
+      return sendJson(response, status, { error: status >= 500 ? "Enregistrement de la référence distante impossible." : (error.message || "Ajout de la référence distante impossible.") });
+    }
+  }
   if (url.pathname === "/api/proto05/library/hls-preparations") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
     try {
@@ -1905,7 +2182,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     const playableId = decodeURIComponent(libraryPlayableMatch[1]);
     const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId);
     if (!playable) return sendJson(response, 404, { error: "Playable vidéo introuvable." });
-    try { return sendJson(response, 200, { playable: resolveLibraryPlayable({ assetId: playable.assetId, playableId }, VIDEO_LIBRARY) }); }
+    try { return sendJson(response, 200, { playable: playableForClient(resolveLibraryPlayable({ assetId: playable.assetId, playableId }, VIDEO_LIBRARY)) }); }
     catch (error) { return sendJson(response, 409, { error: error.message }); }
   }
   const activityVideoRefMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)\/video-ref$/);
@@ -2056,6 +2333,93 @@ function hlsPathIsAllowed(url) {
   return /^uga-37004\/(?:livestream|360p|720p|1080p)\.(?:m3u8|ts)$/.test(suffix);
 }
 
+async function fetchRemoteHlsResource(target, request, signal) {
+  let current = await validateRemoteCopyUrl(target, { allowHls: true });
+  const headers = { accept: request.headers.accept || "*/*" };
+  for (const key of ["range", "if-range"]) if (request.headers[key]) headers[key] = request.headers[key];
+  for (let hop = 0; hop <= 5; hop += 1) {
+    const upstream = await fetch(current, { method: request.method, headers, redirect: "manual", signal });
+    if (upstream.status < 300 || upstream.status >= 400) return upstream;
+    if (hop === 5) throw new Error("Trop de redirections HLS.");
+    const location = upstream.headers.get("location");
+    if (!location) throw new Error("Redirection HLS sans destination.");
+    current = await validateRemoteCopyUrl(new URL(location, current), { allowHls: true });
+  }
+  throw new Error("Trop de redirections HLS.");
+}
+
+async function handleRemoteLibraryHls(request, response, url) {
+  if (!url.pathname.startsWith(REMOTE_HLS_GATEWAY_PREFIX)) return false;
+  if (!["GET", "HEAD"].includes(request.method)) {
+    sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, HEAD" });
+    return true;
+  }
+  const match = /^\/api\/proto05\/library\/remote-hls\/([^/]+)\/(.+)$/.exec(url.pathname);
+  if (!match) { sendJson(response, 404, { error: "Ressource HLS distante introuvable." }); return true; }
+  let playableId;
+  let relativePath;
+  try {
+    playableId = decodeURIComponent(match[1]);
+    relativePath = decodeURIComponent(match[2]);
+  } catch { sendJson(response, 400, { error: "Chemin HLS distant invalide." }); return true; }
+  if (!relativePath || relativePath.includes("\\") || relativePath.split("/").some(part => !part || part === "." || part === "..")) {
+    sendJson(response, 400, { error: "Chemin HLS distant invalide." });
+    return true;
+  }
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId);
+  const manifest = remoteHlsManifestUrl(playable);
+  if (!manifest) { sendJson(response, 404, { error: "Playable HLS distant introuvable." }); return true; }
+  const manifestFile = path.posix.basename(manifest.pathname) || "manifest.m3u8";
+  let target;
+  if (relativePath === manifestFile) target = new URL(manifest);
+  else {
+    const manifestDirectory = new URL(".", manifest);
+    target = new URL(relativePath, manifestDirectory);
+    if (target.origin !== manifest.origin || !target.pathname.startsWith(manifestDirectory.pathname)) {
+      sendJson(response, 400, { error: "Chemin HLS distant hors du répertoire autorisé." });
+      return true;
+    }
+    target.search = url.search;
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REMOTE_HLS_GATEWAY_TIMEOUT_MS);
+  const abort = () => controller.abort();
+  request.once("aborted", abort);
+  response.once("close", abort);
+  try {
+    const upstream = await fetchRemoteHlsResource(target, request, controller.signal);
+    const contentType = (upstream.headers.get("content-type") || "").split(";", 1)[0].toLowerCase();
+    const allowedType = contentType.startsWith("video/")
+      || contentType.startsWith("audio/")
+      || ["application/vnd.apple.mpegurl", "application/x-mpegurl", "application/mpegurl", "application/octet-stream"].includes(contentType);
+    if (!allowedType) {
+      sendJson(response, 502, { error: "La ressource HLS distante renvoie un type de contenu incompatible." });
+      return true;
+    }
+    const relay = { "cache-control": "private, max-age=60" };
+    for (const name of ["accept-ranges", "content-length", "content-range", "content-type", "etag", "last-modified"]) {
+      const value = upstream.headers.get(name);
+      if (value) relay[name] = value;
+    }
+    response.writeHead(upstream.status, relay);
+    if (request.method === "HEAD" || !upstream.body) response.end();
+    else {
+      try { await pipeline(Readable.fromWeb(upstream.body), response); }
+      catch (error) {
+        const expectedAbort = controller.signal.aborted || request.aborted || response.destroyed || ["ERR_STREAM_PREMATURE_CLOSE", "ECONNRESET", "EPIPE"].includes(error?.code);
+        if (!expectedAbort) throw error;
+      }
+    }
+  } catch (error) {
+    if (!response.headersSent) sendJson(response, 502, { error: controller.signal.aborted ? "La source HLS distante a dépassé le délai de lecture." : "La source HLS distante est indisponible." });
+  } finally {
+    clearTimeout(timeout);
+    request.removeListener("aborted", abort);
+    response.removeListener("close", abort);
+  }
+  return true;
+}
+
 async function handleHlsGateway(request, response, url) {
   if (!url.pathname.startsWith(HLS_PREFIX)) return false;
   if (!hlsPathIsAllowed(url)) {
@@ -2176,6 +2540,7 @@ const server = http.createServer(async (request, response) => {
   try {
     if (await servePreparationMedia(request, response, url)) return;
     if (await serveLibraryMedia(request, response, url)) return;
+    if (await handleRemoteLibraryHls(request, response, url)) return;
     if (await handleHlsGateway(request, response, url)) return;
     if (url.pathname.startsWith("/api/")) return await handleApi(request, response, url);
     return await serveStatic(request, response, url);
