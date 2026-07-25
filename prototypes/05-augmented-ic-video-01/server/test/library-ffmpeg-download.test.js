@@ -81,6 +81,11 @@ function testEnvironment(mode = "success", extra = {}) {
   };
 }
 
+function workspaceTempEntries(server, assetId) {
+  const directory = path.join(server.videoLibraryWorkspaceDirectory, assetId, "temp");
+  return fs.existsSync(directory) ? fs.readdirSync(directory, { recursive: true }) : [];
+}
+
 function chromiumDownloadRunner(assetId) {
   return `<!doctype html><html><body data-test-state="running"><iframe id="library" src="/teacher/videos" style="width:1400px;height:900px"></iframe><script>
   const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
@@ -96,20 +101,21 @@ function chromiumDownloadRunner(assetId) {
     const menu=menuButton.nextElementSibling;
     const menusInitiallyClosed=[...doc.querySelectorAll('.asset-delete-menu')].every(item=>item.hidden);
     menuButton.click();
-    const download=[...menu.querySelectorAll('button')].find(button=>button.textContent.includes('Télécharger dans la Library'));
+    const download=[...menu.querySelectorAll('button')].find(button=>button.textContent.includes('Créer une copie locale de travail'));
     if(!download)throw new Error('Action de téléchargement absente');
     download.click();
     const panel=await until(()=>doc.querySelector('.download-panel'));
     const start=await until(()=>panel.querySelector('.start-download:not(:disabled)'));
-    const summary={type:panel.textContent.includes('HLS'),host:panel.textContent.includes('127.0.0.1'),quality:panel.textContent.includes('1280 × 720'),destination:panel.textContent.includes('Dossier géré de la Library Proto05'),ffmpeg:panel.textContent.includes('fixture-1.0')};
+    const summary={type:panel.textContent.includes('HLS'),host:panel.textContent.includes('127.0.0.1'),quality:panel.textContent.includes('1280 × 720'),destination:panel.textContent.includes('Espace de travail'),ffmpeg:panel.textContent.includes('fixture-1.0')};
     start.click();
     const sawProgress=Boolean(await until(()=>panel.querySelector('progress.download-progress')));
     await until(()=>doc.querySelector('[data-asset-card="${assetId}"] .local-copy-note'));
     const completed=panel.textContent.includes('Terminé')&&panel.textContent.includes('100 %');
     const updatedCard=doc.querySelector('[data-asset-card="${assetId}"]');
-    const preview=updatedCard.querySelector('.preview-button');
-    preview.click();await until(()=>updatedCard.querySelector('.preview-mount video'));
-    const previewOpened=!updatedCard.querySelector('.preview').hidden;
+    const workingGroup=[...updatedCard.querySelectorAll('.access-group')].find(group=>group.querySelector('h5')?.textContent.includes('Copie locale de travail'));
+    const preview=workingGroup.querySelector('[data-access-action="preview"]');
+    preview.click();await until(()=>workingGroup.querySelector('.access-preview .preview-mount video'));
+    const previewOpened=!workingGroup.querySelector('.access-preview').hidden;
     doc.getElementById('listView').click();await wait(80);const listView=doc.getElementById('assets').classList.contains('list-view');
     doc.getElementById('gridView').click();await wait(80);const gridView=!doc.getElementById('assets').classList.contains('list-view');
     done({menusInitiallyClosed,summary,sawProgress,completed,previewOpened,listView,gridView,errors});
@@ -131,6 +137,16 @@ test("un HLS importé traverse le catalogue écrit puis devient une copie locale
   const remoteAsset = before.assets.find(item => item.id === created.assetId);
   const remoteSource = before.sources.find(item => item.assetId === created.assetId);
   const remotePlayable = before.playables.find(item => item.id === created.playableId);
+  assert.equal(remoteSource.role, "original-remote");
+  assert.equal(remotePlayable.role, "original-remote");
+  const classified = await requestJson(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(created.assetId)}/accesses/${encodeURIComponent(created.playableId)}/role`, { method: "PUT", body: { role: "original-remote" } });
+  assert.equal(classified.response.status, 200);
+  assert.equal(classified.body.role, "original-remote");
+  const publishedAnalysis = await requestJson(server.baseUrl, "/api/proto05/library/remote-reference/analyze", { method: "POST", body: { url: `${origin.baseUrl}/direct.mp4`, title: "Version publiée contrôlée" } });
+  assert.equal(publishedAnalysis.response.status, 200);
+  const published = await requestJson(server.baseUrl, "/api/proto05/library/remote-reference/confirm", { method: "POST", body: { token: publishedAnalysis.body.token, assetId: created.assetId } });
+  assert.equal(published.response.status, 201, JSON.stringify(published.body));
+  assert.equal(published.body.role, "published-remote");
   assert.equal(remoteAsset.defaultPlayableId, remotePlayable.id);
 
   const options = await requestJson(server.baseUrl, `/api/proto05/library/download-options/${encodeURIComponent(created.assetId)}?playableId=${encodeURIComponent(created.playableId)}`);
@@ -155,20 +171,23 @@ test("un HLS importé traverse le catalogue écrit puis devient une copie locale
   const asset = after.assets.find(item => item.id === created.assetId);
   const sources = after.sources.filter(item => item.assetId === created.assetId);
   const playables = after.playables.filter(item => item.assetId === created.assetId);
-  assert.equal(sources.length, 2);
-  assert.equal(playables.length, 2);
+  assert.equal(sources.length, 3);
+  assert.equal(playables.length, 3);
   assert.deepEqual(after.sources.find(item => item.id === remoteSource.id), remoteSource, "la provenance distante reste intacte");
   assert.deepEqual(after.playables.find(item => item.id === remotePlayable.id), remotePlayable, "le playable distant reste intact");
   assert.equal(asset.title, remoteAsset.title);
   assert.equal(asset.folderId, remoteAsset.folderId);
   assert.deepEqual(asset.tagIds, remoteAsset.tagIds);
-  assert.equal(asset.defaultPlayableId, job.result.playableId);
-  assert.ok(fs.existsSync(path.join(server.videoLibraryMediaDirectory, job.result.storageKey)));
-  assert.equal(fs.readdirSync(server.videoLibraryMediaDirectory).some(name => name === ".proto05-downloads"), true);
+  assert.equal(asset.defaultPlayableId, remotePlayable.id);
+  assert.ok(fs.existsSync(path.join(server.videoLibraryWorkspaceDirectory, job.result.storageKey)));
+  assert.equal(playables.find(item => item.id === job.result.playableId).role, "working-copy");
+  assert.equal(playables.find(item => item.id === job.result.playableId).location.storageScope, "workspace");
+  assert.equal(playables.find(item => item.id === published.body.playableId).role, "published-remote");
+  assert.equal(fs.existsSync(path.join(server.videoLibraryWorkspaceDirectory, created.assetId, "temp")), true);
 
   const listed = await requestJson(server.baseUrl, "/api/proto05/library/assets");
   const projected = listed.body.assets.find(item => item.id === created.assetId);
-  assert.equal(projected.defaultPlayableId, job.result.playableId);
+  assert.equal(projected.defaultPlayableId, remotePlayable.id);
   assert.equal(projected.localCopies.length, 1);
   assert.equal(projected.download.canDownload, false);
   const localPlayable = projected.playables.find(item => item.id === job.result.playableId);
@@ -185,8 +204,9 @@ test("un HLS importé traverse le catalogue écrit puis devient une copie locale
   assert.ok(restored.assets.some(item => item.id === created.assetId));
   assert.ok(restored.sources.some(item => item.id === remoteSource.id));
   assert.ok(restored.playables.some(item => item.id === created.playableId));
+  assert.ok(restored.playables.some(item => item.id === published.body.playableId));
   assert.equal(restored.assets.find(item => item.id === created.assetId).defaultPlayableId, created.playableId);
-  assert.equal(fs.existsSync(path.join(server.videoLibraryMediaDirectory, job.result.storageKey)), false);
+  assert.equal(fs.existsSync(path.join(server.videoLibraryWorkspaceDirectory, job.result.storageKey)), false);
 });
 
 test("une URL vidéo directe utilise la même tâche FFmpeg et devient immédiatement prévisualisable", { timeout: 15000 }, async t => {
@@ -205,7 +225,7 @@ test("une URL vidéo directe utilise la même tâche FFmpeg et devient immédiat
   assert.equal(job.status, "completed", job.error);
   const listed = await requestJson(server.baseUrl, "/api/proto05/library/assets");
   const asset = listed.body.assets.find(item => item.id === created.assetId);
-  assert.equal(asset.playables.find(item => item.id === asset.defaultPlayableId).kind, "local-file");
+  assert.equal(asset.playables.find(item => item.id === asset.defaultPlayableId).kind, "direct-url");
   assert.ok(origin.requests.some(item => item.method === "HEAD" && item.url === "/direct.mp4"));
   assert.ok(origin.requests.some(item => item.method === "GET" && item.url === "/direct.mp4"));
 });
@@ -246,6 +266,7 @@ test("FFmpeg absent, noms invalides, échec et sortie illisible restent sans eff
       PROTO05_FFMPEG_PATH: ""
     }
   });
+  t.after(() => unavailable.cleanup());
   const absentReference = await createRemoteReference(unavailable.baseUrl, `${origin.baseUrl}/direct.mp4`, "FFmpeg absent");
   const status = await requestJson(unavailable.baseUrl, "/api/proto05/library/ffmpeg");
   assert.equal(status.body.ffmpeg.available, false);
@@ -257,6 +278,7 @@ test("FFmpeg absent, noms invalides, échec et sortie illisible restent sans eff
 
   for (const mode of ["fail", "invalid"]) {
     const server = await startTemporaryProto05Server(structuredClone(activities), `proto05-library-download-${mode}-`, { env: testEnvironment(mode) });
+    t.after(() => server.cleanup());
     const created = await createRemoteReference(server.baseUrl, `${origin.baseUrl}/direct.mp4`, `Mode ${mode}`);
     const before = fs.readFileSync(server.videoLibraryFile, "utf8");
     const traversal = await requestJson(server.baseUrl, "/api/proto05/library/downloads", { method: "POST", body: { assetId: created.assetId, playableId: created.playableId, fileName: "../escape.mp4" } });
@@ -266,7 +288,7 @@ test("FFmpeg absent, noms invalides, échec et sortie illisible restent sans eff
     const job = await waitForJob(server.baseUrl, started.body.job.id);
     assert.equal(job.status, "failed");
     assert.equal(fs.readFileSync(server.videoLibraryFile, "utf8"), before);
-    assert.deepEqual(fs.readdirSync(path.join(server.videoLibraryMediaDirectory, ".proto05-downloads")), []);
+    assert.deepEqual(workspaceTempEntries(server, created.assetId), []);
     await server.cleanup();
   }
 });
@@ -295,7 +317,7 @@ test("annuler une tâche lente termine son arbre et nettoie tous ses temporaires
   assert.equal(cancelled.response.status, 200);
   assert.equal(cancelled.body.job.status, "cancelled");
   assert.equal(fs.readFileSync(server.videoLibraryFile, "utf8"), before);
-  assert.deepEqual(fs.readdirSync(path.join(server.videoLibraryMediaDirectory, ".proto05-downloads")), []);
+  assert.deepEqual(workspaceTempEntries(server, created.assetId), []);
   const childPid = Number(fs.readFileSync(childPidFile, "utf8"));
   await new Promise(resolve => setTimeout(resolve, 100));
   assert.throws(() => process.kill(childPid, 0), /ESRCH|not permitted|no such process/i);
@@ -308,6 +330,7 @@ test("timeout, collision et arrêt serveur ne publient jamais de copie partielle
   const timeoutServer = await startTemporaryProto05Server(structuredClone(activities), "proto05-library-download-timeout-", {
     env: testEnvironment("slow", { PROTO05_LIBRARY_DOWNLOAD_TIMEOUT_MS: "250" })
   });
+  t.after(() => timeoutServer.cleanup());
   const timeoutReference = await createRemoteReference(timeoutServer.baseUrl, `${origin.baseUrl}/direct.mp4`, "Timeout contrôlé");
   const timeoutBefore = fs.readFileSync(timeoutServer.videoLibraryFile, "utf8");
   const timeoutStart = await requestJson(timeoutServer.baseUrl, "/api/proto05/library/downloads", { method: "POST", body: { assetId: timeoutReference.assetId, playableId: timeoutReference.playableId, fileName: "timeout.mp4" } });
@@ -315,13 +338,15 @@ test("timeout, collision et arrêt serveur ne publient jamais de copie partielle
   assert.equal(timedOut.status, "failed");
   assert.match(timedOut.error, /durée maximale/);
   assert.equal(fs.readFileSync(timeoutServer.videoLibraryFile, "utf8"), timeoutBefore);
-  assert.deepEqual(fs.readdirSync(path.join(timeoutServer.videoLibraryMediaDirectory, ".proto05-downloads")), []);
+  assert.deepEqual(workspaceTempEntries(timeoutServer, timeoutReference.assetId), []);
   await timeoutServer.cleanup();
 
   const collisionServer = await startTemporaryProto05Server(structuredClone(activities), "proto05-library-download-collision-", { env: testEnvironment() });
+  t.after(() => collisionServer.cleanup());
   const collisionReference = await createRemoteReference(collisionServer.baseUrl, `${origin.baseUrl}/direct.mp4`, "Collision contrôlée");
   const collisionKey = `${crypto.createHash("sha256").update(directVideo).digest("hex").slice(0, 16)}-collision.mp4`;
-  const collisionPath = path.join(collisionServer.videoLibraryMediaDirectory, collisionKey);
+  const collisionPath = path.join(collisionServer.videoLibraryWorkspaceDirectory, collisionReference.assetId, "source", collisionKey);
+  fs.mkdirSync(path.dirname(collisionPath), { recursive: true });
   fs.writeFileSync(collisionPath, Buffer.from("existing-controlled-file"));
   const collisionBefore = fs.readFileSync(collisionServer.videoLibraryFile, "utf8");
   const collisionStart = await requestJson(collisionServer.baseUrl, "/api/proto05/library/downloads", { method: "POST", body: { assetId: collisionReference.assetId, playableId: collisionReference.playableId, fileName: "collision.mp4" } });
@@ -333,6 +358,7 @@ test("timeout, collision et arrêt serveur ne publient jamais de copie partielle
   await collisionServer.cleanup();
 
   const shutdownServer = await startTemporaryProto05Server(structuredClone(activities), "proto05-library-download-shutdown-", { env: testEnvironment("slow") });
+  t.after(() => shutdownServer.cleanup());
   const shutdownReference = await createRemoteReference(shutdownServer.baseUrl, `${origin.baseUrl}/direct.mp4`, "Arrêt contrôlé");
   const shutdownBefore = fs.readFileSync(shutdownServer.videoLibraryFile, "utf8");
   const shutdownStart = await requestJson(shutdownServer.baseUrl, "/api/proto05/library/downloads", { method: "POST", body: { assetId: shutdownReference.assetId, playableId: shutdownReference.playableId, fileName: "shutdown.mp4" } });
@@ -341,7 +367,7 @@ test("timeout, collision et arrêt serveur ne publient jamais de copie partielle
   await shutdownServer.stop();
   assert.equal(fs.readFileSync(shutdownServer.videoLibraryFile, "utf8"), shutdownBefore);
   await shutdownServer.restart();
-  assert.equal(fs.existsSync(path.join(shutdownServer.videoLibraryMediaDirectory, ".proto05-downloads")), false);
+  assert.deepEqual(workspaceTempEntries(shutdownServer, shutdownReference.assetId), []);
   await shutdownServer.cleanup();
 });
 

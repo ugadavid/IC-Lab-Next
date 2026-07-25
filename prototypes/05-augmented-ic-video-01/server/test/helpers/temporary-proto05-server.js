@@ -66,6 +66,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const videoCatalogFile = path.join(temporaryDataDirectory, "video-catalog.json");
   const videoLibraryFile = path.join(temporaryDataDirectory, "video-library.json");
   const temporaryVideoLibraryMediaDirectory = path.join(temporaryDataDirectory, "video-library-media");
+  const temporaryVideoLibraryWorkspaceDirectory = path.join(temporaryDataDirectory, "video-library-workspaces");
   const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
   fs.copyFileSync(path.join(serverDirectory, "media-contract.js"), path.join(temporaryServerDirectory, "media-contract.js"));
@@ -88,7 +89,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   for (const file of ["teacher.html", "teacher-create.html", "teacher-videos.html", "teacher-anonymization.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));
   }
-  for (const file of ["media-library-runtime.js", "media-library-migration.js", "media-library-availability.js", "media-library-schema.js", "media-library-install.js"]) {
+  for (const file of ["media-library-runtime.js", "media-library-migration.js", "media-library-availability.js", "media-library-schema.js", "media-library-install.js", "video-workspaces.js"]) {
     fs.copyFileSync(path.join(serverDirectory, file), path.join(temporaryServerDirectory, file));
   }
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
@@ -131,6 +132,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
     dataFile,
     videoLibraryFile,
     videoLibraryMediaDirectory: temporaryVideoLibraryMediaDirectory,
+    videoLibraryWorkspaceDirectory: temporaryVideoLibraryWorkspaceDirectory,
     languageCatalogFile,
     root,
     async restart() { await stopChild(child); stderr = ""; startChild(); await waitForHealth(baseUrl, child, () => stderr); },

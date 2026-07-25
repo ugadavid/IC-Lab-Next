@@ -17,6 +17,7 @@ const TREATMENT_STATUSES = new Set(["queued", "running", "cancelling", "complete
 const SOURCE_KINDS = new Set(["local-file", "direct-url", "hls", "youtube-embed", "derived-output"]);
 const PLAYABLE_KINDS = new Set(["local-file", "direct-url", "hls", "youtube-embed"]);
 const TRANSPORTS = new Set(["file", "http", "https", "hls", "youtube-iframe"]);
+const BUSINESS_ROLES = new Set(["original-remote", "working-copy", "derivation-local", "published-remote"]);
 
 /** @typedef {{ id:string, title:string, lifecycle:"active"|"archived", folderId:string|null, defaultPlayableId:string|null, parentAssetId:string|null, familyRootAssetId:string, derivationTypes:string[], tagIds:string[], provenance:Object, technicalMetadata:Object, rights:Object, createdAt:string, updatedAt:string }} MediaAsset */
 /** @typedef {{ id:string, assetId:string, kind:string, provider:string, origin:Object, transport:string, mimeType:string|null, provenance:Object, createdAt:string }} MediaSource */
@@ -109,6 +110,7 @@ function validateLocation(result, playable, path) {
   if (playable.kind === "local-file") {
     if (typeof location.storageKey !== "string") addProblem(result, "MISSING_STORAGE_KEY", "error", `${path}.storageKey`, `${path}.storageKey est obligatoire pour un playable local.`, playable.id);
     else validateSafeStorageKey(result, location.storageKey, `${path}.storageKey`, playable.id);
+    if (location.storageScope !== undefined && !["legacy-media", "workspace"].includes(location.storageScope)) addProblem(result, "INVALID_STORAGE_SCOPE", "error", `${path}.storageScope`, "La portée de stockage locale est inconnue.", playable.id);
   } else if (playable.kind === "youtube-embed") {
     if (typeof location.embedUrl !== "string" || !location.embedUrl) addProblem(result, "INVALID_PLAYABLE_LOCATION", "error", `${path}.embedUrl`, `${path}.embedUrl est obligatoire pour YouTube.`, playable.id);
     if (typeof location.videoId !== "string" || !/^[A-Za-z0-9_-]{11}$/.test(location.videoId)) addProblem(result, "INVALID_PLAYABLE_LOCATION", "error", `${path}.videoId`, `${path}.videoId doit être un identifiant YouTube valide.`, playable.id);
@@ -147,6 +149,7 @@ function validateSource(result, source, index, maps) {
   if (!isObject(source)) { addProblem(result, "INVALID_SOURCE", "error", path, `${path} doit être un objet.`); return; }
   validateId(result, source.assetId, `${path}.assetId`, id); maps.sources.set(id, source);
   if (!SOURCE_KINDS.has(source.kind)) addProblem(result, "INVALID_SOURCE_KIND", "error", `${path}.kind`, `Type de source inconnu : ${String(source.kind)}.`, id);
+  if (source.role !== undefined && !BUSINESS_ROLES.has(source.role)) addProblem(result, "INVALID_BUSINESS_ROLE", "error", `${path}.role`, `Rôle métier inconnu : ${String(source.role)}.`, id);
   requiredString(result, source.provider, `${path}.provider`, "MISSING_FIELD", id);
   if (!isObject(source.origin)) addProblem(result, "INVALID_SOURCE_ORIGIN", "error", `${path}.origin`, `${path}.origin doit être un objet.`, id);
   if (!TRANSPORTS.has(source.transport)) addProblem(result, "INVALID_TRANSPORT", "error", `${path}.transport`, `Transport inconnu : ${String(source.transport)}.`, id);
@@ -163,6 +166,7 @@ function validatePlayable(result, playable, index, maps) {
   validateId(result, playable.sourceId, `${path}.sourceId`, id);
   if (Object.prototype.hasOwnProperty.call(playable, "status")) addProblem(result, "PLAYABLE_STATUS_FORBIDDEN", "error", `${path}.status`, "Playable.status n’appartient pas au contrat canonique ; utiliser availability.", id);
   if (!PLAYABLE_KINDS.has(playable.kind)) addProblem(result, "INVALID_PLAYABLE_KIND", "error", `${path}.kind`, `Type de playable inconnu : ${String(playable.kind)}.`, id);
+  if (playable.role !== undefined && !BUSINESS_ROLES.has(playable.role)) addProblem(result, "INVALID_BUSINESS_ROLE", "error", `${path}.role`, `Rôle métier inconnu : ${String(playable.role)}.`, id);
   if (!AVAILABILITIES.has(playable.availability)) addProblem(result, "INVALID_AVAILABILITY", "error", `${path}.availability`, `Disponibilité inconnue : ${String(playable.availability)}.`, id);
   if (!Object.prototype.hasOwnProperty.call(playable, "availabilityReason")) addProblem(result, "MISSING_AVAILABILITY_REASON", "error", `${path}.availabilityReason`, `${path}.availabilityReason est obligatoire et peut valoir null.`, id);
   else if (playable.availabilityReason !== null && (typeof playable.availabilityReason !== "string" || !playable.availabilityReason.trim())) addProblem(result, "INVALID_AVAILABILITY_REASON", "error", `${path}.availabilityReason`, `${path}.availabilityReason doit être une chaîne ou null.`, id);
@@ -209,6 +213,11 @@ function validateTreatment(result, treatment, index, maps) {
   const id = validateId(result, treatment?.id, `${path}.id`);
   if (!isObject(treatment)) { addProblem(result, "INVALID_TREATMENT", "error", path, `${path} doit être un objet.`); return; }
   requiredString(result, treatment.type, `${path}.type`, "MISSING_FIELD", id);
+  if (treatment.derivationId !== undefined && treatment.derivationId !== treatment.id) addProblem(result, "DERIVATION_ID_MISMATCH", "error", `${path}.derivationId`, "derivationId doit être identique à l’identifiant canonique du traitement.", id);
+  if (treatment.label !== undefined) requiredString(result, treatment.label, `${path}.label`, "INVALID_DERIVATION_LABEL", id);
+  if (treatment.updatedAt !== undefined) validateDate(result, treatment.updatedAt, `${path}.updatedAt`, { entityId: id });
+  if (treatment.retained !== undefined && typeof treatment.retained !== "boolean") addProblem(result, "INVALID_RETAINED_FLAG", "error", `${path}.retained`, "retained doit être booléen.", id);
+  if (treatment.publishedPlayableId !== undefined && treatment.publishedPlayableId !== null) validateId(result, treatment.publishedPlayableId, `${path}.publishedPlayableId`, id);
   validateId(result, treatment.sourceAssetId, `${path}.sourceAssetId`, id);
   validateId(result, treatment.sourcePlayableId, `${path}.sourcePlayableId`, id);
   if (treatment.sourcePreparationId !== null && treatment.sourcePreparationId !== undefined) validateId(result, treatment.sourcePreparationId, `${path}.sourcePreparationId`, id);
@@ -274,6 +283,11 @@ function validateReferences(result, library, maps) {
       const outputPlayable = maps.playables.get(treatment.outputPlayableId);
       if (!outputPlayable) addProblem(result, "TREATMENT_OUTPUT_PLAYABLE_NOT_FOUND", "error", `treatments.${treatment.id}.outputPlayableId`, "Le playable de sortie du traitement est introuvable.", treatment.id);
       else if (outputPlayable.assetId !== treatment.outputAssetId) addProblem(result, "TREATMENT_OUTPUT_MISMATCH", "error", `treatments.${treatment.id}.outputPlayableId`, "Le playable de sortie n’appartient pas à l’asset de sortie.", treatment.id);
+    }
+    if (treatment.publishedPlayableId !== null && treatment.publishedPlayableId !== undefined) {
+      const publishedPlayable = maps.playables.get(treatment.publishedPlayableId);
+      if (!publishedPlayable) addProblem(result, "TREATMENT_PUBLISHED_PLAYABLE_NOT_FOUND", "error", `treatments.${treatment.id}.publishedPlayableId`, "Le playable publié relié est introuvable.", treatment.id);
+      else if (publishedPlayable.assetId !== treatment.sourceAssetId || publishedPlayable.role !== "published-remote") addProblem(result, "TREATMENT_PUBLISHED_PLAYABLE_MISMATCH", "error", `treatments.${treatment.id}.publishedPlayableId`, "Le playable publié doit appartenir à la même fiche et porter le rôle published-remote.", treatment.id);
     }
   }
 }

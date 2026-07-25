@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-07-25T14:48:52.231Z",
+  "updatedAt": "2026-07-25T16:15:45.462Z",
   "assets": [
     {
       "id": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
@@ -1223,7 +1223,7 @@
       "title": "yop",
       "lifecycle": "active",
       "folderId": null,
-      "defaultPlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+      "defaultPlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
       "parentAssetId": null,
       "familyRootAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
       "derivationTypes": [],
@@ -1260,7 +1260,7 @@
       },
       "rights": {},
       "createdAt": "2026-07-24T20:54:14.167Z",
-      "updatedAt": "2026-07-25T14:48:52.229Z"
+      "updatedAt": "2026-07-25T16:15:45.460Z"
     }
   ],
   "sources": [
@@ -2160,15 +2160,17 @@
         "kind": "remote-reference",
         "importedAt": "2026-07-24T20:54:14.167Z"
       },
-      "createdAt": "2026-07-24T20:54:14.167Z"
+      "createdAt": "2026-07-24T20:54:14.167Z",
+      "role": "original-remote"
     },
     {
       "id": "source-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
       "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
       "kind": "local-file",
       "provider": "local",
+      "role": "working-copy",
       "origin": {
-        "originalFileName": "36971_GT01_RFC7.mp4",
+        "originalFileName": "yop_macopielocale.mp4",
         "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
         "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819"
       },
@@ -2179,13 +2181,13 @@
         "creationType": "remote-copy",
         "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
         "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
-        "importedAt": "2026-07-25T14:48:52.229Z",
+        "importedAt": "2026-07-25T16:15:45.460Z",
         "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
         "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
         "sizeBytes": 108359167,
-        "originalFileName": "36971_GT01_RFC7.mp4"
+        "originalFileName": "yop_macopielocale.mp4"
       },
-      "createdAt": "2026-07-25T14:48:52.229Z"
+      "createdAt": "2026-07-25T16:15:45.460Z"
     }
   ],
   "playables": [
@@ -2740,7 +2742,8 @@
         "importedAt": "2026-07-24T20:54:14.167Z"
       },
       "createdAt": "2026-07-24T20:54:14.167Z",
-      "updatedAt": "2026-07-24T20:54:14.167Z"
+      "updatedAt": "2026-07-25T15:54:48.314Z",
+      "role": "original-remote"
     },
     {
       "id": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
@@ -2748,10 +2751,12 @@
       "sourceId": "source-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
       "kind": "local-file",
       "provider": "local",
+      "role": "working-copy",
       "availability": "available",
       "availabilityReason": null,
       "location": {
-        "storageKey": "47a3e7cf005c9fdc-36971_GT01_RFC7.mp4"
+        "storageScope": "workspace",
+        "storageKey": "media-proto05-remote-ref-03738b8065e1866b8e956819/source/47a3e7cf005c9fdc-yop_macopielocale.mp4"
       },
       "technicalMetadata": {
         "durationMs": 391838,
@@ -2764,8 +2769,8 @@
         "mimeType": "video/mp4",
         "sizeBytes": 108359167,
         "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
-        "fileName": "36971_GT01_RFC7.mp4",
-        "analyzedAt": "2026-07-25T14:48:52.229Z",
+        "fileName": "yop_macopielocale.mp4",
+        "analyzedAt": "2026-07-25T16:15:45.460Z",
         "analyzer": "ffprobe",
         "analyzerVersion": null,
         "status": "available",
@@ -2776,14 +2781,14 @@
         "creationType": "remote-copy",
         "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
         "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
-        "importedAt": "2026-07-25T14:48:52.229Z",
+        "importedAt": "2026-07-25T16:15:45.460Z",
         "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
         "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
         "sizeBytes": 108359167,
-        "originalFileName": "36971_GT01_RFC7.mp4"
+        "originalFileName": "yop_macopielocale.mp4"
       },
-      "createdAt": "2026-07-25T14:48:52.229Z",
-      "updatedAt": "2026-07-25T14:48:52.229Z"
+      "createdAt": "2026-07-25T16:15:45.460Z",
+      "updatedAt": "2026-07-25T16:15:45.460Z"
     }
   ],
   "treatments": [],

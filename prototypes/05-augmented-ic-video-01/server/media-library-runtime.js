@@ -38,9 +38,10 @@ function flattenPlayable(playable) {
     sizeBytes: playable.technicalMetadata?.sizeBytes ?? null,
     fileName: playable.technicalMetadata?.fileName ?? null,
     provenance: clone(playable.provenance || {}),
+    role: playable.role || null,
     ...location
   };
-  if (location.storageKey) result.url = `/api/proto05/library/media/${encodeURIComponent(location.storageKey)}`;
+  if (location.storageKey) result.url = `/api/proto05/library/media/${location.storageScope === "workspace" ? "workspace/" : ""}${encodeURIComponent(location.storageKey)}`;
   if (location.manifestUrl && !result.url) result.url = location.manifestUrl;
   if (location.embedUrl && !result.url) result.url = location.embedUrl;
   return result;
@@ -67,6 +68,7 @@ function projectCanonicalLibrary(canonical) {
       embedUrl: origin.embedUrl || null,
       videoId: origin.videoId || null,
       storageKey: origin.storageKey || null,
+      role: source.role || null,
       availability: source.availability || "unknown"
     };
   });
@@ -121,10 +123,12 @@ function appendMigratedEntries(canonical, runtime, knownIds) {
   for (const item of migrated.sources) {
     const source = newSources.find(candidate => candidate.id === item.id);
     if (source?.provenance) item.provenance = { ...item.provenance, ...clone(source.provenance) };
+    if (source?.role) item.role = source.role;
   }
   for (const item of migrated.playables) {
     const source = newPlayables.find(candidate => candidate.id === item.id);
     if (source?.provenance) item.provenance = { ...item.provenance, ...clone(source.provenance) };
+    if (source?.role) item.role = source.role;
   }
   return next;
 }

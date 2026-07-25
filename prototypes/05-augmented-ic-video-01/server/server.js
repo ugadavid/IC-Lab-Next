@@ -27,9 +27,10 @@ const {
   canonicalFromRuntime,
   assertWritableCanonical
 } = require("./media-library-runtime");
+const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.35";
+const VERSION = "0.1.36";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -37,6 +38,7 @@ const DATA_FILE = path.join(DATA_DIR, "activities.json");
 const VIDEO_CATALOG_FILE = path.join(DATA_DIR, "video-catalog.json");
 const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
 const VIDEO_LIBRARY_MEDIA_DIR = path.join(DATA_DIR, "video-library-media");
+const VIDEO_LIBRARY_WORKSPACES_DIR = path.join(DATA_DIR, "video-library-workspaces");
 const REMOTE_COPY_MAX_BYTES = Number(process.env.PROTO05_REMOTE_COPY_MAX_BYTES || 1024 * 1024 * 1024);
 const REMOTE_COPY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_COPY_TIMEOUT_MS || 120000);
 const REMOTE_REFERENCE_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_REFERENCE_TIMEOUT_MS || 8000);
@@ -181,12 +183,21 @@ function loadVideoLibrary() {
 
 let VIDEO_LIBRARY = loadVideoLibrary();
 
-function safeLibraryMediaPath(storageKey) {
+function safeRelativeMediaPath(rootDirectory, storageKey) {
   if (typeof storageKey !== "string" || !storageKey || storageKey.startsWith("/") || storageKey.includes("\\") || storageKey.split("/").some(part => !part || part === "." || part === "..")) throw new Error("Clé de média locale invalide.");
-  const root = path.resolve(VIDEO_LIBRARY_MEDIA_DIR);
+  const root = path.resolve(rootDirectory);
   const file = path.resolve(root, storageKey);
   if (!file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de média local refusé.");
   return file;
+}
+
+function safeLibraryMediaPath(storageKey, storageScope = "legacy-media") {
+  return safeRelativeMediaPath(storageScope === "workspace" ? VIDEO_LIBRARY_WORKSPACES_DIR : VIDEO_LIBRARY_MEDIA_DIR, storageKey);
+}
+
+function safeAssetWorkspacePath(assetId, ...parts) {
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,160}$/.test(String(assetId || ""))) throw new Error("Identifiant d’asset invalide.");
+  return safeRelativeMediaPath(VIDEO_LIBRARY_WORKSPACES_DIR, [assetId, ...parts].join("/"));
 }
 
 async function serveLibraryMedia(request, response, url) {
@@ -199,10 +210,16 @@ async function serveLibraryMedia(request, response, url) {
     return true;
   }
   let storageKey;
-  try { storageKey = decodeURIComponent(url.pathname.slice(prefix.length)); }
+  let storageScope = "legacy-media";
+  let encodedStorageKey = url.pathname.slice(prefix.length);
+  if (encodedStorageKey.startsWith("workspace/")) {
+    storageScope = "workspace";
+    encodedStorageKey = encodedStorageKey.slice("workspace/".length);
+  }
+  try { storageKey = decodeURIComponent(encodedStorageKey); }
   catch { sendJson(response, 400, { error: "Clé de média locale invalide." }); return true; }
   let file;
-  try { file = safeLibraryMediaPath(storageKey); }
+  try { file = safeLibraryMediaPath(storageKey, storageScope); }
   catch (error) { sendJson(response, 404, { error: error.message }); return true; }
   let stat;
   try { stat = await fs.stat(file); if (!stat.isFile()) throw new Error("not file"); }
@@ -887,9 +904,9 @@ function libraryAssetDetails(asset, usage = null) {
     const storageKey = localStorageKeyForPlayable(playable, source);
     if (!storageKey) return null;
     try {
-      const file = safeLibraryMediaPath(storageKey);
+      const file = safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(playable));
       const stat = fsSync.statSync(file);
-      return stat.isFile() ? { storageKey, sizeBytes: stat.size } : null;
+      return stat.isFile() ? { storageKey, storageScope: localStorageScopeForPlayable(playable), sizeBytes: stat.size } : null;
     } catch { return null; }
   }).filter(Boolean);
   const remoteCandidate = remoteDownloadCandidate(asset.id);
@@ -897,7 +914,7 @@ function libraryAssetDetails(asset, usage = null) {
   const hasRemoteSource = sources.some(source => ["hls", "direct-url"].includes(source.kind) && ["http", "https", "hls"].includes(source.transport || (source.kind === "hls" ? "hls" : "https")));
   const localCopies = localCandidates.map(candidate => {
     const playable = playables.find(item => localStorageKeyForPlayable(item, sources.find(source => source.id === item.sourceId)) === candidate.storageKey);
-    return { ...candidate, playableId: playable?.id || null, sourceId: playable?.sourceId || null, isDefault: playable?.id === asset.defaultPlayableId };
+    return { ...candidate, playableId: playable?.id || null, sourceId: playable?.sourceId || null, role: explicitRole(playable), isDefault: playable?.id === asset.defaultPlayableId };
   });
   return {
     ...asset,
@@ -905,6 +922,7 @@ function libraryAssetDetails(asset, usage = null) {
     playables: playables.map(playableForClient),
     deletion: { canDeleteFile: localCandidates.length === 1 && !hasRemoteSource, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
     localCopies,
+    versionsAndAccess: projectAssetAccesses(asset, sources, playables, VIDEO_LIBRARY.treatments || []),
     download: {
       canDownload: Boolean(remoteCandidate) && localCopies.length === 0 && !activeDownload,
       active: Boolean(activeDownload),
@@ -913,7 +931,7 @@ function libraryAssetDetails(asset, usage = null) {
       sourceKind: remoteCandidate?.playable.kind || null,
       host: remoteCandidate?.host || null,
       proposedFileName: remoteCandidate ? proposedDownloadFileName(asset, remoteCandidate) : null,
-      destinationLabel: "Dossier géré de la Library Proto05"
+      destinationLabel: `Espace de travail de ${asset.title || asset.id}`
     },
     ...(usage ? { usage } : {}),
     folders: VIDEO_LIBRARY.folders || [],
@@ -1002,6 +1020,10 @@ function libraryMutationCopy() {
 
 function localStorageKeyForPlayable(playable, source) {
   return playable?.location?.storageKey || playable?.storageKey || source?.location?.storageKey || source?.storageKey || null;
+}
+
+function localStorageScopeForPlayable(playable) {
+  return playable?.location?.storageScope || playable?.storageScope || "legacy-media";
 }
 
 function activityDependencyRelations(activity, assetId, sourceIds, playableIds, playables, sources) {
@@ -1153,8 +1175,9 @@ async function removeLocalLibraryCopy(assetId, playableId) {
   const conflicts = [];
   if (plan.activityDependencies.length) conflicts.push({ type: "activities", items: plan.activityDependencies });
   if (plan.sharedReferences.length) conflicts.push({ type: "shared-references", items: plan.sharedReferences });
+  if (hasActiveDerivation(VIDEO_LIBRARY.treatments || [], assetId, playableId)) conflicts.push({ type: "active-derivations", items: [{ id: playableId }] });
   if (conflicts.length) throw Object.assign(new Error("La copie locale est encore utilisée ou partage son fichier avec une autre référence."), { statusCode: 409, conflicts });
-  const file = safeLibraryMediaPath(plan.storageKey);
+  const file = safeLibraryMediaPath(plan.storageKey, localStorageScopeForPlayable(plan.playable));
   const stat = await fs.stat(file).catch(() => null);
   if (!stat?.isFile()) throw Object.assign(new Error("Le fichier de la copie locale est introuvable."), { statusCode: 409 });
   const backup = path.join(os.tmpdir(), `proto05-local-copy-${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.bak`);
@@ -1177,6 +1200,60 @@ async function removeLocalLibraryCopy(assetId, playableId) {
   } finally {
     try { await fs.unlink(backup); } catch {}
   }
+}
+
+async function removeLibraryDerivation(assetId, derivationId) {
+  const treatment = CANONICAL_LIBRARY.treatments.find(item => item.id === derivationId && item.sourceAssetId === assetId);
+  if (!treatment) throw Object.assign(new Error("Tentative de dérivation introuvable."), { statusCode: 404 });
+  if (["queued", "running", "cancelling"].includes(treatment.status)) throw Object.assign(new Error("Une dérivation active ne peut pas être supprimée."), { statusCode: 409 });
+  if (treatment.publishedPlayableId) throw Object.assign(new Error("Cette dérivation est reliée à une version publiée."), { statusCode: 409 });
+  const playable = CANONICAL_LIBRARY.playables.find(item => item.id === treatment.outputPlayableId && item.assetId === assetId);
+  const expectedPrefix = `${assetId}/derived/${derivationId}/`;
+  const storageKey = playable?.location?.storageKey || null;
+  if (storageKey && (playable.location?.storageScope !== "workspace" || !storageKey.startsWith(expectedPrefix))) throw Object.assign(new Error("Le fichier de dérivation n’appartient pas à son espace de travail."), { statusCode: 409 });
+  const file = storageKey ? safeLibraryMediaPath(storageKey, "workspace") : null;
+  const stat = file ? await fs.stat(file).catch(() => null) : null;
+  const backup = stat?.isFile() ? path.join(os.tmpdir(), `proto05-derivation-${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.bak`) : null;
+  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  canonical.treatments = canonical.treatments.filter(item => item.id !== derivationId);
+  if (playable) {
+    canonical.playables = canonical.playables.filter(item => item.id !== playable.id);
+    if (!canonical.playables.some(item => item.sourceId === playable.sourceId)) canonical.sources = canonical.sources.filter(item => item.id !== playable.sourceId);
+  }
+  const asset = canonical.assets.find(item => item.id === assetId);
+  if (asset?.defaultPlayableId === playable?.id) asset.defaultPlayableId = canonical.playables.find(item => item.assetId === assetId && !["working-copy", "derivation-local"].includes(item.role))?.id || null;
+  if (asset) asset.updatedAt = new Date().toISOString();
+  assertWritableCanonical(canonical);
+  if (backup) await fs.copyFile(file, backup);
+  try {
+    if (file && stat?.isFile()) await fs.unlink(file);
+    await persistCanonicalLibrary(canonical);
+    if (file) await fs.rm(path.dirname(file), { recursive: false }).catch(() => {});
+    return { assetId, derivationId, deletedFile: Boolean(stat?.isFile()) };
+  } catch (error) {
+    if (backup && file) try { await fs.copyFile(backup, file); } catch (restoreError) { error.message += ` Restauration impossible : ${restoreError.message}`; }
+    throw error;
+  } finally {
+    if (backup) try { await fs.unlink(backup); } catch {}
+  }
+}
+
+async function assignLibraryAccessRole(assetId, playableId, role) {
+  if (!["original-remote", "working-copy", "derivation-local", "published-remote"].includes(role)) throw new Error("Rôle métier invalide.");
+  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  const playable = canonical.playables.find(item => item.id === playableId && item.assetId === assetId);
+  const source = canonical.sources.find(item => item.id === playable?.sourceId && item.assetId === assetId);
+  if (!playable || !source) throw Object.assign(new Error("Accès vidéo introuvable."), { statusCode: 404 });
+  const localRole = ["working-copy", "derivation-local"].includes(role);
+  if (localRole !== (playable.kind === "local-file")) throw new Error("Ce rôle est incompatible avec le type de playable.");
+  if (playable.role === role && source.role === role) return { assetId, playableId, sourceId: source.id, role };
+  playable.role = role;
+  source.role = role;
+  playable.updatedAt = new Date().toISOString();
+  const asset = canonical.assets.find(item => item.id === assetId);
+  if (asset) asset.updatedAt = playable.updatedAt;
+  await persistCanonicalLibrary(canonical);
+  return { assetId, playableId, sourceId: source.id, role };
 }
 
 async function persistLibraryMutation(nextLibrary) {
@@ -1487,14 +1564,47 @@ async function confirmRemoteLibraryReference(payload) {
   })();
   const title = analysis.title || fallbackTitle || "Référence vidéo distante";
   const provenance = { kind: "remote-reference", importedAt: createdAt };
+  const targetAssetId = typeof payload.assetId === "string" ? payload.assetId : "";
+  if (targetAssetId) {
+    const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+    const targetAsset = canonical.assets.find(item => item.id === targetAssetId);
+    if (!targetAsset) throw Object.assign(new Error("La fiche Library cible est introuvable."), { statusCode: 404 });
+    const publishedIdentity = crypto.createHash("sha256").update(`${targetAssetId}\n${analysis.kind}\n${analysis.finalUrl}`).digest("hex").slice(0, 24);
+    const publishedSourceId = `source-${targetAssetId}-published-${publishedIdentity}`;
+    const publishedPlayableId = `video-${targetAssetId}-published-${publishedIdentity}`;
+    const derivationId = typeof payload.derivationId === "string" && payload.derivationId ? payload.derivationId : null;
+    const treatment = derivationId ? canonical.treatments.find(item => item.id === derivationId && item.sourceAssetId === targetAssetId) : null;
+    if (derivationId && !treatment) throw new Error("La dérivation reliée est introuvable sur cette fiche.");
+    const publicationProvenance = { ...provenance, kind: "published-remote-reference", derivationId };
+    canonical.sources.push({
+      id: publishedSourceId, assetId: targetAssetId, kind: analysis.kind, provider: "direct", role: "published-remote",
+      origin: { originUrl: analysis.originalUrl, sourceUrl: analysis.originalUrl, url: analysis.finalUrl, ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}) },
+      transport: analysis.kind === "hls" ? "hls" : new URL(analysis.finalUrl).protocol.replace(":", ""),
+      mimeType: analysis.contentType, provenance: publicationProvenance, createdAt
+    });
+    canonical.playables.push({
+      id: publishedPlayableId, assetId: targetAssetId, sourceId: publishedSourceId,
+      kind: analysis.kind, provider: "direct", role: "published-remote",
+      availability: "unknown", availabilityReason: null,
+      location: { url: analysis.finalUrl, ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}) },
+      technicalMetadata: { durationMs: null, width: null, height: null, frameRate: null, videoCodec: null, audioCodec: null, hasAudio: null, mimeType: analysis.contentType, sizeBytes: null, sha256: null, analyzedAt: analysis.analyzedAt, analyzer: null, analyzerVersion: null, error: null },
+      provenance: publicationProvenance, createdAt, updatedAt: createdAt
+    });
+    if (treatment) treatment.publishedPlayableId = publishedPlayableId;
+    targetAsset.updatedAt = createdAt;
+    await persistCanonicalLibrary(canonical);
+    REMOTE_REFERENCE_ANALYSES.delete(token);
+    const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === targetAssetId);
+    return { duplicate: false, asset: libraryAssetDetails(projectedAsset), assetId: targetAssetId, playableId: publishedPlayableId, sourceId: publishedSourceId, role: "published-remote" };
+  }
   const source = {
-    id: sourceId, assetId, title, kind: analysis.kind, provider: "direct",
+    id: sourceId, assetId, title, kind: analysis.kind, provider: "direct", role: "original-remote",
     originUrl: analysis.originalUrl, sourceUrl: analysis.originalUrl, url: analysis.finalUrl,
     ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}),
     mimeType: analysis.contentType, durationMs: null, authorized: true, availability: "unknown", provenance
   };
   const playable = {
-    id: playableId, assetId, sourceId, kind: analysis.kind, provider: "direct",
+    id: playableId, assetId, sourceId, kind: analysis.kind, provider: "direct", role: "original-remote",
     status: "pending", availability: "unknown", durationMs: null, mimeType: analysis.contentType,
     url: analysis.finalUrl, ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}),
     originUrl: analysis.originalUrl, provenance
@@ -1840,8 +1950,8 @@ async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
   const sha256 = await hashFile(job.temporaryPath);
   const duplicate = VIDEO_LIBRARY.playables.find(item => item.assetId === job.assetId && item.sha256 === sha256);
   if (duplicate) throw new Error("Une copie locale équivalente existe déjà pour cet asset.");
-  const storageKey = `${sha256.slice(0, 16)}-${job.fileName}`;
-  const targetPath = safeLibraryMediaPath(storageKey);
+  const storageKey = `${job.assetId}/source/${sha256.slice(0, 16)}-${job.fileName}`;
+  const targetPath = safeLibraryMediaPath(storageKey, "workspace");
   if (fsSync.existsSync(targetPath)) throw new Error("Un fichier géré utilise déjà cette destination.");
   const now = new Date().toISOString();
   const mimeType = path.extname(job.fileName).toLowerCase() === ".webm" ? "video/webm" : "video/mp4";
@@ -1859,18 +1969,18 @@ async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
   const asset = canonical.assets.find(item => item.id === job.assetId);
   if (!asset || canonical.sources.some(item => item.id === sourceId) || canonical.playables.some(item => item.id === playableId)) throw new Error("La destination canonique de la copie existe déjà.");
   canonical.sources.push({
-    id: sourceId, assetId: asset.id, kind: "local-file", provider: "local",
+    id: sourceId, assetId: asset.id, kind: "local-file", provider: "local", role: "working-copy",
     origin: { originalFileName: job.fileName, sourceAssetId: asset.id, sourcePlayableId: job.playableId },
     transport: "file", mimeType, provenance, createdAt: now
   });
   canonical.playables.push({
-    id: playableId, assetId: asset.id, sourceId, kind: "local-file", provider: "local",
+    id: playableId, assetId: asset.id, sourceId, kind: "local-file", provider: "local", role: "working-copy",
     availability: "available", availabilityReason: null,
-    location: { storageKey }, technicalMetadata: metadata,
+    location: { storageScope: "workspace", storageKey }, technicalMetadata: metadata,
     provenance, createdAt: now, updatedAt: now
   });
-  asset.defaultPlayableId = playableId;
   asset.updatedAt = now;
+  await fs.mkdir(path.dirname(targetPath), { recursive: true });
   await renameWithWindowsRetries(job.temporaryPath, targetPath);
   try {
     await persistCanonicalLibrary(canonical);
@@ -1916,10 +2026,13 @@ function libraryDownloadError(error, job) {
 
 async function runLibraryDownload(job, candidate, inspection, ffmpegStatus) {
   let sizeMonitor;
+  let terminalStatus = null;
+  let terminalLabel = null;
   const timeout = setTimeout(() => { job.timeout = true; void terminateOwnedDownloadProcess(job); }, LIBRARY_DOWNLOAD_TIMEOUT_MS);
   try {
-    await fs.mkdir(LIBRARY_DOWNLOAD_ROOT, { recursive: true });
-    job.workspace = await fs.mkdtemp(path.join(LIBRARY_DOWNLOAD_ROOT, `${job.id}-`));
+    const tempRoot = safeAssetWorkspacePath(job.assetId, "temp");
+    await fs.mkdir(tempRoot, { recursive: true });
+    job.workspace = await fs.mkdtemp(path.join(tempRoot, `${job.id}-`));
     job.temporaryPath = path.join(job.workspace, `download.${job.container}.incomplete`);
     job.status = "downloading"; job.stateLabel = "Téléchargement"; job.updatedAt = new Date().toISOString();
     const inputUrl = new URL(inspection.inputPath, `http://127.0.0.1:${PORT}`).toString();
@@ -1960,18 +2073,22 @@ async function runLibraryDownload(job, candidate, inspection, ffmpegStatus) {
     if (code !== 0) throw new Error(`FFmpeg a échoué (code ${code}) : ${stderr.trim().slice(-300) || "aucun flux compatible ou source inaccessible"}.`);
     job.status = "finalizing"; job.stateLabel = "Finalisation"; job.progress = Math.min(job.progress, 99); job.updatedAt = new Date().toISOString();
     job.result = await finalizeLibraryDownload(job, candidate, ffmpegStatus);
-    job.status = "completed"; job.stateLabel = "Terminé"; job.progress = 100; job.finishedAt = new Date().toISOString(); job.updatedAt = job.finishedAt;
+    terminalStatus = "completed"; terminalLabel = "Terminé"; job.progress = 100;
   } catch (error) {
     job.error = libraryDownloadError(error, job);
-    job.status = job.cancelRequested ? "cancelled" : "failed";
-    job.stateLabel = job.cancelRequested ? "Annulé" : "Échec";
-    job.progress = 0; job.finishedAt = new Date().toISOString(); job.updatedAt = job.finishedAt;
+    terminalStatus = job.cancelRequested ? "cancelled" : "failed";
+    terminalLabel = job.cancelRequested ? "Annulé" : "Échec";
+    job.status = "cleaning"; job.stateLabel = "Nettoyage"; job.progress = 0;
   } finally {
     clearTimeout(timeout);
     if (sizeMonitor) clearInterval(sizeMonitor);
     if (job.process) { await terminateOwnedDownloadProcess(job); delete job.process; }
     if (job.workspace) { try { await fs.rm(job.workspace, { recursive: true, force: true }); } catch {} }
     job.workspace = null; job.temporaryPath = null; delete job.pid; delete job.progressBuffer;
+    if (terminalStatus) {
+      job.status = terminalStatus; job.stateLabel = terminalLabel;
+      job.finishedAt = new Date().toISOString(); job.updatedAt = job.finishedAt;
+    }
   }
 }
 
@@ -1992,7 +2109,7 @@ async function startLibraryDownload(payload) {
   if (VIDEO_LIBRARY.playables.some(item => {
     if (item.assetId !== assetId || item.kind !== "local-file" || item.availability !== "available") return false;
     const storageKey = localStorageKeyForPlayable(item, VIDEO_LIBRARY.sources.find(source => source.id === item.sourceId));
-    return Boolean(storageKey) && fsSync.existsSync(safeLibraryMediaPath(storageKey));
+    return Boolean(storageKey) && fsSync.existsSync(safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(item)));
   })) {
     throw Object.assign(new Error("Une copie locale disponible existe déjà pour cet asset."), { statusCode: 409 });
   }
@@ -2038,6 +2155,13 @@ async function shutdownLibraryDownloads() {
     await job.completion;
   }));
   try { await fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true }); } catch {}
+}
+
+async function cleanupIncompleteWorkspaceDownloads() {
+  for (const asset of CANONICAL_LIBRARY.assets) {
+    const tempRoot = safeAssetWorkspacePath(asset.id, "temp");
+    await fs.rm(tempRoot, { recursive: true, force: true });
+  }
 }
 
 setInterval(trimLibraryDownloadHistory, 60 * 1000).unref();
@@ -2379,15 +2503,12 @@ async function persistDerivedPlayable(job, prepJob) {
   const stat = await fs.stat(job.outputPath);
   if (!stat.isFile() || stat.size === 0 || stat.size > HLS_PREPARATION_MAX_BYTES) throw new Error("Le fichier dérivé est vide ou dépasse la taille maximale autorisée.");
   const hash = crypto.createHash("sha256").update(await fs.readFile(job.outputPath)).digest("hex");
-  const existing = VIDEO_LIBRARY.playables.find(playable => playable.sha256 === hash && playable.provenance?.derivation);
-  if (existing) {
-    const existingAsset = VIDEO_LIBRARY.assets.find(asset => asset.id === existing.assetId);
-    return { duplicate: true, assetId: existing.assetId, playableId: existing.id, asset: existingAsset ? libraryAssetDetails(existingAsset) : null, sha256: hash, storageKey: existing.storageKey || null, mediaUrl: existing.url || null };
-  }
-  const storageKey = `${hash.slice(0, 16)}-anonymized.mp4`;
-  const targetPath = safeLibraryMediaPath(storageKey);
-  const temporaryTarget = path.join(VIDEO_LIBRARY_MEDIA_DIR, `.${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.derived.tmp`);
-  await fs.mkdir(VIDEO_LIBRARY_MEDIA_DIR, { recursive: true });
+  const derivationId = job.id;
+  const assetId = prepJob.assetId;
+  const storageKey = `${assetId}/derived/${derivationId}/${hash.slice(0, 16)}-anonymized.mp4`;
+  const targetPath = safeLibraryMediaPath(storageKey, "workspace");
+  const temporaryTarget = `${targetPath}.incomplete`;
+  await fs.mkdir(path.dirname(targetPath), { recursive: true });
   try {
     await fs.copyFile(job.outputPath, temporaryTarget);
     await fs.rename(temporaryTarget, targetPath);
@@ -2395,18 +2516,32 @@ async function persistDerivedPlayable(job, prepJob) {
     try { await fs.unlink(temporaryTarget); } catch {}
     throw error;
   }
-  const assetId = `media-proto05-anonymized-${hash.slice(0, 24)}`;
-  const sourceId = `source-${assetId}`;
-  const playableId = `video-${assetId}`;
+  const sourceId = `source-${derivationId}`;
+  const playableId = `video-${derivationId}`;
+  const now = new Date().toISOString();
   const sourceOrigin = prepJob.metadata?.sourceUrl || prepJob.sourceUrl;
-  const provenance = { kind: "derived-anonymized", sourceOriginUrl: sourceOrigin, sourceAssetId: prepJob.assetId, sourcePreparationJobId: prepJob.id, mode: job.mode || "fixed", method: job.method, masks: job.masks, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, interpolation: job.temporalMasks ? "linear-between-keyframes-clamped-at-bounds" : null, blur: job.metadata.blur, filter: job.metadata.filter, ffmpeg: job.metadata.ffmpeg, ffmpegArgs: job.metadata.ffmpegArgs, createdAt: new Date().toISOString(), status: "completed", sha256: hash, sizeBytes: stat.size };
-  const source = { id: sourceId, assetId, title: "Version anonymisée dérivée", kind: "local-file", provider: "proto05-derived", storageKey, url: `/api/proto05/library/media/${encodeURIComponent(storageKey)}`, copiedUrl: `/api/proto05/library/media/${encodeURIComponent(storageKey)}`, mimeType: "video/mp4", sizeBytes: stat.size, sha256: hash, checksum: hash, authorized: true, availability: "available", provenance };
-  const playable = { id: playableId, assetId, sourceId, kind: "local-file", provider: "proto05-derived", status: "available", availability: "available", mimeType: "video/mp4", storageKey, url: source.url, manifestUrl: null, sha256: hash, sizeBytes: stat.size, provenance: { derivation: provenance } };
-  const asset = { id: assetId, title: "Version anonymisée dérivée", status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance, metadata: { fileName: storageKey, mimeType: "video/mp4", sizeBytes: stat.size, sha256: hash }, rights: {} };
-  const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY)); nextLibrary.updatedAt = new Date().toISOString(); nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
-  try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
+  const provenance = { kind: "derived-anonymized", derivationId, sourceOriginUrl: sourceOrigin, sourceAssetId: assetId, sourcePreparationJobId: prepJob.id, mode: job.mode || "fixed", method: job.method, masks: job.masks, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, interpolation: job.temporalMasks ? "linear-between-keyframes-clamped-at-bounds" : null, blur: job.metadata.blur, filter: job.metadata.filter, ffmpeg: job.metadata.ffmpeg, ffmpegArgs: job.metadata.ffmpegArgs, createdAt: now, status: "completed", sha256: hash, sizeBytes: stat.size };
+  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  const asset = canonical.assets.find(item => item.id === assetId);
+  if (!asset || canonical.treatments.some(item => item.id === derivationId)) throw new Error("La destination canonique de la dérivation existe déjà.");
+  canonical.sources.push({ id: sourceId, assetId, kind: "derived-output", provider: "proto05-derived", role: "derivation-local", origin: { sourceOriginUrl: sourceOrigin, derivationId }, transport: "file", mimeType: "video/mp4", provenance, createdAt: now });
+  canonical.playables.push({ id: playableId, assetId, sourceId, kind: "local-file", provider: "proto05-derived", role: "derivation-local", availability: "available", availabilityReason: null, location: { storageScope: "workspace", storageKey }, technicalMetadata: { durationMs: null, width: null, height: null, mimeType: "video/mp4", sizeBytes: stat.size, sha256: hash, fileName: path.basename(storageKey), status: "available", error: null }, provenance, createdAt: now, updatedAt: now });
+  canonical.treatments.push({
+    id: derivationId, derivationId, label: `Tentative ${new Date(now).toLocaleString("fr-FR")}`,
+    type: "anonymization", sourceAssetId: assetId, sourcePlayableId: prepJob.playableId,
+    sourcePreparationId: prepJob.id, outputAssetId: assetId, outputPlayableId: playableId,
+    status: "completed", progress: 100, createdAt: job.createdAt || now, updatedAt: now,
+    startedAt: job.createdAt || now, finishedAt: now, error: null,
+    parameters: { mode: job.mode || "fixed", method: job.method, masks: job.masks, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, blur: job.metadata.blur },
+    engine: "ffmpeg", engineVersion: "proto05-0.1.36", ffmpegVersion: job.metadata.ffmpeg || null,
+    runtimeJobId: job.id, diagnostics: { filter: job.metadata.filter, ffmpegArgs: job.metadata.ffmpegArgs },
+    retained: false, publishedPlayableId: null
+  });
+  asset.updatedAt = now;
+  try { await persistCanonicalLibrary(canonical); }
   catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
-  return { duplicate: false, assetId, playableId, asset: libraryAssetDetails(asset), sha256: hash, storageKey, mediaUrl: source.url };
+  const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  return { duplicate: false, derivationId, assetId, playableId, asset: libraryAssetDetails(projectedAsset), sha256: hash, storageKey, mediaUrl: `/api/proto05/library/media/workspace/${encodeURIComponent(storageKey)}` };
 }
 
 async function runHlsDerivation(job, prepJob) {
@@ -2451,12 +2586,20 @@ async function hlsPreparationSource(assetId, playableId, sourceId) {
   const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
   const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId);
   const source = VIDEO_LIBRARY.sources.find(item => item.id === sourceId && item.assetId === assetId);
-  if (!asset || !playable || !source || source.kind !== "hls" || playable.kind !== "hls") throw new Error("Seules les sources HLS de la Library peuvent être préparées.");
+  if (!asset || !playable || !source) throw new Error("La source de travail est introuvable.");
+  if (playable.kind === "local-file" && explicitRole(playable) === "working-copy") {
+    const storageKey = localStorageKeyForPlayable(playable, source);
+    const inputPath = safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(playable));
+    const stat = await fs.stat(inputPath).catch(() => null);
+    if (!stat?.isFile()) throw new Error("La copie locale de travail est introuvable.");
+    return { asset, playable, source, manifest: inputPath, isLocal: true, sourceLabel: source.title || asset.title };
+  }
+  if (source.kind !== "hls" || playable.kind !== "hls") throw new Error("Seules une copie locale de travail ou une source HLS peuvent être préparées.");
   const manifest = source.originUrl || source.sourceUrl || source.manifestUrl;
   if (!manifest) throw new Error("Le manifeste HLS de la source est invalide.");
   const validatedManifest = await validateRemoteCopyUrl(manifest, { allowHls: true });
   if (!/\.m3u8$/i.test(validatedManifest.pathname)) throw new Error("Le manifeste HLS de la source est invalide.");
-  return { asset, playable, source, manifest: validatedManifest.toString() };
+  return { asset, playable, source, manifest: validatedManifest.toString(), isLocal: false, sourceLabel: source.title || asset.title };
 }
 
 async function removePreparationWorkspace(job) {
@@ -2474,7 +2617,7 @@ async function runHlsPreparation(job, manifest) {
     job.workspace = await fs.mkdtemp(path.join(HLS_PREPARATION_ROOT, `${job.id}-`));
     job.outputPath = path.join(job.workspace, "work.mp4");
     const ffmpeg = findFfmpeg();
-    const args = ["-hide_banner", "-y", "-protocol_whitelist", "file,http,https,tcp,tls,crypto", "-i", manifest, "-map", "0:v:0?", "-map", "0:a:0?", "-c", "copy", "-t", String(HLS_PREPARATION_MAX_DURATION_SECONDS), "-movflags", "+faststart", job.outputPath];
+    const args = ["-hide_banner", "-y", ...(job.isLocal ? [] : ["-protocol_whitelist", "file,http,https,tcp,tls,crypto"]), "-i", manifest, "-map", "0:v:0?", "-map", "0:a:0?", "-c", "copy", "-t", String(HLS_PREPARATION_MAX_DURATION_SECONDS), "-movflags", "+faststart", job.outputPath];
     child = spawn(ffmpeg, args, { windowsHide: true });
     job.process = child;
     job.pid = child.pid || null;
@@ -2605,6 +2748,27 @@ async function handleApi(request, response, url) {
       return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression de la copie locale impossible.", conflicts: error.conflicts || [] });
     }
   }
+  const derivationDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/derivations\/([^/]+)$/.exec(url.pathname);
+  if (derivationDeleteMatch) {
+    if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
+    try {
+      const result = await removeLibraryDerivation(decodeURIComponent(derivationDeleteMatch[1]), decodeURIComponent(derivationDeleteMatch[2]));
+      return sendJson(response, 200, result);
+    } catch (error) {
+      return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression de la dérivation impossible." });
+    }
+  }
+  const accessRoleMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/accesses\/([^/]+)\/role$/.exec(url.pathname);
+  if (accessRoleMatch) {
+    if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
+    try {
+      const payload = JSON.parse(await readRequestBody(request));
+      const result = await assignLibraryAccessRole(decodeURIComponent(accessRoleMatch[1]), decodeURIComponent(accessRoleMatch[2]), payload.role);
+      return sendJson(response, 200, result);
+    } catch (error) {
+      return sendJson(response, error.statusCode || 400, { error: error.message || "Attribution du rôle impossible." });
+    }
+  }
   const libraryAssetDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)(\/physical)?$/.exec(url.pathname);
   if (libraryAssetDeleteMatch) {
     if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
@@ -2667,7 +2831,7 @@ async function handleApi(request, response, url) {
         assetId, playableId: candidate.playable.id, title: candidate.asset.title,
         sourceKind: candidate.playable.kind, host: candidate.host,
         proposedFileName: proposedDownloadFileName(candidate.asset, candidate),
-        destinationLabel: "Dossier géré de la Library Proto05",
+        destinationLabel: `Espace de travail de ${candidate.asset.title || candidate.asset.id}`,
         quality: inspection.quality, bandwidth: inspection.bandwidth || null,
         durationMs: inspection.durationMs, estimatedSizeBytes: inspection.estimatedSizeBytes,
         ffmpeg: publicFfmpegStatus()
@@ -2714,7 +2878,7 @@ async function handleApi(request, response, url) {
     try {
       const payload = JSON.parse(await readRequestBody(request));
       const resolved = await hlsPreparationSource(payload.assetId, payload.playableId, payload.sourceId);
-      const job = { id: `hls-prep-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, assetId: resolved.asset.id, playableId: resolved.playable.id, sourceId: resolved.source.id, status: "queued", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: { sourceUrl: resolved.manifest, sourceTitle: resolved.source.title || resolved.asset.title }, masks: defaultAnonymizationMasks(), temporalMasks: null, error: null, log: [], cancelRequested: false };
+      const job = { id: `hls-prep-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, assetId: resolved.asset.id, playableId: resolved.playable.id, sourceId: resolved.source.id, isLocal: resolved.isLocal, status: "queued", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: { sourceUrl: resolved.isLocal ? null : resolved.manifest, sourceTitle: resolved.sourceLabel }, masks: defaultAnonymizationMasks(), temporalMasks: null, error: null, log: [], cancelRequested: false };
       ACTIVE_HLS_PREPARATIONS.set(job.id, job);
       void runHlsPreparation(job, resolved.manifest);
       return sendJson(response, 202, { job: publicHlsPreparationJob(job) });
@@ -3230,7 +3394,10 @@ async function shutdownServer(signal) {
 process.once("SIGINT", () => { void shutdownServer("SIGINT").finally(() => process.exit(0)); });
 process.once("SIGTERM", () => { void shutdownServer("SIGTERM").finally(() => process.exit(0)); });
 
-fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true })
+Promise.all([
+  fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true }),
+  cleanupIncompleteWorkspaceDownloads()
+])
   .then(() => server.listen(PORT, "127.0.0.1", () => console.log(`[startup] ${SERVICE} ${VERSION} sur http://127.0.0.1:${PORT}/`)))
   .catch(error => {
     console.error(`[startup] nettoyage des téléchargements incomplets impossible : ${error.message}`);
