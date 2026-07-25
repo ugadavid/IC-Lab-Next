@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fiche vidéo · IC-Lab</title>
+  <script src="/vendor/hls.js/hls.min.js"></script>
+  <script src="/shared/ic-video-player.js"></script>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#172033;background:#f6f7fb}
+    *{box-sizing:border-box}
+    body{margin:0;padding:1.5rem;overflow-x:hidden}
+    main{max-width:1280px;margin:auto}
+    a{color:#164e63}
+    h1{margin:.35rem 0;overflow-wrap:anywhere}
+    h2{margin:0;font-size:1.05rem}
+    h3{margin:.2rem 0 .5rem;overflow-wrap:anywhere}
+    button,.button,input,select{font:inherit;border:1px solid #9aa5b8;border-radius:7px;padding:.55rem}
+    button,.button{background:#164e63;color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    button.secondary,.button.secondary{background:#fff;color:#164e63}
+    button.danger{background:#fff;color:#b91c1c;border-color:#fca5a5}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    input,select{width:100%;background:#fff;color:#172033}
+    .topbar{display:flex;justify-content:space-between;gap:1rem;align-items:start;margin-bottom:1rem}
+    .back{font-weight:650}
+    .version,.muted,.meta{font-size:.86rem;color:#475569;overflow-wrap:anywhere}
+    .loading,.not-found{min-height:55vh;display:grid;place-content:center;text-align:center}
+    .not-found{max-width:620px;margin:auto}
+    .eyebrow{margin:0;color:#64748b;font-size:.9rem;font-weight:650}
+    .status{min-height:1.5rem;margin:0 0 1rem}
+    .status:empty{display:none}
+    .status.error{color:#a21caf}
+    .status.ok{color:#166534}
+    .hero,.section{background:#fff;border:1px solid #dbe1ea;border-radius:14px;padding:1rem;box-shadow:0 2px 16px #17203312;margin-bottom:1rem}
+    .hero{display:grid;grid-template-columns:minmax(240px,360px) minmax(0,1fr);gap:1rem;align-items:start}
+    .visual{width:100%;aspect-ratio:16/9;border-radius:8px;background:linear-gradient(135deg,#164e63,#0f172a);display:grid;place-content:center;text-align:center;color:#fff;overflow:hidden}
+    .visual::before{content:"▶";font-size:2.25rem}
+    .visual span{margin-top:.35rem;font-size:.86rem}
+    .hero-copy{min-width:0}
+    .chips,.actions,.general-actions{display:flex;flex-wrap:wrap;gap:.5rem}
+    .chip{display:inline-block;border-radius:999px;padding:.18rem .5rem;margin:.15rem .2rem .15rem 0;background:#e0f2fe;color:#075985;font-size:.78rem}
+    .summary{display:grid;grid-template-columns:repeat(4,minmax(90px,1fr));gap:.5rem;margin-top:1rem}
+    .metric{padding:.65rem;border:1px solid #dbe1ea;border-radius:10px;background:#f8fafc}
+    .metric strong{display:block;font-size:1.15rem}
+    .metric span{color:#64748b;font-size:.78rem}
+    .section-head{display:flex;align-items:start;justify-content:space-between;gap:1rem;margin-bottom:.75rem}
+    .section-head p{margin:.25rem 0 0}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+    .access-card{min-width:0;border:1px solid #dbe1ea;border-radius:10px;background:#f8fafc;padding:1rem}
+    .access-card .meta{margin:.35rem 0}
+    .access-card .actions{margin-top:.75rem}
+    .access-card details{margin:.65rem 0;color:#475569;font-size:.86rem}
+    .empty{padding:1.25rem;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:10px;background:#fff}
+    .preview{margin-top:.75rem;padding-top:.75rem;border-top:1px solid #e5e7eb}
+    .preview[hidden]{display:none}
+    .preview-mount{width:100%;aspect-ratio:16/9;background:#0f172a;border-radius:8px;overflow:hidden}
+    .preview-mount video,.preview-mount iframe{display:block;width:100%;height:100%}
+    .classification{display:grid;grid-template-columns:minmax(200px,320px) minmax(0,1fr);gap:1rem}
+    .field{margin:0 0 .75rem;padding:0;border:0}
+    .field label,.field legend{display:block;font-weight:650;font-size:.9rem;margin-bottom:.3rem}
+    .tag-options{display:flex;flex-wrap:wrap;gap:.35rem}
+    .tag-option{display:flex;gap:.35rem;align-items:center;border-radius:999px;padding:.18rem .5rem;background:#fef3c7;color:#92400e;font-size:.78rem}
+    .tag-option input{width:auto}
+    .usage-list{margin:.5rem 0;padding-left:1.2rem}
+    dialog{width:min(520px,calc(100% - 2rem));max-height:90vh;overflow:auto;border:1px solid #dbe1ea;border-radius:14px;background:#fff;color:#172033;padding:1.25rem;box-shadow:0 12px 45px #17203344}
+    dialog::backdrop{background:#17203355}
+    dialog h2{margin-top:0}
+    dialog .actions{justify-content:flex-end;margin-top:1rem}
+    progress{width:100%;height:.8rem}
+    @media(max-width:760px){
+      body{padding:.8rem}
+      .topbar{display:block}
+      .version{display:block;margin-top:.35rem}
+      .hero,.classification,.grid{grid-template-columns:1fr}
+      .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .section-head{display:block}
+      .section-head>button{margin-top:.75rem}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a id="backLink" class="back" href="/teacher/videos">← Retour à la vidéothèque</a>
+    <span class="version">Proto05 · 0.1.40</span>
+  </header>
+  <main>
+    <div id="status" class="status" role="status" aria-live="polite"></div>
+    <div id="app" class="loading"><p>Chargement de la fiche vidéo…</p></div>
+  </main>
+  <dialog id="actionDialog"></dialog>
+  <script>
+  (() => {
+    const app=document.getElementById('app'),status=document.getElementById('status'),dialog=document.getElementById('actionDialog');
+    const params=new URLSearchParams(location.search),returnTo=params.get('return');
+    if(returnTo?.startsWith('/teacher/videos'))document.getElementById('backLink').href=returnTo;
+    let asset=null,activities=[],players=new Map(),downloadTimer=null;
+    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    const duration=ms=>Number.isFinite(ms)&&ms>0?`${Math.floor(ms/60000)} min ${String(Math.round(ms/1000)%60).padStart(2,'0')} s`:'Durée non renseignée';
+    const date=value=>value?new Intl.DateTimeFormat('fr-FR',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value)):'Date non renseignée';
+    const availability=value=>value==='available'?'Disponible':value==='unavailable'?'Indisponible':'Disponibilité non vérifiée';
+    const kind=value=>({hls:'HLS distant','direct-url':'Fichier distant','local-file':'Fichier local','derived-output':'Dérivation locale',youtube:'YouTube'}[value]||value||'Type non renseigné');
+    const api=async(url,options={})=>{const response=await fetch(url,{headers:{'content-type':'application/json',...(options.headers||{})},...options});const payload=await response.json().catch(()=>({}));if(!response.ok)throw Object.assign(new Error(payload.error||`Erreur HTTP ${response.status}`),{status:response.status,payload});return payload};
+    function setStatus(message='',type=''){status.textContent=message;status.className=`status ${type}`.trim()}
+    function sourceHost(){const source=asset.sources?.find(item=>item.role==='original-remote')||asset.sources?.[0];const raw=source?.originUrl||source?.sourceUrl||source?.url;try{return new URL(raw,location.origin).hostname}catch{return source?.provider==='local'?'Fichier local':source?.provider||'Origine non renseignée'}}
+    function destroyPlayers(){players.forEach(player=>player.destroy?.());players.clear()}
+    function playable(id){return asset.playables?.find(item=>item.id===id)}
+    function accessMeta(entry){return [kind(entry.kind),availability(entry.availability),entry.durationMs?duration(entry.durationMs):null,entry.width&&entry.height?`${entry.width} × ${entry.height}`:null,date(entry.createdAt)].filter(Boolean).map(esc).join(' · ')}
+    function previewMarkup(id){return `<div class="preview" data-preview="${esc(id)}" hidden><div class="preview-mount"></div></div>`}
+    function entryMarkup(entry,role){
+      const preview=entry.url?`<button type="button" class="secondary" data-action="preview" data-playable="${esc(entry.id)}">Prévisualiser</button>`:'';
+      const workshop=role==='working-copy'?`<button type="button" data-action="workshop" data-playable="${esc(entry.id)}">Ouvrir dans l’atelier d’anonymisation</button>`:'';
+      const download=['working-copy','derivation-local'].includes(role)&&entry.url?`<a class="button secondary" href="${esc(entry.url)}" download>Récupérer sur mon disque</a>`:'';
+      const remove=role==='working-copy'?`<button type="button" class="danger" data-action="delete-copy" data-playable="${esc(entry.id)}">Supprimer la copie de travail</button>`:role==='derivation-local'?`<button type="button" class="danger" data-action="delete-derivation" data-derivation="${esc(entry.derivationId)}">Supprimer la tentative</button>`:'';
+      const associate=role==='published-remote'?`<button type="button" data-action="associate" data-playable="${esc(entry.id)}">Associer à l’activité</button>`:'';
+      const recipe=role==='derivation-local'&&entry.recipe?`<details><summary>Résumé de la recette</summary><p>${esc(entry.recipe.mode==='temporal'?'Masques temporels':'Masques fixes')} · Flou ${esc(entry.recipe.blur?.label||'configuré')} · ${Number(entry.recipe.temporalMasks?.length||entry.recipe.masks?.length||0)} masque(s)</p></details>`:'';
+      return `<article class="access-card" data-access="${esc(entry.id)}"><h3>${esc(entry.label||entry.name||'Accès vidéo')}</h3><p class="meta">${accessMeta(entry)}</p>${recipe}<div class="actions">${preview}${workshop}${download}${associate}${remove}</div>${previewMarkup(entry.id)}</article>`;
+    }
+    function groupMarkup(items,role,empty){return items?.length?items.map(item=>entryMarkup(item,role)).join(''):`<div class="empty">${esc(empty)}</div>`}
+    function usageMarkup(){
+      const usage=asset.usage||{},items=usage.items||usage.references||[];
+      if(!usage.whetherUsed&&!items.length)return '<p class="muted">Cette vidéo n’est utilisée dans aucune activité.</p>';
+      return `<p>${Number(usage.activityCount||items.length)} activité(s) utilisent cette vidéo.</p>${items.length?`<ul class="usage-list">${items.map(item=>`<li>${esc(item.title||item.name||item.activityTitle||'Activité')}</li>`).join('')}</ul>`:''}`;
+    }
+    function render(){
+      destroyPlayers();
+      const groups=asset.versionsAndAccess||{},counts={original:(groups.originalRemote||[]).length,copy:(groups.workingCopy||[]).length,derivations:(groups.derivations||[]).length,published:(groups.publishedRemote||[]).length};
+      const tags=(asset.tagIds||[]).map(id=>asset.tags?.find(tag=>tag.id===id)).filter(Boolean),folder=asset.folders?.find(item=>item.id===asset.folderId);
+      const mainPlayable=playable(asset.defaultPlayableId)||asset.playables?.[0]||{};
+      app.className='';
+      app.innerHTML=`
+        <section class="hero">
+          <div class="visual" aria-label="Visuel de la vidéo"><span>${esc(kind(mainPlayable.kind))}</span></div>
+          <div class="hero-copy"><p class="eyebrow">Fiche vidéo</p><h1>${esc(asset.title||'Vidéo sans titre')}</h1>
+            <div class="chips"><span class="chip">${esc(sourceHost())}</span><span class="chip">${esc(duration(mainPlayable.durationMs||asset.technicalMetadata?.durationMs))}</span><span class="chip">${esc(availability(mainPlayable.availability))}</span>${folder?`<span class="chip">Dossier · ${esc(folder.name)}</span>`:''}${tags.map(tag=>`<span class="chip">${esc(tag.name)}</span>`).join('')}</div>
+            <div class="summary"><div class="metric"><strong>${counts.original}</strong><span>originale</span></div><div class="metric"><strong>${counts.copy}</strong><span>copie de travail</span></div><div class="metric"><strong>${counts.derivations}</strong><span>dérivation(s)</span></div><div class="metric"><strong>${counts.published}</strong><span>publiée(s)</span></div></div>
+          </div>
+        </section>
+        <section class="section"><div class="section-head"><div><h2>Sources et travail</h2><p class="muted">L’originale reste distincte de la copie locale utilisée pour travailler.</p></div>${asset.download?.canDownload?'<button type="button" data-action="create-copy">Créer une copie locale de travail</button>':''}</div><div class="grid">${groupMarkup(groups.originalRemote,'original-remote','Aucune originale distante qualifiée.')}${groupMarkup(groups.workingCopy,'working-copy','Aucune copie locale de travail.')}</div></section>
+        <section class="section"><div class="section-head"><div><h2>Dérivations locales</h2><p class="muted">Chaque tentative est conservée et contrôlée indépendamment.</p></div></div><div class="grid derivation-grid">${groupMarkup(groups.derivations,'derivation-local','Aucune dérivation locale.')}</div></section>
+        <section class="section"><div class="section-head"><div><h2>Versions publiées</h2><p class="muted">Accès destinés à être associés explicitement aux activités.</p></div><button type="button" class="secondary" data-action="add-published">Ajouter une version publiée</button></div><div class="grid">${groupMarkup(groups.publishedRemote,'published-remote','Aucune version publiée.')}${groups.legacy?.length?groupMarkup(groups.legacy,'legacy-unknown',''):''}</div></section>
+        <section class="section"><div class="section-head"><div><h2>Usages et classement</h2><p class="muted">Le classement modifie uniquement la fiche de la Library.</p></div></div><div class="classification"><div>${usageMarkup()}</div><form id="classificationForm"><div class="field"><label for="folder">Dossier</label><select id="folder"><option value="">Non classée</option>${(asset.folders||[]).map(item=>`<option value="${esc(item.id)}" ${item.id===asset.folderId?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><fieldset class="field"><legend>Tags</legend><div class="tag-options">${(asset.tags||[]).map(item=>`<label class="tag-option"><input type="checkbox" value="${esc(item.id)}" ${(asset.tagIds||[]).includes(item.id)?'checked':''}>${esc(item.name)}</label>`).join('')||'<span class="muted">Aucun tag disponible.</span>'}</div></fieldset><div class="actions"><button type="submit">Enregistrer le classement</button></div></form></div></section>
+        <section class="section"><div class="section-head"><div><h2>Actions générales</h2><p class="muted">Les suppressions restent protégées par une confirmation et les dépendances serveur.</p></div></div><div class="general-actions"><button type="button" class="danger" data-action="remove-asset">Retirer de la Library</button>${asset.deletion?.canDeleteFile?'<button type="button" class="danger" data-action="remove-physical">Supprimer de la Library et du disque</button>':''}</div></section>`;
+      bind();
+      document.title=`${asset.title||'Fiche vidéo'} · IC-Lab`;
+    }
+    async function reload(message){const payload=await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}`);asset=payload.asset;render();if(message)setStatus(message,'ok')}
+    async function preview(id,button){
+      const entry=playable(id),shell=document.querySelector(`[data-preview="${CSS.escape(id)}"]`),mount=shell?.querySelector('.preview-mount');if(!entry||!shell||!mount)return;
+      const current=players.get(id);if(current){current.destroy();players.delete(id);shell.hidden=true;button.textContent='Prévisualiser';return}
+      shell.hidden=false;button.disabled=true;mount.replaceChildren();
+      try{const player=window.createICVideoPlayer({container:mount}),value=entry.role==='derivation-local'?{...entry,provider:'local'}:entry;await player.load(value);players.set(id,player);button.textContent='Fermer l’aperçu';setStatus('Aperçu chargé.','ok')}
+      catch(error){shell.hidden=true;setStatus(`Aperçu indisponible : ${error.message}`,'error')}finally{button.disabled=false}
+    }
+    async function workshop(id){setStatus('Préparation de la copie de travail…');try{const entry=playable(id),result=await api('/api/proto05/library/hls-preparations',{method:'POST',body:JSON.stringify({assetId:asset.id,playableId:id,sourceId:entry.sourceId})});const poll=async()=>{const payload=await api(`/api/proto05/library/hls-preparations/${encodeURIComponent(result.job.id)}`);if(payload.job.status==='completed'){location.href=`/teacher/anonymization/${encodeURIComponent(result.job.id)}`;return}if(['failed','cancelled'].includes(payload.job.status))throw new Error(payload.job.error||'Préparation impossible.');setTimeout(()=>poll().catch(error=>setStatus(error.message,'error')),500)};poll()}catch(error){setStatus(error.message,'error')}}
+    function openAssociation(id){dialog.innerHTML=`<h2>Associer à une activité</h2><p class="muted">Seule cette version publiée sera associée.</p><label for="activitySelect">Activité</label><select id="activitySelect"><option value="">Choisir une activité</option>${activities.map(item=>`<option value="${esc(item.id)}">${esc(item.title||item.name||item.id)}</option>`).join('')}</select><div class="actions"><button type="button" class="secondary" data-dialog-close>Annuler</button><button type="button" data-confirm-association>Associer</button></div>`;dialog.showModal();dialog.querySelector('[data-dialog-close]').onclick=()=>dialog.close();dialog.querySelector('[data-confirm-association]').onclick=async()=>{const activityId=dialog.querySelector('#activitySelect').value;if(!activityId)return;try{await api(`/api/proto05/activities/${encodeURIComponent(activityId)}/video-ref`,{method:'PUT',body:JSON.stringify({assetId:asset.id,playableId:id})});dialog.close();await reload('Version publiée associée à l’activité.')}catch(error){setStatus(error.message,'error')}}}
+    async function addPublished(){const url=prompt(`URL distante publiée à rattacher à « ${asset.title||asset.id} » :`,'');if(!url?.trim())return;try{const analyzed=await api('/api/proto05/library/remote-reference/analyze',{method:'POST',body:JSON.stringify({url:url.trim(),title:`${asset.title||asset.id} — version publiée`})});if(!confirm(`Ajouter cette version publiée ?\n\nType : ${analyzed.analysis.kind}\nHôte : ${analyzed.analysis.domain}\nURL finale : ${analyzed.analysis.finalUrl}`))return;await api('/api/proto05/library/remote-reference/confirm',{method:'POST',body:JSON.stringify({token:analyzed.token,assetId:asset.id})});await reload('Version distante publiée ajoutée.')}catch(error){setStatus(error.message,'error')}}
+    async function removeCopy(id){const copy=(asset.localCopies||[]).find(item=>item.playableId===id);if(!confirm(`Supprimer la copie locale de travail de « ${asset.title} » ?\n\nLa référence distante et les dérivations seront conservées.`))return;try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/local-copies/${encodeURIComponent(id)}`,{method:'DELETE'});await reload('Copie locale de travail supprimée.')}catch(error){setStatus(error.message,'error')}}
+    async function removeDerivation(id){const entry=asset.versionsAndAccess?.derivations?.find(item=>item.derivationId===id);if(!confirm(`Supprimer uniquement la tentative « ${entry?.label||'sélectionnée'} » ?`))return;try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/derivations/${encodeURIComponent(id)}`,{method:'DELETE'});await reload('Tentative de dérivation supprimée.')}catch(error){setStatus(error.message,'error')}}
+    async function removeAsset(physical){const message=physical?`Supprimer « ${asset.title} » de la Library et du disque ?\n\nAttention : le fichier sera réellement supprimé.`:`Retirer « ${asset.title} » de la Library ?\n\nLes fichiers présents sur le disque seront conservés.`;if(!confirm(message))return;try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}${physical?'/physical':''}`,{method:'DELETE'});location.href=document.getElementById('backLink').href}catch(error){const details=(error.payload?.conflicts||[]).flatMap(item=>item.items||[]).map(item=>item.title||item.id).join(', ');setStatus([error.message,details].filter(Boolean).join(' · '),'error')}}
+    async function createCopy(){
+      try{const options=await api(`/api/proto05/library/download-options/${encodeURIComponent(asset.id)}?playableId=${encodeURIComponent(asset.download.sourcePlayableId||'')}`);dialog.innerHTML=`<h2>Créer une copie locale de travail</h2><p class="muted">Cette copie sert à l’anonymisation et ne remplace aucune vidéo d’activité.</p><p>${esc(kind(options.sourceKind))} · ${esc(options.host)} · ${esc(options.quality||'Qualité automatique')} · ${esc(duration(options.durationMs))}</p><label for="copyName">Nom du fichier</label><input id="copyName" maxlength="180" value="${esc(options.proposedFileName)}"><div id="downloadProgress"></div><div class="actions"><button type="button" class="secondary" data-dialog-close>Annuler</button><button type="button" data-start-copy ${options.ffmpeg?.available?'':'disabled'}>Télécharger</button></div>`;dialog.showModal();dialog.querySelector('[data-dialog-close]').onclick=()=>dialog.close();dialog.querySelector('[data-start-copy]').onclick=async event=>{event.currentTarget.disabled=true;try{const started=await api('/api/proto05/library/downloads',{method:'POST',body:JSON.stringify({assetId:asset.id,playableId:options.playableId,fileName:dialog.querySelector('#copyName').value.trim()})});const progress=dialog.querySelector('#downloadProgress');const poll=async()=>{const payload=await api(`/api/proto05/library/downloads/${encodeURIComponent(started.job.id)}`),job=payload.job;progress.innerHTML=`<p>${esc(job.stateLabel||job.status)} · ${Number(job.progress)||0} %</p><progress max="100" value="${Number(job.progress)||0}"></progress>`;if(job.status==='completed'){dialog.close();await reload('Copie locale de travail terminée.');return}if(['failed','cancelled'].includes(job.status))throw new Error(job.error||'Création de copie interrompue.');downloadTimer=setTimeout(()=>poll().catch(error=>setStatus(error.message,'error')),500)};poll()}catch(error){setStatus(error.message,'error')}}}catch(error){setStatus(error.message,'error')}
+    }
+    function bind(){
+      app.querySelectorAll('[data-action]').forEach(control=>control.addEventListener('click',()=>{const action=control.dataset.action;if(action==='preview')preview(control.dataset.playable,control);else if(action==='workshop')workshop(control.dataset.playable);else if(action==='associate')openAssociation(control.dataset.playable);else if(action==='add-published')addPublished();else if(action==='delete-copy')removeCopy(control.dataset.playable);else if(action==='delete-derivation')removeDerivation(control.dataset.derivation);else if(action==='create-copy')createCopy();else if(action==='remove-asset')removeAsset(false);else if(action==='remove-physical')removeAsset(true)}));
+      document.getElementById('classificationForm').addEventListener('submit',async event=>{event.preventDefault();const folderId=document.getElementById('folder').value||null,tagIds=[...event.currentTarget.querySelectorAll('input:checked')].map(input=>input.value);try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/classification`,{method:'PUT',body:JSON.stringify({folderId,tagIds})});await reload('Classement enregistré.')}catch(error){setStatus(error.message,'error')}});
+    }
+    async function init(){
+      let id;try{id=decodeURIComponent(location.pathname.split('/').filter(Boolean).at(-1)||'')}catch{id=''}
+      try{const [detail,activityPayload]=await Promise.all([api(`/api/proto05/library/assets/${encodeURIComponent(id)}`),api('/api/proto05/activities')]);asset=detail.asset;activities=activityPayload.activities||[];render()}
+      catch(error){if(error.status===404){app.className='not-found';app.innerHTML='<p class="eyebrow">Vidéo introuvable</p><h1>Cette fiche n’existe pas</h1><p class="muted">La référence demandée est absente de la Library ou a été retirée.</p><p><a class="button" href="/teacher/videos">Retour à la vidéothèque</a></p>';document.title='Vidéo introuvable · IC-Lab'}else{app.className='not-found';app.innerHTML=`<h1>Chargement impossible</h1><p class="muted">${esc(error.message)}</p><p><a class="button" href="/teacher/videos">Retour à la vidéothèque</a></p>`}}
+    }
+    window.addEventListener('beforeunload',()=>{destroyPlayers();clearTimeout(downloadTimer)});
+    init();
+  })();
+  </script>
+</body>
+</html>

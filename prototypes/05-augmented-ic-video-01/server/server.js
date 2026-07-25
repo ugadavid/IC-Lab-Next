@@ -30,7 +30,7 @@ const {
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.39";
+const VERSION = "0.1.40";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -2771,6 +2771,13 @@ async function handleApi(request, response, url) {
   }
   const libraryAssetDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)(\/physical)?$/.exec(url.pathname);
   if (libraryAssetDeleteMatch) {
+    if (request.method === "GET" && !libraryAssetDeleteMatch[2]) {
+      const asset = VIDEO_LIBRARY.assets.find(item => item.id === decodeURIComponent(libraryAssetDeleteMatch[1]));
+      if (!asset) return sendJson(response, 404, { error: "Asset vidéo introuvable." });
+      const activities = (await readActivities()).activities || [];
+      const plan = libraryAssetDeletionPlan(asset.id, activities);
+      return sendJson(response, 200, { asset: libraryAssetDetails(asset, libraryUsageSummary(plan)) });
+    }
     if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
     try {
       const result = await removeLibraryAsset(decodeURIComponent(libraryAssetDeleteMatch[1]), { physical: Boolean(libraryAssetDeleteMatch[2]) });
@@ -3316,6 +3323,11 @@ async function serveStatic(request, response, url) {
   }
   if (url.pathname === "/teacher/videos" || url.pathname === "/teacher/videos/") {
     const target = path.join(ROOT_DIR, "teacher-videos.html"); const file = await fs.readFile(target);
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
+    return request.method === "HEAD" ? response.end() : response.end(file);
+  }
+  if (/^\/teacher\/videos\/[^/]+$/.test(url.pathname)) {
+    const target = path.join(ROOT_DIR, "teacher-video-detail.html"); const file = await fs.readFile(target);
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
   }

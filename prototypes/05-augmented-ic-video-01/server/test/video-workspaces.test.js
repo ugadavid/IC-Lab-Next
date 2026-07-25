@@ -7,6 +7,7 @@ const path = require("node:path");
 const test = require("node:test");
 const { validateMediaLibrary } = require("../media-library-schema");
 const { migrateWorkingCopy, projectAssetAccesses } = require("../video-workspaces");
+const { startTemporaryProto05Server } = require("./helpers/temporary-proto05-server");
 
 const now = "2026-07-25T12:00:00.000Z";
 
@@ -86,20 +87,44 @@ test("un échec du writer restaure la copie historique", async t => {
   assert.equal(fs.existsSync(path.join(workspaces, "asset-safe", "source", "copy.mp4")), false);
 });
 
-test("l’interface nomme les espaces de travail et rend les actions conditionnelles", () => {
+test("la vidéothèque ouvre une fiche dédiée sans détail transitoire dans les cartes", () => {
   const html = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
-  assert.match(html, /playable\.role==='derivation-local'\?\{\.\.\.playable,provider:'local'\}:playable/);
-  assert.match(html, /class="versions-access" data-version-details="\$\{esc\(asset\.id\)\}" hidden/);
   assert.match(html, /lineage-summary-button/);
+  assert.match(html, /asset-detail-link/);
+  assert.match(html, /Voir la fiche détaillée/);
+  assert.match(html, /\/teacher\/videos\/\$\{encodeURIComponent\(asset\.id\)\}/);
+  assert.doesNotMatch(html, /data-version-details/);
   assert.match(html, /window\.proto05CloseLineagePanel\?\.\(\)/);
   assert.match(html, /window\.proto05CloseUsagePanel\?\.\(\)/);
-  assert.match(html, /Versions et accès/);
   assert.match(html, /Créer une copie locale de travail/);
   assert.match(html, /ne remplace aucune vidéo d’activité/);
+  assert.doesNotMatch(html, /Copie locale disponible · lecture par défaut/);
+});
+
+test("la route détaillée projette un asset et traite proprement un identifiant inconnu", async t => {
+  const server = await startTemporaryProto05Server({ schemaVersion: "0.1", activities: [] }, "proto05-video-detail-");
+  t.after(() => server.cleanup());
+  const list = await fetch(`${server.baseUrl}/api/proto05/library/assets`).then(response => response.json());
+  const first = list.assets[0];
+  assert.ok(first?.id);
+  const page = await fetch(`${server.baseUrl}/teacher/videos/${encodeURIComponent(first.id)}`);
+  assert.equal(page.status, 200);
+  assert.match(page.headers.get("content-type"), /text\/html/);
+  assert.match(await page.text(), /Sources et travail/);
+  const detail = await fetch(`${server.baseUrl}/api/proto05/library/assets/${encodeURIComponent(first.id)}`);
+  assert.equal(detail.status, 200);
+  assert.equal((await detail.json()).asset.id, first.id);
+  const missing = await fetch(`${server.baseUrl}/api/proto05/library/assets/asset-inconnu-mission-117`);
+  assert.equal(missing.status, 404);
+});
+
+test("la fiche dédiée conserve les actions par rôle et normalise les dérivations locales", () => {
+  const html = fs.readFileSync(path.resolve(__dirname, "../../teacher-video-detail.html"), "utf8");
+  assert.match(html, /entry\.role==='derivation-local'\?\{\.\.\.entry,provider:'local'\}:entry/);
   assert.match(html, /Ouvrir dans l’atelier d’anonymisation/);
   assert.match(html, /Récupérer sur mon disque/);
   assert.match(html, /Supprimer la tentative/);
   assert.match(html, /Associer à l’activité/);
   assert.match(html, /Ajouter une version publiée/);
-  assert.doesNotMatch(html, /Copie locale disponible · lecture par défaut/);
+  assert.match(html, /Enregistrer le classement/);
 });
