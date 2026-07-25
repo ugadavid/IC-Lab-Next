@@ -91,6 +91,8 @@ test("l’interface nomme les espaces de travail et rend les actions conditionne
   assert.match(html, /playable\.role==='derivation-local'\?\{\.\.\.playable,provider:'local'\}:playable/);
   assert.match(html, /class="versions-access" data-version-details="\$\{esc\(asset\.id\)\}" hidden/);
   assert.match(html, /lineage-summary-button/);
+  assert.match(html, /window\.proto05CloseLineagePanel\?\.\(\)/);
+  assert.match(html, /window\.proto05CloseUsagePanel\?\.\(\)/);
   assert.match(html, /Versions et accès/);
   assert.match(html, /Créer une copie locale de travail/);
   assert.match(html, /ne remplace aucune vidéo d’activité/);
