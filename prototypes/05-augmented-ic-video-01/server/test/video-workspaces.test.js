@@ -88,6 +88,7 @@ test("un échec du writer restaure la copie historique", async t => {
 
 test("l’interface nomme les espaces de travail et rend les actions conditionnelles", () => {
   const html = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
+  assert.match(html, /playable\.role==='derivation-local'\?\{\.\.\.playable,provider:'local'\}:playable/);
   assert.match(html, /Versions et accès/);
   assert.match(html, /Créer une copie locale de travail/);
   assert.match(html, /ne remplace aucune vidéo d’activité/);

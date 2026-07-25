@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-07-25T16:15:45.462Z",
+  "updatedAt": "2026-07-25T16:28:38.823Z",
   "assets": [
     {
       "id": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
@@ -1260,7 +1260,7 @@
       },
       "rights": {},
       "createdAt": "2026-07-24T20:54:14.167Z",
-      "updatedAt": "2026-07-25T16:15:45.460Z"
+      "updatedAt": "2026-07-25T16:28:38.820Z"
     }
   ],
   "sources": [
@@ -2188,6 +2188,289 @@
         "originalFileName": "yop_macopielocale.mp4"
       },
       "createdAt": "2026-07-25T16:15:45.460Z"
+    },
+    {
+      "id": "source-hls-temporal-derivation-1784996744983-f056bd47",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "kind": "derived-output",
+      "provider": "proto05-derived",
+      "role": "derivation-local",
+      "origin": {
+        "derivationId": "hls-temporal-derivation-1784996744983-f056bd47"
+      },
+      "transport": "file",
+      "mimeType": "video/mp4",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "derivationId": "hls-temporal-derivation-1784996744983-f056bd47",
+        "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "sourcePreparationJobId": "hls-prep-1784996658684-24a3edbc",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0.831695656114724,
+            "y": 0.06029231358128632,
+            "width": 0.16830434388527604,
+            "height": 0.16463286434602814
+          },
+          {
+            "time": 10053,
+            "x": 0.271790814292881,
+            "y": 0.2915830423765188,
+            "width": 0.5285260803831204,
+            "height": 0.11140167026751518
+          },
+          {
+            "time": 26469,
+            "x": 0.9369254612951632,
+            "y": 0.05830250945093768,
+            "width": 0.06307453870483681,
+            "height": 0.0618154841129325
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 26469,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              },
+              {
+                "time": 10053,
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 10053,
+            "endMs": 26469,
+            "keyframes": [
+              {
+                "time": 10053,
+                "x": 0.271790814292881,
+                "y": 0.2915830423765188,
+                "width": 0.5285260803831204,
+                "height": 0.11140167026751518
+              }
+            ]
+          },
+          {
+            "id": "mask-3",
+            "startMs": 26469,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 26469,
+                "x": 0.9369254612951632,
+                "y": 0.05830250945093768,
+                "width": 0.06307453870483681,
+                "height": 0.0618154841129325
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 10053,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 10053,
+            "endMs": 26469,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              },
+              {
+                "id": "mask-2",
+                "x": 0.271790814292881,
+                "y": 0.2915830423765188,
+                "width": 0.5285260803831204,
+                "height": 0.11140167026751518
+              }
+            ]
+          },
+          {
+            "id": "step-3",
+            "startMs": 26469,
+            "endMs": 391838,
+            "masks": [
+              {
+                "id": "mask-3",
+                "x": 0.9369254612951632,
+                "y": 0.05830250945093768,
+                "width": 0.06307453870483681,
+                "height": 0.0618154841129325
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-25T16:26:17.024Z",
+        "status": "completed",
+        "sha256": "e88d23de161345885ddc9e5c977de96d2f5fafa9dc29d63eab3be8e2e3914823",
+        "sizeBytes": 29130464
+      },
+      "createdAt": "2026-07-25T16:26:17.024Z"
+    },
+    {
+      "id": "source-hls-temporal-derivation-1784996884534-a240cc7c",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "kind": "derived-output",
+      "provider": "proto05-derived",
+      "role": "derivation-local",
+      "origin": {
+        "derivationId": "hls-temporal-derivation-1784996884534-a240cc7c"
+      },
+      "transport": "file",
+      "mimeType": "video/mp4",
+      "provenance": {
+        "kind": "derived-anonymized",
+        "derivationId": "hls-temporal-derivation-1784996884534-a240cc7c",
+        "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "sourcePreparationJobId": "hls-prep-1784996849438-cdc0e1bb",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0,
+            "y": 0,
+            "width": 0.3784468894503865,
+            "height": 0.07785703212699749
+          },
+          {
+            "time": 1426,
+            "x": 0.26481774652262136,
+            "y": 0.5130304803057316,
+            "width": 0.5218700084901734,
+            "height": 0.13168693175721413
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0,
+                "y": 0,
+                "width": 0.3784468894503865,
+                "height": 0.07785703212699749
+              },
+              {
+                "time": 1426,
+                "x": 0.8329635235507856,
+                "y": 0.05691141087229266,
+                "width": 0.16703647644921438,
+                "height": 0.1680137670550218
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 1426,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 1426,
+                "x": 0.26481774652262136,
+                "y": 0.5130304803057316,
+                "width": 0.5218700084901734,
+                "height": 0.13168693175721413
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 1426,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.3784468894503865,
+                "height": 0.07785703212699749
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 1426,
+            "endMs": 391838,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.8329635235507856,
+                "y": 0.05691141087229266,
+                "width": 0.16703647644921438,
+                "height": 0.1680137670550218
+              },
+              {
+                "id": "mask-2",
+                "x": 0.26481774652262136,
+                "y": 0.5130304803057316,
+                "width": 0.5218700084901734,
+                "height": 0.13168693175721413
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-25T16:28:38.820Z",
+        "status": "completed",
+        "sha256": "f4dd436c50e8bea3cbb7704d263dfdc03c1bd94181515c7d0977cef889e2c1f3",
+        "sizeBytes": 27393166
+      },
+      "createdAt": "2026-07-25T16:28:38.820Z"
     }
   ],
   "playables": [
@@ -2789,9 +3072,608 @@
       },
       "createdAt": "2026-07-25T16:15:45.460Z",
       "updatedAt": "2026-07-25T16:15:45.460Z"
+    },
+    {
+      "id": "video-hls-temporal-derivation-1784996744983-f056bd47",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "sourceId": "source-hls-temporal-derivation-1784996744983-f056bd47",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "role": "derivation-local",
+      "availability": "available",
+      "availabilityReason": null,
+      "location": {
+        "storageScope": "workspace",
+        "storageKey": "media-proto05-remote-ref-03738b8065e1866b8e956819/derived/hls-temporal-derivation-1784996744983-f056bd47/e88d23de16134588-anonymized.mp4"
+      },
+      "technicalMetadata": {
+        "durationMs": null,
+        "width": null,
+        "height": null,
+        "mimeType": "video/mp4",
+        "sizeBytes": 29130464,
+        "sha256": "e88d23de161345885ddc9e5c977de96d2f5fafa9dc29d63eab3be8e2e3914823",
+        "fileName": "e88d23de16134588-anonymized.mp4",
+        "status": "available",
+        "error": null
+      },
+      "provenance": {
+        "kind": "derived-anonymized",
+        "derivationId": "hls-temporal-derivation-1784996744983-f056bd47",
+        "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "sourcePreparationJobId": "hls-prep-1784996658684-24a3edbc",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0.831695656114724,
+            "y": 0.06029231358128632,
+            "width": 0.16830434388527604,
+            "height": 0.16463286434602814
+          },
+          {
+            "time": 10053,
+            "x": 0.271790814292881,
+            "y": 0.2915830423765188,
+            "width": 0.5285260803831204,
+            "height": 0.11140167026751518
+          },
+          {
+            "time": 26469,
+            "x": 0.9369254612951632,
+            "y": 0.05830250945093768,
+            "width": 0.06307453870483681,
+            "height": 0.0618154841129325
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 26469,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              },
+              {
+                "time": 10053,
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 10053,
+            "endMs": 26469,
+            "keyframes": [
+              {
+                "time": 10053,
+                "x": 0.271790814292881,
+                "y": 0.2915830423765188,
+                "width": 0.5285260803831204,
+                "height": 0.11140167026751518
+              }
+            ]
+          },
+          {
+            "id": "mask-3",
+            "startMs": 26469,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 26469,
+                "x": 0.9369254612951632,
+                "y": 0.05830250945093768,
+                "width": 0.06307453870483681,
+                "height": 0.0618154841129325
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 10053,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 10053,
+            "endMs": 26469,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              },
+              {
+                "id": "mask-2",
+                "x": 0.271790814292881,
+                "y": 0.2915830423765188,
+                "width": 0.5285260803831204,
+                "height": 0.11140167026751518
+              }
+            ]
+          },
+          {
+            "id": "step-3",
+            "startMs": 26469,
+            "endMs": 391838,
+            "masks": [
+              {
+                "id": "mask-3",
+                "x": 0.9369254612951632,
+                "y": 0.05830250945093768,
+                "width": 0.06307453870483681,
+                "height": 0.0618154841129325
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-25T16:26:17.024Z",
+        "status": "completed",
+        "sha256": "e88d23de161345885ddc9e5c977de96d2f5fafa9dc29d63eab3be8e2e3914823",
+        "sizeBytes": 29130464
+      },
+      "createdAt": "2026-07-25T16:26:17.024Z",
+      "updatedAt": "2026-07-25T16:26:17.024Z"
+    },
+    {
+      "id": "video-hls-temporal-derivation-1784996884534-a240cc7c",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "sourceId": "source-hls-temporal-derivation-1784996884534-a240cc7c",
+      "kind": "local-file",
+      "provider": "proto05-derived",
+      "role": "derivation-local",
+      "availability": "available",
+      "availabilityReason": null,
+      "location": {
+        "storageScope": "workspace",
+        "storageKey": "media-proto05-remote-ref-03738b8065e1866b8e956819/derived/hls-temporal-derivation-1784996884534-a240cc7c/f4dd436c50e8bea3-anonymized.mp4"
+      },
+      "technicalMetadata": {
+        "durationMs": null,
+        "width": null,
+        "height": null,
+        "mimeType": "video/mp4",
+        "sizeBytes": 27393166,
+        "sha256": "f4dd436c50e8bea3cbb7704d263dfdc03c1bd94181515c7d0977cef889e2c1f3",
+        "fileName": "f4dd436c50e8bea3-anonymized.mp4",
+        "status": "available",
+        "error": null
+      },
+      "provenance": {
+        "kind": "derived-anonymized",
+        "derivationId": "hls-temporal-derivation-1784996884534-a240cc7c",
+        "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "sourcePreparationJobId": "hls-prep-1784996849438-cdc0e1bb",
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0,
+            "y": 0,
+            "width": 0.3784468894503865,
+            "height": 0.07785703212699749
+          },
+          {
+            "time": 1426,
+            "x": 0.26481774652262136,
+            "y": 0.5130304803057316,
+            "width": 0.5218700084901734,
+            "height": 0.13168693175721413
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0,
+                "y": 0,
+                "width": 0.3784468894503865,
+                "height": 0.07785703212699749
+              },
+              {
+                "time": 1426,
+                "x": 0.8329635235507856,
+                "y": 0.05691141087229266,
+                "width": 0.16703647644921438,
+                "height": 0.1680137670550218
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 1426,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 1426,
+                "x": 0.26481774652262136,
+                "y": 0.5130304803057316,
+                "width": 0.5218700084901734,
+                "height": 0.13168693175721413
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 1426,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.3784468894503865,
+                "height": 0.07785703212699749
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 1426,
+            "endMs": 391838,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.8329635235507856,
+                "y": 0.05691141087229266,
+                "width": 0.16703647644921438,
+                "height": 0.1680137670550218
+              },
+              {
+                "id": "mask-2",
+                "x": 0.26481774652262136,
+                "y": 0.5130304803057316,
+                "width": 0.5218700084901734,
+                "height": 0.13168693175721413
+              }
+            ]
+          }
+        ],
+        "interpolation": "linear-between-keyframes-clamped-at-bounds",
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        },
+        "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "createdAt": "2026-07-25T16:28:38.820Z",
+        "status": "completed",
+        "sha256": "f4dd436c50e8bea3cbb7704d263dfdc03c1bd94181515c7d0977cef889e2c1f3",
+        "sizeBytes": 27393166
+      },
+      "createdAt": "2026-07-25T16:28:38.820Z",
+      "updatedAt": "2026-07-25T16:28:38.820Z"
     }
   ],
-  "treatments": [],
+  "treatments": [
+    {
+      "id": "hls-temporal-derivation-1784996744983-f056bd47",
+      "derivationId": "hls-temporal-derivation-1784996744983-f056bd47",
+      "label": "Tentative 25/07/2026 18:26:17",
+      "type": "anonymization",
+      "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+      "sourcePreparationId": "hls-prep-1784996658684-24a3edbc",
+      "outputAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "outputPlayableId": "video-hls-temporal-derivation-1784996744983-f056bd47",
+      "status": "completed",
+      "progress": 100,
+      "createdAt": "2026-07-25T16:25:44.983Z",
+      "updatedAt": "2026-07-25T16:26:17.024Z",
+      "startedAt": "2026-07-25T16:25:44.983Z",
+      "finishedAt": "2026-07-25T16:26:17.024Z",
+      "error": null,
+      "parameters": {
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0.831695656114724,
+            "y": 0.06029231358128632,
+            "width": 0.16830434388527604,
+            "height": 0.16463286434602814
+          },
+          {
+            "time": 10053,
+            "x": 0.271790814292881,
+            "y": 0.2915830423765188,
+            "width": 0.5285260803831204,
+            "height": 0.11140167026751518
+          },
+          {
+            "time": 26469,
+            "x": 0.9369254612951632,
+            "y": 0.05830250945093768,
+            "width": 0.06307453870483681,
+            "height": 0.0618154841129325
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 26469,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              },
+              {
+                "time": 10053,
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 10053,
+            "endMs": 26469,
+            "keyframes": [
+              {
+                "time": 10053,
+                "x": 0.271790814292881,
+                "y": 0.2915830423765188,
+                "width": 0.5285260803831204,
+                "height": 0.11140167026751518
+              }
+            ]
+          },
+          {
+            "id": "mask-3",
+            "startMs": 26469,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 26469,
+                "x": 0.9369254612951632,
+                "y": 0.05830250945093768,
+                "width": 0.06307453870483681,
+                "height": 0.0618154841129325
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 10053,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 10053,
+            "endMs": 26469,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.831695656114724,
+                "y": 0.06029231358128632,
+                "width": 0.16830434388527604,
+                "height": 0.16463286434602814
+              },
+              {
+                "id": "mask-2",
+                "x": 0.271790814292881,
+                "y": 0.2915830423765188,
+                "width": 0.5285260803831204,
+                "height": 0.11140167026751518
+              }
+            ]
+          },
+          {
+            "id": "step-3",
+            "startMs": 26469,
+            "endMs": 391838,
+            "masks": [
+              {
+                "id": "mask-3",
+                "x": 0.9369254612951632,
+                "y": 0.05830250945093768,
+                "width": 0.06307453870483681,
+                "height": 0.0618154841129325
+              }
+            ]
+          }
+        ],
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        }
+      },
+      "engine": "ffmpeg",
+      "engineVersion": "proto05-0.1.36",
+      "ffmpegVersion": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+      "runtimeJobId": "hls-temporal-derivation-1784996744983-f056bd47",
+      "diagnostics": {},
+      "retained": false,
+      "publishedPlayableId": null
+    },
+    {
+      "id": "hls-temporal-derivation-1784996884534-a240cc7c",
+      "derivationId": "hls-temporal-derivation-1784996884534-a240cc7c",
+      "label": "Tentative 25/07/2026 18:28:38",
+      "type": "anonymization",
+      "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+      "sourcePreparationId": "hls-prep-1784996849438-cdc0e1bb",
+      "outputAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "outputPlayableId": "video-hls-temporal-derivation-1784996884534-a240cc7c",
+      "status": "completed",
+      "progress": 100,
+      "createdAt": "2026-07-25T16:28:04.534Z",
+      "updatedAt": "2026-07-25T16:28:38.820Z",
+      "startedAt": "2026-07-25T16:28:04.534Z",
+      "finishedAt": "2026-07-25T16:28:38.820Z",
+      "error": null,
+      "parameters": {
+        "mode": "temporal",
+        "method": "ffmpeg-boxblur-temporal-steps",
+        "masks": [
+          {
+            "time": 0,
+            "x": 0,
+            "y": 0,
+            "width": 0.3784468894503865,
+            "height": 0.07785703212699749
+          },
+          {
+            "time": 1426,
+            "x": 0.26481774652262136,
+            "y": 0.5130304803057316,
+            "width": 0.5218700084901734,
+            "height": 0.13168693175721413
+          }
+        ],
+        "temporalMasks": [
+          {
+            "id": "mask-1",
+            "startMs": 0,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 0,
+                "x": 0,
+                "y": 0,
+                "width": 0.3784468894503865,
+                "height": 0.07785703212699749
+              },
+              {
+                "time": 1426,
+                "x": 0.8329635235507856,
+                "y": 0.05691141087229266,
+                "width": 0.16703647644921438,
+                "height": 0.1680137670550218
+              }
+            ]
+          },
+          {
+            "id": "mask-2",
+            "startMs": 1426,
+            "endMs": 391838,
+            "keyframes": [
+              {
+                "time": 1426,
+                "x": 0.26481774652262136,
+                "y": 0.5130304803057316,
+                "width": 0.5218700084901734,
+                "height": 0.13168693175721413
+              }
+            ]
+          }
+        ],
+        "temporalSteps": [
+          {
+            "id": "step-1",
+            "startMs": 0,
+            "endMs": 1426,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0,
+                "y": 0,
+                "width": 0.3784468894503865,
+                "height": 0.07785703212699749
+              }
+            ]
+          },
+          {
+            "id": "step-2",
+            "startMs": 1426,
+            "endMs": 391838,
+            "masks": [
+              {
+                "id": "mask-1",
+                "x": 0.8329635235507856,
+                "y": 0.05691141087229266,
+                "width": 0.16703647644921438,
+                "height": 0.1680137670550218
+              },
+              {
+                "id": "mask-2",
+                "x": 0.26481774652262136,
+                "y": 0.5130304803057316,
+                "width": 0.5218700084901734,
+                "height": 0.13168693175721413
+              }
+            ]
+          }
+        ],
+        "blur": {
+          "id": "light",
+          "label": "Léger",
+          "filter": "boxblur",
+          "lumaRadius": 2,
+          "lumaPower": 1
+        }
+      },
+      "engine": "ffmpeg",
+      "engineVersion": "proto05-0.1.36",
+      "ffmpegVersion": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+      "runtimeJobId": "hls-temporal-derivation-1784996884534-a240cc7c",
+      "diagnostics": {},
+      "retained": false,
+      "publishedPlayableId": null
+    }
+  ],
   "folders": [
     {
       "id": "folder-proto05-1784911712092-4e944d",
