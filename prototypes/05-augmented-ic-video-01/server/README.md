@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.34
+# Serveur autonome du Prototype 05 — 0.1.35
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -16,6 +16,26 @@ Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `DELETE /api/proto05/activities/:id`.
 Les méthodes non prévues sont refusées (`405`) et les chemins traversants sont
 rejetés.
+
+## Copie locale FFmpeg des références distantes (0.1.35)
+
+Le menu `Actions` d’une référence HLS ou vidéo directe peut créer une copie
+locale gérée sans créer un second asset. La source et le playable distants sont
+conservés ; une source `local-file` et son playable sont ajoutés au même asset,
+puis le playable local devient le défaut après validation par `ffprobe` et
+écriture canonique réussie.
+
+Le serveur détecte FFmpeg et FFprobe depuis `PROTO05_FFMPEG_PATH`,
+`FFMPEG_PATH`, puis `PATH`. L’interface accepte aussi, pour l’exécution
+courante, le chemin absolu du seul fichier `ffmpeg.exe` ; aucun argument ou
+fragment de commande fourni par le navigateur n’est exécuté. FFmpeg est lancé
+avec une liste d’arguments et `shell: false`.
+
+Les tâches exposent leur progression et peuvent être annulées. Les fichiers
+incomplets restent dans un dossier de travail privé, sont nettoyés après
+échec, annulation, timeout ou redémarrage, et ne deviennent visibles dans la
+Library qu’après déplacement atomique et persistance canonique. Pour un asset
+mixte, `Supprimer la copie locale` conserve la référence distante et l’asset.
 
 ## Références vidéo distantes (0.1.34)
 

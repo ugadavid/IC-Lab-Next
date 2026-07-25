@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-07-24T20:54:14.168Z",
+  "updatedAt": "2026-07-25T14:48:52.231Z",
   "assets": [
     {
       "id": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
@@ -1223,7 +1223,7 @@
       "title": "yop",
       "lifecycle": "active",
       "folderId": null,
-      "defaultPlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "defaultPlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
       "parentAssetId": null,
       "familyRootAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
       "derivationTypes": [],
@@ -1260,7 +1260,7 @@
       },
       "rights": {},
       "createdAt": "2026-07-24T20:54:14.167Z",
-      "updatedAt": "2026-07-24T20:54:14.167Z"
+      "updatedAt": "2026-07-25T14:48:52.229Z"
     }
   ],
   "sources": [
@@ -2161,6 +2161,31 @@
         "importedAt": "2026-07-24T20:54:14.167Z"
       },
       "createdAt": "2026-07-24T20:54:14.167Z"
+    },
+    {
+      "id": "source-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "kind": "local-file",
+      "provider": "local",
+      "origin": {
+        "originalFileName": "36971_GT01_RFC7.mp4",
+        "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819"
+      },
+      "transport": "file",
+      "mimeType": "video/mp4",
+      "provenance": {
+        "kind": "managed-remote-copy",
+        "creationType": "remote-copy",
+        "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "importedAt": "2026-07-25T14:48:52.229Z",
+        "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
+        "sizeBytes": 108359167,
+        "originalFileName": "36971_GT01_RFC7.mp4"
+      },
+      "createdAt": "2026-07-25T14:48:52.229Z"
     }
   ],
   "playables": [
@@ -2716,6 +2741,49 @@
       },
       "createdAt": "2026-07-24T20:54:14.167Z",
       "updatedAt": "2026-07-24T20:54:14.167Z"
+    },
+    {
+      "id": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "sourceId": "source-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+      "kind": "local-file",
+      "provider": "local",
+      "availability": "available",
+      "availabilityReason": null,
+      "location": {
+        "storageKey": "47a3e7cf005c9fdc-36971_GT01_RFC7.mp4"
+      },
+      "technicalMetadata": {
+        "durationMs": 391838,
+        "width": 1920,
+        "height": 1080,
+        "frameRate": "60/1",
+        "videoCodec": "h264",
+        "audioCodec": "aac",
+        "hasAudio": true,
+        "mimeType": "video/mp4",
+        "sizeBytes": 108359167,
+        "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
+        "fileName": "36971_GT01_RFC7.mp4",
+        "analyzedAt": "2026-07-25T14:48:52.229Z",
+        "analyzer": "ffprobe",
+        "analyzerVersion": null,
+        "status": "available",
+        "error": null
+      },
+      "provenance": {
+        "kind": "managed-remote-copy",
+        "creationType": "remote-copy",
+        "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+        "importedAt": "2026-07-25T14:48:52.229Z",
+        "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
+        "sizeBytes": 108359167,
+        "originalFileName": "36971_GT01_RFC7.mp4"
+      },
+      "createdAt": "2026-07-25T14:48:52.229Z",
+      "updatedAt": "2026-07-25T14:48:52.229Z"
     }
   ],
   "treatments": [],

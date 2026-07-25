@@ -32,7 +32,7 @@ test("les dossiers virtuels se créent, se renomment, classent et se suppriment 
     assert.equal(removed.response.status, 200);
     const after = await jsonRequest(server.baseUrl, "/api/proto05/library/assets");
     assert.equal(after.body.assets.find(asset => asset.id === assetId).folderId, null);
-    assert.equal(after.body.assets.length, 15);
+    assert.equal(after.body.assets.length, initial.body.assets.length);
   } finally { await server.cleanup(); }
 });
 

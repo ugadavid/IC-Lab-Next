@@ -27,7 +27,10 @@ async function freePort() {
 async function stopChild(child) {
   if (child.exitCode !== null || child.signalCode !== null) return;
   await new Promise(resolve => {
-    const timer = setTimeout(resolve, 2000);
+    const timer = setTimeout(() => {
+      try { child.kill("SIGKILL"); } catch {}
+      resolve();
+    }, 2000);
     child.once("exit", () => {
       clearTimeout(timer);
       resolve();
@@ -106,7 +109,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const startChild = () => {
     child = spawn(process.execPath, [serverFile], {
       cwd: temporaryServerDirectory,
-      env: { ...process.env, PORT: String(port), PROTO05_LANGUAGE_CATALOG_FILE: languageCatalogFile },
+      env: { ...process.env, ...(options.env || {}), PORT: String(port), PROTO05_LANGUAGE_CATALOG_FILE: languageCatalogFile },
       windowsHide: true
     });
     child.stderr.setEncoding("utf8");
@@ -127,6 +130,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
     stderr: () => stderr,
     dataFile,
     videoLibraryFile,
+    videoLibraryMediaDirectory: temporaryVideoLibraryMediaDirectory,
     languageCatalogFile,
     root,
     async restart() { await stopChild(child); stderr = ""; startChild(); await waitForHealth(baseUrl, child, () => stderr); },

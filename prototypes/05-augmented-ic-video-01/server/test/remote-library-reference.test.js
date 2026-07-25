@@ -132,7 +132,7 @@ test("l’interface sépare l’analyse de la confirmation et active l’aperçu
   assert.match(html, /Confirmer l’ajout/);
   assert.match(server, /Référence distante : aucun fichier n’est copié/);
   assert.match(server, /remote-hls/);
-  assert.match(html, /\['youtube','uga','direct'\]/);
+  assert.match(html, /\['youtube','uga','direct','local'\]/);
   assert.match(html, /\/vendor\/hls\.js\/hls\.min\.js/);
   assert.match(player, /video\.kind === "hls"/);
 });

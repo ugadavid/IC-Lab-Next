@@ -26,6 +26,7 @@ test("video-library.json est initialisée avec les structures persistantes", () 
 test("sert la copie locale contrÃ´lÃ©e avec une rÃ©ponse partielle", async () => {
   const server = await startTemporaryProto05Server(JSON.parse(fs.readFileSync(activitiesFile, "utf8")));
   try {
+    fs.writeFileSync(path.join(server.videoLibraryMediaDirectory, "video_37004_1080p.mp4"), Buffer.alloc(32, 0x2a));
     const playable = await jsonRequest(server.baseUrl, "/api/proto05/library/playables/video-proto05-local-video-37004-1080p");
     assert.equal(playable.response.status, 200);
     assert.equal(playable.body.playable.provider, "local");

@@ -29,7 +29,7 @@ const {
 } = require("./media-library-runtime");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.34";
+const VERSION = "0.1.35";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -45,6 +45,14 @@ const REMOTE_REFERENCE_TOKEN_TTL_MS = Number(process.env.PROTO05_REMOTE_REFERENC
 const REMOTE_REFERENCE_ANALYSES = new Map();
 const REMOTE_HLS_GATEWAY_PREFIX = "/api/proto05/library/remote-hls/";
 const REMOTE_HLS_GATEWAY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_HLS_GATEWAY_TIMEOUT_MS || 30000);
+const REMOTE_MEDIA_GATEWAY_PREFIX = "/api/proto05/library/remote-media/";
+const LIBRARY_DOWNLOAD_ROOT = path.join(VIDEO_LIBRARY_MEDIA_DIR, ".proto05-downloads");
+const LIBRARY_DOWNLOAD_TIMEOUT_MS = Number(process.env.PROTO05_LIBRARY_DOWNLOAD_TIMEOUT_MS || 4 * 60 * 60 * 1000);
+const LIBRARY_DOWNLOAD_TTL_MS = Number(process.env.PROTO05_LIBRARY_DOWNLOAD_TTL_MS || 30 * 60 * 1000);
+const LIBRARY_DOWNLOAD_MAX_HISTORY = Number(process.env.PROTO05_LIBRARY_DOWNLOAD_MAX_HISTORY || 100);
+const ACTIVE_LIBRARY_DOWNLOADS = new Map();
+let RUNTIME_FFMPEG_PATH = null;
+let SERVER_SHUTTING_DOWN = false;
 const HLS_PREPARATION_ROOT = path.join(os.tmpdir(), "proto05-hls-preparations");
 const HLS_PREPARATION_TIMEOUT_MS = Number(process.env.PROTO05_HLS_PREPARATION_TIMEOUT_MS || 15 * 60 * 1000);
 const HLS_PREPARATION_TTL_MS = Number(process.env.PROTO05_HLS_PREPARATION_TTL_MS || 30 * 60 * 1000);
@@ -802,10 +810,10 @@ async function renameWithWindowsRetries(source, target, options = {}) {
   throw lastError;
 }
 
-async function persistVideoLibrary(library) {
+async function writeCanonicalVideoLibrary(canonical) {
   const operation = writeQueue.then(async () => {
     const file = safeVideoLibraryFile();
-    const canonical = assertWritableCanonical(canonicalFromRuntime(library, CANONICAL_LIBRARY));
+    assertWritableCanonical(canonical);
     const backup = `${file}.bak`;
     const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
     await fs.copyFile(file, backup);
@@ -819,6 +827,19 @@ async function persistVideoLibrary(library) {
   });
   writeQueue = operation.catch(() => {});
   return operation;
+}
+
+async function persistVideoLibrary(library) {
+  return writeCanonicalVideoLibrary(assertWritableCanonical(canonicalFromRuntime(library, CANONICAL_LIBRARY)));
+}
+
+async function persistCanonicalLibrary(canonical) {
+  const next = assertWritableCanonical(JSON.parse(JSON.stringify(canonical)));
+  next.updatedAt = new Date().toISOString();
+  await writeCanonicalVideoLibrary(next);
+  CANONICAL_LIBRARY = next;
+  VIDEO_LIBRARY = projectCanonicalLibrary(next);
+  return VIDEO_LIBRARY;
 }
 
 function libraryAssetFromInput(payload) {
@@ -871,24 +892,80 @@ function libraryAssetDetails(asset, usage = null) {
       return stat.isFile() ? { storageKey, sizeBytes: stat.size } : null;
     } catch { return null; }
   }).filter(Boolean);
+  const remoteCandidate = remoteDownloadCandidate(asset.id);
+  const activeDownload = [...ACTIVE_LIBRARY_DOWNLOADS.values()].find(job => job.assetId === asset.id && ["preparing", "downloading", "finalizing", "cancelling"].includes(job.status));
+  const hasRemoteSource = sources.some(source => ["hls", "direct-url"].includes(source.kind) && ["http", "https", "hls"].includes(source.transport || (source.kind === "hls" ? "hls" : "https")));
+  const localCopies = localCandidates.map(candidate => {
+    const playable = playables.find(item => localStorageKeyForPlayable(item, sources.find(source => source.id === item.sourceId)) === candidate.storageKey);
+    return { ...candidate, playableId: playable?.id || null, sourceId: playable?.sourceId || null, isDefault: playable?.id === asset.defaultPlayableId };
+  });
   return {
     ...asset,
     sources,
     playables: playables.map(playableForClient),
-    deletion: { canDeleteFile: localCandidates.length === 1, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
+    deletion: { canDeleteFile: localCandidates.length === 1 && !hasRemoteSource, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
+    localCopies,
+    download: {
+      canDownload: Boolean(remoteCandidate) && localCopies.length === 0 && !activeDownload,
+      active: Boolean(activeDownload),
+      jobId: activeDownload?.id || null,
+      sourcePlayableId: remoteCandidate?.playable.id || null,
+      sourceKind: remoteCandidate?.playable.kind || null,
+      host: remoteCandidate?.host || null,
+      proposedFileName: remoteCandidate ? proposedDownloadFileName(asset, remoteCandidate) : null,
+      destinationLabel: "Dossier géré de la Library Proto05"
+    },
     ...(usage ? { usage } : {}),
     folders: VIDEO_LIBRARY.folders || [],
     tags: VIDEO_LIBRARY.tags || []
   };
 }
 
-function remoteHlsManifestUrl(playable) {
-  if (playable?.kind !== "hls" || playable?.provider !== "direct") return null;
-  const value = playable.manifestUrl || playable.url;
-  try {
-    const url = new URL(value);
-    return ["http:", "https:"].includes(url.protocol) ? url : null;
-  } catch { return null; }
+function remoteUrlForDownload(playable, source) {
+  const values = playable?.kind === "hls"
+    ? [playable.manifestUrl, playable.url, source?.manifestUrl, source?.originUrl, source?.sourceUrl, source?.url]
+    : [playable?.url, playable?.originUrl, source?.url, source?.sourceUrl, source?.originUrl];
+  for (const value of values) {
+    try {
+      const url = new URL(value);
+      if (["http:", "https:"].includes(url.protocol)) return url;
+    } catch {}
+  }
+  return null;
+}
+
+function remoteDownloadCandidate(assetId, playableId = null) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  if (!asset) return null;
+  const playables = VIDEO_LIBRARY.playables.filter(item => item.assetId === assetId && ["hls", "direct-url"].includes(item.kind));
+  const playable = playableId ? playables.find(item => item.id === playableId) : playables.find(item => item.id === asset.defaultPlayableId) || playables[0];
+  if (!playable) return null;
+  const source = VIDEO_LIBRARY.sources.find(item => item.id === playable.sourceId && item.assetId === assetId);
+  const url = remoteUrlForDownload(playable, source);
+  return url ? { asset, playable, source, url, host: url.hostname } : null;
+}
+
+function proposedDownloadFileName(asset, candidate) {
+  const fallback = candidate.playable.kind === "hls" ? "video-hls" : path.parse(candidate.url.pathname).name || "video";
+  const base = String(asset.title || fallback).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9._ -]+/g, "-").replace(/\s+/g, "-").replace(/^-+|-+$/g, "").slice(0, 140) || fallback;
+  const remoteExtension = path.extname(candidate.url.pathname).toLowerCase();
+  return `${base}${candidate.playable.kind === "direct-url" && remoteExtension === ".webm" ? ".webm" : ".mp4"}`;
+}
+
+function remoteHlsManifestUrl(playable, source = null) {
+  if (playable?.kind !== "hls") return null;
+  const values = [
+    playable.manifestUrl, playable.url, playable.originUrl, playable.sourceUrl,
+    source?.manifestUrl, source?.originUrl, source?.sourceUrl, source?.url,
+    source?.origin?.manifestUrl, source?.origin?.originUrl
+  ];
+  for (const value of values) {
+    try {
+      const url = new URL(value);
+      if (["http:", "https:"].includes(url.protocol)) return url;
+    } catch {}
+  }
+  return null;
 }
 
 function remoteHlsGatewayUrl(playable) {
@@ -1048,6 +1125,57 @@ async function removeLibraryAsset(assetId, { physical = false } = {}) {
     throw error;
   } finally {
     if (transactionBackup) { try { await fs.unlink(transactionBackup); } catch {} }
+  }
+}
+
+function localCopyConflicts(assetId, playableId, activities) {
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId && item.kind === "local-file");
+  if (!playable) throw Object.assign(new Error("Copie locale introuvable."), { statusCode: 404 });
+  const source = VIDEO_LIBRARY.sources.find(item => item.id === playable.sourceId && item.assetId === assetId);
+  const storageKey = localStorageKeyForPlayable(playable, source);
+  if (!storageKey) throw Object.assign(new Error("La copie locale ne possède pas de fichier géré valide."), { statusCode: 409 });
+  const activityDependencies = (activities || []).filter(activity => {
+    const ref = activity?.videoRef || {};
+    const video = activity?.video || {};
+    return ref.playableId === playableId || video.id === playableId || ref.sourceId === source?.id || video.sourceId === source?.id || video.storageKey === storageKey
+      || ((ref.assetId === assetId || video.assetId === assetId) && !ref.playableId && !video.id);
+  }).map(activity => ({ id: activity.id, title: activity.title || "Activité sans titre" }));
+  const sharedReferences = VIDEO_LIBRARY.playables.filter(item => item.id !== playableId && localStorageKeyForPlayable(item, VIDEO_LIBRARY.sources.find(sourceItem => sourceItem.id === item.sourceId)) === storageKey).map(item => {
+    const asset = VIDEO_LIBRARY.assets.find(candidate => candidate.id === item.assetId);
+    return { id: item.id, title: asset?.title || item.id };
+  });
+  return { playable, source, storageKey, activityDependencies, sharedReferences };
+}
+
+async function removeLocalLibraryCopy(assetId, playableId) {
+  const store = await readActivities();
+  const plan = localCopyConflicts(assetId, playableId, store.activities || []);
+  const conflicts = [];
+  if (plan.activityDependencies.length) conflicts.push({ type: "activities", items: plan.activityDependencies });
+  if (plan.sharedReferences.length) conflicts.push({ type: "shared-references", items: plan.sharedReferences });
+  if (conflicts.length) throw Object.assign(new Error("La copie locale est encore utilisée ou partage son fichier avec une autre référence."), { statusCode: 409, conflicts });
+  const file = safeLibraryMediaPath(plan.storageKey);
+  const stat = await fs.stat(file).catch(() => null);
+  if (!stat?.isFile()) throw Object.assign(new Error("Le fichier de la copie locale est introuvable."), { statusCode: 409 });
+  const backup = path.join(os.tmpdir(), `proto05-local-copy-${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.bak`);
+  await fs.copyFile(file, backup);
+  try {
+    await fs.unlink(file);
+    const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+    const asset = canonical.assets.find(item => item.id === assetId);
+    if (!asset) throw new Error("Asset vidéo introuvable.");
+    canonical.playables = canonical.playables.filter(item => item.id !== playableId);
+    if (!canonical.playables.some(item => item.sourceId === plan.source?.id)) canonical.sources = canonical.sources.filter(item => item.id !== plan.source?.id);
+    if (asset.defaultPlayableId === playableId) asset.defaultPlayableId = canonical.playables.find(item => item.assetId === assetId)?.id || null;
+    asset.updatedAt = new Date().toISOString();
+    await persistCanonicalLibrary(canonical);
+    const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+    return { assetId, playableId, deletedFile: true, storageKey: plan.storageKey, asset: libraryAssetDetails(projectedAsset) };
+  } catch (error) {
+    try { await fs.copyFile(backup, file); } catch (restoreError) { error.message += ` Restauration du fichier impossible : ${restoreError.message}`; }
+    throw error;
+  } finally {
+    try { await fs.unlink(backup); } catch {}
   }
 }
 
@@ -1482,13 +1610,437 @@ async function copyDirectLibraryMedia(request, url) {
 }
 
 function findFfmpeg() {
-  const configured = process.env.FFMPEG_PATH;
+  const configured = RUNTIME_FFMPEG_PATH || process.env.PROTO05_FFMPEG_PATH || process.env.FFMPEG_PATH;
   if (configured) {
     if (!fsSync.existsSync(configured)) throw new Error("FFmpeg configuré mais inaccessible.");
     return configured;
   }
   return "ffmpeg";
 }
+
+function libraryDownloadProgram(candidate, { probe = false } = {}) {
+  const testScript = process.env.PROTO05_TEST_FFMPEG_SCRIPT;
+  if (testScript) return { executable: process.execPath, prefixArgs: [testScript, probe ? "--ffprobe" : "--ffmpeg"] };
+  if (probe) {
+    if (/ffmpeg(?:\.exe)?$/i.test(candidate)) return { executable: candidate.replace(/ffmpeg(?:\.exe)?$/i, process.platform === "win32" ? "ffprobe.exe" : "ffprobe"), prefixArgs: [] };
+    return { executable: "ffprobe", prefixArgs: [] };
+  }
+  return { executable: candidate, prefixArgs: [] };
+}
+
+function validateConfiguredFfmpegPath(value) {
+  if (typeof value !== "string" || !value.trim()) throw new Error("Le chemin de ffmpeg.exe est obligatoire.");
+  const candidate = value.trim();
+  if (!path.isAbsolute(candidate) || !/^ffmpeg(?:\.exe)?$/i.test(path.basename(candidate))) throw new Error("Sélectionnez uniquement le fichier ffmpeg.exe.");
+  if (!fsSync.existsSync(candidate) || !fsSync.statSync(candidate).isFile()) throw new Error("Le fichier ffmpeg.exe est introuvable.");
+  return candidate;
+}
+
+function inspectFfmpegCandidate(candidate, source) {
+  const program = libraryDownloadProgram(candidate);
+  const checked = spawnSync(program.executable, [...program.prefixArgs, "-version"], { encoding: "utf8", timeout: 4000, windowsHide: true, shell: false });
+  if (checked.error || checked.status !== 0 || !/^ffmpeg version /i.test(String(checked.stdout || ""))) {
+    return { available: false, source, error: "FFmpeg est absent ou invalide. Configurez le chemin exact de ffmpeg.exe." };
+  }
+  const version = String(checked.stdout).split(/\r?\n/, 1)[0].replace(/^ffmpeg version\s+/i, "").slice(0, 160);
+  const probe = libraryDownloadProgram(candidate, { probe: true });
+  const probeCheck = spawnSync(probe.executable, [...probe.prefixArgs, "-version"], { encoding: "utf8", timeout: 4000, windowsHide: true, shell: false });
+  if (probeCheck.error || probeCheck.status !== 0) return { available: false, source, error: "FFprobe associé à FFmpeg est absent ou invalide." };
+  return { available: true, source, version, candidate, program, probe };
+}
+
+function detectLibraryFfmpeg() {
+  if (process.env.PROTO05_TEST_FFMPEG_SCRIPT) return inspectFfmpegCandidate(process.execPath, "fixture contrôlée");
+  const configured = RUNTIME_FFMPEG_PATH || process.env.PROTO05_FFMPEG_PATH || process.env.FFMPEG_PATH;
+  if (configured) {
+    try { return inspectFfmpegCandidate(validateConfiguredFfmpegPath(configured), RUNTIME_FFMPEG_PATH ? "configuration temporaire" : "configuration Proto05"); }
+    catch (error) { return { available: false, source: "configuration Proto05", error: error.message }; }
+  }
+  if (process.env.PROTO05_TEST_DISABLE_PATH_FFMPEG === "1") return { available: false, source: "PATH", error: "FFmpeg est introuvable dans la configuration Proto05 et dans PATH." };
+  return inspectFfmpegCandidate("ffmpeg", "PATH");
+}
+
+function publicFfmpegStatus(status = detectLibraryFfmpeg()) {
+  return { available: status.available, source: status.source, version: status.version || null, error: status.error || null, configurable: true };
+}
+
+function configureLibraryFfmpeg(value) {
+  const candidate = validateConfiguredFfmpegPath(value);
+  const status = inspectFfmpegCandidate(candidate, "configuration temporaire");
+  if (!status.available) throw new Error(status.error);
+  RUNTIME_FFMPEG_PATH = candidate;
+  return status;
+}
+
+function safeDownloadFileName(value, candidate) {
+  const expectedExtension = candidate.playable.kind === "direct-url" && path.extname(candidate.url.pathname).toLowerCase() === ".webm" ? ".webm" : ".mp4";
+  const raw = typeof value === "string" ? value.trim() : "";
+  if (!raw || raw !== path.basename(raw) || raw.includes("\\") || /[\u0000-\u001f<>:"/|?*]/.test(raw) || raw.length > 180) throw new Error("Le nom de sortie est invalide.");
+  if (path.extname(raw).toLowerCase() !== expectedExtension) throw new Error(`Le nom de sortie doit utiliser l’extension ${expectedExtension}.`);
+  return raw;
+}
+
+function hlsVariantCandidates(text, baseUrl) {
+  const lines = String(text || "").replace(/^\uFEFF/, "").split(/\r?\n/);
+  const variants = [];
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = lines[index].trim();
+    if (!line.startsWith("#EXT-X-STREAM-INF:")) continue;
+    const attributes = line.slice(line.indexOf(":") + 1);
+    let uri = "";
+    for (let next = index + 1; next < lines.length; next += 1) {
+      const candidate = lines[next].trim();
+      if (!candidate || candidate.startsWith("#")) continue;
+      uri = candidate;
+      break;
+    }
+    if (!uri) continue;
+    const bandwidth = Number(/\bBANDWIDTH=(\d+)/i.exec(attributes)?.[1] || 0);
+    const resolution = /\bRESOLUTION=(\d+)x(\d+)/i.exec(attributes);
+    const url = new URL(uri, baseUrl);
+    if (!url.search && baseUrl.search) url.search = baseUrl.search;
+    variants.push({ url, bandwidth, width: Number(resolution?.[1] || 0), height: Number(resolution?.[2] || 0) });
+  }
+  return variants.sort((a, b) => b.bandwidth - a.bandwidth || b.width * b.height - a.width * a.height);
+}
+
+function hlsPlaylistDurationMs(text) {
+  const durations = [...String(text || "").matchAll(/#EXTINF:([0-9.]+)/g)].map(match => Number(match[1])).filter(Number.isFinite);
+  return durations.length ? Math.round(durations.reduce((sum, value) => sum + value, 0) * 1000) : null;
+}
+
+function gatewayPathForRemoteHls(playable, selectedUrl, source = null) {
+  const manifest = remoteHlsManifestUrl(playable, source);
+  if (!manifest) throw new Error("Le manifeste canonique du playable est invalide.");
+  const directory = new URL(".", manifest);
+  if (selectedUrl.origin !== manifest.origin || !selectedUrl.pathname.startsWith(directory.pathname)) throw new Error("La variante HLS sélectionnée sort du répertoire distant autorisé.");
+  const relative = selectedUrl.pathname.slice(directory.pathname.length);
+  if (!relative || relative.split("/").some(part => !part || part === "." || part === "..")) throw new Error("Le chemin de variante HLS est invalide.");
+  return `${REMOTE_HLS_GATEWAY_PREFIX}${encodeURIComponent(playable.id)}/${relative.split("/").map(encodeURIComponent).join("/")}${selectedUrl.search}`;
+}
+
+async function inspectRemoteDownload(candidate) {
+  const checked = await validateRemoteCopyUrl(candidate.url, { allowHls: candidate.playable.kind === "hls" });
+  if (candidate.playable.kind === "direct-url") {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REMOTE_REFERENCE_TIMEOUT_MS);
+    try {
+      const result = await remoteReferenceFetch(checked, "HEAD", controller.signal);
+      if (!result.response.ok) throw new Error(`La source distante répond HTTP ${result.response.status}.`);
+      return {
+        inputPath: `${REMOTE_MEDIA_GATEWAY_PREFIX}${encodeURIComponent(candidate.playable.id)}`,
+        quality: path.extname(result.finalUrl.pathname).slice(1).toUpperCase() || "fichier direct",
+        bandwidth: null,
+        durationMs: candidate.playable.durationMs || null,
+        estimatedSizeBytes: Number(result.response.headers.get("content-length")) || null
+      };
+    } finally { clearTimeout(timeout); }
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REMOTE_REFERENCE_TIMEOUT_MS);
+  try {
+    const masterResult = await remoteReferenceFetch(checked, "GET", controller.signal);
+    if (!masterResult.response.ok) throw new Error(`Le manifeste HLS répond HTTP ${masterResult.response.status}.`);
+    const masterText = await boundedRemoteText(masterResult.response);
+    const variants = hlsVariantCandidates(masterText, masterResult.finalUrl);
+    const selected = variants[0] || { url: masterResult.finalUrl, bandwidth: null, width: null, height: null };
+    await validateRemoteCopyUrl(selected.url, { allowHls: true });
+    let durationMs = candidate.playable.durationMs || null;
+    if (variants.length) {
+      const mediaResult = await remoteReferenceFetch(selected.url, "GET", controller.signal);
+      if (!mediaResult.response.ok) throw new Error(`La playlist HLS sélectionnée répond HTTP ${mediaResult.response.status}.`);
+      durationMs = hlsPlaylistDurationMs(await boundedRemoteText(mediaResult.response)) || durationMs;
+    } else {
+      durationMs = hlsPlaylistDurationMs(masterText) || durationMs;
+    }
+    return {
+      inputPath: gatewayPathForRemoteHls(candidate.playable, selected.url, candidate.source),
+      quality: selected.width && selected.height ? `${selected.width} × ${selected.height}` : (variants.length ? "variante HLS sélectionnée" : "playlist HLS"),
+      bandwidth: selected.bandwidth || null,
+      durationMs,
+      estimatedSizeBytes: durationMs && selected.bandwidth ? Math.ceil(durationMs / 1000 * selected.bandwidth / 8) : null
+    };
+  } finally { clearTimeout(timeout); }
+}
+
+function publicLibraryDownloadJob(job) {
+  return {
+    id: job.id, assetId: job.assetId, playableId: job.playableId,
+    status: job.status, stateLabel: job.stateLabel, progress: job.progress,
+    mediaTimeMs: job.mediaTimeMs, durationMs: job.durationMs, speed: job.speed,
+    outputSizeBytes: job.outputSizeBytes, quality: job.quality,
+    estimatedSizeBytes: job.estimatedSizeBytes, fileName: job.fileName,
+    createdAt: job.createdAt, updatedAt: job.updatedAt,
+    finishedAt: job.finishedAt || null, error: job.error || null,
+    result: job.result || null
+  };
+}
+
+async function hashFile(file) {
+  const hash = crypto.createHash("sha256");
+  for await (const chunk of fsSync.createReadStream(file)) hash.update(chunk);
+  return hash.digest("hex");
+}
+
+function probeDownloadedMedia(ffmpegStatus, file) {
+  const args = [...ffmpegStatus.probe.prefixArgs, "-v", "error", "-show_entries", "format=duration:stream=codec_type,codec_name,width,height,r_frame_rate", "-of", "json", file];
+  const result = spawnSync(ffmpegStatus.probe.executable, args, { encoding: "utf8", timeout: 15000, windowsHide: true, shell: false });
+  if (result.error || result.status !== 0) throw new Error("Le fichier produit est vide ou illisible.");
+  let payload;
+  try { payload = JSON.parse(result.stdout); } catch { throw new Error("FFprobe n’a pas pu valider le fichier produit."); }
+  const video = (payload.streams || []).find(stream => stream.codec_type === "video");
+  if (!video) throw new Error("Le fichier produit ne contient aucun flux vidéo lisible.");
+  const audio = (payload.streams || []).find(stream => stream.codec_type === "audio");
+  return {
+    durationMs: Number.isFinite(Number(payload.format?.duration)) ? Math.round(Number(payload.format.duration) * 1000) : null,
+    width: Number(video.width) || null, height: Number(video.height) || null,
+    frameRate: video.r_frame_rate || null, videoCodec: video.codec_name || null,
+    audioCodec: audio?.codec_name || null, hasAudio: Boolean(audio)
+  };
+}
+
+function waitForChildClose(child, timeoutMs = 5000) {
+  if (!child || child.exitCode !== null || child.signalCode !== null) return Promise.resolve();
+  return new Promise(resolve => {
+    const timer = setTimeout(resolve, timeoutMs);
+    child.once("close", () => { clearTimeout(timer); resolve(); });
+  });
+}
+
+async function terminateOwnedDownloadProcess(job) {
+  const child = job?.process;
+  if (!child || !child.pid || child.exitCode !== null) return;
+  if (process.platform === "win32") {
+    await new Promise(resolve => {
+      const killer = spawn("taskkill.exe", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true, shell: false });
+      killer.once("error", resolve);
+      killer.once("close", resolve);
+    });
+  } else {
+    try { process.kill(-child.pid, "SIGTERM"); } catch { try { child.kill("SIGTERM"); } catch {} }
+  }
+  await waitForChildClose(child);
+}
+
+function downloadedTechnicalMetadata(probe, { mimeType, sizeBytes, sha256, fileName, analyzedAt }) {
+  return {
+    durationMs: probe.durationMs, width: probe.width, height: probe.height,
+    frameRate: probe.frameRate, videoCodec: probe.videoCodec,
+    audioCodec: probe.audioCodec, hasAudio: probe.hasAudio,
+    mimeType, sizeBytes, sha256, fileName,
+    analyzedAt, analyzer: "ffprobe", analyzerVersion: null,
+    status: "available", error: null
+  };
+}
+
+async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
+  const stat = await fs.stat(job.temporaryPath).catch(() => null);
+  if (!stat?.isFile() || stat.size <= 0) throw new Error("FFmpeg n’a produit aucun fichier exploitable.");
+  const probe = probeDownloadedMedia(ffmpegStatus, job.temporaryPath);
+  const sha256 = await hashFile(job.temporaryPath);
+  const duplicate = VIDEO_LIBRARY.playables.find(item => item.assetId === job.assetId && item.sha256 === sha256);
+  if (duplicate) throw new Error("Une copie locale équivalente existe déjà pour cet asset.");
+  const storageKey = `${sha256.slice(0, 16)}-${job.fileName}`;
+  const targetPath = safeLibraryMediaPath(storageKey);
+  if (fsSync.existsSync(targetPath)) throw new Error("Un fichier géré utilise déjà cette destination.");
+  const now = new Date().toISOString();
+  const mimeType = path.extname(job.fileName).toLowerCase() === ".webm" ? "video/webm" : "video/mp4";
+  const metadata = downloadedTechnicalMetadata(probe, { mimeType, sizeBytes: stat.size, sha256, fileName: job.fileName, analyzedAt: now });
+  const identity = `${job.assetId}-download-${sha256.slice(0, 16)}`;
+  const sourceId = `source-${identity}`;
+  const playableId = `video-${identity}`;
+  const provenance = {
+    kind: "managed-remote-copy", creationType: "remote-copy",
+    sourceAssetId: job.assetId, sourcePlayableId: job.playableId,
+    importedAt: now, ffmpegVersion: ffmpegStatus.version,
+    sha256, sizeBytes: stat.size, originalFileName: job.fileName
+  };
+  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  const asset = canonical.assets.find(item => item.id === job.assetId);
+  if (!asset || canonical.sources.some(item => item.id === sourceId) || canonical.playables.some(item => item.id === playableId)) throw new Error("La destination canonique de la copie existe déjà.");
+  canonical.sources.push({
+    id: sourceId, assetId: asset.id, kind: "local-file", provider: "local",
+    origin: { originalFileName: job.fileName, sourceAssetId: asset.id, sourcePlayableId: job.playableId },
+    transport: "file", mimeType, provenance, createdAt: now
+  });
+  canonical.playables.push({
+    id: playableId, assetId: asset.id, sourceId, kind: "local-file", provider: "local",
+    availability: "available", availabilityReason: null,
+    location: { storageKey }, technicalMetadata: metadata,
+    provenance, createdAt: now, updatedAt: now
+  });
+  asset.defaultPlayableId = playableId;
+  asset.updatedAt = now;
+  await renameWithWindowsRetries(job.temporaryPath, targetPath);
+  try {
+    await persistCanonicalLibrary(canonical);
+  } catch (error) {
+    try { await fs.unlink(targetPath); } catch (rollbackError) { error.message += ` Nettoyage du fichier final impossible : ${rollbackError.message}`; }
+    throw error;
+  }
+  job.finalPath = targetPath;
+  job.storageKey = storageKey;
+  const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === asset.id);
+  return { assetId: asset.id, sourceId, playableId, storageKey, asset: libraryAssetDetails(projectedAsset) };
+}
+
+function parseFfmpegProgress(job, chunk) {
+  job.progressBuffer = `${job.progressBuffer || ""}${chunk}`;
+  const lines = job.progressBuffer.split(/\r?\n/);
+  job.progressBuffer = lines.pop() || "";
+  for (const line of lines) {
+    const separator = line.indexOf("=");
+    if (separator <= 0) continue;
+    const key = line.slice(0, separator);
+    const value = line.slice(separator + 1).trim();
+    if (key === "out_time_us" || key === "out_time_ms") {
+      const mediaTimeMs = Math.max(0, Math.round(Number(value) / 1000));
+      if (Number.isFinite(mediaTimeMs)) job.mediaTimeMs = Math.max(job.mediaTimeMs || 0, mediaTimeMs);
+    } else if (key === "out_time") {
+      const match = /^(\d+):(\d{2}):(\d{2}(?:\.\d+)?)$/.exec(value);
+      if (match) job.mediaTimeMs = Math.max(job.mediaTimeMs || 0, Math.round((Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3])) * 1000));
+    } else if (key === "speed") job.speed = value;
+  }
+  job.progress = job.durationMs ? Math.min(99, Math.max(job.progress, Math.floor((job.mediaTimeMs / job.durationMs) * 100))) : Math.max(job.progress, job.mediaTimeMs > 0 ? 1 : 0);
+  job.updatedAt = new Date().toISOString();
+}
+
+function libraryDownloadError(error, job) {
+  if (job.cancelRequested) return "Téléchargement annulé.";
+  if (job.timeout) return "Le téléchargement a dépassé la durée maximale autorisée.";
+  if (error?.code === "ENOSPC") return "Espace disque insuffisant pour finaliser la copie.";
+  if (["EACCES", "EPERM"].includes(error?.code)) return "Permission refusée dans le dossier géré de la Library.";
+  const message = String(error?.message || "Le téléchargement distant a échoué.").replace(/https?:\/\/[^\s?#]+[^\s]*/g, value => value.replace(/\?.*$/, "?…"));
+  return message.slice(0, 500);
+}
+
+async function runLibraryDownload(job, candidate, inspection, ffmpegStatus) {
+  let sizeMonitor;
+  const timeout = setTimeout(() => { job.timeout = true; void terminateOwnedDownloadProcess(job); }, LIBRARY_DOWNLOAD_TIMEOUT_MS);
+  try {
+    await fs.mkdir(LIBRARY_DOWNLOAD_ROOT, { recursive: true });
+    job.workspace = await fs.mkdtemp(path.join(LIBRARY_DOWNLOAD_ROOT, `${job.id}-`));
+    job.temporaryPath = path.join(job.workspace, `download.${job.container}.incomplete`);
+    job.status = "downloading"; job.stateLabel = "Téléchargement"; job.updatedAt = new Date().toISOString();
+    const inputUrl = new URL(inspection.inputPath, `http://127.0.0.1:${PORT}`).toString();
+    const args = [
+      ...ffmpegStatus.program.prefixArgs,
+      "-hide_banner", "-nostdin", "-n",
+      "-protocol_whitelist", "http,https,tcp,tls,crypto",
+      "-i", inputUrl,
+      "-map", "0:v:0", "-map", "0:a:0?",
+      "-c", "copy",
+      ...(job.container === "mp4" ? ["-movflags", "+faststart"] : []),
+      "-progress", "pipe:1", "-nostats",
+      "-f", job.container,
+      job.temporaryPath
+    ];
+    const child = spawn(ffmpegStatus.program.executable, args, {
+      cwd: job.workspace, windowsHide: true, shell: false,
+      detached: process.platform !== "win32",
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    job.process = child;
+    job.pid = child.pid || null;
+    job.spawn = { shell: false, executableSource: ffmpegStatus.source, argumentCount: args.length };
+    let spawnError = null;
+    let stderr = "";
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", chunk => parseFfmpegProgress(job, String(chunk)));
+    child.stderr.on("data", chunk => { stderr = `${stderr}${chunk}`.slice(-4000); });
+    child.once("error", error => { spawnError = error; });
+    sizeMonitor = setInterval(async () => {
+      try { job.outputSizeBytes = (await fs.stat(job.temporaryPath)).size; job.updatedAt = new Date().toISOString(); } catch {}
+    }, 250);
+    const code = await new Promise(resolve => child.once("close", resolve));
+    delete job.process;
+    if (job.cancelRequested) throw new Error("Téléchargement annulé.");
+    if (spawnError) throw spawnError;
+    if (code !== 0) throw new Error(`FFmpeg a échoué (code ${code}) : ${stderr.trim().slice(-300) || "aucun flux compatible ou source inaccessible"}.`);
+    job.status = "finalizing"; job.stateLabel = "Finalisation"; job.progress = Math.min(job.progress, 99); job.updatedAt = new Date().toISOString();
+    job.result = await finalizeLibraryDownload(job, candidate, ffmpegStatus);
+    job.status = "completed"; job.stateLabel = "Terminé"; job.progress = 100; job.finishedAt = new Date().toISOString(); job.updatedAt = job.finishedAt;
+  } catch (error) {
+    job.error = libraryDownloadError(error, job);
+    job.status = job.cancelRequested ? "cancelled" : "failed";
+    job.stateLabel = job.cancelRequested ? "Annulé" : "Échec";
+    job.progress = 0; job.finishedAt = new Date().toISOString(); job.updatedAt = job.finishedAt;
+  } finally {
+    clearTimeout(timeout);
+    if (sizeMonitor) clearInterval(sizeMonitor);
+    if (job.process) { await terminateOwnedDownloadProcess(job); delete job.process; }
+    if (job.workspace) { try { await fs.rm(job.workspace, { recursive: true, force: true }); } catch {} }
+    job.workspace = null; job.temporaryPath = null; delete job.pid; delete job.progressBuffer;
+  }
+}
+
+function trimLibraryDownloadHistory() {
+  const finished = [...ACTIVE_LIBRARY_DOWNLOADS.values()].filter(job => ["completed", "failed", "cancelled"].includes(job.status)).sort((a, b) => Date.parse(a.finishedAt || 0) - Date.parse(b.finishedAt || 0));
+  const expiredBefore = Date.now() - LIBRARY_DOWNLOAD_TTL_MS;
+  for (const job of finished) {
+    if (Date.parse(job.finishedAt || 0) < expiredBefore || ACTIVE_LIBRARY_DOWNLOADS.size > LIBRARY_DOWNLOAD_MAX_HISTORY) ACTIVE_LIBRARY_DOWNLOADS.delete(job.id);
+  }
+}
+
+async function startLibraryDownload(payload) {
+  if (SERVER_SHUTTING_DOWN) throw Object.assign(new Error("Le serveur est en cours d’arrêt."), { statusCode: 503 });
+  const assetId = String(payload?.assetId || "");
+  const playableId = String(payload?.playableId || "");
+  const candidate = remoteDownloadCandidate(assetId, playableId);
+  if (!candidate) throw Object.assign(new Error("L’asset ou le playable distant est introuvable."), { statusCode: 404 });
+  if (VIDEO_LIBRARY.playables.some(item => {
+    if (item.assetId !== assetId || item.kind !== "local-file" || item.availability !== "available") return false;
+    const storageKey = localStorageKeyForPlayable(item, VIDEO_LIBRARY.sources.find(source => source.id === item.sourceId));
+    return Boolean(storageKey) && fsSync.existsSync(safeLibraryMediaPath(storageKey));
+  })) {
+    throw Object.assign(new Error("Une copie locale disponible existe déjà pour cet asset."), { statusCode: 409 });
+  }
+  if ([...ACTIVE_LIBRARY_DOWNLOADS.values()].some(job => job.assetId === assetId && ["preparing", "downloading", "finalizing", "cancelling"].includes(job.status))) {
+    throw Object.assign(new Error("Un téléchargement est déjà actif pour cet asset."), { statusCode: 409 });
+  }
+  const ffmpegStatus = detectLibraryFfmpeg();
+  if (!ffmpegStatus.available) throw Object.assign(new Error(ffmpegStatus.error), { statusCode: 503 });
+  const fileName = safeDownloadFileName(payload?.fileName, candidate);
+  const inspection = await inspectRemoteDownload(candidate);
+  const now = new Date().toISOString();
+  const job = {
+    id: `library-download-${crypto.randomBytes(18).toString("base64url")}`,
+    assetId, playableId: candidate.playable.id, fileName,
+    container: path.extname(fileName).toLowerCase() === ".webm" ? "webm" : "mp4",
+    status: "preparing", stateLabel: "Préparation", progress: 0,
+    mediaTimeMs: 0, durationMs: inspection.durationMs,
+    speed: null, outputSizeBytes: 0, quality: inspection.quality,
+    estimatedSizeBytes: inspection.estimatedSizeBytes,
+    createdAt: now, updatedAt: now, error: null
+  };
+  trimLibraryDownloadHistory();
+  ACTIVE_LIBRARY_DOWNLOADS.set(job.id, job);
+  job.completion = runLibraryDownload(job, candidate, inspection, ffmpegStatus);
+  return job;
+}
+
+async function cancelLibraryDownload(job) {
+  if (!job) throw Object.assign(new Error("Tâche de téléchargement introuvable."), { statusCode: 404 });
+  if (!["preparing", "downloading", "finalizing"].includes(job.status)) return job;
+  job.cancelRequested = true; job.status = "cancelling"; job.stateLabel = "Annulation"; job.updatedAt = new Date().toISOString();
+  await terminateOwnedDownloadProcess(job);
+  await job.completion;
+  return job;
+}
+
+async function shutdownLibraryDownloads() {
+  SERVER_SHUTTING_DOWN = true;
+  const active = [...ACTIVE_LIBRARY_DOWNLOADS.values()].filter(job => ["preparing", "downloading", "finalizing", "cancelling"].includes(job.status));
+  await Promise.all(active.map(async job => {
+    job.cancelRequested = true; job.status = "cancelling"; job.stateLabel = "Arrêt du serveur";
+    await terminateOwnedDownloadProcess(job);
+    await job.completion;
+  }));
+  try { await fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true }); } catch {}
+}
+
+setInterval(trimLibraryDownloadHistory, 60 * 1000).unref();
 
 function powerShellQuote(value) {
   return `'${String(value).replace(/'/g, "''")}'`;
@@ -2041,7 +2593,17 @@ async function handleApi(request, response, url) {
   if (classificationRoute) {
     if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
     try { const assetId = decodeURIComponent(classificationRoute[1]); const payload = JSON.parse(await readRequestBody(request)); const classification = classificationFromInput(assetId, payload); const nextLibrary = libraryMutationCopy(); const asset = nextLibrary.assets.find(item => item.id === assetId); asset.folderId = classification.folderId; asset.tagIds = classification.tagIds; await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { asset: libraryAssetDetails(asset) }); }
-    catch (error) { return sendJson(response, 400, { error: error.message || "Classement impossible." }); }
+      catch (error) { return sendJson(response, 400, { error: error.message || "Classement impossible." }); }
+  }
+  const localCopyDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/local-copies\/([^/]+)$/.exec(url.pathname);
+  if (localCopyDeleteMatch) {
+    if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
+    try {
+      const result = await removeLocalLibraryCopy(decodeURIComponent(localCopyDeleteMatch[1]), decodeURIComponent(localCopyDeleteMatch[2]));
+      return sendJson(response, 200, result);
+    } catch (error) {
+      return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression de la copie locale impossible.", conflicts: error.conflicts || [] });
+    }
   }
   const libraryAssetDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)(\/physical)?$/.exec(url.pathname);
   if (libraryAssetDeleteMatch) {
@@ -2084,6 +2646,53 @@ async function handleApi(request, response, url) {
     } catch (error) {
       return sendJson(response, request.aborted ? 499 : 400, { error: error.message || "Copie distante impossible." });
     }
+  }
+  if (url.pathname === "/api/proto05/library/ffmpeg") {
+    if (request.method === "GET") return sendJson(response, 200, { ffmpeg: publicFfmpegStatus() });
+    if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, PUT" });
+    try {
+      const payload = JSON.parse(await readRequestBody(request));
+      return sendJson(response, 200, { ffmpeg: publicFfmpegStatus(configureLibraryFfmpeg(payload?.path)) });
+    } catch (error) { return sendJson(response, 400, { error: error.message || "Configuration FFmpeg invalide." }); }
+  }
+  const downloadOptionsMatch = /^\/api\/proto05\/library\/download-options\/([^/]+)$/.exec(url.pathname);
+  if (downloadOptionsMatch) {
+    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
+    const assetId = decodeURIComponent(downloadOptionsMatch[1]);
+    const candidate = remoteDownloadCandidate(assetId, url.searchParams.get("playableId"));
+    if (!candidate) return sendJson(response, 404, { error: "Source distante téléchargeable introuvable." });
+    try {
+      const inspection = await inspectRemoteDownload(candidate);
+      return sendJson(response, 200, {
+        assetId, playableId: candidate.playable.id, title: candidate.asset.title,
+        sourceKind: candidate.playable.kind, host: candidate.host,
+        proposedFileName: proposedDownloadFileName(candidate.asset, candidate),
+        destinationLabel: "Dossier géré de la Library Proto05",
+        quality: inspection.quality, bandwidth: inspection.bandwidth || null,
+        durationMs: inspection.durationMs, estimatedSizeBytes: inspection.estimatedSizeBytes,
+        ffmpeg: publicFfmpegStatus()
+      });
+    } catch (error) { return sendJson(response, 400, { error: error.message || "Analyse du téléchargement impossible.", ffmpeg: publicFfmpegStatus() }); }
+  }
+  if (url.pathname === "/api/proto05/library/downloads") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    try {
+      const job = await startLibraryDownload(JSON.parse(await readRequestBody(request)));
+      return sendJson(response, 202, { job: publicLibraryDownloadJob(job) });
+    } catch (error) { return sendJson(response, error.statusCode || 400, { error: error.message || "Téléchargement impossible.", ffmpeg: publicFfmpegStatus() }); }
+  }
+  const downloadJobMatch = /^\/api\/proto05\/library\/downloads\/([^/]+)$/.exec(url.pathname);
+  if (downloadJobMatch) {
+    let id;
+    try { id = decodeURIComponent(downloadJobMatch[1]); } catch { return sendJson(response, 400, { error: "Identifiant de tâche invalide." }); }
+    const job = ACTIVE_LIBRARY_DOWNLOADS.get(id);
+    if (!job) return sendJson(response, 404, { error: "Tâche de téléchargement introuvable." });
+    if (request.method === "GET") return sendJson(response, 200, { job: publicLibraryDownloadJob(job) });
+    if (request.method === "DELETE") {
+      try { return sendJson(response, 200, { job: publicLibraryDownloadJob(await cancelLibraryDownload(job)) }); }
+      catch (error) { return sendJson(response, error.statusCode || 400, { error: error.message || "Annulation impossible." }); }
+    }
+    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, DELETE" });
   }
   if (url.pathname === "/api/proto05/library/remote-reference/analyze") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
@@ -2348,6 +2957,56 @@ async function fetchRemoteHlsResource(target, request, signal) {
   throw new Error("Trop de redirections HLS.");
 }
 
+async function handleRemoteLibraryMedia(request, response, url) {
+  if (!url.pathname.startsWith(REMOTE_MEDIA_GATEWAY_PREFIX)) return false;
+  if (!["GET", "HEAD"].includes(request.method)) {
+    sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, HEAD" });
+    return true;
+  }
+  let playableId;
+  try { playableId = decodeURIComponent(url.pathname.slice(REMOTE_MEDIA_GATEWAY_PREFIX.length)); }
+  catch { sendJson(response, 400, { error: "Playable distant invalide." }); return true; }
+  if (!playableId || playableId.includes("/")) { sendJson(response, 404, { error: "Playable distant introuvable." }); return true; }
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.kind === "direct-url");
+  const source = playable && VIDEO_LIBRARY.sources.find(item => item.id === playable.sourceId && item.assetId === playable.assetId);
+  const target = remoteUrlForDownload(playable, source);
+  if (!target) { sendJson(response, 404, { error: "Playable distant introuvable." }); return true; }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REMOTE_HLS_GATEWAY_TIMEOUT_MS);
+  const abort = () => controller.abort();
+  request.once("aborted", abort);
+  response.once("close", abort);
+  try {
+    const upstream = await fetchRemoteHlsResource(target, request, controller.signal);
+    const contentType = (upstream.headers.get("content-type") || "").split(";", 1)[0].toLowerCase();
+    if (!(contentType.startsWith("video/") || contentType === "application/octet-stream")) {
+      sendJson(response, 502, { error: "La source distante ne renvoie pas une vidéo compatible." });
+      return true;
+    }
+    const relay = { "cache-control": "private, no-store" };
+    for (const name of ["accept-ranges", "content-length", "content-range", "content-type", "etag", "last-modified"]) {
+      const value = upstream.headers.get(name);
+      if (value) relay[name] = value;
+    }
+    response.writeHead(upstream.status, relay);
+    if (request.method === "HEAD" || !upstream.body) response.end();
+    else {
+      try { await pipeline(Readable.fromWeb(upstream.body), response); }
+      catch (error) {
+        const expectedAbort = controller.signal.aborted || request.aborted || response.destroyed || ["ERR_STREAM_PREMATURE_CLOSE", "ECONNRESET", "EPIPE"].includes(error?.code);
+        if (!expectedAbort) throw error;
+      }
+    }
+  } catch {
+    if (!response.headersSent) sendJson(response, 502, { error: controller.signal.aborted ? "La source distante a dépassé le délai de lecture." : "La source distante est indisponible." });
+  } finally {
+    clearTimeout(timeout);
+    request.removeListener("aborted", abort);
+    response.removeListener("close", abort);
+  }
+  return true;
+}
+
 async function handleRemoteLibraryHls(request, response, url) {
   if (!url.pathname.startsWith(REMOTE_HLS_GATEWAY_PREFIX)) return false;
   if (!["GET", "HEAD"].includes(request.method)) {
@@ -2367,7 +3026,8 @@ async function handleRemoteLibraryHls(request, response, url) {
     return true;
   }
   const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId);
-  const manifest = remoteHlsManifestUrl(playable);
+  const source = playable && VIDEO_LIBRARY.sources.find(item => item.id === playable.sourceId && item.assetId === playable.assetId);
+  const manifest = remoteHlsManifestUrl(playable, source);
   if (!manifest) { sendJson(response, 404, { error: "Playable HLS distant introuvable." }); return true; }
   const manifestFile = path.posix.basename(manifest.pathname) || "manifest.m3u8";
   let target;
@@ -2540,6 +3200,7 @@ const server = http.createServer(async (request, response) => {
   try {
     if (await servePreparationMedia(request, response, url)) return;
     if (await serveLibraryMedia(request, response, url)) return;
+    if (await handleRemoteLibraryMedia(request, response, url)) return;
     if (await handleRemoteLibraryHls(request, response, url)) return;
     if (await handleHlsGateway(request, response, url)) return;
     if (url.pathname.startsWith("/api/")) return await handleApi(request, response, url);
@@ -2550,4 +3211,28 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-server.listen(PORT, "127.0.0.1", () => console.log(`[startup] ${SERVICE} ${VERSION} sur http://127.0.0.1:${PORT}/`));
+let shutdownPromise = null;
+async function shutdownServer(signal) {
+  if (shutdownPromise) return shutdownPromise;
+  shutdownPromise = (async () => {
+    console.log(`[shutdown] ${signal}: arrêt des téléchargements de la Library.`);
+    await shutdownLibraryDownloads();
+    await new Promise(resolve => {
+      const force = setTimeout(() => server.closeAllConnections?.(), 500);
+      force.unref();
+      server.close(() => { clearTimeout(force); resolve(); });
+      server.closeIdleConnections?.();
+    });
+  })();
+  return shutdownPromise;
+}
+
+process.once("SIGINT", () => { void shutdownServer("SIGINT").finally(() => process.exit(0)); });
+process.once("SIGTERM", () => { void shutdownServer("SIGTERM").finally(() => process.exit(0)); });
+
+fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true })
+  .then(() => server.listen(PORT, "127.0.0.1", () => console.log(`[startup] ${SERVICE} ${VERSION} sur http://127.0.0.1:${PORT}/`)))
+  .catch(error => {
+    console.error(`[startup] nettoyage des téléchargements incomplets impossible : ${error.message}`);
+    process.exitCode = 1;
+  });
