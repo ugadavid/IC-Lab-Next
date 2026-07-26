@@ -88,8 +88,8 @@ function validateResourceNature(value) {
   if ((state === "to-verify" || value.value === "other") && value.note !== undefined) {
     requireString(value.note, "pedagogicalIdentity.resourceNature.note");
   }
-  if (state === "to-verify" && !value.note?.trim()) {
-    throw new Error("pedagogicalIdentity.resourceNature.note doit préciser ce qui reste à vérifier.");
+  if (state === "to-verify" && !value.note?.trim() && value.value === undefined) {
+    throw new Error("pedagogicalIdentity.resourceNature doit préciser la nature pressentie ou ce qui reste à vérifier.");
   }
 }
 
@@ -103,7 +103,8 @@ function validateDuration(value) {
   } else if (value.minutes !== undefined && (!Number.isInteger(value.minutes) || value.minutes <= 0 || value.minutes > 24 * 60)) {
     throw new Error(`${label}.minutes doit être un entier compris entre 1 et 1440.`);
   }
-  if (state === "to-verify" || state === "not-applicable") requireString(value.note, `${label}.note`);
+  if (state === "to-verify" && value.minutes === undefined) requireString(value.note, `${label}.note`);
+  else if (state === "not-applicable") requireString(value.note, `${label}.note`);
   else if (value.note !== undefined) requireString(value.note, `${label}.note`, { allowEmpty: true });
 }
 
@@ -171,6 +172,30 @@ function validatePedagogicalIdentity(identity, activityId) {
 
 function unknownText() {
   return { state: "unknown" };
+}
+
+function hasText(value) {
+  return typeof value === "string" && Boolean(value.trim());
+}
+
+function normalizePedagogicalIdentityStates(identity) {
+  const normalized = clone(identity);
+  if (normalized.resourceNature?.state === "unknown"
+    && (hasText(normalized.resourceNature.value) || hasText(normalized.resourceNature.note))) {
+    normalized.resourceNature.state = "to-verify";
+  }
+  for (const field of QUALIFIED_TEXT_FIELDS) {
+    if (normalized[field]?.state === "unknown" && hasText(normalized[field].value)) {
+      normalized[field].state = "to-verify";
+    }
+  }
+  if (normalized.indicativeDuration?.state === "unknown"
+    && (normalized.indicativeDuration.minutes !== undefined
+      && normalized.indicativeDuration.minutes !== null
+      || hasText(normalized.indicativeDuration.note))) {
+    normalized.indicativeDuration.state = "to-verify";
+  }
+  return normalized;
 }
 
 function createEmptyPedagogicalIdentity(activityId, options = {}) {
@@ -319,10 +344,12 @@ module.exports = {
   DESIGN_STATUSES,
   EVIDENCE_TYPES,
   KNOWLEDGE_STATES,
+  QUALIFIED_TEXT_FIELDS,
   QUALIFICATION_LEVELS,
   RESOURCE_NATURES,
   assertPedagogicalLineage,
   createEmptyPedagogicalIdentity,
+  normalizePedagogicalIdentityStates,
   pedagogicalIdentityForDuplicate,
   summarizePedagogicalIdentity,
   validatePedagogicalIdentity

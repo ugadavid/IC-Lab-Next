@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.41
+# Serveur autonome du Prototype 05 — 0.1.42
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -16,6 +16,14 @@ Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `DELETE /api/proto05/activities/:id`.
 Les méthodes non prévues sont refusées (`405`) et les chemins traversants sont
 rejetés.
+
+## Harmonisation des états de saisie (0.1.42)
+
+Lorsqu’une information est saisie alors que son état est `unknown`, la fiche
+et l’API la conservent et passent son état à `to-verify`. Cette normalisation
+s’applique aux champs textuels, à la nature de l’activité et à la durée
+indicative. Elle intervient lors de la saisie ou de la prochaine sauvegarde,
+jamais lors d’une simple consultation.
 
 ## Identité pédagogique des activités (0.1.41)
 

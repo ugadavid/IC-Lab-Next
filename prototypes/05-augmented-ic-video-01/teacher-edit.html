@@ -213,12 +213,28 @@ const state={activity:null,catalog:[],identity:null,identityEnabled:false};
 
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
 function knowledgeOptions(selected="unknown",states=Object.keys(knowledgeLabels)){return states.map(value=>`<option value="${value}" ${value===selected?"selected":""}>${knowledgeLabels[value]}</option>`).join("");}
+function hasSemanticInformation(control){return String(control.value??"").trim()!=="";}
+function harmonizeUnknownState(stateControl,informationControls){
+  if(stateControl.value==="unknown"&&informationControls.some(hasSemanticInformation))stateControl.value="to-verify";
+  return stateControl.value;
+}
+function bindSemanticState(stateControl,informationControls){
+  const harmonize=()=>harmonizeUnknownState(stateControl,informationControls);
+  for(const control of informationControls){control.addEventListener("input",harmonize);control.addEventListener("change",harmonize);}
+  stateControl.addEventListener("change",harmonize);
+}
 function qualifiedMarkup(definition){
   return `<div class="qualified-field" data-qualified-field="${definition.key}"><div class="field-heading"><strong>${escapeHtml(definition.label)}</strong><span class="help">${escapeHtml(definition.help)}</span></div><div class="qualified-grid"><label>État<select data-role="state">${knowledgeOptions()}</select></label><label>Information<textarea data-role="value" maxlength="5000"></textarea></label></div></div>`;
 }
 for(const definition of qualifiedDefinitions)document.getElementById(definition.host).insertAdjacentHTML("beforeend",qualifiedMarkup(definition));
 $("#resourceNatureState").innerHTML=knowledgeOptions("unknown",["known","unknown","to-verify"]);
 $("#indicativeDurationState").innerHTML=knowledgeOptions();
+for(const definition of qualifiedDefinitions){
+  const host=document.querySelector(`[data-qualified-field="${definition.key}"]`);
+  bindSemanticState(host.querySelector('[data-role="state"]'),[host.querySelector('[data-role="value"]')]);
+}
+bindSemanticState($("#resourceNatureState"),[$("#resourceNatureValue"),$("#resourceNatureNote")]);
+bindSemanticState($("#indicativeDurationState"),[$("#indicativeDurationMinutes"),$("#indicativeDurationNote")]);
 
 function emptyIdentity(){
   const identity={schemaVersion:"0.1",resourceNature:{state:"unknown"},designStatus:"draft",indicativeDuration:{state:"unknown"},lineage:{state:"unknown"},qualifications:[]};
@@ -232,11 +248,12 @@ function setQualifiedField(key,value={state:"unknown"}){
 }
 function collectQualifiedField(definition){
   const host=document.querySelector(`[data-qualified-field="${definition.key}"]`);
-  const item={state:host.querySelector('[data-role="state"]').value};
-  const value=host.querySelector('[data-role="value"]').value.trim();
+  const stateControl=host.querySelector('[data-role="state"]'),valueControl=host.querySelector('[data-role="value"]');
+  const item={state:harmonizeUnknownState(stateControl,[valueControl])};
+  const value=valueControl.value.trim();
+  if(value)item.value=value;
   if(item.state!=="unknown"){
     if(!value)throw new Error(`Le champ « ${definition.label} » doit expliquer l’état choisi.`);
-    item.value=value;
   }
   return item;
 }
@@ -255,19 +272,24 @@ function populateIdentity(){
 }
 function collectIdentity(){
   const identity={...state.identity,schemaVersion:"0.1",designStatus:$("#designStatus").value};
-  const natureState=$("#resourceNatureState").value,natureValue=$("#resourceNatureValue").value,natureNote=$("#resourceNatureNote").value.trim();
+  const natureValue=$("#resourceNatureValue").value,natureNote=$("#resourceNatureNote").value.trim();
+  const natureState=harmonizeUnknownState($("#resourceNatureState"),[$("#resourceNatureValue"),$("#resourceNatureNote")]);
   identity.resourceNature={state:natureState};
   if(natureValue)identity.resourceNature.value=natureValue;
   if(natureNote)identity.resourceNature.note=natureNote;
   if(natureState==="known"&&!natureValue)throw new Error("Choisissez la nature établie de l’activité.");
-  if(natureState==="to-verify"&&!natureNote)throw new Error("Précisez ce qui reste à vérifier pour la nature de l’activité.");
+  if(natureState==="to-verify"&&!natureValue&&!natureNote)throw new Error("Précisez la nature pressentie ou ce qui reste à vérifier.");
   for(const definition of qualifiedDefinitions)identity[definition.key]=collectQualifiedField(definition);
-  const durationState=$("#indicativeDurationState").value,minutes=Number($("#indicativeDurationMinutes").value),durationNote=$("#indicativeDurationNote").value.trim();
+  const durationInput=$("#indicativeDurationMinutes"),durationNote=$("#indicativeDurationNote").value.trim(),durationRaw=durationInput.value.trim();
+  const durationState=harmonizeUnknownState($("#indicativeDurationState"),[durationInput,$("#indicativeDurationNote")]);
+  const minutes=Number(durationRaw);
   identity.indicativeDuration={state:durationState};
-  if(Number.isInteger(minutes)&&minutes>0)identity.indicativeDuration.minutes=minutes;
+  if(durationRaw&&(!Number.isInteger(minutes)||minutes<=0||minutes>1440))throw new Error("La durée doit être comprise entre 1 et 1440 minutes.");
+  if(durationRaw)identity.indicativeDuration.minutes=minutes;
   if(durationNote)identity.indicativeDuration.note=durationNote;
   if(durationState==="known"&&!identity.indicativeDuration.minutes)throw new Error("Indiquez une durée en minutes.");
-  if(["to-verify","not-applicable"].includes(durationState)&&!durationNote)throw new Error("Précisez l’état de la durée.");
+  if(durationState==="to-verify"&&!durationRaw&&!durationNote)throw new Error("Précisez la durée pressentie ou ce qui reste à vérifier.");
+  if(durationState==="not-applicable"&&!durationNote)throw new Error("Précisez pourquoi la durée n’est pas applicable.");
   identity.qualifications=[...(state.identity.qualifications||[])];
   return identity;
 }

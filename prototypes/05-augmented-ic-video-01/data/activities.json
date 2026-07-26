@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-26T15:32:15.861Z",
+  "updatedAt": "2026-07-26T16:06:35.029Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -840,7 +840,7 @@
         },
         "designStatus": "documented",
         "indicativeDuration": {
-          "state": "unknown",
+          "state": "to-verify",
           "minutes": 60
         },
         "lineage": {

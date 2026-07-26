@@ -31,13 +31,14 @@ const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./v
 const {
   assertPedagogicalLineage,
   createEmptyPedagogicalIdentity,
+  normalizePedagogicalIdentityStates,
   pedagogicalIdentityForDuplicate,
   summarizePedagogicalIdentity,
   validatePedagogicalIdentity
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.41";
+const VERSION = "0.1.42";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -3126,7 +3127,9 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       const current = store.activities[index];
       const next = { ...current };
       for (const key of ["title", "description", "instruction", "pedagogicalQuestion"]) if (payload[key] !== undefined) next[key] = payload[key];
-      if (payload.pedagogicalIdentity !== undefined) next.pedagogicalIdentity = payload.pedagogicalIdentity;
+      if (payload.pedagogicalIdentity !== undefined) {
+        next.pedagogicalIdentity = normalizePedagogicalIdentityStates(payload.pedagogicalIdentity);
+      }
       if (payload.videoId !== undefined) {
         const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId);
         next.video = activityVideoFromCatalog(video, current.video);

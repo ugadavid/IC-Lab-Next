@@ -6,7 +6,9 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const {
+  QUALIFIED_TEXT_FIELDS,
   createEmptyPedagogicalIdentity,
+  normalizePedagogicalIdentityStates,
   summarizePedagogicalIdentity,
   validatePedagogicalIdentity
 } = require("../pedagogical-identity");
@@ -87,10 +89,40 @@ test("contrat d’identité pédagogique et séparation complétude–qualificat
   assert.throws(() => validatePedagogicalIdentity(invalid, activityId), /context.*non vide/i);
 });
 
+test("harmonisation uniforme des informations saisies depuis l’état inconnu", () => {
+  const activityId = "activity-state-consistency";
+  const identity = createEmptyPedagogicalIdentity(activityId);
+  for (const field of QUALIFIED_TEXT_FIELDS) {
+    identity[field] = { state: "unknown", value: `Information saisie pour ${field}.` };
+  }
+  identity.resourceNature = { state: "unknown", value: "functional-test" };
+  identity.indicativeDuration = { state: "unknown", minutes: 60 };
+
+  const normalized = normalizePedagogicalIdentityStates(identity);
+
+  for (const field of QUALIFIED_TEXT_FIELDS) {
+    assert.equal(normalized[field].state, "to-verify", field);
+    assert.equal(normalized[field].value, `Information saisie pour ${field}.`);
+  }
+  assert.deepEqual(normalized.resourceNature, { state: "to-verify", value: "functional-test" });
+  assert.deepEqual(normalized.indicativeDuration, { state: "to-verify", minutes: 60 });
+  assert.deepEqual(normalized.qualifications, []);
+  assert.doesNotThrow(() => validatePedagogicalIdentity(normalized, activityId));
+
+  assert.equal(identity.learningObjectives.state, "unknown", "La normalisation ne mute pas l’objet reçu.");
+  const empty = normalizePedagogicalIdentityStates(createEmptyPedagogicalIdentity("activity-empty"));
+  assert.equal(empty.learningObjectives.state, "unknown");
+  assert.equal(empty.indicativeDuration.state, "unknown");
+
+  const explicit = completeIdentity("activity-explicit");
+  assert.equal(normalizePedagogicalIdentityStates(explicit).intention.state, "known");
+  assert.equal(normalizePedagogicalIdentityStates(explicit).indicativeDuration.state, "known");
+});
+
 test("lecture legacy, fiche partielle et reprise sans migration canonique", { timeout: 20000 }, async () => {
   const canonicalHashBefore = sha256(canonicalDataFile);
   const store = canonicalStore();
-  const historical = store.activities.find(activity => activity.id === "proto05-augmented-video-01");
+  const historical = store.activities.find(activity => !activity.pedagogicalIdentity);
   assert.ok(historical);
   assert.equal(historical.pedagogicalIdentity, undefined);
   const historicalBefore = clone(historical);
@@ -135,6 +167,57 @@ test("lecture legacy, fiche partielle et reprise sans migration canonique", { ti
     const withoutIdentity = clone(persistedHistorical);
     delete withoutIdentity.pedagogicalIdentity;
     assert.deepEqual(withoutIdentity, historicalBefore);
+    assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
+  } finally {
+    await temporary.cleanup();
+  }
+});
+
+test("consultation sans écriture puis harmonisation à la prochaine sauvegarde", { timeout: 20000 }, async () => {
+  const canonicalHashBefore = sha256(canonicalDataFile);
+  const store = canonicalStore();
+  const activity = store.activities.find(item => item.id === "proto05-augmented-video-01");
+  assert.equal(activity.pedagogicalIdentity.indicativeDuration.state, "unknown");
+  assert.equal(activity.pedagogicalIdentity.indicativeDuration.minutes, 60);
+  const temporary = await startTemporaryProto05Server(clone(store), "proto05-pedagogical-consistency-");
+
+  try {
+    const persistedBeforeConsultation = fs.readFileSync(temporary.dataFile, "utf8");
+    const consultation = await fetch(`${temporary.baseUrl}/api/proto05/activities/${encodeURIComponent(activity.id)}`);
+    assert.equal(consultation.status, 200);
+    assert.equal(fs.readFileSync(temporary.dataFile, "utf8"), persistedBeforeConsultation);
+
+    const identity = clone(activity.pedagogicalIdentity);
+    identity.learningObjectives = { state: "unknown", value: "Comparer plusieurs stratégies d’intercompréhension." };
+    identity.prerequisites = { state: "unknown", value: "Préparation éventuelle à confirmer." };
+    identity.limitations = { state: "known", value: "Droits vidéo traités séparément." };
+    const save = await fetch(`${temporary.baseUrl}/api/proto05/activities/${encodeURIComponent(activity.id)}`, {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(metadataBody(activity, identity))
+    });
+    assert.equal(save.status, 200);
+    const saved = (await save.json()).activity;
+    assert.deepEqual(saved.pedagogicalIdentity.learningObjectives, {
+      state: "to-verify",
+      value: "Comparer plusieurs stratégies d’intercompréhension."
+    });
+    assert.deepEqual(saved.pedagogicalIdentity.prerequisites, {
+      state: "to-verify",
+      value: "Préparation éventuelle à confirmer."
+    });
+    assert.deepEqual(saved.pedagogicalIdentity.indicativeDuration, {
+      state: "to-verify",
+      minutes: 60
+    });
+    assert.equal(saved.pedagogicalIdentity.limitations.state, "known");
+    assert.equal(saved.pedagogicalIdentity.intention.state, "known");
+    assert.deepEqual(saved.pedagogicalIdentity.qualifications, []);
+    assert.equal(saved.pedagogicalIdentitySummary.qualificationLevel, "unqualified");
+
+    const persisted = JSON.parse(fs.readFileSync(temporary.dataFile, "utf8"));
+    const reloaded = persisted.activities.find(item => item.id === activity.id);
+    assert.deepEqual(reloaded.pedagogicalIdentity, saved.pedagogicalIdentity);
     assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
   } finally {
     await temporary.cleanup();
@@ -286,7 +369,7 @@ test("parcours Chromium de fiche partielle, bibliothèque, atelier guidé et vue
   assert.ok(chromium, "Chrome, Edge ou Chromium est requis pour la validation de l’identité pédagogique.");
   const canonicalHashBefore = sha256(canonicalDataFile);
   const store = canonicalStore();
-  const historical = store.activities.find(activity => activity.id === "proto05-augmented-video-01");
+  const historical = store.activities.find(activity => !activity.pedagogicalIdentity);
   const temporary = await startTemporaryProto05Server(clone(store), "proto05-pedagogical-chromium-");
   const runnerFile = path.join(temporary.root, "prototype", "pedagogical-identity-runner.html");
   fs.writeFileSync(runnerFile, chromiumIdentityRunner(historical.id), "utf8");
@@ -330,4 +413,114 @@ test("parcours Chromium de fiche partielle, bibliothèque, atelier guidé et vue
     assert.equal(results.studentHasTeacherReminder, false);
   });
   await temporary.cleanup();
+});
+
+function chromiumStateConsistencyRunner(activityId) {
+  return `<!doctype html><html><body data-test-state="running"><iframe id="flow" src="/teacher/edit/${encodeURIComponent(activityId)}"></iframe><script>
+  const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+  async function waitFor(predicate, label) {
+    const deadline = Date.now() + 9000;
+    while (Date.now() < deadline) {
+      try { if (predicate()) return; } catch {}
+      await pause(30);
+    }
+    throw new Error('Délai dépassé : ' + label);
+  }
+  const input = control => control.dispatchEvent(new Event('input', { bubbles: true }));
+  const change = control => control.dispatchEvent(new Event('change', { bubbles: true }));
+  (async () => {
+    const frame = document.getElementById('flow');
+    await waitFor(() => frame.contentDocument?.querySelector('#identityFields') && !frame.contentDocument.querySelector('#identityFields').hidden, 'fiche existante');
+    const editDocument = frame.contentDocument;
+    const objective = editDocument.querySelector('[data-qualified-field="learningObjectives"]');
+    const prerequisite = editDocument.querySelector('[data-qualified-field="prerequisites"]');
+    const intention = editDocument.querySelector('[data-qualified-field="intention"]');
+    const durationState = editDocument.querySelector('#indicativeDurationState');
+    const durationMinutes = editDocument.querySelector('#indicativeDurationMinutes');
+    const natureState = editDocument.querySelector('#resourceNatureState');
+    const natureValue = editDocument.querySelector('#resourceNatureValue');
+    const initialDurationState = durationState.value;
+
+    objective.querySelector('[data-role="value"]').value = 'Comparer plusieurs stratégies d’intercompréhension.';
+    input(objective.querySelector('[data-role="value"]'));
+    prerequisite.querySelector('[data-role="value"]').value = 'Préparation éventuelle à confirmer.';
+    input(prerequisite.querySelector('[data-role="value"]'));
+    durationMinutes.value = '60';
+    input(durationMinutes);
+    natureState.value = 'unknown';
+    natureValue.value = 'functional-test';
+    change(natureState);
+    intention.querySelector('[data-role="value"]').value = 'Test fonctionnel précisé.';
+    input(intention.querySelector('[data-role="value"]'));
+
+    const automaticStates = {
+      objective: objective.querySelector('[data-role="state"]').value,
+      prerequisite: prerequisite.querySelector('[data-role="state"]').value,
+      duration: durationState.value,
+      nature: natureState.value,
+      intention: intention.querySelector('[data-role="state"]').value
+    };
+    editDocument.querySelector('#save').click();
+    await waitFor(() => editDocument.querySelector('#status').textContent.includes('enregistrées'), 'sauvegarde harmonisée');
+    frame.contentWindow.location.reload();
+    await waitFor(() => frame.contentDocument?.querySelector('[data-qualified-field="learningObjectives"] [data-role="value"]')?.value.includes('Comparer plusieurs'), 'relecture harmonisée');
+    const reloaded = frame.contentDocument;
+    const persisted = await (await fetch('/api/proto05/activities/${encodeURIComponent(activityId)}')).json();
+    document.body.dataset.results = encodeURIComponent(JSON.stringify({
+      initialDurationState,
+      automaticStates,
+      reloadedObjectiveState: reloaded.querySelector('[data-qualified-field="learningObjectives"] [data-role="state"]').value,
+      reloadedObjectiveValue: reloaded.querySelector('[data-qualified-field="learningObjectives"] [data-role="value"]').value,
+      reloadedDurationState: reloaded.querySelector('#indicativeDurationState').value,
+      reloadedDurationMinutes: reloaded.querySelector('#indicativeDurationMinutes').value,
+      reloadedPrerequisiteState: reloaded.querySelector('[data-qualified-field="prerequisites"] [data-role="state"]').value,
+      qualificationCount: persisted.activity.pedagogicalIdentity.qualifications.length,
+      qualificationLevel: persisted.activity.pedagogicalIdentitySummary.qualificationLevel
+    }));
+    document.body.dataset.testState = 'done';
+  })().catch(error => {
+    document.body.dataset.error = encodeURIComponent(error.stack || error.message || String(error));
+    document.body.dataset.testState = 'failed';
+  });
+  </script></body></html>`;
+}
+
+test("harmonisation Chromium de la saisie, sauvegarde et relecture", { timeout: 30000 }, async () => {
+  const chromium = findChromium();
+  assert.ok(chromium, "Chrome, Edge ou Chromium est requis pour la validation ciblée des états.");
+  const canonicalHashBefore = sha256(canonicalDataFile);
+  const store = canonicalStore();
+  const activity = store.activities.find(item => item.id === "proto05-augmented-video-01");
+  const temporary = await startTemporaryProto05Server(clone(store), "proto05-pedagogical-consistency-chromium-");
+  const runnerFile = path.join(temporary.root, "prototype", "pedagogical-state-consistency-runner.html");
+  fs.writeFileSync(runnerFile, chromiumStateConsistencyRunner(activity.id), "utf8");
+  const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-pedagogical-consistency-profile-"));
+
+  try {
+    const dom = await runChromium(chromium, `${temporary.baseUrl}/pedagogical-state-consistency-runner.html`, profileDirectory, {
+      virtualTimeBudget: 15000,
+      timeout: 24000,
+      windowSize: "1500,1100"
+    });
+    const results = readBrowserResults(dom);
+    assert.equal(results.initialDurationState, "unknown");
+    assert.deepEqual(results.automaticStates, {
+      objective: "to-verify",
+      prerequisite: "to-verify",
+      duration: "to-verify",
+      nature: "to-verify",
+      intention: "known"
+    });
+    assert.equal(results.reloadedObjectiveState, "to-verify");
+    assert.equal(results.reloadedObjectiveValue, "Comparer plusieurs stratégies d’intercompréhension.");
+    assert.equal(results.reloadedDurationState, "to-verify");
+    assert.equal(results.reloadedDurationMinutes, "60");
+    assert.equal(results.reloadedPrerequisiteState, "to-verify");
+    assert.equal(results.qualificationCount, 0);
+    assert.equal(results.qualificationLevel, "unqualified");
+    assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
+  } finally {
+    fs.rmSync(profileDirectory, { recursive: true, force: true });
+    await temporary.cleanup();
+  }
 });
