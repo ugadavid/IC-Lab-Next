@@ -198,6 +198,8 @@ async function startBrowserFixtureServer(requests) {
   const teacherPage = teacherPageForTest();
   const timelineScript = fs.readFileSync(path.join(prototypeDirectory, "shared", "ic-timeline.js"));
   const timelineStyle = fs.readFileSync(path.join(prototypeDirectory, "shared", "ic-timeline.css"));
+  const teacherShellScript = fs.readFileSync(path.join(prototypeDirectory, "shared", "teacher-shell.js"));
+  const teacherShellStyle = fs.readFileSync(path.join(prototypeDirectory, "shared", "teacher-shell.css"));
   const server = http.createServer(async (request, response) => {
     const pathname = new URL(request.url, "http://127.0.0.1").pathname;
     const entry = { method: request.method, pathname };
@@ -206,6 +208,8 @@ async function startBrowserFixtureServer(requests) {
     if (/^\/teacher\/guided\/save-[^/]+$/.test(pathname)) return send(response, 200, "text/html; charset=utf-8", teacherPage);
     if (pathname === "/shared/ic-timeline.js") return send(response, 200, "text/javascript; charset=utf-8", timelineScript);
     if (pathname === "/shared/ic-timeline.css") return send(response, 200, "text/css; charset=utf-8", timelineStyle);
+    if (pathname === "/shared/teacher-shell.js") return send(response, 200, "text/javascript; charset=utf-8", teacherShellScript);
+    if (pathname === "/shared/teacher-shell.css") return send(response, 200, "text/css; charset=utf-8", teacherShellStyle);
     if (pathname === "/vendor/hls.js/hls.min.js") return send(response, 200, "text/javascript; charset=utf-8", "window.Hls={isSupported:()=>false};");
     if (pathname === "/test-timeout-attempt") return send(response, 204, "text/plain; charset=utf-8", "");
     if (pathname === "/test-network-error-attempt") return send(response, 204, "text/plain; charset=utf-8", "");

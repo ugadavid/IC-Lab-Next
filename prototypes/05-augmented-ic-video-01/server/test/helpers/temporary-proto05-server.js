@@ -95,7 +95,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   }
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
   fs.mkdirSync(temporarySharedDirectory, { recursive: true });
-  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js"]) {
+  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js", "teacher-shell.css", "teacher-shell.js"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, "shared", file), path.join(temporarySharedDirectory, file));
   }
   fs.copyFileSync(path.join(sourcePrototypeDirectory, "guided-overlays.js"), path.join(prototypeDirectory, "guided-overlays.js"));

@@ -38,7 +38,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.42";
+const VERSION = "0.1.43";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
