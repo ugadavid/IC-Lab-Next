@@ -38,11 +38,12 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.44";
+const VERSION = "0.1.45";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "activities.json");
+const ACTIVITY_LIBRARY_FILE = path.join(DATA_DIR, "activity-library.json");
 const VIDEO_CATALOG_FILE = path.join(DATA_DIR, "video-catalog.json");
 const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
 const VIDEO_LIBRARY_MEDIA_DIR = path.join(DATA_DIR, "video-library-media");
@@ -326,6 +327,126 @@ async function readActivities() {
     console.error(`[data] lecture impossible : ${error.message}`);
     throw new Error("Données Proto05 absentes ou JSON invalide.");
   }
+}
+
+function safeActivityLibraryFile() {
+  const root = path.resolve(DATA_DIR);
+  const file = path.resolve(ACTIVITY_LIBRARY_FILE);
+  if (file !== root && !file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de classement des activités invalide.");
+  return file;
+}
+
+function emptyActivityLibraryClassification() {
+  return { schemaVersion: "0.1", updatedAt: null, folders: [], assignments: {} };
+}
+
+function activityFolderName(value) {
+  const name = typeof value === "string" ? value.trim().replace(/\s+/g, " ") : "";
+  if (!name) throw new Error("Le nom du dossier est obligatoire.");
+  if (name.length > 120) throw new Error("Le nom du dossier est limité à 120 caractères.");
+  return name;
+}
+
+function normalizeActivityLibraryClassification(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Classement des activités invalide.");
+  const folders = Array.isArray(value.folders) ? value.folders.map(folder => {
+    if (!folder || typeof folder !== "object" || Array.isArray(folder)) throw new Error("Dossier d’activités invalide.");
+    const id = typeof folder.id === "string" ? folder.id : "";
+    if (!/^[A-Za-z0-9][A-Za-z0-9._:-]{0,160}$/.test(id)) throw new Error("Identifiant de dossier d’activités invalide.");
+    return { ...folder, id, name: activityFolderName(folder.name) };
+  }) : [];
+  const folderIds = new Set();
+  const folderNames = [];
+  for (const folder of folders) {
+    if (folderIds.has(folder.id)) throw new Error("Identifiant de dossier d’activités dupliqué.");
+    if (folderNames.some(name => name.localeCompare(folder.name, "fr", { sensitivity: "base" }) === 0)) throw new Error("Nom de dossier d’activités dupliqué.");
+    folderIds.add(folder.id);
+    folderNames.push(folder.name);
+  }
+  const sourceAssignments = value.assignments && typeof value.assignments === "object" && !Array.isArray(value.assignments)
+    ? value.assignments
+    : {};
+  const assignments = {};
+  for (const [activityId, folderId] of Object.entries(sourceAssignments)) {
+    if (!activityId || typeof folderId !== "string" || !folderIds.has(folderId)) throw new Error("Affectation de dossier d’activités invalide.");
+    assignments[activityId] = folderId;
+  }
+  return {
+    ...value,
+    schemaVersion: "0.1",
+    updatedAt: typeof value.updatedAt === "string" ? value.updatedAt : null,
+    folders,
+    assignments
+  };
+}
+
+async function readActivityLibraryClassification() {
+  const file = safeActivityLibraryFile();
+  try {
+    return normalizeActivityLibraryClassification(JSON.parse(await fs.readFile(file, "utf8")));
+  } catch (error) {
+    if (error.code === "ENOENT") return emptyActivityLibraryClassification();
+    console.error(`[data] classement des activités illisible : ${error.message}`);
+    throw new Error("Classement des activités absent ou invalide.");
+  }
+}
+
+async function persistActivityLibraryClassification(classification) {
+  const normalized = normalizeActivityLibraryClassification({
+    ...classification,
+    updatedAt: new Date().toISOString()
+  });
+  const operation = writeQueue.then(async () => {
+    const file = safeActivityLibraryFile();
+    const backup = `${file}.bak`;
+    const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    try { await fs.copyFile(file, backup); } catch (error) { if (error.code !== "ENOENT") throw error; }
+    try {
+      await fs.writeFile(temp, `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
+      await fs.rename(temp, file);
+    } finally {
+      try { await fs.unlink(temp); } catch {}
+    }
+  });
+  writeQueue = operation.catch(() => {});
+  await operation;
+  return normalized;
+}
+
+function activityLibraryFolderFromInput(classification, payload) {
+  const name = activityFolderName(payload?.name);
+  if (classification.folders.some(folder => folder.name.localeCompare(name, "fr", { sensitivity: "base" }) === 0)) throw new Error("Ce dossier existe déjà.");
+  const now = new Date().toISOString();
+  return {
+    id: `activity-folder-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`,
+    name,
+    createdAt: now,
+    updatedAt: now
+  };
+}
+
+function activityLibraryPayload(store, classification) {
+  const folderIds = new Set(classification.folders.map(folder => folder.id));
+  return {
+    schemaVersion: classification.schemaVersion,
+    updatedAt: classification.updatedAt,
+    folders: classification.folders,
+    activities: store.activities.map(activity => ({
+      ...activityForLibraryResponse(activity),
+      folderId: folderIds.has(classification.assignments[activity.id]) ? classification.assignments[activity.id] : null
+    }))
+  };
+}
+
+async function removeActivityLibraryAssignment(activityId) {
+  const file = safeActivityLibraryFile();
+  if (!fsSync.existsSync(file)) return;
+  const classification = await readActivityLibraryClassification();
+  if (!Object.prototype.hasOwnProperty.call(classification.assignments, activityId)) return;
+  const assignments = { ...classification.assignments };
+  delete assignments[activityId];
+  await persistActivityLibraryClassification({ ...classification, assignments });
 }
 
 function normalizeActivityOverlays(activity) {
@@ -2719,6 +2840,86 @@ async function handleApi(request, response, url) {
     catch (error) { console.error(`[data] catalogue vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement du catalogue impossible." }); }
     return sendJson(response, 201, { video: entry });
   }
+  if (url.pathname === "/api/proto05/activity-library") {
+    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
+    try {
+      const [store, classification] = await Promise.all([readActivities(), readActivityLibraryClassification()]);
+      return sendJson(response, 200, activityLibraryPayload(store, classification));
+    } catch (error) {
+      return sendJson(response, 500, { error: error.message || "Bibliothèque d’activités indisponible." });
+    }
+  }
+  const activityFolderRoute = /^\/api\/proto05\/activity-library\/folders(?:\/([^/]+))?$/.exec(url.pathname);
+  if (activityFolderRoute) {
+    let classification;
+    try { classification = await readActivityLibraryClassification(); }
+    catch (error) { return sendJson(response, 500, { error: error.message }); }
+    if (request.method === "POST" && !activityFolderRoute[1]) {
+      try {
+        const folder = activityLibraryFolderFromInput(classification, JSON.parse(await readRequestBody(request)));
+        const next = await persistActivityLibraryClassification({
+          ...classification,
+          folders: [...classification.folders, folder]
+        });
+        return sendJson(response, 201, { folder: next.folders.find(item => item.id === folder.id) });
+      } catch (error) {
+        return sendJson(response, 400, { error: error.message || "Dossier invalide." });
+      }
+    }
+    if (!activityFolderRoute[1]) return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    const folderId = decodeURIComponent(activityFolderRoute[1]);
+    const folder = classification.folders.find(item => item.id === folderId);
+    if (!folder) return sendJson(response, 404, { error: "Dossier introuvable." });
+    if (request.method === "PATCH") {
+      try {
+        const name = activityFolderName(JSON.parse(await readRequestBody(request)).name);
+        if (classification.folders.some(item => item.id !== folderId && item.name.localeCompare(name, "fr", { sensitivity: "base" }) === 0)) throw new Error("Ce dossier existe déjà.");
+        const folders = classification.folders.map(item => item.id === folderId
+          ? { ...item, name, updatedAt: new Date().toISOString() }
+          : item);
+        const next = await persistActivityLibraryClassification({ ...classification, folders });
+        return sendJson(response, 200, { folder: next.folders.find(item => item.id === folderId) });
+      } catch (error) {
+        return sendJson(response, 400, { error: error.message || "Renommage impossible." });
+      }
+    }
+    if (request.method === "DELETE") {
+      try {
+        const assignments = Object.fromEntries(Object.entries(classification.assignments).filter(([, assignedFolderId]) => assignedFolderId !== folderId));
+        const unclassifiedActivityIds = Object.entries(classification.assignments)
+          .filter(([, assignedFolderId]) => assignedFolderId === folderId)
+          .map(([activityId]) => activityId);
+        await persistActivityLibraryClassification({
+          ...classification,
+          folders: classification.folders.filter(item => item.id !== folderId),
+          assignments
+        });
+        return sendJson(response, 200, { folderId, unclassifiedActivityIds });
+      } catch (error) {
+        return sendJson(response, 400, { error: error.message || "Suppression impossible." });
+      }
+    }
+    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PATCH, DELETE" });
+  }
+  const activityClassificationRoute = /^\/api\/proto05\/activity-library\/activities\/([^/]+)\/classification$/.exec(url.pathname);
+  if (activityClassificationRoute) {
+    if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
+    try {
+      const activityId = decodeURIComponent(activityClassificationRoute[1]);
+      const [store, classification] = await Promise.all([readActivities(), readActivityLibraryClassification()]);
+      if (!store.activities.some(activity => activity?.id === activityId)) return sendJson(response, 404, { error: "Activité introuvable." });
+      const payload = JSON.parse(await readRequestBody(request));
+      const folderId = payload?.folderId ?? null;
+      if (folderId !== null && !classification.folders.some(folder => folder.id === folderId)) return sendJson(response, 404, { error: "Dossier introuvable." });
+      const assignments = { ...classification.assignments };
+      if (folderId === null) delete assignments[activityId];
+      else assignments[activityId] = folderId;
+      await persistActivityLibraryClassification({ ...classification, assignments });
+      return sendJson(response, 200, { activityId, folderId });
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message || "Classement impossible." });
+    }
+  }
   const folderRoute = /^\/api\/proto05\/library\/folders(?:\/([^/]+))?$/.exec(url.pathname);
   if (folderRoute) {
     if (request.method === "POST" && !folderRoute[1]) {
@@ -3076,6 +3277,8 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       console.error(`[data] suppression Proto05 impossible : ${error.message}`);
       return sendJson(response, 500, { error: "Suppression JSON impossible." });
     }
+    try { await removeActivityLibraryAssignment(id); }
+    catch (error) { console.error(`[data] nettoyage du classement de ${id} impossible : ${error.message}`); }
     return sendJson(response, 200, {
       schemaVersion: store.schemaVersion || "0.1",
       updatedAt: store.updatedAt,

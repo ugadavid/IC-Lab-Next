@@ -1,136 +1,81 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Prototype 05 — Préparation enseignant</title>
-  <style>
-    body{margin:0;padding:32px;font-family:Arial,sans-serif;color:#20242c;background:linear-gradient(135deg,#eef3f7,#faf7ef)}
-    main{max-width:960px;margin:auto;background:#fff;padding:28px;border:1px solid #d9e0e8;border-radius:14px;box-shadow:0 10px 30px #1923301a}
-    .notice{padding:12px 14px;border-radius:9px;background:#fff4df;color:#7a4c0c;font-weight:700}
-    .activity{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid #d9e0e8;padding:18px 0}
-    .activity-main{min-width:0;flex:1}.activity-main h2{margin:0 0 5px}.activity-identity{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 5px}.identity-badge{display:inline-flex;border-radius:999px;padding:4px 8px;background:#eef2f6;color:#475467;font-size:.78rem;font-weight:800}.identity-badge.incomplete{background:#fff4df;color:#7a4c0c}.identity-badge.qualified{background:#e7f7ed;color:#17633a}.identity-summary{margin:5px 0;color:#475467;font-size:.9rem;line-height:1.35}.identity-summary strong{color:#20242c}
-    .activity-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px}
-    a{color:#325f8f;font-weight:700;margin-left:12px} small{color:#667085}
-    .activity-actions a{margin-left:0}
-    .activity-actions button{padding:8px 11px;border:0;border-radius:6px;background:#325f8f;color:#fff;font:inherit;font-weight:700;cursor:pointer}
-    .activity-actions .delete-activity{background:#9a3d3d}
-    .activity-actions button:disabled{cursor:wait;opacity:.65}
-    .activity-status{flex-basis:100%;min-height:1.2em;text-align:right;color:#667085;font-size:.9rem}
-    .activity-status[data-state="error"]{color:#9a3d3d;font-weight:700}
-    #library-status{min-height:1.3em;color:#17633a;font-weight:700}
-    #library-status[data-state="error"]{color:#9a3d3d}
-  </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bibliothèque d’activités — Proto05</title>
   <link rel="stylesheet" href="/shared/teacher-shell.css">
+  <link rel="stylesheet" href="/shared/activity-library.css">
   <script src="/shared/teacher-shell.js" defer></script>
+  <script src="/shared/activity-library.js" defer></script>
 </head>
-<body><main>
-  <h1>Préparation enseignant</h1>
-  <p class="notice">Mode enseignant local de prototype — aucune authentification ni gestion réelle des droits.</p>
-  <p>Bibliothèque des activités disponibles. La prévisualisation réutilise le moteur de rendu de la vue étudiant.</p><p><a href="/teacher/create">Créer une activité</a> · <a href="/teacher/videos">Gérer les sources vidéo</a></p>
-  <p id="library-status" role="status" aria-live="polite"></p>
-  <section id="library" aria-live="polite">Chargement de la bibliothèque…</section>
-</main>
-<script>
-  const library = document.getElementById("library");
-  fetch("/api/proto05/activities").then(r => { if (!r.ok) throw new Error("API indisponible"); return r.json(); }).then(payload => {
-    if (!Array.isArray(payload.activities) || !payload.activities.length) { library.textContent = "Aucune activité disponible."; return; }
-    library.innerHTML = payload.activities.map(activity => `
-      <article class="activity"><div class="activity-main"><h2>${escapeHtml(activity.title || activity.id)}</h2>
-      <small>${escapeHtml(activity.id)} · version ${escapeHtml(activity.version || "—")} · ${activity.segments?.length || 0} segments</small>
-      ${identityMarkup(activity)}</div>
-      <div class="activity-actions"><a href="/teacher/preview/${encodeURIComponent(activity.id)}">Prévisualiser</a>
-      <a href="/teacher/edit/${encodeURIComponent(activity.id)}">Voir / modifier la fiche</a>
-      <a href="/student/${encodeURIComponent(activity.id)}">Vue étudiant</a>
-      <button type="button" data-duplicate-id="${escapeHtml(activity.id)}">Dupliquer comme variante</button>
-      <button type="button" class="delete-activity" data-delete-id="${escapeHtml(activity.id)}" data-delete-title="${escapeHtml(activity.title || activity.id)}">Supprimer l’activité</button>
-      <span class="activity-status" role="status" aria-live="polite"></span></div></article>`).join("");
-  }).catch(error => { library.textContent = "Impossible de charger la bibliothèque : " + error.message; });
-  library.addEventListener("click", async event => {
-    const deleteButton = event.target.closest("[data-delete-id]");
-    if (deleteButton && !deleteButton.disabled) {
-      const id = deleteButton.dataset.deleteId;
-      const title = deleteButton.dataset.deleteTitle;
-      const status = deleteButton.parentElement.querySelector(".activity-status");
-      const confirmed = confirm(`Supprimer définitivement l’activité « ${title} » (identifiant : ${id}) ?\n\nUne sauvegarde .bak sera créée avant la suppression.`);
-      if (!confirmed) {
-        status.dataset.state = "cancelled";
-        status.textContent = "Suppression annulée. Aucune donnée modifiée.";
-        return;
-      }
-      deleteButton.disabled = true;
-      deleteButton.setAttribute("aria-busy", "true");
-      deleteButton.textContent = "Suppression en cours…";
-      status.dataset.state = "saving";
-      status.textContent = "Création de la sauvegarde et suppression atomique…";
-      try {
-        const response = await fetch(`/api/proto05/activities/${encodeURIComponent(id)}`, { method: "DELETE" });
-        const payload = await response.json().catch(() => null);
-        if (!response.ok) throw new Error(payload?.error || "Suppression refusée par l’API.");
-        if (payload?.deleted?.id !== id) throw new Error("Réponse de suppression invalide.");
-        deleteButton.closest("article.activity").remove();
-        const libraryStatus = document.getElementById("library-status");
-        libraryStatus.dataset.state = "success";
-        libraryStatus.textContent = `Activité supprimée : « ${title} » (${id}). Retour à la bibliothèque.`;
-        if (!library.querySelector("article.activity")) library.textContent = "Aucune activité disponible.";
-      } catch (error) {
-        status.dataset.state = "error";
-        status.textContent = `Échec de la suppression : ${error.message || "API indisponible."}`;
-        deleteButton.disabled = false;
-        deleteButton.removeAttribute("aria-busy");
-        deleteButton.textContent = "Supprimer l’activité";
-      }
-      return;
-    }
-    const button = event.target.closest("[data-duplicate-id]");
-    if (!button || button.disabled) return;
-    const sourceId = button.dataset.duplicateId;
-    const status = button.parentElement.querySelector(".activity-status");
-    button.disabled = true;
-    button.setAttribute("aria-busy", "true");
-    button.textContent = "Duplication en cours…";
-    status.dataset.state = "saving";
-    status.textContent = "Création d’une copie indépendante…";
-    try {
-      const response = await fetch(`/api/proto05/activities/${encodeURIComponent(sourceId)}/duplicate`, { method: "POST" });
-      const payload = await response.json().catch(() => null);
-      if (!response.ok) throw new Error(payload?.error || "Duplication refusée par l’API.");
-      const copyId = payload?.activity?.id;
-      if (typeof copyId !== "string" || !copyId || copyId === sourceId) throw new Error("Réponse de duplication invalide.");
-      status.dataset.state = "success";
-      status.textContent = "Copie créée. Ouverture de l’atelier auteur…";
-      location.assign(`/teacher/author/${encodeURIComponent(copyId)}`);
-    } catch (error) {
-      status.dataset.state = "error";
-      status.textContent = `Échec de la duplication : ${error.message || "API indisponible."}`;
-      button.disabled = false;
-      button.removeAttribute("aria-busy");
-      button.textContent = "Dupliquer comme variante";
-    }
-  });
-  const identityLabels = {
-    "functional-test": "Test fonctionnel",
-    "pedagogical-activity": "Activité pédagogique",
-    "demonstration": "Démonstration",
-    "other": "Autre",
-    "documented-by-author": "Documentée par l’auteur",
-    "reviewed-by-expert": "Relue par un expert",
-    "experimented": "Expérimentée",
-    "reused-by-third-party": "Reprise par un tiers",
-    "unqualified": "Non qualifiée"
-  };
-  function knownValue(value) { return value?.state === "known" ? value.value : ""; }
-  function identityMarkup(activity) {
-    const identity = activity.pedagogicalIdentity;
-    const summary = activity.pedagogicalIdentitySummary || {};
-    const nature = knownValue(identity?.resourceNature);
-    const qualification = identityLabels[summary.qualificationLevel] || "Non qualifiée";
-    const completeness = summary.completeness === "complete" ? "Fiche complète" : summary.presence === "absent" ? "Fiche absente" : "Fiche incomplète";
-    const details = [
-      knownValue(identity?.intention) && `<p class="identity-summary"><strong>Intention :</strong> ${escapeHtml(knownValue(identity.intention))}</p>`,
-      (knownValue(identity?.audience) || knownValue(identity?.useContext)) && `<p class="identity-summary"><strong>Public / contexte :</strong> ${escapeHtml([knownValue(identity?.audience),knownValue(identity?.useContext)].filter(Boolean).join(" · "))}</p>`,
-      identity?.lineage?.relation === "variant" && `<p class="identity-summary"><strong>Variante de :</strong> ${escapeHtml(identity.lineage.parentActivityId || "source à vérifier")}</p>`
-    ].filter(Boolean).join("");
-    return `<div class="activity-identity">${nature ? `<span class="identity-badge">${escapeHtml(identityLabels[nature] || nature)}</span>` : ""}<span class="identity-badge ${summary.completeness === "complete" ? "qualified" : "incomplete"}">${escapeHtml(completeness)}</span><span class="identity-badge">${escapeHtml(qualification)}</span>${summary.requalificationRequired ? '<span class="identity-badge incomplete">À requalifier</span>' : ""}</div>${details}`;
-  }
-  function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
-</script></body></html>
+<body>
+  <main class="activity-library-page">
+    <header class="activity-library-header">
+      <h1>Bibliothèque d’activités</h1>
+      <p>Recherchez, classez et ouvrez les activités pédagogiques de Proto05.</p>
+    </header>
+
+    <section class="activity-toolbar" aria-label="Outils de la bibliothèque d’activités">
+      <div class="activity-search">
+        <label for="activitySearch">Rechercher</label>
+        <input id="activitySearch" type="search" placeholder="Titre, identifiant, intention, contexte, vidéo ou dossier" autocomplete="off">
+        <button type="button" id="clearSearch" aria-label="Effacer la recherche" hidden>×</button>
+      </div>
+      <div>
+        <label for="activitySort">Trier par</label>
+        <select id="activitySort">
+          <option value="title-asc">Titre de A à Z</option>
+          <option value="title-desc">Titre de Z à A</option>
+        </select>
+      </div>
+      <div>
+        <label for="activityStatusFilter">État de la fiche</label>
+        <select id="activityStatusFilter">
+          <option value="all">Toutes les fiches</option>
+          <option value="draft">Brouillons</option>
+          <option value="incomplete">Fiches incomplètes</option>
+          <option value="complete">Fiches complètes</option>
+        </select>
+      </div>
+      <div class="activity-view-toggle" role="group" aria-label="Mode d’affichage" data-view-controls>
+        <button type="button" data-view-choice="grid" aria-pressed="true">Grille</button>
+        <button type="button" data-view-choice="list" aria-pressed="false">Liste</button>
+      </div>
+      <a class="add-activity" href="/teacher/create">Ajouter une activité</a>
+    </section>
+
+    <p id="libraryStatus" role="status" aria-live="polite"></p>
+
+    <div class="activity-library-layout">
+      <aside class="activity-sidebar" aria-labelledby="classificationTitle">
+        <h2 id="classificationTitle">Bibliothèque</h2>
+        <nav id="activityFolders" aria-label="Classement des activités"></nav>
+      </aside>
+
+      <section class="activity-results-section" aria-labelledby="resultTitle">
+        <header class="activity-results-header">
+          <h2 id="resultTitle">Toutes les activités</h2>
+          <span id="resultCount"></span>
+        </header>
+        <div id="activityResults" class="activity-results" data-view="grid" aria-live="polite">
+          <div class="activity-empty" role="status">Chargement de la bibliothèque…</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <dialog id="folderDialog" aria-labelledby="folderDialogTitle">
+    <form id="folderForm">
+      <h2 id="folderDialogTitle">Ajouter un dossier</h2>
+      <label for="folderName">Nom du dossier</label>
+      <input id="folderName" name="name" maxlength="120" required autocomplete="off">
+      <p class="dialog-status" role="status" aria-live="polite"></p>
+      <div class="folder-dialog-actions">
+        <button type="button" class="secondary" id="cancelFolder">Annuler</button>
+        <button type="submit">Ajouter</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>

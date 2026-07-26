@@ -63,6 +63,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   fs.mkdirSync(temporaryReferenceDirectory, { recursive: true });
   const serverFile = path.join(temporaryServerDirectory, "server.js");
   const dataFile = path.join(temporaryDataDirectory, "activities.json");
+  const activityLibraryFile = path.join(temporaryDataDirectory, "activity-library.json");
   const videoCatalogFile = path.join(temporaryDataDirectory, "video-catalog.json");
   const videoLibraryFile = path.join(temporaryDataDirectory, "video-library.json");
   const temporaryVideoLibraryMediaDirectory = path.join(temporaryDataDirectory, "video-library-media");
@@ -95,7 +96,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   }
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
   fs.mkdirSync(temporarySharedDirectory, { recursive: true });
-  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js", "teacher-shell.css", "teacher-shell.js"]) {
+  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js", "teacher-shell.css", "teacher-shell.js", "activity-library.css", "activity-library.js"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, "shared", file), path.join(temporarySharedDirectory, file));
   }
   fs.copyFileSync(path.join(sourcePrototypeDirectory, "guided-overlays.js"), path.join(prototypeDirectory, "guided-overlays.js"));
@@ -131,6 +132,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
     baseUrl,
     stderr: () => stderr,
     dataFile,
+    activityLibraryFile,
     videoLibraryFile,
     videoLibraryMediaDirectory: temporaryVideoLibraryMediaDirectory,
     videoLibraryWorkspaceDirectory: temporaryVideoLibraryWorkspaceDirectory,

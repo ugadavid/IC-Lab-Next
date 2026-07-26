@@ -106,9 +106,10 @@ test("les pages enseignantes partagent le socle sans ajouter sa feuille à l’a
 
 test("les actions métier existantes restent présentes dans leurs pages", () => {
   const source = page => fs.readFileSync(path.join(prototypeDirectory, page), "utf8");
-  assert.match(source("teacher.html"), /data-duplicate-id/);
-  assert.match(source("teacher.html"), /data-delete-id/);
-  assert.match(source("teacher.html"), /href="\/teacher\/create">Créer une activité/);
+  const activityLibrarySource = fs.readFileSync(path.join(prototypeDirectory, "shared", "activity-library.js"), "utf8");
+  assert.match(activityLibrarySource, /data-duplicate-id/);
+  assert.match(activityLibrarySource, /data-delete-id/);
+  assert.match(source("teacher.html"), /href="\/teacher\/create">Ajouter une activité/);
   assert.match(source("teacher-create.html"), /id="create"/);
   assert.match(source("teacher-edit.html"), /id="save"/);
   assert.match(source("teacher-guided.html"), /id="save"/);
@@ -156,6 +157,9 @@ test("les routes enseignantes et les actifs partagés sont servis par une copie 
     const scriptResponse = await fetch(`${temporary.baseUrl}/shared/teacher-shell.js`);
     assert.equal(scriptResponse.status, 200);
     assert.match(scriptResponse.headers.get("content-type"), /text\/javascript/);
+    const activityLibraryResponse = await fetch(`${temporary.baseUrl}/shared/activity-library.js`);
+    assert.equal(activityLibraryResponse.status, 200);
+    assert.match(activityLibraryResponse.headers.get("content-type"), /text\/javascript/);
 
     const removed = await fetch(`${temporary.baseUrl}/teacher/anonymization-advanced/job-fixture`);
     assert.equal(removed.status, 404);

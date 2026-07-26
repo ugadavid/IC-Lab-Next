@@ -13,14 +13,9 @@ const prototypeDirectory = path.resolve(serverDirectory, "..");
 const canonicalDataFile = path.join(prototypeDirectory, "data", "activities.json");
 const expectedIds = [
   "proto05-augmented-video-01",
-  "proto05-draft-1784218562686-f87014",
-  "proto05-draft-1784219853222-b9e6a5",
-  "proto05-draft-1784230655360-d1182f",
-  "proto05-copy-1784236861048-984dec",
-  "proto05-copy-1784304228900-10fb33",
-  "proto05-draft-1784811747316-88a00c"
+  "proto05-draft-1784230655360-d1182f"
 ];
-const deletionTargetId = "proto05-copy-1784236861048-984dec";
+const deletionTargetId = "proto05-test-deletion-target";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -37,11 +32,21 @@ function assertOtherActivitiesPreserved(before, after, deletedId) {
   assert.deepEqual(after.activities, expected);
 }
 
+function storeWithDeletionTarget() {
+  const store = clone(readCanonicalStore());
+  const target = clone(store.activities[1]);
+  target.id = deletionTargetId;
+  target.title = "Activité temporaire à supprimer";
+  delete target.pedagogicalIdentity;
+  store.activities.push(target);
+  return store;
+}
+
 test("DELETE supprime une seule activité sur une copie et crée la sauvegarde préalable", { timeout: 15000 }, async () => {
   const canonicalHashBefore = sha256(canonicalDataFile);
-  const initialStore = clone(readCanonicalStore());
+  const initialStore = storeWithDeletionTarget();
   const target = initialStore.activities.find(activity => activity.id === deletionTargetId);
-  assert.equal(target.title, "CopieCopie");
+  assert.equal(target.title, "Activité temporaire à supprimer");
   const temporary = await startTemporaryProto05Server(initialStore, "proto05-deletion-api-");
 
   try {
@@ -52,7 +57,7 @@ test("DELETE supprime une seule activité sur une copie et crée la sauvegarde p
 
     assert.equal(response.status, 200);
     assert.deepEqual(payload.deleted, { id: target.id, title: target.title });
-    assert.equal(payload.activitiesRemaining, 6);
+    assert.equal(payload.activitiesRemaining, 2);
     assert.equal(after.activities.some(activity => activity.id === target.id), false);
     assertOtherActivitiesPreserved(initialStore, after, target.id);
     assert.deepEqual(backup, initialStore);
@@ -92,7 +97,7 @@ test("Chromium annule sans requête puis confirme la suppression depuis la bibli
   const chromium = findChromium();
   assert.ok(chromium, "Chromium ou Edge doit être disponible pour la recette demandée.");
   const canonicalHashBefore = sha256(canonicalDataFile);
-  const initialStore = clone(readCanonicalStore());
+  const initialStore = storeWithDeletionTarget();
   const target = initialStore.activities.find(activity => activity.id === deletionTargetId);
   const temporary = await startTemporaryProto05Server(initialStore, "proto05-deletion-browser-");
   const runnerFile = path.join(temporary.root, "prototype", "deletion-runner.html");
@@ -110,8 +115,8 @@ test("Chromium annule sans requête puis confirme la suppression depuis la bibli
       const win = frame.contentWindow;
       const doc = frame.contentDocument;
       const button = await waitFor(() => doc.querySelector('[data-delete-id="${target.id}"]'), "Bouton de suppression absent.");
-      const article = button.closest("article.activity");
-      const status = article.querySelector(".activity-status");
+      const article = button.closest("[data-activity-card]");
+      const status = article.querySelector(".activity-card__status");
       const confirmationMessages = [];
       let deleteRequests = 0;
       const originalFetch = win.fetch.bind(win);
@@ -140,8 +145,8 @@ test("Chromium annule sans requête puis confirme la suppression depuis la bibli
         cancellation,
         disabledDuringRequest,
         deleteRequests,
-        remainingCards: doc.querySelectorAll("article.activity").length,
-        libraryStatus: doc.getElementById("library-status").textContent,
+        remainingCards: doc.querySelectorAll("[data-activity-card]").length,
+        libraryStatus: doc.getElementById("libraryStatus").textContent,
         visibleError: doc.querySelector('[data-state="error"]')?.textContent || ""
       };
       document.body.dataset.results = encodeURIComponent(JSON.stringify(results));
@@ -173,8 +178,8 @@ test("Chromium annule sans requête puis confirme la suppression depuis la bibli
     });
     assert.equal(results.disabledDuringRequest, true);
     assert.equal(results.deleteRequests, 1);
-    assert.equal(results.remainingCards, 6);
-    assert.match(results.libraryStatus, /Activité supprimée.*Retour à la bibliothèque/);
+    assert.equal(results.remainingCards, 2);
+    assert.match(results.libraryStatus, /Activité supprimée/);
     assert.equal(results.visibleError, "");
     assertOtherActivitiesPreserved(initialStore, after, target.id);
     assert.deepEqual(backup, initialStore);
