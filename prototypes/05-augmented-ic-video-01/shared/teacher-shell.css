@@ -65,7 +65,7 @@ body.proto05-teacher-ui * {
   border-bottom: 1px solid var(--teacher-border);
   border-radius: 0;
   background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 6px 22px rgba(23, 32, 51, 0.08);
+  box-shadow: 0 2px 10px rgba(23, 32, 51, 0.07);
   color: var(--teacher-text);
   backdrop-filter: blur(14px);
 }
@@ -77,20 +77,20 @@ body.proto05-teacher-ui * {
 }
 
 .teacher-shell__general {
-  min-height: 62px;
+  min-height: 60px;
   display: flex;
   align-items: center;
-  gap: 1.15rem;
-  padding: 0.6rem 0;
+  gap: 1.4rem;
+  padding: 0.35rem 0;
 }
 
 .teacher-shell__brand {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
   color: var(--teacher-text);
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 820;
   letter-spacing: -0.015em;
   text-decoration: none;
@@ -102,14 +102,13 @@ body.proto05-teacher-ui * {
 
 .teacher-shell__brand-mark {
   display: grid;
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 1.85rem;
+  height: 1.85rem;
   place-items: center;
-  border-radius: 11px;
-  background: linear-gradient(145deg, var(--teacher-primary), var(--teacher-accent));
-  box-shadow: 0 7px 16px rgba(14, 116, 144, 0.2);
+  border-radius: 8px;
+  background: var(--teacher-primary);
   color: #fff;
-  font-size: 0.82rem;
+  font-size: 0.7rem;
   font-weight: 850;
 }
 
@@ -118,9 +117,8 @@ body.proto05-teacher-ui * {
   min-width: 0;
   flex: 1 1 auto;
   align-items: center;
-  gap: 0.25rem;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  gap: 1.15rem;
+  overflow: visible;
 }
 
 .teacher-shell__link,
@@ -128,9 +126,10 @@ body.proto05-teacher-ui * {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
-  border: 1px solid transparent;
-  border-radius: var(--teacher-radius-small);
+  position: relative;
+  gap: 0.25rem;
+  border: 0;
+  border-radius: 0;
   color: #344154;
   font-weight: 720;
   line-height: 1.2;
@@ -141,39 +140,50 @@ body.proto05-teacher-ui * {
 }
 
 .teacher-shell__link {
-  min-height: 38px;
-  padding: 0.52rem 0.72rem;
-  font-size: 0.91rem;
+  min-height: 42px;
+  padding: 0.55rem 0;
+  font-size: 0.9rem;
 }
 
 .teacher-shell__link:hover,
 .teacher-shell__context-link:hover {
-  border-color: #c7dce3;
-  background: var(--teacher-primary-soft);
   color: var(--teacher-primary-strong);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.28rem;
 }
 
 .teacher-shell__link[aria-current="page"],
 .teacher-shell__context-link[aria-current="page"] {
-  border-color: #9bc8d4;
-  background: var(--teacher-primary-soft);
-  box-shadow: inset 0 -3px 0 var(--teacher-accent);
   color: var(--teacher-primary-strong);
+  font-weight: 830;
 }
 
-.teacher-shell__link[aria-current="page"]::before,
-.teacher-shell__context-link[aria-current="page"]::before {
-  width: 0.42rem;
-  height: 0.42rem;
-  border-radius: 999px;
+.teacher-shell__link[aria-current="page"]::after,
+.teacher-shell__context-link[aria-current="page"]::after {
+  position: absolute;
+  right: 0;
+  bottom: 0.25rem;
+  left: 0;
+  height: 2px;
   background: var(--teacher-accent);
   content: "";
 }
 
 .teacher-shell__hub {
   margin-left: auto;
-  border-color: var(--teacher-border);
-  background: var(--teacher-surface-soft);
+  min-height: 34px;
+  padding: 0 0 0 1rem;
+  border-left: 1px solid var(--teacher-border);
+  color: var(--teacher-muted);
+  font-size: 0.82rem;
+  font-weight: 690;
+}
+
+.teacher-shell__hub::after {
+  margin-left: 0.18rem;
+  content: "↗";
+  font-size: 0.8rem;
 }
 
 .teacher-shell__context {
@@ -183,11 +193,11 @@ body.proto05-teacher-ui * {
 
 .teacher-shell__context-inner {
   display: grid;
-  grid-template-columns: minmax(180px, 0.8fr) minmax(0, 1.7fr) auto;
+  grid-template-columns: minmax(170px, 0.72fr) minmax(0, 1.55fr) auto;
   align-items: center;
-  gap: 1rem;
-  min-height: 66px;
-  padding: 0.55rem 0;
+  gap: 1.1rem;
+  min-height: 56px;
+  padding: 0.35rem 0;
 }
 
 .teacher-shell__activity {
@@ -196,9 +206,9 @@ body.proto05-teacher-ui * {
 
 .teacher-shell__eyebrow {
   display: block;
-  margin-bottom: 0.1rem;
+  margin-bottom: 0;
   color: var(--teacher-muted);
-  font-size: 0.69rem;
+  font-size: 0.62rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -208,20 +218,19 @@ body.proto05-teacher-ui * {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.38rem;
 }
 
 .teacher-shell__activity-title {
   overflow: hidden;
   color: var(--teacher-text);
-  font-size: 0.94rem;
+  font-size: 0.86rem;
   font-weight: 790;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .teacher-shell__activity-status,
-.teacher-shell__expert,
 .teacher-shell__save-status {
   display: inline-flex;
   align-items: center;
@@ -231,47 +240,42 @@ body.proto05-teacher-ui * {
 }
 
 .teacher-shell__activity-status {
-  padding: 0.2rem 0.48rem;
+  padding: 0.12rem 0.4rem;
   background: var(--teacher-warning-soft);
   color: var(--teacher-warning);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
 }
 
 .teacher-shell__context-nav {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 0.25rem;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  justify-content: center;
+  gap: 0.95rem;
+  overflow: visible;
 }
 
 .teacher-shell__context-link {
-  min-height: 36px;
-  padding: 0.44rem 0.62rem;
-  font-size: 0.84rem;
-}
-
-.teacher-shell__expert {
-  padding: 0.12rem 0.4rem;
-  background: #f0eafe;
-  color: #68429a;
-  font-size: 0.63rem;
+  min-height: 38px;
+  padding: 0.5rem 0;
+  font-size: 0.8rem;
 }
 
 .teacher-shell__actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.55rem;
+  gap: 0.45rem;
+  padding-left: 0.85rem;
+  border-left: 1px solid var(--teacher-border);
 }
 
 .teacher-shell__save-status {
-  max-width: 230px;
-  padding: 0.28rem 0.55rem;
+  max-width: 170px;
+  padding: 0.2rem 0.48rem;
   background: #edf1f5;
   color: var(--teacher-muted);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -297,15 +301,15 @@ body.proto05-teacher-ui * {
 }
 
 .teacher-shell__save {
-  min-height: 38px;
+  min-height: 34px;
   margin: 0;
-  padding: 0.52rem 0.82rem;
+  padding: 0.42rem 0.7rem;
   border: 1px solid var(--teacher-primary);
   border-radius: var(--teacher-radius-small);
   background: var(--teacher-primary);
   color: #fff;
   font: inherit;
-  font-size: 0.86rem;
+  font-size: 0.8rem;
   font-weight: 780;
   cursor: pointer;
 }
@@ -466,13 +470,16 @@ body.proto05-teacher-ui[data-teacher-route="anonymization"] > main.content {
 
 @media (max-width: 1060px) {
   .teacher-shell__context-inner {
-    grid-template-columns: minmax(160px, 0.7fr) minmax(0, 1.3fr);
+    grid-template-columns: minmax(145px, 0.65fr) minmax(0, 1.35fr) auto;
+    gap: 0.75rem;
   }
 
-  .teacher-shell__actions {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-    padding-bottom: 0.15rem;
+  .teacher-shell__context-nav {
+    gap: 0.65rem;
+  }
+
+  .teacher-shell__save-status {
+    max-width: 105px;
   }
 }
 
@@ -486,32 +493,35 @@ body.proto05-teacher-ui[data-teacher-route="anonymization"] > main.content {
   }
 
   .teacher-shell__general {
-    min-height: auto;
-    flex-wrap: wrap;
-    gap: 0.35rem 0.75rem;
-    padding: 0.55rem 0;
+    min-height: 56px;
+    flex-wrap: nowrap;
+    gap: 0.65rem;
+    padding: 0.3rem 0;
   }
 
   .teacher-shell__brand-mark {
-    width: 1.9rem;
-    height: 1.9rem;
+    width: 1.7rem;
+    height: 1.7rem;
   }
 
   .teacher-shell__general-nav {
-    order: 3;
-    width: 100%;
-    flex-basis: 100%;
-    padding-bottom: 0.2rem;
+    width: auto;
+    flex: 1 1 auto;
+    justify-content: space-evenly;
+    gap: 0.35rem;
   }
 
   .teacher-shell__link {
-    min-height: 34px;
-    padding: 0.42rem 0.58rem;
-    font-size: 0.83rem;
+    min-height: 40px;
+    padding: 0.48rem 0;
+    font-size: 0.78rem;
   }
 
   .teacher-shell__hub {
     margin-left: 0;
+    min-height: 30px;
+    padding-left: 0.6rem;
+    font-size: 0.72rem;
   }
 
   .teacher-shell__context-inner {
@@ -521,8 +531,8 @@ body.proto05-teacher-ui[data-teacher-route="anonymization"] > main.content {
       "navigation navigation";
     grid-template-columns: minmax(0, 1fr) auto;
     min-height: auto;
-    gap: 0.45rem;
-    padding: 0.5rem 0 0.65rem;
+    gap: 0.25rem 0.5rem;
+    padding: 0.35rem 0 0.4rem;
   }
 
   .teacher-shell__activity {
@@ -531,33 +541,51 @@ body.proto05-teacher-ui[data-teacher-route="anonymization"] > main.content {
 
   .teacher-shell__context-nav {
     grid-area: navigation;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     width: 100%;
+    gap: 0.3rem;
+    overflow: visible;
+  }
+
+  .teacher-shell__context-link {
+    min-width: 0;
+    min-height: 36px;
+    padding: 0.4rem 0.12rem;
+    font-size: 0.7rem;
+    white-space: normal;
+    text-align: center;
   }
 
   .teacher-shell__actions {
     grid-area: actions;
     width: auto;
-    padding: 0;
+    gap: 0.3rem;
+    padding: 0 0 0 0.5rem;
   }
 
   .teacher-shell__save-status {
-    max-width: 96px;
-    padding-inline: 0.45rem;
-    font-size: 0.66rem;
+    max-width: 78px;
+    padding-inline: 0.38rem;
+    font-size: 0.62rem;
   }
 
   .teacher-shell__save {
     min-height: 34px;
-    padding: 0.42rem 0.62rem;
-    font-size: 0.78rem;
+    padding: 0.4rem 0.52rem;
+    font-size: 0.72rem;
   }
 
   .teacher-shell__activity-title {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
   }
 
   .teacher-shell__activity-status {
-    font-size: 0.64rem;
+    font-size: 0.6rem;
+  }
+
+  .teacher-shell__eyebrow {
+    font-size: 0.56rem;
   }
 
   body.proto05-teacher-ui > main {

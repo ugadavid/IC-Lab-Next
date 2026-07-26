@@ -10,7 +10,7 @@
   <script src="/shared/teacher-shell.js" defer></script>
 </head>
 <body><main>
-  <header class="topbar"><div><a href="/teacher">← Bibliothèque enseignant</a><h1>Créer une activité</h1><p>Choisissez explicitement un asset et un playable de la Library vidéo.</p></div><a href="/teacher/videos">Ouvrir la Library</a></header>
+  <header class="topbar"><div><h1>Créer une activité</h1><p>Choisissez explicitement un asset et un playable de la Library vidéo.</p></div></header>
   <section class="panel"><h2>Métadonnées</h2><label for="title">Titre</label><input id="title" value="Nouvelle activité"><label for="description">Description</label><textarea id="description"></textarea></section>
   <section class="panel"><h2>Choisir une vidéo dans la Library</h2><div class="toolbar"><div><label for="librarySearch">Recherche</label><input id="librarySearch" type="search" placeholder="Titre, identifiant ou type"></div><div><label for="libraryFilter">Source</label><select id="libraryFilter"><option value="all">Toutes</option><option value="local-file">Fichier local</option><option value="direct-url">URL directe</option><option value="hls">HLS</option><option value="youtube-embed">YouTube</option></select></div></div><p id="selection" class="status" aria-live="polite">Aucun playable sélectionné.</p><div id="assets" class="asset-grid"><p>Chargement…</p></div></section>
   <div class="actions"><button id="create" disabled>Créer le brouillon</button><a href="/teacher">Annuler</a></div><p id="status" class="status" role="status" aria-live="polite"></p>

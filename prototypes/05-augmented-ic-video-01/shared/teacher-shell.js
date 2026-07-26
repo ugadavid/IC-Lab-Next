@@ -13,7 +13,7 @@
   function routeContext(pathname) {
     const path = String(pathname || "").replace(/\/+$/, "") || "/";
     if (path === "/teacher") return { route: "library", general: "library" };
-    if (path === "/teacher/create") return { route: "create", general: "create" };
+    if (path === "/teacher/create") return { route: "create", general: "library" };
     if (path === "/teacher/videos") return { route: "videos", general: "videos" };
     if (/^\/teacher\/videos\/[^/]+$/.test(path)) return { route: "video-detail", general: "videos" };
     if (/^\/teacher\/anonymization\/[^/]+$/.test(path)) return { route: "anonymization", general: "videos" };
@@ -21,28 +21,30 @@
     if (!activityMatch) return null;
     return {
       route: activityMatch[1],
-      general: null,
+      general: "library",
       activityId: decodeURIComponent(activityMatch[2]),
       activityPage: activityMatch[1]
     };
   }
 
-  function generalItems(active, hubUrl = IC_HUB_URL) {
+  function generalItems(active) {
     return [
       { id: "library", label: "Bibliothèque", href: "/teacher", active: active === "library" },
-      { id: "create", label: "Nouvelle activité", href: "/teacher/create", active: active === "create" },
-      { id: "videos", label: "Vidéothèque", href: "/teacher/videos", active: active === "videos" },
-      { id: "hub", label: "IC-Hub", href: hubUrl, active: false, hub: true }
+      { id: "videos", label: "Vidéothèque", href: "/teacher/videos", active: active === "videos" }
     ];
+  }
+
+  function hubItem(hubUrl = IC_HUB_URL) {
+    return { id: "hub", label: "IC-Hub", href: hubUrl, active: false, hub: true };
   }
 
   function activityItems(activityId, active) {
     const encoded = encodeURIComponent(activityId);
     return [
-      { id: "edit", label: "Fiche pédagogique", href: `/teacher/edit/${encoded}`, active: active === "edit" },
-      { id: "guided", label: "Atelier guidé", href: `/teacher/guided/${encoded}`, active: active === "guided" },
-      { id: "author", label: "Atelier auteur", href: `/teacher/author/${encoded}`, active: active === "author", expert: true },
-      { id: "preview", label: "Prévisualisation étudiante", href: `/teacher/preview/${encoded}`, active: active === "preview" }
+      { id: "edit", label: "Fiche", href: `/teacher/edit/${encoded}`, active: active === "edit" },
+      { id: "guided", label: "Guidé", href: `/teacher/guided/${encoded}`, active: active === "guided" },
+      { id: "author", label: "Auteur expert", href: `/teacher/author/${encoded}`, active: active === "author" },
+      { id: "preview", label: "Prévisualisation", href: `/teacher/preview/${encoded}`, active: active === "preview" }
     ];
   }
 
@@ -70,17 +72,10 @@
     const anchor = document.createElement("a");
     anchor.href = item.href;
     anchor.className = context ? "teacher-shell__context-link" : "teacher-shell__link";
-    if (item.hub) anchor.classList.add("teacher-shell__hub");
     if (item.active) anchor.setAttribute("aria-current", "page");
     const label = document.createElement("span");
     label.textContent = item.label;
     anchor.append(label);
-    if (item.expert) {
-      const expert = document.createElement("span");
-      expert.className = "teacher-shell__expert";
-      expert.textContent = "Mode expert";
-      anchor.append(expert);
-    }
     return anchor;
   }
 
@@ -95,16 +90,20 @@
     const mark = document.createElement("span");
     mark.className = "teacher-shell__brand-mark";
     mark.setAttribute("aria-hidden", "true");
-    mark.textContent = "IC";
+    mark.textContent = "P5";
     const name = document.createElement("span");
-    name.textContent = "Vidéo augmentée";
+    name.textContent = "Proto05";
     brand.append(mark, name);
 
     const nav = document.createElement("nav");
     nav.className = "teacher-shell__general-nav";
     nav.setAttribute("aria-label", "Navigation générale de Proto05");
-    generalItems(context.general, hubUrl).forEach(item => nav.append(linkElement(item)));
-    row.append(brand, nav);
+    generalItems(context.general).forEach(item => nav.append(linkElement(item)));
+
+    const hub = linkElement(hubItem(hubUrl));
+    hub.classList.add("teacher-shell__hub");
+    hub.setAttribute("aria-label", "Ouvrir IC-Hub");
+    row.append(brand, nav, hub);
     return row;
   }
 
@@ -307,6 +306,7 @@
     STYLE_PATH,
     routeContext,
     generalItems,
+    hubItem,
     activityItems,
     activityStatusLabel,
     saveStateFromMessage,

@@ -28,14 +28,14 @@ const teacherPages = [
 test("le routeur du socle distingue toutes les vues enseignantes des vues étudiantes", () => {
   const activityId = "activité test";
   assert.deepEqual(teacherShell.routeContext("/teacher"), { route: "library", general: "library" });
-  assert.deepEqual(teacherShell.routeContext("/teacher/create"), { route: "create", general: "create" });
+  assert.deepEqual(teacherShell.routeContext("/teacher/create"), { route: "create", general: "library" });
   assert.deepEqual(teacherShell.routeContext("/teacher/videos"), { route: "videos", general: "videos" });
   assert.deepEqual(teacherShell.routeContext("/teacher/videos/video-1"), { route: "video-detail", general: "videos" });
   assert.deepEqual(teacherShell.routeContext("/teacher/anonymization/job-1"), { route: "anonymization", general: "videos" });
   for (const route of ["edit", "guided", "author", "preview"]) {
     assert.deepEqual(teacherShell.routeContext(`/teacher/${route}/${encodeURIComponent(activityId)}`), {
       route,
-      general: null,
+      general: "library",
       activityId,
       activityPage: route
     });
@@ -46,22 +46,27 @@ test("le routeur du socle distingue toutes les vues enseignantes des vues étudi
   assert.equal(teacherShell.routeContext("/teacher/anonymization-advanced/job-1"), null);
 });
 
-test("le menu général centralise ses destinations et expose un seul accès IC-Hub", () => {
-  const items = teacherShell.generalItems("create");
+test("le menu général reste limité aux deux espaces principaux et sépare IC-Hub", () => {
+  const items = teacherShell.generalItems("library");
   assert.deepEqual(items.map(item => item.label), [
     "Bibliothèque",
-    "Nouvelle activité",
-    "Vidéothèque",
-    "IC-Hub"
+    "Vidéothèque"
   ]);
   assert.deepEqual(items.map(item => item.href), [
     "/teacher",
-    "/teacher/create",
-    "/teacher/videos",
-    "http://127.0.0.1:8790/"
+    "/teacher/videos"
   ]);
   assert.equal(items.filter(item => item.active).length, 1);
-  assert.equal(items.find(item => item.active).id, "create");
+  assert.equal(items.find(item => item.active).id, "library");
+  assert.ok(items.every(item => !["Nouvelle activité", "Ajouter une vidéo", "IC-Hub"].includes(item.label)));
+
+  assert.deepEqual(teacherShell.hubItem(), {
+    id: "hub",
+    label: "IC-Hub",
+    href: "http://127.0.0.1:8790/",
+    active: false,
+    hub: true
+  });
 
   const shellSource = fs.readFileSync(path.join(prototypeDirectory, "shared", "teacher-shell.js"), "utf8");
   assert.equal((shellSource.match(/http:\/\/127\.0\.0\.1:8790\//g) || []).length, 1);
@@ -74,12 +79,11 @@ test("le menu général centralise ses destinations et expose un seul accès IC-
 test("la navigation d’activité distingue le guidé de l’auteur expert et signale la page active", () => {
   const items = teacherShell.activityItems("activity/with spaces", "author");
   assert.deepEqual(items.map(item => item.label), [
-    "Fiche pédagogique",
-    "Atelier guidé",
-    "Atelier auteur",
-    "Prévisualisation étudiante"
+    "Fiche",
+    "Guidé",
+    "Auteur expert",
+    "Prévisualisation"
   ]);
-  assert.equal(items.find(item => item.id === "author").expert, true);
   assert.equal(items.filter(item => item.active).length, 1);
   assert.equal(items.find(item => item.active).id, "author");
   assert.ok(items.every(item => item.href.includes("activity%2Fwith%20spaces")));
@@ -94,7 +98,7 @@ test("les pages enseignantes partagent le socle sans ajouter sa feuille à l’a
   }
   const studentArtifact = fs.readFileSync(path.join(prototypeDirectory, "index-0.0.9.html"), "utf8");
   const shellSource = fs.readFileSync(path.join(prototypeDirectory, "shared", "teacher-shell.js"), "utf8");
-  assert.match(studentArtifact, /\/shared\/teacher-shell\.js/);
+  assert.doesNotMatch(studentArtifact, /\/shared\/teacher-shell\.js/);
   assert.doesNotMatch(studentArtifact, /\/shared\/teacher-shell\.css/);
   assert.doesNotMatch(studentArtifact, /data-teacher-shell|teacher-shell__general/);
   assert.match(shellSource, /context\.route === "preview" && window\.self !== window\.top/);
@@ -104,12 +108,15 @@ test("les actions métier existantes restent présentes dans leurs pages", () =>
   const source = page => fs.readFileSync(path.join(prototypeDirectory, page), "utf8");
   assert.match(source("teacher.html"), /data-duplicate-id/);
   assert.match(source("teacher.html"), /data-delete-id/);
+  assert.match(source("teacher.html"), /href="\/teacher\/create">Créer une activité/);
   assert.match(source("teacher-create.html"), /id="create"/);
   assert.match(source("teacher-edit.html"), /id="save"/);
   assert.match(source("teacher-guided.html"), /id="save"/);
   assert.match(source("teacher-author.html"), /id="save"/);
   assert.match(source("teacher-video-detail.html"), /data-action="workshop"/);
   assert.match(source("teacher-anonymization.html"), /id="derive"/);
+  assert.doesNotMatch(source("teacher-videos.html"), /← Bibliothèque enseignant/);
+  assert.doesNotMatch(source("teacher-create.html"), /← Bibliothèque enseignant|Ouvrir la Library/);
   assert.ok(teacherPages.every(page => !source(page).includes("anonymization-advanced")));
 });
 
@@ -137,6 +144,11 @@ test("les routes enseignantes et les actifs partagés sont servis par une copie 
       assert.equal(response.status, 200, route);
       assert.match(await response.text(), /\/shared\/teacher-shell\.js/, route);
     }
+
+    const studentResponse = await fetch(`${temporary.baseUrl}/student/teacher-ui-fixture`);
+    assert.equal(studentResponse.status, 200);
+    const studentHtml = await studentResponse.text();
+    assert.doesNotMatch(studentHtml, /\/shared\/teacher-shell\.(?:js|css)/);
 
     const styleResponse = await fetch(`${temporary.baseUrl}/shared/teacher-shell.css`);
     assert.equal(styleResponse.status, 200);

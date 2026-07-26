@@ -38,7 +38,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.43";
+const VERSION = "0.1.44";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -3424,6 +3424,14 @@ async function serveStatic(request, response, url) {
     const stat = await fs.stat(target);
     if (!stat.isFile()) throw new Error("not file");
     const extension = path.extname(target).toLowerCase();
+    if (isTeacherPreviewRoute) {
+      const file = Buffer.from((await fs.readFile(target, "utf8")).replace(
+        "</head>",
+        "  <script src=\"/shared/teacher-shell.js\" defer></script>\n</head>"
+      ));
+      response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
+      return request.method === "HEAD" ? response.end() : response.end(file);
+    }
     response.writeHead(200, { "content-type": STATIC_TYPES[extension] || "application/octet-stream", "content-length": stat.size });
     if (request.method === "HEAD") return response.end();
     return await pipeline((await import("node:fs")).createReadStream(target), response);
