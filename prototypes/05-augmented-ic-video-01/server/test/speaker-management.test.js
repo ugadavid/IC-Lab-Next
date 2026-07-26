@@ -107,6 +107,7 @@ test("création d’un locuteur local et association à un segment après rechar
     assert.deepEqual(withoutUnused.segments[0].speakerIds, ["speaker-local-test"]);
     const storedWithUnused = clone(withUnused);
     delete storedWithUnused.videoSource;
+    delete storedWithUnused.pedagogicalIdentitySummary;
     assert.deepEqual(JSON.parse(fs.readFileSync(`${temporary.dataFile}.bak`, "utf8")).activities.find(activity => activity.id === draft.id), storedWithUnused);
   } finally {
     await temporary.cleanup();

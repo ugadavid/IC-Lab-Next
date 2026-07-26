@@ -640,7 +640,7 @@ Le tableau suivant conserve une vue synthétique. Les rapports détaillés demeu
 
 | Prototype | État initial | Audit long | Priorité retenue | Transformation | Réévaluation | Preuve tierce | Statut |
 |---|---|---|---|---|---|---|---|
-| Proto05 — vidéo augmentée | 26/07/2026 ; version 0.1.40 ; état audité après `ac77bcf` | Rapport 118 | Identité pédagogique canonique et reprise de l’activité historique | Mission 119 — audit de conception | À réaliser | À organiser | Cycle en cours |
+| Proto05 — vidéo augmentée | 26/07/2026 ; version 0.1.40 ; état audité après `ac77bcf` | Rapport 118 | Identité pédagogique canonique et reprise de l’activité historique | Mission 120 — identité pédagogique minimale implémentée en 0.1.41 | À réaliser par David | À organiser | Cycle en cours |
 | Prototype à sélectionner | — | — | — | — | — | — | Non commencé |
 | Prototype à sélectionner | — | — | — | — | — | — | Non commencé |
 | Prototype à sélectionner | — | — | — | — | — | — | Non commencé |

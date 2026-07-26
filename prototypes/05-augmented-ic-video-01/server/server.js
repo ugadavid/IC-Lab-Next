@@ -28,9 +28,16 @@ const {
   assertWritableCanonical
 } = require("./media-library-runtime");
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
+const {
+  assertPedagogicalLineage,
+  createEmptyPedagogicalIdentity,
+  pedagogicalIdentityForDuplicate,
+  summarizePedagogicalIdentity,
+  validatePedagogicalIdentity
+} = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.40";
+const VERSION = "0.1.41";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -386,7 +393,19 @@ function resolveActivityVideo(activity) {
 
 function activityForResponse(activity) {
   const resolved = resolveActivityVideo(activity);
-  return { ...activity, videoRef: resolved.videoRef, videoSource: resolved.source };
+  return {
+    ...activity,
+    videoRef: resolved.videoRef,
+    videoSource: resolved.source,
+    pedagogicalIdentitySummary: summarizePedagogicalIdentity(activity)
+  };
+}
+
+function activityForLibraryResponse(activity) {
+  return {
+    ...activity,
+    pedagogicalIdentitySummary: summarizePedagogicalIdentity(activity)
+  };
 }
 
 function readRequestBody(request, limit = 64 * 1024) {
@@ -407,7 +426,7 @@ function readRequestBody(request, limit = 64 * 1024) {
 
 function validateMetadataPatch(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
-  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "videoRef"]);
+  const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "videoRef", "pedagogicalIdentity"]);
   const unknown = Object.keys(payload).filter(key => !allowed.has(key));
   if (unknown.length) throw new Error(`Champ non autorisé : ${unknown.join(", ")}.`);
   for (const key of ["title", "description", "instruction", "pedagogicalQuestion"]) {
@@ -421,6 +440,9 @@ function validateMetadataPatch(payload) {
   if (payload.videoRef !== undefined) {
     if (!payload.videoRef || typeof payload.videoRef !== "object" || Array.isArray(payload.videoRef)) throw new Error("videoRef doit être un objet.");
     if (typeof payload.videoRef.assetId !== "string" || typeof payload.videoRef.playableId !== "string") throw new Error("videoRef doit contenir assetId et playableId.");
+  }
+  if (payload.pedagogicalIdentity !== undefined && (!payload.pedagogicalIdentity || typeof payload.pedagogicalIdentity !== "object" || Array.isArray(payload.pedagogicalIdentity))) {
+    throw new Error("pedagogicalIdentity doit être un objet.");
   }
   return payload;
 }
@@ -598,6 +620,7 @@ function validateActivityIntegrity(activity) {
   const learnerVisible = new Set(layerConfiguration.learnerVisibleLayerIds);
   const invalidDefaults = layerConfiguration.defaultVisibleLayerIds.filter(id => !learnerVisible.has(id));
   if (invalidDefaults.length) throw new Error(`Les couches visibles par défaut doivent être visibles par les étudiants : ${invalidDefaults.join(", ")}.`);
+  if (activity.pedagogicalIdentity !== undefined) validatePedagogicalIdentity(activity.pedagogicalIdentity, activity.id);
 }
 
 function validateSharedLanguageSelection(languages) {
@@ -636,7 +659,7 @@ function draftActivity(videoId, metadata = {}) {
   const video = VIDEO_CATALOG.find(entry => entry.id === videoId && entry.authorized);
   if (!video) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
-  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", video: activityVideoFromCatalog(video), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", pedagogicalIdentity: metadata.pedagogicalIdentity || createEmptyPedagogicalIdentity(id), video: activityVideoFromCatalog(video), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
 }
 
 function draftActivityFromVideoRef(videoRef, metadata = {}) {
@@ -644,7 +667,7 @@ function draftActivityFromVideoRef(videoRef, metadata = {}) {
   const asset = VIDEO_LIBRARY.assets.find(item => item.id === videoRef.assetId);
   if (!asset) throw new Error("Asset vidÃ©o introuvable.");
   const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
-  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activitÃ©", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", videoRef: { schemaVersion: "0.1", assetId: asset.id, playableId: playable.id }, video: activityVideoFromLibrary(asset, playable), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activitÃ©", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", pedagogicalIdentity: metadata.pedagogicalIdentity || createEmptyPedagogicalIdentity(id), videoRef: { schemaVersion: "0.1", assetId: asset.id, playableId: playable.id }, video: activityVideoFromLibrary(asset, playable), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
 }
 
 function uniqueCopyActivityId(activities) {
@@ -688,7 +711,7 @@ function duplicateActivity(source, activities) {
     description: source.description,
     instruction: source.instruction || "",
     pedagogicalQuestion: source.pedagogicalQuestion || "",
-    videoId
+    ...(source.videoRef ? { videoRef: source.videoRef } : { videoId })
   });
   if (!source.transcription || typeof source.transcription !== "object") throw new Error("Transcription source invalide.");
   if (!source.layerConfiguration || typeof source.layerConfiguration !== "object") throw new Error("Configuration de couches source invalide.");
@@ -748,6 +771,8 @@ function duplicateActivity(source, activities) {
     description: source.description || "",
     instruction: source.instruction || "",
     pedagogicalQuestion: source.pedagogicalQuestion || "",
+    pedagogicalIdentity: pedagogicalIdentityForDuplicate(source, id),
+    ...(source.videoRef ? { videoRef: { ...source.videoRef } } : {}),
     video: { ...source.video },
     transcription: {
       ...source.transcription,
@@ -773,6 +798,7 @@ function duplicateActivity(source, activities) {
   };
 
   validateActivityIntegrity(copy);
+  assertPedagogicalLineage(copy, [...activities, copy]);
   return copy;
 }
 
@@ -3031,6 +3057,16 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       .filter(index => index >= 0);
     if (!matches.length) return sendJson(response, 404, { error: "Activité introuvable." });
     if (matches.length > 1) return sendJson(response, 409, { error: `Identifiant d’activité ambigu : ${id}.` });
+    const pedagogicalVariants = store.activities.filter(activity =>
+      activity?.id !== id
+      && activity?.pedagogicalIdentity?.lineage?.parentActivityId === id
+    );
+    if (pedagogicalVariants.length) {
+      return sendJson(response, 409, {
+        error: "Suppression refusée : cette activité est la source d’une variante pédagogique.",
+        variants: pedagogicalVariants.map(activity => ({ id: activity.id, title: activity.title || activity.id }))
+      });
+    }
     const [index] = matches;
     const [deleted] = store.activities.splice(index, 1);
     store.updatedAt = new Date().toISOString();
@@ -3052,7 +3088,11 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
     const store = await readActivities();
     let activity;
-    try { activity = payload.videoRef ? draftActivityFromVideoRef(payload.videoRef, payload) : draftActivity(payload.videoId, payload); validateActivityIntegrity(activity); }
+    try {
+      activity = payload.videoRef ? draftActivityFromVideoRef(payload.videoRef, payload) : draftActivity(payload.videoId, payload);
+      validateActivityIntegrity(activity);
+      assertPedagogicalLineage(activity, [...store.activities, activity]);
+    }
     catch (error) { return sendJson(response, 400, { error: error.message }); }
     store.activities.push(activity); store.updatedAt = new Date().toISOString();
     try { await persistActivities(store); } catch { return sendJson(response, 500, { error: "Création JSON impossible." }); }
@@ -3065,7 +3105,11 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       const store = await readActivities(); const index = store.activities.findIndex(activity => activity && activity.id === id);
       if (index < 0) return sendJson(response, 404, { error: "Activité introuvable." });
       let payload; let next;
-      try { payload = JSON.parse(await readRequestBody(request)); next = validateAuthoringPatch(payload, store.activities[index]); }
+      try {
+        payload = JSON.parse(await readRequestBody(request));
+        next = validateAuthoringPatch(payload, store.activities[index]);
+        assertPedagogicalLineage(next, store.activities.map((activity, activityIndex) => activityIndex === index ? next : activity));
+      }
       catch (error) { return sendJson(response, 400, { error: error.message || "Données d’atelier invalides." }); }
       next.status = "draft"; store.activities[index] = next; store.updatedAt = new Date().toISOString();
       try { await persistActivities(store); } catch { return sendJson(response, 500, { error: "Sauvegarde de l’atelier impossible." }); }
@@ -3082,11 +3126,21 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       const current = store.activities[index];
       const next = { ...current };
       for (const key of ["title", "description", "instruction", "pedagogicalQuestion"]) if (payload[key] !== undefined) next[key] = payload[key];
+      if (payload.pedagogicalIdentity !== undefined) next.pedagogicalIdentity = payload.pedagogicalIdentity;
       if (payload.videoId !== undefined) {
         const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId);
         next.video = activityVideoFromCatalog(video, current.video);
       }
-      try { validateActivityIntegrity(next); }
+      if (payload.videoRef !== undefined) {
+        const playable = resolveLibraryPlayable(payload.videoRef, VIDEO_LIBRARY);
+        const asset = VIDEO_LIBRARY.assets.find(item => item.id === payload.videoRef.assetId);
+        next.videoRef = { schemaVersion: "0.1", assetId: asset.id, playableId: playable.id };
+        next.video = activityVideoFromLibrary(asset, playable, current.video);
+      }
+      try {
+        validateActivityIntegrity(next);
+        assertPedagogicalLineage(next, store.activities.map((activity, activityIndex) => activityIndex === index ? next : activity));
+      }
       catch (error) { return sendJson(response, 400, { error: error.message || "Activité invalide." }); }
       store.activities[index] = next;
       store.updatedAt = new Date().toISOString();
@@ -3097,7 +3151,11 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: isDetail ? "GET, PUT, DELETE" : "GET" });
     const store = await readActivities();
     if (url.pathname === "/api/proto05/activities") {
-      return sendJson(response, 200, { schemaVersion: store.schemaVersion || "0.1", updatedAt: store.updatedAt || null, activities: store.activities });
+      return sendJson(response, 200, {
+        schemaVersion: store.schemaVersion || "0.1",
+        updatedAt: store.updatedAt || null,
+        activities: store.activities.map(activityForLibraryResponse)
+      });
     }
     const id = decodeURIComponent(url.pathname.slice("/api/proto05/activities/".length));
     const activity = store.activities.find((entry) => entry && entry.id === id);

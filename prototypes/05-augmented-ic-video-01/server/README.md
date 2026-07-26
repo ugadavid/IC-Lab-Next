@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.40
+# Serveur autonome du Prototype 05 — 0.1.41
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -16,6 +16,27 @@ Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `DELETE /api/proto05/activities/:id`.
 Les méthodes non prévues sont refusées (`405`) et les chemins traversants sont
 rejetés.
+
+## Identité pédagogique des activités (0.1.41)
+
+`activity.pedagogicalIdentity` est une fiche facultative et progressive. Les
+sept activités historiques qui n’en possèdent pas restent lisibles et
+modifiables sans migration ni réécriture automatique. Les nouvelles activités
+reçoivent une fiche vide dont les informations sont explicitement inconnues.
+
+Le contrat se trouve dans `pedagogical-identity.js`. Il sépare :
+
+- la complétude documentaire ;
+- les qualifications explicitement ajoutées, avec niveau, personne ou acteur,
+  date, contexte et preuve ;
+- la filiation pédagogique créée par duplication ;
+- l’association technique à un média, qui ne crée aucune parenté pédagogique.
+
+Une duplication conserve le contenu descriptif, crée une variante reliée à sa
+source, demande une nouvelle qualification et ne copie aucune qualification
+antérieure. La liste et le détail API exposent un résumé dérivé sans l’écrire
+dans `activities.json`. Aucun niveau de transmissibilité juridique n’est
+calculé.
 
 ## Copie locale FFmpeg des références distantes (0.1.35)
 

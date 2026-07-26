@@ -71,6 +71,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
   fs.copyFileSync(path.join(serverDirectory, "media-contract.js"), path.join(temporaryServerDirectory, "media-contract.js"));
   fs.copyFileSync(path.join(serverDirectory, "library-contract.js"), path.join(temporaryServerDirectory, "library-contract.js"));
+  fs.copyFileSync(path.join(serverDirectory, "pedagogical-identity.js"), path.join(temporaryServerDirectory, "pedagogical-identity.js"));
   fs.copyFileSync(sourceLanguageCatalogFile, languageCatalogFile);
   fs.copyFileSync(sourceVideoLibraryFile, videoLibraryFile);
   if (options.videoLibrary) fs.writeFileSync(videoLibraryFile, `${JSON.stringify(options.videoLibrary, null, 2)}\n`, "utf8");
@@ -86,7 +87,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
     }
   }
   fs.writeFileSync(videoCatalogFile, `${JSON.stringify(videoCatalog, null, 2)}\n`, "utf8");
-  for (const file of ["teacher.html", "teacher-create.html", "teacher-videos.html", "teacher-video-detail.html", "teacher-anonymization.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
+  for (const file of ["teacher.html", "teacher-create.html", "teacher-edit.html", "teacher-videos.html", "teacher-video-detail.html", "teacher-anonymization.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));
   }
   for (const file of ["media-library-runtime.js", "media-library-migration.js", "media-library-availability.js", "media-library-schema.js", "media-library-install.js", "video-workspaces.js"]) {

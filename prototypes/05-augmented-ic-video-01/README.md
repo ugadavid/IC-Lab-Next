@@ -28,6 +28,11 @@ L’hypothèse n’est pas que l’annotation donne la “bonne lecture”, mais
   `phenomena[].segmentId`; chaque phénomène conserve ses propres temps.
 - Bibliothèque enseignant avec duplication et suppression explicite sécurisée
   par confirmation, sauvegarde `.bak` et remplacement atomique du JSON.
+- Fiche d’identité pédagogique progressive et facultative, avec états explicites
+  (`établi`, `inconnu`, `à vérifier`, `non applicable`), qualifications fondées
+  sur des preuves et filiation créée uniquement par duplication pédagogique.
+  Les activités historiques sans fiche restent lisibles et modifiables sans
+  migration automatique.
 - Badges de stratégie :
   - présentation ;
   - changement de langue ;

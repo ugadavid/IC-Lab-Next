@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-23T13:02:27.316Z",
+  "updatedAt": "2026-07-26T15:32:15.861Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -831,7 +831,62 @@
             "layer-repertoire-plurilingue"
           ]
         }
-      ]
+      ],
+      "pedagogicalIdentity": {
+        "schemaVersion": "0.1",
+        "resourceNature": {
+          "state": "known",
+          "value": "functional-test"
+        },
+        "designStatus": "documented",
+        "indicativeDuration": {
+          "state": "unknown",
+          "minutes": 60
+        },
+        "lineage": {
+          "state": "unknown"
+        },
+        "qualifications": [],
+        "intention": {
+          "state": "known",
+          "value": "Test fonctionnel"
+        },
+        "audience": {
+          "state": "known",
+          "value": "Etudiants DILIPEM, langues, enseignement"
+        },
+        "useContext": {
+          "state": "to-verify",
+          "value": "Voir avec Christian"
+        },
+        "learningObjectives": {
+          "state": "unknown"
+        },
+        "prerequisites": {
+          "state": "unknown"
+        },
+        "modalities": {
+          "state": "unknown"
+        },
+        "recommendedScenario": {
+          "state": "unknown"
+        },
+        "pedagogicalCore": {
+          "state": "unknown"
+        },
+        "adaptableElements": {
+          "state": "unknown"
+        },
+        "limitations": {
+          "state": "unknown"
+        },
+        "origin": {
+          "state": "unknown"
+        },
+        "responsibility": {
+          "state": "unknown"
+        }
+      }
     },
     {
       "id": "proto05-draft-1784218562686-f87014",

@@ -8,6 +8,7 @@
     main{max-width:960px;margin:auto;background:#fff;padding:28px;border:1px solid #d9e0e8;border-radius:14px;box-shadow:0 10px 30px #1923301a}
     .notice{padding:12px 14px;border-radius:9px;background:#fff4df;color:#7a4c0c;font-weight:700}
     .activity{display:flex;justify-content:space-between;gap:20px;align-items:center;border-top:1px solid #d9e0e8;padding:18px 0}
+    .activity-main{min-width:0;flex:1}.activity-main h2{margin:0 0 5px}.activity-identity{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 5px}.identity-badge{display:inline-flex;border-radius:999px;padding:4px 8px;background:#eef2f6;color:#475467;font-size:.78rem;font-weight:800}.identity-badge.incomplete{background:#fff4df;color:#7a4c0c}.identity-badge.qualified{background:#e7f7ed;color:#17633a}.identity-summary{margin:5px 0;color:#475467;font-size:.9rem;line-height:1.35}.identity-summary strong{color:#20242c}
     .activity-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;align-items:center;gap:10px}
     a{color:#325f8f;font-weight:700;margin-left:12px} small{color:#667085}
     .activity-actions a{margin-left:0}
@@ -32,12 +33,13 @@
   fetch("/api/proto05/activities").then(r => { if (!r.ok) throw new Error("API indisponible"); return r.json(); }).then(payload => {
     if (!Array.isArray(payload.activities) || !payload.activities.length) { library.textContent = "Aucune activité disponible."; return; }
     library.innerHTML = payload.activities.map(activity => `
-      <article class="activity"><div><h2>${escapeHtml(activity.title || activity.id)}</h2>
-      <small>${escapeHtml(activity.id)} · version ${escapeHtml(activity.version || "—")} · ${activity.segments?.length || 0} segments</small></div>
+      <article class="activity"><div class="activity-main"><h2>${escapeHtml(activity.title || activity.id)}</h2>
+      <small>${escapeHtml(activity.id)} · version ${escapeHtml(activity.version || "—")} · ${activity.segments?.length || 0} segments</small>
+      ${identityMarkup(activity)}</div>
       <div class="activity-actions"><a href="/teacher/preview/${encodeURIComponent(activity.id)}">Prévisualiser</a>
-      <a href="/teacher/edit/${encodeURIComponent(activity.id)}">Modifier l’activité</a>
+      <a href="/teacher/edit/${encodeURIComponent(activity.id)}">Voir / modifier la fiche</a>
       <a href="/student/${encodeURIComponent(activity.id)}">Vue étudiant</a>
-      <button type="button" data-duplicate-id="${escapeHtml(activity.id)}">Dupliquer l’activité</button>
+      <button type="button" data-duplicate-id="${escapeHtml(activity.id)}">Dupliquer comme variante</button>
       <button type="button" class="delete-activity" data-delete-id="${escapeHtml(activity.id)}" data-delete-title="${escapeHtml(activity.title || activity.id)}">Supprimer l’activité</button>
       <span class="activity-status" role="status" aria-live="polite"></span></div></article>`).join("");
   }).catch(error => { library.textContent = "Impossible de charger la bibliothèque : " + error.message; });
@@ -100,8 +102,33 @@
       status.textContent = `Échec de la duplication : ${error.message || "API indisponible."}`;
       button.disabled = false;
       button.removeAttribute("aria-busy");
-      button.textContent = "Dupliquer l’activité";
+      button.textContent = "Dupliquer comme variante";
     }
   });
+  const identityLabels = {
+    "functional-test": "Test fonctionnel",
+    "pedagogical-activity": "Activité pédagogique",
+    "demonstration": "Démonstration",
+    "other": "Autre",
+    "documented-by-author": "Documentée par l’auteur",
+    "reviewed-by-expert": "Relue par un expert",
+    "experimented": "Expérimentée",
+    "reused-by-third-party": "Reprise par un tiers",
+    "unqualified": "Non qualifiée"
+  };
+  function knownValue(value) { return value?.state === "known" ? value.value : ""; }
+  function identityMarkup(activity) {
+    const identity = activity.pedagogicalIdentity;
+    const summary = activity.pedagogicalIdentitySummary || {};
+    const nature = knownValue(identity?.resourceNature);
+    const qualification = identityLabels[summary.qualificationLevel] || "Non qualifiée";
+    const completeness = summary.completeness === "complete" ? "Fiche complète" : summary.presence === "absent" ? "Fiche absente" : "Fiche incomplète";
+    const details = [
+      knownValue(identity?.intention) && `<p class="identity-summary"><strong>Intention :</strong> ${escapeHtml(knownValue(identity.intention))}</p>`,
+      (knownValue(identity?.audience) || knownValue(identity?.useContext)) && `<p class="identity-summary"><strong>Public / contexte :</strong> ${escapeHtml([knownValue(identity?.audience),knownValue(identity?.useContext)].filter(Boolean).join(" · "))}</p>`,
+      identity?.lineage?.relation === "variant" && `<p class="identity-summary"><strong>Variante de :</strong> ${escapeHtml(identity.lineage.parentActivityId || "source à vérifier")}</p>`
+    ].filter(Boolean).join("");
+    return `<div class="activity-identity">${nature ? `<span class="identity-badge">${escapeHtml(identityLabels[nature] || nature)}</span>` : ""}<span class="identity-badge ${summary.completeness === "complete" ? "qualified" : "incomplete"}">${escapeHtml(completeness)}</span><span class="identity-badge">${escapeHtml(qualification)}</span>${summary.requalificationRequired ? '<span class="identity-badge incomplete">À requalifier</span>' : ""}</div>${details}`;
+  }
   function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c])); }
 </script></body></html>

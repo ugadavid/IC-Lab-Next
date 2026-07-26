@@ -1,11 +1,343 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Modifier l’activité — Prototype 05</title>
-<style>body{margin:0;padding:28px;font-family:Arial,sans-serif;color:#20242c;background:#f5f7fb}main{max-width:760px;margin:auto;background:#fff;padding:26px;border:1px solid #d9e0e8;border-radius:14px}label{display:block;margin:16px 0 6px;font-weight:700}input,textarea,select{width:100%;padding:10px;border:1px solid #cdd6e1;border-radius:7px;font:inherit}textarea{min-height:100px;resize:vertical}.notice{padding:12px;background:#fff4df;color:#7a4c0c;border-radius:8px;font-weight:700}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:20px}button,a{padding:10px 14px;border-radius:8px;border:1px solid #325f8f;background:#325f8f;color:#fff;text-decoration:none;font-weight:700;cursor:pointer}a{background:#fff;color:#325f8f}button:disabled{cursor:wait;opacity:.7}#status{min-height:1.4em;margin-top:15px;font-weight:700}#status[data-state="saving"]{color:#325f8f}#status[data-state="error"]{padding:10px 12px;border-radius:8px;background:#fff0f0;color:#8a2d2d}</style></head>
-<body><main><h1>Modifier l’activité</h1><p class="notice">Administration locale de prototype — aucune authentification ni gestion réelle des droits.</p><form id="form"><label for="title">Titre</label><input id="title" required maxlength="5000"><label for="description">Description</label><textarea id="description" maxlength="5000"></textarea><label for="instruction">Consigne</label><textarea id="instruction" maxlength="5000"></textarea><label for="question">Question pédagogique</label><textarea id="question" maxlength="5000"></textarea><label for="video">Vidéo autorisée</label><select id="video" required></select><div class="actions"><button id="save" type="submit">Enregistrer</button><a href="/teacher">Retour bibliothèque</a><a id="preview" href="#">Ouvrir la prévisualisation</a><a id="author" href="#">Ouvrir l’atelier auteur</a></div><p id="status" role="status" aria-live="polite"></p></form></main>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Fiche de l’activité — Prototype 05</title>
+  <style>
+    :root{font-family:Arial,sans-serif;color:#20242c;background:#f5f7fb}
+    *{box-sizing:border-box}
+    body{margin:0;padding:28px}
+    main{max-width:940px;margin:auto}
+    header,.panel,details{background:#fff;border:1px solid #d9e0e8;border-radius:14px;box-shadow:0 7px 20px #1923300e}
+    header,.panel{padding:24px;margin-bottom:16px}
+    h1,h2{margin-top:0}
+    .notice,.identity-note{padding:12px 14px;border-radius:9px;background:#fff4df;color:#6f4509;font-weight:700}
+    .identity-note{background:#eef5ff;color:#244f78;font-weight:400}
+    .section-heading,.field-heading,.qualification-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+    .badge{display:inline-flex;align-items:center;border-radius:999px;padding:5px 10px;background:#eef2f6;color:#475467;font-size:.85rem;font-weight:800}
+    .badge.incomplete{background:#fff4df;color:#7a4c0c}
+    .badge.qualified{background:#e7f7ed;color:#17633a}
+    .badge.review{background:#f3eefe;color:#68429a}
+    label{display:block;margin:14px 0 6px;font-weight:700}
+    input,textarea,select{width:100%;padding:10px;border:1px solid #cdd6e1;border-radius:7px;font:inherit;background:#fff}
+    textarea{min-height:92px;resize:vertical}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+    .full{grid-column:1/-1}
+    details{padding:0;margin:12px 0;box-shadow:none}
+    summary{padding:16px 18px;cursor:pointer;font-weight:800}
+    .details-body{padding:0 18px 18px;border-top:1px solid #e5eaf0}
+    .qualified-field{padding:12px 0;border-bottom:1px solid #edf0f4}
+    .qualified-field:last-child{border-bottom:0}
+    .qualified-field p,.help{margin:4px 0;color:#667085;font-size:.9rem}
+    .qualified-grid{display:grid;grid-template-columns:190px minmax(0,1fr);gap:10px;align-items:start}
+    .qualified-grid label{margin-top:6px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+    button,a.button{padding:10px 14px;border-radius:8px;border:1px solid #325f8f;background:#325f8f;color:#fff;text-decoration:none;font-weight:700;cursor:pointer}
+    button.secondary,a.button.secondary{background:#fff;color:#325f8f}
+    button.danger{border-color:#9a3d3d;background:#fff;color:#9a3d3d}
+    button:disabled{cursor:wait;opacity:.65}
+    #status{min-height:1.4em;margin-top:15px;font-weight:700}
+    #status[data-state="saving"]{color:#325f8f}
+    #status[data-state="success"]{color:#17633a}
+    #status[data-state="error"]{padding:10px 12px;border-radius:8px;background:#fff0f0;color:#8a2d2d}
+    .qualification-card{padding:13px;margin:10px 0;border:1px solid #d9e0e8;border-radius:10px;background:#fafbfc}
+    .qualification-card p{margin:6px 0}
+    .empty{padding:14px;border:1px dashed #aeb9c7;border-radius:9px;color:#667085}
+    .lineage{padding:12px;border-radius:9px;background:#f4f6f8;overflow-wrap:anywhere}
+    [hidden]{display:none!important}
+    @media(max-width:720px){body{padding:12px}.grid,.qualified-grid{grid-template-columns:1fr}.full{grid-column:auto}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Fiche de l’activité</h1>
+    <p class="notice">Mode enseignant local — aucune authentification ni qualification juridique de la transmissibilité.</p>
+    <p>La fiche peut rester partielle. Une fiche complète n’est jamais une validation pédagogique automatique.</p>
+  </header>
+
+  <form id="form">
+    <section class="panel">
+      <h2>Métadonnées générales</h2>
+      <div class="grid">
+        <div class="full"><label for="title">Titre</label><input id="title" required maxlength="5000"></div>
+        <div class="full"><label for="description">Description</label><textarea id="description" maxlength="5000"></textarea></div>
+        <div><label for="instruction">Consigne apprenant</label><textarea id="instruction" maxlength="5000"></textarea></div>
+        <div><label for="question">Question pédagogique générale</label><textarea id="question" maxlength="5000"></textarea></div>
+        <div class="full"><label for="video">Vidéo associée</label><select id="video" required></select></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <div><h2>Identité pédagogique</h2><p id="identitySummary" class="help"></p></div>
+        <span id="identityBadge" class="badge incomplete">Fiche absente</span>
+      </div>
+      <p class="identity-note">Les états « inconnu », « à vérifier » et « non applicable » sont des informations différentes. Ne renseignez que ce qui est réellement établi.</p>
+      <button id="startIdentity" type="button">Commencer la fiche pédagogique</button>
+
+      <div id="identityFields" hidden>
+        <details open>
+          <summary>Repères essentiels</summary>
+          <div class="details-body">
+            <div class="grid">
+              <div>
+                <label for="designStatus">État de conception</label>
+                <select id="designStatus">
+                  <option value="draft">Brouillon</option>
+                  <option value="documented">Documentée</option>
+                  <option value="to-review">À requalifier</option>
+                  <option value="archived">Archivée</option>
+                </select>
+              </div>
+              <div>
+                <label for="resourceNatureState">Nature de l’activité</label>
+                <select id="resourceNatureState"></select>
+                <select id="resourceNatureValue" aria-label="Nature établie">
+                  <option value="">Choisir une nature</option>
+                  <option value="functional-test">Test fonctionnel</option>
+                  <option value="pedagogical-activity">Activité pédagogique</option>
+                  <option value="demonstration">Démonstration</option>
+                  <option value="other">Autre</option>
+                </select>
+                <input id="resourceNatureNote" placeholder="Précision ou point à vérifier">
+              </div>
+            </div>
+            <div id="essentialFields"></div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Usage conseillé</summary>
+          <div class="details-body">
+            <div class="qualified-field">
+              <div class="field-heading"><strong>Durée indicative</strong><span class="help">Durée de l’activité, pas de la vidéo.</span></div>
+              <div class="qualified-grid">
+                <label>État<select id="indicativeDurationState"></select></label>
+                <div><label for="indicativeDurationMinutes">Minutes</label><input id="indicativeDurationMinutes" type="number" min="1" max="1440"><label for="indicativeDurationNote">Précision</label><input id="indicativeDurationNote" maxlength="5000"></div>
+              </div>
+            </div>
+            <div id="usageFields"></div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Adaptation et limites</summary>
+          <div class="details-body" id="adaptationFields"></div>
+        </details>
+
+        <details>
+          <summary>Origine et responsabilité</summary>
+          <div class="details-body" id="originFields"></div>
+        </details>
+
+        <details>
+          <summary>Qualifications et preuves</summary>
+          <div class="details-body">
+            <p class="identity-note">Une validation est ajoutée uniquement sur action explicite. Le remplissage de la fiche ne crée aucune qualification.</p>
+            <div id="qualificationList"></div>
+            <div class="qualification-card">
+              <h3>Ajouter une validation</h3>
+              <div class="grid">
+                <div><label for="qualificationLevel">Niveau</label><select id="qualificationLevel">
+                  <option value="documented-by-author">Documentée par l’auteur</option>
+                  <option value="reviewed-by-expert">Relue par un expert</option>
+                  <option value="experimented">Expérimentée</option>
+                  <option value="reused-by-third-party">Reprise par un tiers</option>
+                </select></div>
+                <div><label for="qualificationDate">Date</label><input id="qualificationDate" type="date"></div>
+                <div><label for="qualificationActor">Personne ou acteur</label><input id="qualificationActor" maxlength="500"></div>
+                <div><label for="qualificationEvidenceType">Nature de la preuve</label><select id="qualificationEvidenceType">
+                  <option value="author-declaration">Déclaration de l’auteur</option>
+                  <option value="expert-review">Relecture experte</option>
+                  <option value="observed-use">Usage observé</option>
+                  <option value="third-party-reappropriation">Reprise documentée par un tiers</option>
+                  <option value="other">Autre preuve</option>
+                </select></div>
+                <div class="full"><label for="qualificationContext">Contexte de validation</label><textarea id="qualificationContext" maxlength="5000"></textarea></div>
+                <div class="full"><label for="qualificationEvidence">Preuve ou validation associée</label><textarea id="qualificationEvidence" maxlength="5000"></textarea></div>
+              </div>
+              <button id="addQualification" type="button" class="secondary">Ajouter cette validation à la fiche</button>
+            </div>
+          </div>
+        </details>
+
+        <details>
+          <summary>Filiation pédagogique</summary>
+          <div class="details-body">
+            <p class="help">La filiation est créée par la duplication explicite d’une activité. Le partage d’une même vidéo ne crée pas de parenté pédagogique.</p>
+            <div id="lineage" class="lineage"></div>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="actions">
+        <button id="save" type="submit">Enregistrer</button>
+        <a class="button secondary" href="/teacher">Retour bibliothèque</a>
+        <a id="preview" class="button secondary" href="#">Ouvrir la prévisualisation</a>
+        <a id="guided" class="button secondary" href="#">Ouvrir l’atelier guidé</a>
+        <a id="author" class="button secondary" href="#">Ouvrir l’atelier auteur</a>
+      </div>
+      <p id="status" role="status" aria-live="polite"></p>
+    </section>
+  </form>
+</main>
 <script>
-const id=decodeURIComponent(location.pathname.split("/").pop()), form=document.getElementById("form"), status=document.getElementById("status"), video=document.getElementById("video"), preview=document.getElementById("preview"), author=document.getElementById("author"), save=document.getElementById("save");
-const fields={title:document.getElementById("title"),description:document.getElementById("description"),instruction:document.getElementById("instruction"),question:document.getElementById("question")};
-async function load(){const [a,c]=await Promise.all([fetch(`/api/proto05/activities/${encodeURIComponent(id)}`),fetch("/api/proto05/video-catalog")]);if(!a.ok||!c.ok)throw new Error("Impossible de charger l’activité ou le catalogue vidéo.");const activity=(await a.json()).activity;const catalog=(await c.json()).videos;fields.title.value=activity.title||"";fields.description.value=activity.description||"";fields.instruction.value=activity.instruction||"";fields.question.value=activity.pedagogicalQuestion||"";video.innerHTML=catalog.filter(v=>v.authorized).map(v=>`<option value="${escapeHtml(v.id)}">${escapeHtml(v.title)}</option>`).join("");video.value=activity.video?.id||"";preview.href=`/teacher/preview/${encodeURIComponent(id)}`;author.href=`/teacher/author/${encodeURIComponent(id)}`;}
-form.addEventListener("submit",async event=>{event.preventDefault();save.disabled=true;form.setAttribute("aria-busy","true");status.dataset.state="saving";status.textContent="Sauvegarde des métadonnées en cours…";try{const response=await fetch(`/api/proto05/activities/${encodeURIComponent(id)}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify({title:fields.title.value,description:fields.description.value,instruction:fields.instruction.value,pedagogicalQuestion:fields.question.value,videoId:video.value})});const payload=await response.json().catch(()=>null);if(!response.ok)throw new Error(payload?.error||"Sauvegarde refusée par l’API.");if(payload?.activity?.id!==id)throw new Error("Réponse de sauvegarde invalide.");status.textContent="Métadonnées enregistrées. Ouverture de l’atelier auteur…";location.assign(`/teacher/author/${encodeURIComponent(id)}`);}catch(error){status.dataset.state="error";status.textContent="Échec de la sauvegarde : "+(error.message||"API indisponible.")+" Vous restez sur cette page.";save.disabled=false;form.removeAttribute("aria-busy");}});
-function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));} load().catch(error=>status.textContent="Erreur : "+error.message);
-</script></body></html>
+"use strict";
+const id=decodeURIComponent(location.pathname.split("/").pop());
+const $=selector=>document.querySelector(selector);
+const form=$("#form"),status=$("#status"),save=$("#save"),video=$("#video");
+const fields={title:$("#title"),description:$("#description"),instruction:$("#instruction"),question:$("#question")};
+const knowledgeLabels={known:"Établi",unknown:"Inconnu","to-verify":"À vérifier","not-applicable":"Non applicable"};
+const natureLabels={"functional-test":"Test fonctionnel","pedagogical-activity":"Activité pédagogique",demonstration:"Démonstration",other:"Autre"};
+const designLabels={draft:"Brouillon",documented:"Documentée","to-review":"À requalifier",archived:"Archivée"};
+const qualificationLabels={"documented-by-author":"Documentée par l’auteur","reviewed-by-expert":"Relue par un expert",experimented:"Expérimentée","reused-by-third-party":"Reprise par un tiers",unqualified:"Non qualifiée"};
+const qualifiedDefinitions=[
+  {host:"essentialFields",key:"intention",label:"Finalité ou intention pédagogique",help:"Ce que l’activité cherche à faire comprendre, observer ou travailler."},
+  {host:"essentialFields",key:"audience",label:"Public visé",help:"Rôle, niveau ou expérience du public."},
+  {host:"essentialFields",key:"useContext",label:"Contexte d’usage",help:"Cours, recherche, travail autonome, groupe ou autre situation."},
+  {host:"essentialFields",key:"learningObjectives",label:"Objectifs",help:"Résultats attendus, sans inventer des acquis non évalués."},
+  {host:"usageFields",key:"prerequisites",label:"Prérequis",help:"Indiquer explicitement « aucun » si cela est établi."},
+  {host:"usageFields",key:"modalities",label:"Modalités",help:"Individuel, collectif, synchrone, autonome ou combinaison."},
+  {host:"usageFields",key:"recommendedScenario",label:"Déroulement conseillé",help:"Étapes et gestes d’accompagnement réellement décidés."},
+  {host:"adaptationFields",key:"pedagogicalCore",label:"Cœur pédagogique éventuel",help:"Ce que l’auteur propose de préserver ; peut aussi expliciter un principe de modularité."},
+  {host:"adaptationFields",key:"adaptableElements",label:"Marges d’adaptation",help:"Éléments modifiables et conséquences à requalifier."},
+  {host:"adaptationFields",key:"limitations",label:"Limites et précautions",help:"Dépendances, incertitudes ou points de vigilance."},
+  {host:"originFields",key:"origin",label:"Origine de l’activité",help:"Genèse pédagogique, distincte de la provenance technique du média."},
+  {host:"originFields",key:"responsibility",label:"Responsabilité pédagogique",help:"Personne ou équipe qui assume la description de l’activité."}
+];
+const state={activity:null,catalog:[],identity:null,identityEnabled:false};
+
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[c]));}
+function knowledgeOptions(selected="unknown",states=Object.keys(knowledgeLabels)){return states.map(value=>`<option value="${value}" ${value===selected?"selected":""}>${knowledgeLabels[value]}</option>`).join("");}
+function qualifiedMarkup(definition){
+  return `<div class="qualified-field" data-qualified-field="${definition.key}"><div class="field-heading"><strong>${escapeHtml(definition.label)}</strong><span class="help">${escapeHtml(definition.help)}</span></div><div class="qualified-grid"><label>État<select data-role="state">${knowledgeOptions()}</select></label><label>Information<textarea data-role="value" maxlength="5000"></textarea></label></div></div>`;
+}
+for(const definition of qualifiedDefinitions)document.getElementById(definition.host).insertAdjacentHTML("beforeend",qualifiedMarkup(definition));
+$("#resourceNatureState").innerHTML=knowledgeOptions("unknown",["known","unknown","to-verify"]);
+$("#indicativeDurationState").innerHTML=knowledgeOptions();
+
+function emptyIdentity(){
+  const identity={schemaVersion:"0.1",resourceNature:{state:"unknown"},designStatus:"draft",indicativeDuration:{state:"unknown"},lineage:{state:"unknown"},qualifications:[]};
+  for(const definition of qualifiedDefinitions)identity[definition.key]={state:"unknown"};
+  return identity;
+}
+function setQualifiedField(key,value={state:"unknown"}){
+  const host=document.querySelector(`[data-qualified-field="${key}"]`);
+  host.querySelector('[data-role="state"]').value=value.state||"unknown";
+  host.querySelector('[data-role="value"]').value=value.value||"";
+}
+function collectQualifiedField(definition){
+  const host=document.querySelector(`[data-qualified-field="${definition.key}"]`);
+  const item={state:host.querySelector('[data-role="state"]').value};
+  const value=host.querySelector('[data-role="value"]').value.trim();
+  if(item.state!=="unknown"){
+    if(!value)throw new Error(`Le champ « ${definition.label} » doit expliquer l’état choisi.`);
+    item.value=value;
+  }
+  return item;
+}
+function populateIdentity(){
+  const identity=state.identity;
+  $("#designStatus").value=identity.designStatus||"draft";
+  $("#resourceNatureState").value=identity.resourceNature?.state||"unknown";
+  $("#resourceNatureValue").value=identity.resourceNature?.value||"";
+  $("#resourceNatureNote").value=identity.resourceNature?.note||"";
+  $("#indicativeDurationState").value=identity.indicativeDuration?.state||"unknown";
+  $("#indicativeDurationMinutes").value=identity.indicativeDuration?.minutes||"";
+  $("#indicativeDurationNote").value=identity.indicativeDuration?.note||"";
+  for(const definition of qualifiedDefinitions)setQualifiedField(definition.key,identity[definition.key]);
+  renderQualifications();
+  renderLineage();
+}
+function collectIdentity(){
+  const identity={...state.identity,schemaVersion:"0.1",designStatus:$("#designStatus").value};
+  const natureState=$("#resourceNatureState").value,natureValue=$("#resourceNatureValue").value,natureNote=$("#resourceNatureNote").value.trim();
+  identity.resourceNature={state:natureState};
+  if(natureValue)identity.resourceNature.value=natureValue;
+  if(natureNote)identity.resourceNature.note=natureNote;
+  if(natureState==="known"&&!natureValue)throw new Error("Choisissez la nature établie de l’activité.");
+  if(natureState==="to-verify"&&!natureNote)throw new Error("Précisez ce qui reste à vérifier pour la nature de l’activité.");
+  for(const definition of qualifiedDefinitions)identity[definition.key]=collectQualifiedField(definition);
+  const durationState=$("#indicativeDurationState").value,minutes=Number($("#indicativeDurationMinutes").value),durationNote=$("#indicativeDurationNote").value.trim();
+  identity.indicativeDuration={state:durationState};
+  if(Number.isInteger(minutes)&&minutes>0)identity.indicativeDuration.minutes=minutes;
+  if(durationNote)identity.indicativeDuration.note=durationNote;
+  if(durationState==="known"&&!identity.indicativeDuration.minutes)throw new Error("Indiquez une durée en minutes.");
+  if(["to-verify","not-applicable"].includes(durationState)&&!durationNote)throw new Error("Précisez l’état de la durée.");
+  identity.qualifications=[...(state.identity.qualifications||[])];
+  return identity;
+}
+function summaryText(summary){
+  if(!summary||summary.presence==="absent")return "Aucune fiche n’est enregistrée. Les données historiques restent inchangées.";
+  if(summary.presence==="invalid")return `Fiche invalide : ${summary.validationError||"contrat non reconnu"}`;
+  const completeness=summary.completeness==="complete"?"Fiche complète":"Fiche incomplète";
+  return `${completeness} · ${qualificationLabels[summary.qualificationLevel]||summary.qualificationLevel}${summary.requalificationRequired?" · nouvelle qualification requise":""}`;
+}
+function renderSummary(summary){
+  const badge=$("#identityBadge");
+  badge.textContent=summary?.presence==="absent"?"Fiche absente":summary?.completeness==="complete"?(summary.qualificationLevel==="unqualified"?"Fiche complète · non qualifiée":qualificationLabels[summary.qualificationLevel]):"Fiche incomplète";
+  badge.className=`badge ${summary?.completeness==="complete"&&summary.qualificationLevel!=="unqualified"?"qualified":summary?.requalificationRequired?"review":"incomplete"}`;
+  $("#identitySummary").textContent=summaryText(summary);
+}
+function renderLineage(){
+  const lineage=state.identity?.lineage||{state:"unknown"};
+  if(lineage.relation==="root"&&lineage.state==="known")$("#lineage").textContent="Activité racine — aucune activité parente.";
+  else if(lineage.relation==="variant")$("#lineage").textContent=`Variante de ${lineage.parentActivityId||"parent inconnu"}${lineage.rootActivityId?` · racine ${lineage.rootActivityId}`:" · racine à vérifier"}${lineage.note?` · ${lineage.note}`:""}`;
+  else $("#lineage").textContent=`Filiation ${knowledgeLabels[lineage.state]?.toLowerCase()||"inconnue"}.`;
+}
+function renderQualifications(){
+  const list=$("#qualificationList"),qualifications=state.identity?.qualifications||[];
+  if(!qualifications.length){list.innerHTML='<p class="empty">Aucune validation pédagogique enregistrée. La fiche reste non qualifiée.</p>';return;}
+  list.innerHTML=qualifications.map(item=>`<article class="qualification-card" data-qualification-id="${escapeHtml(item.id)}"><div class="qualification-heading"><strong>${escapeHtml(qualificationLabels[item.level]||item.level)}</strong><button type="button" class="danger" data-remove-qualification>Retirer</button></div><p>${escapeHtml(item.validatedBy)} · ${escapeHtml(item.validatedAt)}</p><p><strong>Contexte :</strong> ${escapeHtml(item.context)}</p><p><strong>Preuve :</strong> ${escapeHtml(item.evidence)}</p></article>`).join("");
+  list.querySelectorAll("[data-remove-qualification]").forEach(button=>button.onclick=()=>{const qualificationId=button.closest("[data-qualification-id]").dataset.qualificationId;state.identity.qualifications=state.identity.qualifications.filter(item=>item.id!==qualificationId);renderQualifications();status.textContent="Validation retirée du brouillon. Enregistrez pour confirmer.";});
+}
+function enableIdentity(identity=emptyIdentity()){
+  state.identity=identity;state.identityEnabled=true;$("#identityFields").hidden=false;$("#startIdentity").hidden=true;populateIdentity();
+}
+$("#startIdentity").onclick=()=>{enableIdentity();renderSummary({presence:"present",completeness:"incomplete",qualificationLevel:"unqualified",requalificationRequired:false});status.textContent="Fiche initialisée dans le formulaire. Enregistrez pour la conserver.";};
+$("#addQualification").onclick=()=>{
+  const validatedBy=$("#qualificationActor").value.trim(),validatedAt=$("#qualificationDate").value,context=$("#qualificationContext").value.trim(),evidence=$("#qualificationEvidence").value.trim();
+  if(!validatedBy||!validatedAt||!context||!evidence){status.dataset.state="error";status.textContent="Personne, date, contexte et preuve sont nécessaires pour ajouter une validation.";return;}
+  state.identity.qualifications.push({id:`qualification-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,level:$("#qualificationLevel").value,validatedBy,validatedAt,context,evidenceType:$("#qualificationEvidenceType").value,evidence});
+  for(const selector of ["#qualificationActor","#qualificationDate","#qualificationContext","#qualificationEvidence"])$(selector).value="";
+  status.dataset.state="";status.textContent="Validation ajoutée au brouillon. Enregistrez pour la conserver.";renderQualifications();
+};
+
+async function load(){
+  const [activityResponse,catalogResponse]=await Promise.all([fetch(`/api/proto05/activities/${encodeURIComponent(id)}`),fetch("/api/proto05/video-catalog")]);
+  if(!activityResponse.ok||!catalogResponse.ok)throw new Error("Impossible de charger l’activité ou le catalogue vidéo.");
+  state.activity=(await activityResponse.json()).activity;state.catalog=(await catalogResponse.json()).videos||[];
+  fields.title.value=state.activity.title||"";fields.description.value=state.activity.description||"";fields.instruction.value=state.activity.instruction||"";fields.question.value=state.activity.pedagogicalQuestion||"";
+  const options=state.catalog.filter(item=>item.authorized).map(item=>`<option value="${escapeHtml(item.id)}">${escapeHtml(item.title)}</option>`);
+  if(!state.catalog.some(item=>item.id===state.activity.video?.id))options.unshift(`<option value="${escapeHtml(state.activity.video?.id||"")}">${escapeHtml(state.activity.video?.title||"Vidéo actuelle")} · référence actuelle</option>`);
+  video.innerHTML=options.join("");video.value=state.activity.video?.id||"";
+  $("#preview").href=`/teacher/preview/${encodeURIComponent(id)}`;$("#guided").href=`/teacher/guided/${encodeURIComponent(id)}`;$("#author").href=`/teacher/author/${encodeURIComponent(id)}`;
+  renderSummary(state.activity.pedagogicalIdentitySummary);
+  if(state.activity.pedagogicalIdentity)enableIdentity(JSON.parse(JSON.stringify(state.activity.pedagogicalIdentity)));
+}
+
+form.addEventListener("submit",async event=>{
+  event.preventDefault();save.disabled=true;form.setAttribute("aria-busy","true");status.dataset.state="saving";status.textContent="Enregistrement en cours…";
+  try{
+    const body={title:fields.title.value,description:fields.description.value,instruction:fields.instruction.value,pedagogicalQuestion:fields.question.value};
+    if(state.identityEnabled)body.pedagogicalIdentity=collectIdentity();
+    if(video.value!==state.activity.video?.id)body.videoId=video.value;
+    const response=await fetch(`/api/proto05/activities/${encodeURIComponent(id)}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+    const payload=await response.json().catch(()=>null);
+    if(!response.ok)throw new Error(payload?.error||"Sauvegarde refusée par l’API.");
+    if(payload?.activity?.id!==id)throw new Error("Réponse de sauvegarde invalide.");
+    state.activity=payload.activity;
+    if(payload.activity.pedagogicalIdentity){state.identity=JSON.parse(JSON.stringify(payload.activity.pedagogicalIdentity));state.identityEnabled=true;}
+    renderSummary(payload.activity.pedagogicalIdentitySummary);renderLineage();renderQualifications();
+    status.dataset.state="success";status.textContent="Activité et fiche pédagogique enregistrées.";
+  }catch(error){status.dataset.state="error";status.textContent=`Échec de la sauvegarde : ${error.message||"API indisponible."} Les valeurs restent dans le formulaire.`;}
+  finally{save.disabled=false;form.removeAttribute("aria-busy");}
+});
+load().catch(error=>{status.dataset.state="error";status.textContent=`Erreur : ${error.message}`;});
+</script>
+</body>
+</html>

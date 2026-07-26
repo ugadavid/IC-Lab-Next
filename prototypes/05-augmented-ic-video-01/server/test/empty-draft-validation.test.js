@@ -178,6 +178,7 @@ test("création vide et validation d’intégrité sur serveur temporaire", { ti
     const stored = clone(createdPayload.activity);
     delete stored.videoSource;
     delete stored.videoRef;
+    delete stored.pedagogicalIdentitySummary;
     const persistedActivity = clone(persisted.activities.find(activity => activity.id === createdPayload.activity.id));
     const backupActivity = clone(backup.activities.find(activity => activity.id === createdPayload.activity.id));
     delete persistedActivity.videoRef;
