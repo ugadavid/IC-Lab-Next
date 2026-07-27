@@ -100,6 +100,21 @@ test("les dossiers, tags et associations respectent leur hiérarchie", () => {
   assert.ok(problem(validateMediaLibrary(badNormalization), "INVALID_TAG_NORMALIZATION"));
 });
 
+test("la description d’asset et la couleur de tag sont optionnelles et typées", () => {
+  const valid = readFixture();
+  valid.assets[0].description = "Description canonique";
+  valid.tags[0].color = "#123456";
+  assert.equal(validateMediaLibrary(valid).valid, true);
+
+  const badDescription = readFixture();
+  badDescription.assets[0].description = { text: "invalide" };
+  assert.ok(problem(validateMediaLibrary(badDescription), "INVALID_ASSET_DESCRIPTION"));
+
+  const badColor = readFixture();
+  badColor.tags[0].color = "x".repeat(33);
+  assert.ok(problem(validateMediaLibrary(badColor), "INVALID_TAG_COLOR"));
+});
+
 test("la disponibilité et la localisation des playables sont séparées", () => {
   const library = readFixture();
   const missingReason = clone(library); missingReason.playables[2].availabilityReason = null;
@@ -124,6 +139,45 @@ test("les traitements valident leurs sources, sorties et états terminaux", () =
   assert.ok(problem(validateMediaLibrary(badFailed), "FAILED_OUTPUT_PRESENT"));
   const noFalseOutput = readFixture();
   assert.equal(validateMediaLibrary(noFalseOutput).valid, true);
+});
+
+test("un traitement completed sans finishedAt est rejeté", () => {
+  const library = readFixture();
+  delete library.treatments[0].finishedAt;
+  assert.ok(problem(validateMediaLibrary(library), "MISSING_DATE"));
+});
+
+test("un traitement completed avec une progression différente de 100 est rejeté", () => {
+  const library = readFixture();
+  library.treatments[0].progress = 99;
+  assert.ok(problem(validateMediaLibrary(library), "COMPLETED_PROGRESS_INVALID"));
+});
+
+test("un playable publié de l’asset de sortie avec le rôle attendu est accepté", () => {
+  const library = readFixture();
+  const publishedSource = clone(library.sources.find(source => source.id === "source-remote"));
+  publishedSource.id = "source-published-output";
+  publishedSource.assetId = "asset-derived";
+  publishedSource.role = "published-remote";
+  const publishedPlayable = clone(library.playables.find(playable => playable.id === "playable-remote"));
+  publishedPlayable.id = "playable-published-output";
+  publishedPlayable.assetId = "asset-derived";
+  publishedPlayable.sourceId = publishedSource.id;
+  publishedPlayable.role = "published-remote";
+  library.sources.push(publishedSource);
+  library.playables.push(publishedPlayable);
+  library.treatments[0].publishedPlayableId = publishedPlayable.id;
+  assert.equal(validateMediaLibrary(library).valid, true);
+});
+
+test("un playable publié appartenant seulement à l’asset source est rejeté", () => {
+  const library = readFixture();
+  const publishedPlayable = clone(library.playables.find(playable => playable.id === "playable-local-copy"));
+  publishedPlayable.id = "playable-published-source";
+  publishedPlayable.role = "published-remote";
+  library.playables.push(publishedPlayable);
+  library.treatments[0].publishedPlayableId = publishedPlayable.id;
+  assert.ok(problem(validateMediaLibrary(library), "TREATMENT_PUBLISHED_PLAYABLE_MISMATCH"));
 });
 
 test("les diagnostics sont stables, précis et distinguent indisponibilité et erreur", () => {

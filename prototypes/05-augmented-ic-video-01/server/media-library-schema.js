@@ -19,12 +19,12 @@ const PLAYABLE_KINDS = new Set(["local-file", "direct-url", "hls", "youtube-embe
 const TRANSPORTS = new Set(["file", "http", "https", "hls", "youtube-iframe"]);
 const BUSINESS_ROLES = new Set(["original-remote", "working-copy", "derivation-local", "published-remote"]);
 
-/** @typedef {{ id:string, title:string, lifecycle:"active"|"archived", folderId:string|null, defaultPlayableId:string|null, parentAssetId:string|null, familyRootAssetId:string, derivationTypes:string[], tagIds:string[], provenance:Object, technicalMetadata:Object, rights:Object, createdAt:string, updatedAt:string }} MediaAsset */
+/** @typedef {{ id:string, title:string, description?:string|null, lifecycle:"active"|"archived", folderId:string|null, defaultPlayableId:string|null, parentAssetId:string|null, familyRootAssetId:string, derivationTypes:string[], tagIds:string[], provenance:Object, technicalMetadata:Object, rights:Object, createdAt:string, updatedAt:string }} MediaAsset */
 /** @typedef {{ id:string, assetId:string, kind:string, provider:string, origin:Object, transport:string, mimeType:string|null, provenance:Object, createdAt:string }} MediaSource */
 /** @typedef {{ id:string, assetId:string, sourceId:string, kind:string, availability:string, availabilityReason:string|null, location:Object, technicalMetadata:Object, provenance:Object, createdAt:string, updatedAt:string }} Playable */
-/** @typedef {{ id:string, type:string, sourceAssetId:string, sourcePlayableId:string, sourcePreparationId:string|null, outputAssetId:string|null, outputPlayableId:string|null, status:string, progress:number, createdAt:string, startedAt:string|null, finishedAt:string|null, error:Object|null, parameters:Object, engine:string, engineVersion:string, ffmpegVersion:string|null, runtimeJobId:string|null, diagnostics:Object }} MediaTreatment */
+/** @typedef {{ id:string, type:string, sourceAssetId:string, sourcePlayableId:string, sourcePreparationId:string|null, outputAssetId:string|null, outputPlayableId:string|null, publishedPlayableId:string|null, status:string, progress:number, createdAt:string, startedAt:string|null, finishedAt:string|null, error:Object|null, parameters:Object, engine:string, engineVersion:string, ffmpegVersion:string|null, runtimeJobId:string|null, diagnostics:Object }} MediaTreatment */
 /** @typedef {{ id:string, name:string, parentFolderId:string|null, sortOrder:number, createdAt:string, updatedAt:string }} MediaFolder */
-/** @typedef {{ id:string, name:string, normalizedName:string, createdAt:string, updatedAt:string }} MediaTag */
+/** @typedef {{ id:string, name:string, normalizedName:string, color?:string|null, createdAt:string, updatedAt:string }} MediaTag */
 /** @typedef {{ schemaVersion:string, updatedAt:string|null, assets:MediaAsset[], sources:MediaSource[], playables:Playable[], treatments:MediaTreatment[], folders:MediaFolder[], tags:MediaTag[] }} MediaLibrary */
 /** @typedef {{ code:string, severity:"error"|"warning"|"unavailable"|"reconcilable", path:string, message:string, entityId?:string }} MediaLibraryProblem */
 /** @typedef {{ valid:boolean, readable:boolean, writeEligible:boolean, requiresUnknownFieldPreservation:boolean, version:{major:number,minor:number}|null, problems:MediaLibraryProblem[], warnings:MediaLibraryProblem[], unavailable:MediaLibraryProblem[], reconcilable:MediaLibraryProblem[] }} MediaLibraryValidationResult */
@@ -126,6 +126,13 @@ function validateAsset(result, asset, index, maps) {
   const id = validateId(result, asset?.id, `${path}.id`);
   if (!isObject(asset)) { addProblem(result, "INVALID_ASSET", "error", path, `${path} doit être un objet.`); return; }
   requiredString(result, asset.title, `${path}.title`, "MISSING_FIELD", id);
+  if (
+    asset.description !== undefined
+    && asset.description !== null
+    && typeof asset.description !== "string"
+  ) {
+    addProblem(result, "INVALID_ASSET_DESCRIPTION", "error", `${path}.description`, `${path}.description doit être une chaîne ou null.`, id);
+  }
   if (!ASSET_LIFECYCLES.has(asset.lifecycle)) addProblem(result, "INVALID_ASSET_LIFECYCLE", "error", `${path}.lifecycle`, `Cycle de vie inconnu : ${String(asset.lifecycle)}.`, id);
   if (asset.folderId !== null && asset.folderId !== undefined) { validateId(result, asset.folderId, `${path}.folderId`, id); maps.foldersReferenced.push({ id: asset.folderId, path: `${path}.folderId`, assetId: id }); }
   if (asset.defaultPlayableId !== null && asset.defaultPlayableId !== undefined) { validateId(result, asset.defaultPlayableId, `${path}.defaultPlayableId`, id); maps.defaults.push({ assetId: id, playableId: asset.defaultPlayableId, path: `${path}.defaultPlayableId` }); }
@@ -199,6 +206,13 @@ function validateTag(result, tag, index, maps) {
   if (!isObject(tag)) { addProblem(result, "INVALID_TAG", "error", path, `${path} doit être un objet.`); return; }
   requiredString(result, tag.name, `${path}.name`, "MISSING_FIELD", id);
   requiredString(result, tag.normalizedName, `${path}.normalizedName`, "MISSING_FIELD", id);
+  if (
+    tag.color !== undefined
+    && tag.color !== null
+    && (typeof tag.color !== "string" || tag.color.length > 32)
+  ) {
+    addProblem(result, "INVALID_TAG_COLOR", "error", `${path}.color`, `${path}.color doit être une chaîne de 32 caractères au plus, ou null.`, id);
+  }
   validateDate(result, tag.createdAt, `${path}.createdAt`, { required: true, entityId: id });
   validateDate(result, tag.updatedAt, `${path}.updatedAt`, { required: true, entityId: id });
   const normalized = typeof tag.name === "string" ? tag.name.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-") : "";
@@ -225,13 +239,14 @@ function validateTreatment(result, treatment, index, maps) {
   if (treatment.progress !== undefined && (typeof treatment.progress !== "number" || !Number.isFinite(treatment.progress) || treatment.progress < 0 || treatment.progress > 100)) addProblem(result, "INVALID_PROGRESS", "error", `${path}.progress`, `${path}.progress doit être compris entre 0 et 100.`, id);
   validateDate(result, treatment.createdAt, `${path}.createdAt`, { required: true, entityId: id });
   validateDate(result, treatment.startedAt, `${path}.startedAt`, { entityId: id });
-  validateDate(result, treatment.finishedAt, `${path}.finishedAt`, { entityId: id });
+  validateDate(result, treatment.finishedAt, `${path}.finishedAt`, { required: treatment.status === "completed", entityId: id });
   if (!isObject(treatment.parameters)) addProblem(result, "INVALID_TREATMENT_PARAMETERS", "error", `${path}.parameters`, `${path}.parameters doit être un objet.`, id);
   requiredString(result, treatment.engine, `${path}.engine`, "MISSING_FIELD", id);
   requiredString(result, treatment.engineVersion, `${path}.engineVersion`, "MISSING_FIELD", id);
   if (!isObject(treatment.diagnostics)) addProblem(result, "INVALID_TREATMENT_DIAGNOSTICS", "error", `${path}.diagnostics`, `${path}.diagnostics doit être un objet.`, id);
   if (treatment.error !== null && treatment.error !== undefined && !isObject(treatment.error)) addProblem(result, "INVALID_TREATMENT_ERROR", "error", `${path}.error`, `${path}.error doit être un objet ou null.`, id);
   if (treatment.status === "completed" && (!treatment.outputAssetId || !treatment.outputPlayableId)) addProblem(result, "COMPLETED_OUTPUT_MISSING", "error", path, "Un traitement completed doit référencer son asset et son playable de sortie.", id);
+  if (treatment.status === "completed" && treatment.progress !== 100) addProblem(result, "COMPLETED_PROGRESS_INVALID", "error", `${path}.progress`, "Un traitement completed doit avoir une progression égale à 100.", id);
   if (["failed", "cancelled", "interrupted"].includes(treatment.status) && (treatment.outputAssetId !== null && treatment.outputAssetId !== undefined || treatment.outputPlayableId !== null && treatment.outputPlayableId !== undefined)) addProblem(result, "FAILED_OUTPUT_PRESENT", "error", path, "Un traitement échoué, annulé ou interrompu ne doit pas publier de sortie.", id);
   maps.treatments.set(id, treatment);
 }
@@ -287,7 +302,7 @@ function validateReferences(result, library, maps) {
     if (treatment.publishedPlayableId !== null && treatment.publishedPlayableId !== undefined) {
       const publishedPlayable = maps.playables.get(treatment.publishedPlayableId);
       if (!publishedPlayable) addProblem(result, "TREATMENT_PUBLISHED_PLAYABLE_NOT_FOUND", "error", `treatments.${treatment.id}.publishedPlayableId`, "Le playable publié relié est introuvable.", treatment.id);
-      else if (publishedPlayable.assetId !== treatment.sourceAssetId || publishedPlayable.role !== "published-remote") addProblem(result, "TREATMENT_PUBLISHED_PLAYABLE_MISMATCH", "error", `treatments.${treatment.id}.publishedPlayableId`, "Le playable publié doit appartenir à la même fiche et porter le rôle published-remote.", treatment.id);
+      else if (publishedPlayable.assetId !== treatment.outputAssetId || publishedPlayable.role !== "published-remote") addProblem(result, "TREATMENT_PUBLISHED_PLAYABLE_MISMATCH", "error", `treatments.${treatment.id}.publishedPlayableId`, "Le playable publié doit appartenir à l’asset de sortie et porter le rôle published-remote.", treatment.id);
     }
   }
 }
