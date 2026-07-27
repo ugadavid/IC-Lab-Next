@@ -3612,6 +3612,9 @@ function deterministicResult(prototypeDirectory) {
 
   return {
     collector,
+    model,
+    intermediate,
+    sources,
     result: {
       status: blockers ? "blocked" : "valid",
       deterministicHash,
@@ -4190,9 +4193,18 @@ function main() {
   return result.blockers > 0 ? 1 : 0;
 }
 
-try {
-  process.exitCode = main();
-} catch (error) {
-  console.error(`DRY_RUN_FATAL ${error.code || "ERROR"}: ${error.message}`);
-  process.exitCode = 1;
+export {
+  DEFAULT_PROTOTYPE_DIRECTORY,
+  TABLE_DEFINITIONS,
+  deterministicResult,
+  stableStringify
+};
+
+if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_FILE) {
+  try {
+    process.exitCode = main();
+  } catch (error) {
+    console.error(`DRY_RUN_FATAL ${error.code || "ERROR"}: ${error.message}`);
+    process.exitCode = 1;
+  }
 }
