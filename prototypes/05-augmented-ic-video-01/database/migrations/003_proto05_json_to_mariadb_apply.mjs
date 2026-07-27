@@ -323,20 +323,25 @@ async function schemaSnapshot(connection) {
         WHERE EVENT_SCHEMA = ?) AS events_count,
        (SELECT COUNT(*) FROM information_schema.TABLES
         WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'
-          AND ENGINE <> 'InnoDB') AS non_innodb`,
-    Array(7).fill(TARGET_DATABASE)
+          AND ENGINE <> 'InnoDB') AS non_innodb,
+       (SELECT COUNT(*) FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'data_projection_metadata'
+          AND TABLE_TYPE = 'BASE TABLE') AS metadata_table_count`,
+    Array(8).fill(TARGET_DATABASE)
   );
   const snapshot = Object.fromEntries(
     Object.entries(counts).map(([key, value]) => [key, Number(value)])
   );
+  const metadataInstalled = snapshot.metadata_table_count === 1;
   const expected = {
-    tables_count: 31,
+    tables_count: metadataInstalled ? 32 : 31,
     procedures_count: 43,
     fk_count: 48,
-    checks_count: 65,
+    checks_count: metadataInstalled ? 68 : 65,
     triggers_count: 0,
     events_count: 0,
-    non_innodb: 0
+    non_innodb: 0,
+    metadata_table_count: metadataInstalled ? 1 : 0
   };
   if (stableStringify(snapshot) !== stableStringify(expected)) {
     throw new MigrationError("SCHEMA_PREFLIGHT_FAILED", "The installed schema does not match Mission 133.", {

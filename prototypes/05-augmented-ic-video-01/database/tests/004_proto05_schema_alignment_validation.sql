@@ -172,7 +172,7 @@ CALL sp_m133_assert(
 
 CALL sp_m133_assert(
   (SELECT COUNT(*) FROM information_schema.tables
-   WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE') = 31
+   WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE') = 32
   AND
   (SELECT COUNT(*) FROM information_schema.routines
    WHERE routine_schema = DATABASE()
@@ -183,8 +183,8 @@ CALL sp_m133_assert(
    WHERE constraint_schema = DATABASE()) = 48
   AND
   (SELECT COUNT(*) FROM information_schema.check_constraints
-   WHERE constraint_schema = DATABASE()) = 65,
-  'table, procedure, foreign-key and CHECK counts remain stable'
+   WHERE constraint_schema = DATABASE()) = 68,
+  'historical schema plus document metadata table remain stable'
 );
 
 CALL sp_m133_assert(
