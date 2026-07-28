@@ -156,7 +156,11 @@ function mapPedagogicalIdentity(activityId, tables) {
     lineage: {
       state: identity.lineage_state,
       ...(identity.lineage_relation !== null ? { relation: identity.lineage_relation } : {}),
-      ...(identity.parent_activity_id !== null ? { parentActivityId: identity.parent_activity_id } : {}),
+      ...(identity.parent_activity_id !== null
+        ? { parentActivityId: identity.parent_activity_id }
+        : identity.lineage_relation === "root"
+          ? { parentActivityId: null }
+          : {}),
       ...(identity.root_activity_id !== null ? { rootActivityId: identity.root_activity_id } : {}),
       ...(identity.lineage_note !== null ? { note: identity.lineage_note } : {})
     },
@@ -539,10 +543,17 @@ function mapMariaDbTablesToSnapshot(tables) {
 }
 
 function projectMariaDbSnapshotForApplication(snapshot) {
-  return {
+  const projected = {
     ...snapshot,
     videoLibrary: projectCanonicalLibrary(snapshot.videoLibrary)
   };
+  Object.defineProperty(projected, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: snapshot.videoLibrary
+  });
+  return projected;
 }
 
 function privilegeList(statement) {
@@ -602,7 +613,10 @@ function createMariaDbReadonlyAdapter({
   config,
   prototypeDirectory,
   mysqlModulePath = null,
-  mysql = null
+  mysql = null,
+  grantValidator = assertReadonlyGrants,
+  mode = "mariadb-readonly",
+  readonlySession = true
 }) {
   const client = mysql || defaultMysqlModule(prototypeDirectory, mysqlModulePath);
 
@@ -623,7 +637,7 @@ function createMariaDbReadonlyAdapter({
         connectTimeout: 10_000
       });
       await result.query("SET SESSION time_zone = '+00:00'");
-      await result.query("SET SESSION TRANSACTION READ ONLY");
+      if (readonlySession) await result.query("SET SESSION TRANSACTION READ ONLY");
       return result;
     } catch {
       throw new Error("Connexion MariaDB readonly impossible.");
@@ -639,10 +653,10 @@ function createMariaDbReadonlyAdapter({
           throw new Error("L’identité MariaDB obtenue ne correspond pas à la configuration readonly.");
         }
         const [grantRows] = await database.query("SHOW GRANTS");
-        const grants = assertReadonlyGrants(grantRows, config);
+        const grants = grantValidator(grantRows, config);
         const [[probe]] = await database.query("SELECT COUNT(*) AS activity_count FROM activities WHERE deleted_at IS NULL");
         return {
-          mode: "mariadb-readonly",
+          mode,
           account: String(identity.account),
           database: identity.database_name,
           activityCount: Number(probe.activity_count),

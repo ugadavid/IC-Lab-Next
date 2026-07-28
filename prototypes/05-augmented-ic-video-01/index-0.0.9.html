@@ -928,7 +928,7 @@
     </main>
   </div>
 
-  <link rel="stylesheet" href="/shared/ic-timeline.css"><script src="/vendor/hls.js/hls.min.js"></script><script src="/shared/ic-video-player.js"></script><script src="/shared/ic-timeline.js"></script>
+  <link rel="stylesheet" href="/shared/ic-timeline.css"><script src="/vendor/hls.js/hls.min.js"></script><script src="/shared/ic-video-player.js"></script><script src="/shared/ic-timeline.js"></script><script src="/shared/playable-transcription.js"></script><script src="/shared/playable-overlays.js"></script><script src="/shared/playable-layers.js"></script><script src="/shared/playable-phenomena.js"></script>
   <script>
     let hlsUrl = "";
     let videoPlayer = null;
@@ -985,6 +985,8 @@
     let languageIntervals = [];
     let activityData = null;
     let allOverlays = [];
+    let allPhenomena = [];
+    let initialActiveLayerIds = [];
 
     function buildActivityView(activity) {
       if (!activity || !Array.isArray(activity.segments) || !Array.isArray(activity.layers) || !activity.video || !(activity.video.proxyUrl || activity.video.url || activity.video.storageKey || activity.video.provider === "youtube")) {
@@ -996,58 +998,24 @@
       document.getElementById("activityInstruction").textContent = activity.instruction ? `Consigne : ${activity.instruction}` : "";
 
       activityData = activity;
-      const learnerLayerIds = new Set(activity.layerConfiguration?.learnerVisibleLayerIds || activity.layers.map(layer => layer.id));
-      allTags = activity.layers.filter(layer => learnerLayerIds.has(layer.id)).map(layer => layer.id);
-      tagLabels = Object.fromEntries(activity.layers.map(layer => [layer.id, layer.label]));
+      const layerView = Proto05PlayableLayers.projectLayers(
+        activity,
+        viewMode === "teacher" ? "teacher" : "learner"
+      );
+      allTags = layerView.layers.map(layer => layer.id);
+      initialActiveLayerIds = layerView.activeLayerIds;
+      tagLabels = Object.fromEntries(layerView.layers.map(layer => [layer.id, layer.label]));
       timelineLanguages = (activity.languages || []).map(language => language.code);
       Object.assign(languageLabels, Object.fromEntries(
         (activity.languages || []).map(language => [language.code, language.label])
       ));
       fallbackTimelineDuration = Number(activity.video?.durationMs || 0) / 1000 || 15 * 60 + 39;
-      allOverlays = (activity.overlays || []).map(overlay => ({
-        id: overlay.id,
-        annotationId: overlay.annotationId || null,
-        start: overlay.startMs / 1000,
-        end: overlay.endMs / 1000,
-        title: overlay.title || "",
-        text: overlay.text || "",
-        tags: Array.isArray(overlay.layerIds) ? overlay.layerIds : []
-      }));
+      allOverlays = Proto05PlayableOverlays.projectOverlays(activity);
+      allPhenomena = Proto05PlayablePhenomena.projectPhenomena(activity);
 
-      const speakersById = new Map((activity.speakers || []).map(speaker => [speaker.id, speaker.label]));
       const languagesById = new Map((activity.languages || []).map(language => [language.id, language.code]));
       languageIntervals = (activity.languageIntervals || []).map(interval => ({ ...interval, code: languagesById.get(interval.languageId), start: interval.startMs / 1000, end: interval.endMs / 1000 })).filter(interval => interval.code);
-      const phenomenaBySegmentId = new Map();
-      for (const phenomenon of activity.phenomena || []) {
-        if (!phenomenaBySegmentId.has(phenomenon.segmentId)) phenomenaBySegmentId.set(phenomenon.segmentId, []);
-        phenomenaBySegmentId.get(phenomenon.segmentId).push(phenomenon);
-      }
-      const annotationsBySegmentId = new Map(
-        (activity.teacherAnnotations || []).map(annotation => [annotation.segmentId, annotation])
-      );
-
-      segments = activity.segments.map(segment => {
-        const annotation = annotationsBySegmentId.get(segment.id);
-        const tags = (phenomenaBySegmentId.get(segment.id) || [])
-          .map(phenomenon => phenomenon.layerId)
-          .filter(Boolean);
-        return {
-          id: segment.id,
-          start: segment.startMs / 1000,
-          end: segment.endMs / 1000,
-          speaker: (segment.speakerIds || [])
-            .map(speakerId => speakersById.get(speakerId) || speakerId)
-            .join(" et "),
-          text: segment.text,
-          languages: (segment.languageIds || [])
-            .map(languageId => languagesById.get(languageId))
-            .filter(Boolean),
-          tags,
-          note: annotation?.note || "",
-          question: annotation?.pedagogicalQuestion || "",
-          overlays: annotation ? allOverlays.filter(overlay => overlay.annotationId === annotation.id) : []
-        };
-      });
+      segments = Proto05PlayableTranscription.projectSegments(activity, allOverlays);
 
       if (!segments.length) return;
     }
@@ -1114,14 +1082,16 @@
         streamLink.href = hlsUrl;
         activeSegmentIndex = 0;
         activeLayers.clear();
-        const learnerVisible = new Set(activityData.layerConfiguration?.learnerVisibleLayerIds || allTags);
-        allTags.filter(tag => learnerVisible.has(tag)).forEach(tag => activeLayers.add(tag));
+        initialActiveLayerIds.forEach(tag => activeLayers.add(tag));
         renderLayers();
         renderTranscript();
         renderTimeline();
         renderObservations();
         loadVideo(activityData.videoSource || activityData.video);
-        if (segments.length) activateSegment(0, false);
+        if (segments.length) {
+          activateSegment(0, false);
+          if (findActiveSegment(video.currentTime) < 0) clearActiveSegmentHighlight();
+        }
         else {
           activeTime.textContent = "Cette activité ne contient encore aucun segment.";
           annotationText.textContent = "Ajoutez des segments depuis l’atelier auteur pour préparer cette activité.";
@@ -1185,11 +1155,11 @@
     }
 
     function segmentHasActiveLayer(segment) {
-      return getVisibleTags(segment).length > 0;
+      return Proto05PlayableTranscription.hasVisibleTranscription(segment, activeLayers);
     }
 
     function getOverlayAt(time = video.currentTime) {
-      return allOverlays.find(overlay => time >= overlay.start && time < overlay.end) || null;
+      return Proto05PlayableOverlays.overlayAtTime(allOverlays, time);
     }
 
     function getSegmentOverlayKey() {
@@ -1224,7 +1194,7 @@
         .filter(item => segmentHasActiveLayer(item.segment));
 
       if (!visibleSegments.length) {
-        transcriptList.innerHTML = `<p class="subtitle">Aucune couche active. Cochez au moins une couche pour faire réapparaître des segments.</p>`;
+        transcriptList.innerHTML = `<p class="subtitle">Aucune transcription disponible pour cette activité.</p>`;
         return;
       }
 
@@ -1343,14 +1313,22 @@
     function renderTimeline() {
       const target = sharedTimelineMount;
       if (!target || !activityData) return;
+      const visibleActivity = {
+        ...activityData,
+        phenomena: Proto05PlayablePhenomena.visiblePhenomena(allPhenomena, activeLayers)
+      };
       if (!sharedICTimeline) {
-        const visibleActivity = { ...activityData, phenomena: (activityData.phenomena || []).filter(item => activeLayers.has(item.layerId)) };
         sharedICTimeline = createICTimeline({
           container: target, activity: visibleActivity, durationMs: getTimelineDuration() * 1000, currentTime: (video.currentTime || 0) * 1000,
           mode: "student", onSeek: timeMs => { video.currentTime = timeMs / 1000; },
           onSelect: selection => { if (selection.type === "segment") { const index = segments.findIndex(item => item.id === selection.item.id); if (index >= 0) activateSegment(index, true); } }
         });
-      } else { sharedICTimeline.update({activity: { ...activityData, phenomena: (activityData.phenomena || []).filter(item => activeLayers.has(item.layerId)) }, durationMs: getTimelineDuration() * 1000}); }
+      } else {
+        sharedICTimeline.update({
+          activity: visibleActivity,
+          durationMs: getTimelineDuration() * 1000
+        });
+      }
     }
 
     function buildLayeredNote(segment, visibleTags) {
@@ -1379,7 +1357,7 @@
       }
 
       const visibleOverlayTags = overlay.tags.filter(tag => activeLayers.has(tag));
-      if (!visibleOverlayTags.length) {
+      if (!Proto05PlayableOverlays.hasVisibleOverlay(overlay, activeLayers)) {
         videoOverlay.classList.add("hidden");
         return;
       }
@@ -1401,6 +1379,8 @@
       renderTranscript();
       renderTimeline();
       activateSegment(activeSegmentIndex, false);
+      if (findActiveSegment(video.currentTime) < 0) clearActiveSegmentHighlight();
+      updateOverlay();
     }
 
     function toggleLayersPanel() {
@@ -1441,7 +1421,11 @@
     }
 
     function findActiveSegment(time) {
-      return segments.findIndex(segment => time >= segment.start && time < segment.end);
+      return Proto05PlayableTranscription.segmentIndexAtTime(segments, time);
+    }
+
+    function clearActiveSegmentHighlight() {
+      document.querySelectorAll(".segment").forEach(item => item.classList.remove("active"));
     }
 
     function buildObservationText(segment) {
@@ -1622,7 +1606,10 @@
       sharedICTimeline?.setCurrentTime(video.currentTime * 1000);
       const index = findActiveSegment(video.currentTime);
       if (index >= 0) activateSegment(index, false);
-      if (index < 0) dismissedOverlayKey = null;
+      if (index < 0) {
+        clearActiveSegmentHighlight();
+        dismissedOverlayKey = null;
+      }
       updateOverlay(index >= 0 ? segments[index] : null);
     });
 

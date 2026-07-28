@@ -58,9 +58,11 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const temporaryServerDirectory = path.join(prototypeDirectory, "server");
   const temporaryDataDirectory = path.join(prototypeDirectory, "data");
   const temporaryReferenceDirectory = path.join(root, "shared", "reference-data");
+  const temporaryMigrationDirectory = path.join(prototypeDirectory, "database", "migrations");
   fs.mkdirSync(temporaryServerDirectory, { recursive: true });
   fs.mkdirSync(temporaryDataDirectory, { recursive: true });
   fs.mkdirSync(temporaryReferenceDirectory, { recursive: true });
+  fs.mkdirSync(temporaryMigrationDirectory, { recursive: true });
   const serverFile = path.join(temporaryServerDirectory, "server.js");
   const dataFile = path.join(temporaryDataDirectory, "activities.json");
   const activityLibraryFile = path.join(temporaryDataDirectory, "activity-library.json");
@@ -96,13 +98,19 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
     "proto05-data-mode.js",
     "proto05-canonical-compare.js",
     "proto05-read-boundary.js",
-    "proto05-mariadb-readonly.js"
+    "proto05-mariadb-readonly.js",
+    "proto05-mariadb-write.js",
+    "proto05-write-boundary.js"
   ]) {
     fs.copyFileSync(path.join(serverDirectory, file), path.join(temporaryServerDirectory, file));
   }
+  fs.copyFileSync(
+    path.join(sourcePrototypeDirectory, "database", "migrations", "001_proto05_json_to_mariadb_dry_run.mjs"),
+    path.join(temporaryMigrationDirectory, "001_proto05_json_to_mariadb_dry_run.mjs")
+  );
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
   fs.mkdirSync(temporarySharedDirectory, { recursive: true });
-  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js", "teacher-shell.css", "teacher-shell.js", "activity-library.css", "activity-library.js"]) {
+  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js", "teacher-shell.css", "teacher-shell.js", "guided-authoring-contract.js", "activity-library.css", "activity-library.js"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, "shared", file), path.join(temporarySharedDirectory, file));
   }
   fs.copyFileSync(path.join(sourcePrototypeDirectory, "guided-overlays.js"), path.join(prototypeDirectory, "guided-overlays.js"));

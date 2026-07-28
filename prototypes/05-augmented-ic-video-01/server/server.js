@@ -37,7 +37,12 @@ const {
   readonlyMutationPayload
 } = require("./proto05-data-mode");
 const { createMariaDbReadonlyAdapter } = require("./proto05-mariadb-readonly");
+const {
+  assertApplicationGrants,
+  createMariaDbWriteAdapter
+} = require("./proto05-mariadb-write");
 const { createProto05ReadBoundary } = require("./proto05-read-boundary");
+const { createProto05WriteBoundary } = require("./proto05-write-boundary");
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 const {
   assertPedagogicalLineage,
@@ -49,10 +54,11 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.47";
+const VERSION = "0.1.48";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_MODE = dataModeFromEnvironment(process.env);
+const MARIADB_IS_AUTHORITY = DATA_MODE === "mariadb" || DATA_MODE === "mariadb-readonly";
 const MARIADB_CONFIGURATION = DATA_MODE === "json"
   ? null
   : mariadbConfigurationFromEnvironment(process.env);
@@ -187,7 +193,7 @@ function loadVideoCatalog() {
   }));
 }
 
-let JSON_VIDEO_CATALOG = DATA_MODE === "mariadb-readonly" ? freezeVideoCatalog([]) : loadVideoCatalog();
+let JSON_VIDEO_CATALOG = MARIADB_IS_AUTHORITY ? freezeVideoCatalog([]) : loadVideoCatalog();
 
 function activeVideoCatalog() {
   return READ_CONTEXT.getStore()?.videoCatalog?.videos || JSON_VIDEO_CATALOG;
@@ -210,7 +216,13 @@ function loadVideoLibrary() {
   return validateLibraryShape(projectCanonicalLibrary(CANONICAL_LIBRARY));
 }
 
-let JSON_VIDEO_LIBRARY = DATA_MODE === "mariadb-readonly" ? null : loadVideoLibrary();
+let JSON_VIDEO_LIBRARY = MARIADB_IS_AUTHORITY ? null : loadVideoLibrary();
+
+function activeCanonicalVideoLibrary() {
+  const canonical = READ_CONTEXT.getStore()?.canonicalVideoLibrary || CANONICAL_LIBRARY;
+  if (!canonical) throw new Error("Aucune Library vidéo canonique n’est disponible.");
+  return canonical;
+}
 
 function activeVideoLibrary() {
   const library = READ_CONTEXT.getStore()?.videoLibrary || JSON_VIDEO_LIBRARY;
@@ -345,11 +357,14 @@ function loadLanguageCatalog() {
   });
   return Object.freeze(languages);
 }
-const LANGUAGE_CATALOG = DATA_MODE === "mariadb-readonly" ? Object.freeze([]) : loadLanguageCatalog();
-const LANGUAGE_CATALOG_BY_ID = new Map(LANGUAGE_CATALOG.map(language => [language.id, language]));
+const LANGUAGE_CATALOG = MARIADB_IS_AUTHORITY ? Object.freeze([]) : loadLanguageCatalog();
 
 function activeLanguageCatalog() {
   return READ_CONTEXT.getStore()?.languageCatalog?.languages || LANGUAGE_CATALOG;
+}
+
+function activeLanguageCatalogById() {
+  return new Map(activeLanguageCatalog().map(language => [language.id, language]));
 }
 let writeQueue = Promise.resolve();
 
@@ -468,6 +483,13 @@ async function persistActivityLibraryClassification(classification) {
     ...classification,
     updatedAt: new Date().toISOString()
   });
+  if (DATA_MODE === "mariadb") {
+    await persistMariaDbSnapshot(
+      { activityLibrary: normalized },
+      { operation: "activity-library" }
+    );
+    return normalized;
+  }
   const operation = writeQueue.then(async () => {
     const file = safeActivityLibraryFile();
     const backup = `${file}.bak`;
@@ -512,8 +534,10 @@ function activityLibraryPayload(store, classification) {
 }
 
 async function removeActivityLibraryAssignment(activityId) {
-  const file = safeActivityLibraryFile();
-  if (!fsSync.existsSync(file)) return;
+  if (DATA_MODE !== "mariadb") {
+    const file = safeActivityLibraryFile();
+    if (!fsSync.existsSync(file)) return;
+  }
   const classification = await readActivityLibraryClassification();
   if (!Object.prototype.hasOwnProperty.call(classification.assignments, activityId)) return;
   const assignments = { ...classification.assignments };
@@ -818,7 +842,7 @@ function validateActivityIntegrity(activity) {
 function validateSharedLanguageSelection(languages) {
   if (!Array.isArray(languages)) throw new Error("languages doit être un tableau.");
   for (const language of languages) {
-    const reference = LANGUAGE_CATALOG_BY_ID.get(language?.id);
+    const reference = activeLanguageCatalogById().get(language?.id);
     if (!reference) throw new Error(`Langue absente du référentiel partagé : ${String(language?.id)}.`);
     if (language.label !== reference.label || language.code !== reference.id.toUpperCase()) throw new Error(`La langue ${reference.id} doit reprendre le code et le libellé du référentiel partagé.`);
   }
@@ -976,6 +1000,30 @@ function duplicateActivity(source, activities) {
 }
 
 async function persistActivities(store) {
+  if (DATA_MODE === "mariadb") {
+    const currentClassification = READ_CONTEXT.getStore()?.activityLibrary;
+    const activityIds = new Set((store.activities || []).map(activity => activity.id));
+    const assignments = Object.fromEntries(Object.entries(currentClassification?.assignments || {})
+      .filter(([activityId]) => activityIds.has(activityId)));
+    const classificationChanged = Object.keys(assignments).length
+      !== Object.keys(currentClassification?.assignments || {}).length;
+    await persistMariaDbSnapshot(
+      {
+        activities: storeForPersistence(store),
+        ...(classificationChanged
+          ? {
+              activityLibrary: normalizeActivityLibraryClassification({
+                ...currentClassification,
+                assignments,
+                updatedAt: new Date().toISOString()
+              })
+            }
+          : {})
+      },
+      { operation: "activities" }
+    );
+    return;
+  }
   const operation = writeQueue.then(async () => {
     const file = safeDataFile();
     const backup = `${file}.bak`;
@@ -994,6 +1042,22 @@ async function persistActivities(store) {
 }
 
 async function persistVideoCatalog(videos) {
+  if (DATA_MODE === "mariadb") {
+    const runtimeLibrary = mergeCatalogIntoLibrary(activeVideoLibrary(), videos);
+    const canonical = assertWritableCanonical(canonicalFromRuntime(
+      runtimeLibrary,
+      activeCanonicalVideoLibrary()
+    ));
+    canonical.updatedAt = new Date().toISOString();
+    await persistMariaDbSnapshot(
+      {
+        videoCatalog: { schemaVersion: "0.1", videos: structuredClone(videos) },
+        videoLibrary: projectCanonicalLibrary(canonical)
+      },
+      { operation: "video-catalog", canonicalVideoLibrary: canonical }
+    );
+    return;
+  }
   const operation = writeQueue.then(async () => {
     const file = safeVideoCatalogFile();
     const backup = `${file}.bak`;
@@ -1047,12 +1111,31 @@ async function writeCanonicalVideoLibrary(canonical) {
 }
 
 async function persistVideoLibrary(library) {
-  return writeCanonicalVideoLibrary(assertWritableCanonical(canonicalFromRuntime(library, CANONICAL_LIBRARY)));
+  const canonical = assertWritableCanonical(canonicalFromRuntime(
+    library,
+    activeCanonicalVideoLibrary()
+  ));
+  if (DATA_MODE === "mariadb") {
+    canonical.updatedAt = new Date().toISOString();
+    await persistMariaDbSnapshot(
+      { videoLibrary: projectCanonicalLibrary(canonical) },
+      { operation: "media-library", canonicalVideoLibrary: canonical }
+    );
+    return;
+  }
+  return writeCanonicalVideoLibrary(canonical);
 }
 
 async function persistCanonicalLibrary(canonical) {
   const next = assertWritableCanonical(JSON.parse(JSON.stringify(canonical)));
   next.updatedAt = new Date().toISOString();
+  if (DATA_MODE === "mariadb") {
+    await persistMariaDbSnapshot(
+      { videoLibrary: projectCanonicalLibrary(next) },
+      { operation: "media-library", canonicalVideoLibrary: next }
+    );
+    return VIDEO_LIBRARY;
+  }
   await writeCanonicalVideoLibrary(next);
   CANONICAL_LIBRARY = next;
   JSON_VIDEO_LIBRARY = projectCanonicalLibrary(next);
@@ -1379,7 +1462,7 @@ async function removeLocalLibraryCopy(assetId, playableId) {
   await fs.copyFile(file, backup);
   try {
     await fs.unlink(file);
-    const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+    const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
     const asset = canonical.assets.find(item => item.id === assetId);
     if (!asset) throw new Error("Asset vidéo introuvable.");
     canonical.playables = canonical.playables.filter(item => item.id !== playableId);
@@ -1398,18 +1481,18 @@ async function removeLocalLibraryCopy(assetId, playableId) {
 }
 
 async function removeLibraryDerivation(assetId, derivationId) {
-  const treatment = CANONICAL_LIBRARY.treatments.find(item => item.id === derivationId && item.sourceAssetId === assetId);
+  const treatment = activeCanonicalVideoLibrary().treatments.find(item => item.id === derivationId && item.sourceAssetId === assetId);
   if (!treatment) throw Object.assign(new Error("Tentative de dérivation introuvable."), { statusCode: 404 });
   if (["queued", "running", "cancelling"].includes(treatment.status)) throw Object.assign(new Error("Une dérivation active ne peut pas être supprimée."), { statusCode: 409 });
   if (treatment.publishedPlayableId) throw Object.assign(new Error("Cette dérivation est reliée à une version publiée."), { statusCode: 409 });
-  const playable = CANONICAL_LIBRARY.playables.find(item => item.id === treatment.outputPlayableId && item.assetId === assetId);
+  const playable = activeCanonicalVideoLibrary().playables.find(item => item.id === treatment.outputPlayableId && item.assetId === assetId);
   const expectedPrefix = `${assetId}/derived/${derivationId}/`;
   const storageKey = playable?.location?.storageKey || null;
   if (storageKey && (playable.location?.storageScope !== "workspace" || !storageKey.startsWith(expectedPrefix))) throw Object.assign(new Error("Le fichier de dérivation n’appartient pas à son espace de travail."), { statusCode: 409 });
   const file = storageKey ? safeLibraryMediaPath(storageKey, "workspace") : null;
   const stat = file ? await fs.stat(file).catch(() => null) : null;
   const backup = stat?.isFile() ? path.join(os.tmpdir(), `proto05-derivation-${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.bak`) : null;
-  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
   canonical.treatments = canonical.treatments.filter(item => item.id !== derivationId);
   if (playable) {
     canonical.playables = canonical.playables.filter(item => item.id !== playable.id);
@@ -1435,7 +1518,7 @@ async function removeLibraryDerivation(assetId, derivationId) {
 
 async function assignLibraryAccessRole(assetId, playableId, role) {
   if (!["original-remote", "working-copy", "derivation-local", "published-remote"].includes(role)) throw new Error("Rôle métier invalide.");
-  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
   const playable = canonical.playables.find(item => item.id === playableId && item.assetId === assetId);
   const source = canonical.sources.find(item => item.id === playable?.sourceId && item.assetId === assetId);
   if (!playable || !source) throw Object.assign(new Error("Accès vidéo introuvable."), { statusCode: 404 });
@@ -1761,7 +1844,7 @@ async function confirmRemoteLibraryReference(payload) {
   const provenance = { kind: "remote-reference", importedAt: createdAt };
   const targetAssetId = typeof payload.assetId === "string" ? payload.assetId : "";
   if (targetAssetId) {
-    const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+    const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
     const targetAsset = canonical.assets.find(item => item.id === targetAssetId);
     if (!targetAsset) throw Object.assign(new Error("La fiche Library cible est introuvable."), { statusCode: 404 });
     const publishedIdentity = crypto.createHash("sha256").update(`${targetAssetId}\n${analysis.kind}\n${analysis.finalUrl}`).digest("hex").slice(0, 24);
@@ -2160,7 +2243,7 @@ async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
     importedAt: now, ffmpegVersion: ffmpegStatus.version,
     sha256, sizeBytes: stat.size, originalFileName: job.fileName
   };
-  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
   const asset = canonical.assets.find(item => item.id === job.assetId);
   if (!asset || canonical.sources.some(item => item.id === sourceId) || canonical.playables.some(item => item.id === playableId)) throw new Error("La destination canonique de la copie existe déjà.");
   canonical.sources.push({
@@ -2353,7 +2436,7 @@ async function shutdownLibraryDownloads() {
 }
 
 async function cleanupIncompleteWorkspaceDownloads() {
-  for (const asset of CANONICAL_LIBRARY.assets) {
+  for (const asset of activeCanonicalVideoLibrary().assets) {
     const tempRoot = safeAssetWorkspacePath(asset.id, "temp");
     await fs.rm(tempRoot, { recursive: true, force: true });
   }
@@ -2716,7 +2799,7 @@ async function persistDerivedPlayable(job, prepJob) {
   const now = new Date().toISOString();
   const sourceOrigin = prepJob.metadata?.sourceUrl || prepJob.sourceUrl;
   const provenance = { kind: "derived-anonymized", derivationId, sourceOriginUrl: sourceOrigin, sourceAssetId: assetId, sourcePreparationJobId: prepJob.id, mode: job.mode || "fixed", method: job.method, masks: job.masks, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, interpolation: job.temporalMasks ? "linear-between-keyframes-clamped-at-bounds" : null, blur: job.metadata.blur, filter: job.metadata.filter, ffmpeg: job.metadata.ffmpeg, ffmpegArgs: job.metadata.ffmpegArgs, createdAt: now, status: "completed", sha256: hash, sizeBytes: stat.size };
-  const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
   const asset = canonical.assets.find(item => item.id === assetId);
   if (!asset || canonical.treatments.some(item => item.id === derivationId)) throw new Error("La destination canonique de la dérivation existe déjà.");
   canonical.sources.push({ id: sourceId, assetId, kind: "derived-output", provider: "proto05-derived", role: "derivation-local", origin: { sourceOriginUrl: sourceOrigin, derivationId }, transport: "file", mimeType: "video/mp4", provenance, createdAt: now });
@@ -2893,6 +2976,8 @@ const JSON_READ_ADAPTER = Object.freeze({
 });
 
 let READ_BOUNDARY = null;
+let WRITE_BOUNDARY = null;
+let MARIADB_WRITE_ADAPTER = null;
 
 function proto05ReadBoundary() {
   if (READ_BOUNDARY) return READ_BOUNDARY;
@@ -2901,7 +2986,13 @@ function proto05ReadBoundary() {
     : createMariaDbReadonlyAdapter({
         config: MARIADB_CONFIGURATION,
         prototypeDirectory: ROOT_DIR,
-        mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null
+        mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null,
+        ...(DATA_MODE === "mariadb"
+          ? {
+              grantValidator: assertApplicationGrants,
+              mode: "mariadb"
+            }
+          : {})
       });
   READ_BOUNDARY = createProto05ReadBoundary({
     mode: DATA_MODE,
@@ -2909,6 +3000,58 @@ function proto05ReadBoundary() {
     mariadbAdapter
   });
   return READ_BOUNDARY;
+}
+
+function proto05WriteBoundary() {
+  if (WRITE_BOUNDARY) return WRITE_BOUNDARY;
+  if (DATA_MODE === "mariadb") {
+    MARIADB_WRITE_ADAPTER = createMariaDbWriteAdapter({
+      config: MARIADB_CONFIGURATION,
+      prototypeDirectory: ROOT_DIR,
+      mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null
+    });
+  }
+  WRITE_BOUNDARY = createProto05WriteBoundary({
+    mode: DATA_MODE,
+    jsonAdapter: Object.freeze({
+      async writeSnapshot() {
+        throw new Error("Les écritures JSON historiques ne passent pas par l’adaptateur MariaDB.");
+      }
+    }),
+    mariadbAdapter: MARIADB_WRITE_ADAPTER
+  });
+  return WRITE_BOUNDARY;
+}
+
+async function persistMariaDbSnapshot(patch, {
+  operation,
+  canonicalVideoLibrary = null,
+  failAfterStatements = null
+}) {
+  const context = READ_CONTEXT.getStore();
+  if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
+  const snapshot = structuredClone(context);
+  Object.assign(snapshot, structuredClone(patch));
+  Object.defineProperty(snapshot, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: structuredClone(canonicalVideoLibrary || context.canonicalVideoLibrary)
+  });
+  const queued = writeQueue.then(() => proto05WriteBoundary().writeSnapshot(snapshot, {
+    operation,
+    failAfterStatements
+  }));
+  writeQueue = queued.catch(() => {});
+  const result = await queued;
+  Object.assign(context, result.snapshot);
+  Object.defineProperty(context, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: result.snapshot.canonicalVideoLibrary
+  });
+  return result;
 }
 
 async function handleApiInReadContext(request, response, url) {
@@ -3121,7 +3264,10 @@ async function handleApiInReadContext(request, response, url) {
     nextLibrary.sources.push(created.source);
     nextLibrary.playables.push(created.playable);
     try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); JSON_VIDEO_LIBRARY = nextLibrary; }
-    catch (error) { console.error(`[data] Library vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement de la Library impossible." }); }
+    catch (error) {
+      console.error(`[data] Library vidéo Proto05 impossible : ${error.code || "ERROR"}/${error.reasonCode || "UNKNOWN"} ${(error.differencePaths || []).join(",")}`);
+      return sendJson(response, 500, { error: "Enregistrement de la Library impossible." });
+    }
     return sendJson(response, 201, { asset: libraryAssetDetails(created.asset) });
   }
   if (url.pathname === "/api/proto05/library/copy-direct") {
@@ -3333,7 +3479,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     catch (error) { return sendJson(response, 400, { error: error.message || "Duplication invalide." }); }
     store.activities.push(activity); store.updatedAt = new Date().toISOString();
     try { await persistActivities(store); }
-    catch (error) { console.error(`[data] duplication Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Duplication JSON impossible." }); }
+    catch (error) { console.error(`[data] duplication Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Duplication impossible." }); }
     return sendJson(response, 201, activityResponse(store, activity));
   }
   const deleteMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)$/);
@@ -3363,7 +3509,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     try { await persistActivities(store); }
     catch (error) {
       console.error(`[data] suppression Proto05 impossible : ${error.message}`);
-      return sendJson(response, 500, { error: "Suppression JSON impossible." });
+      return sendJson(response, 500, { error: "Suppression impossible." });
     }
     try { await removeActivityLibraryAssignment(id); }
     catch (error) { console.error(`[data] nettoyage du classement de ${id} impossible : ${error.message}`); }
@@ -3387,7 +3533,11 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     }
     catch (error) { return sendJson(response, 400, { error: error.message }); }
     store.activities.push(activity); store.updatedAt = new Date().toISOString();
-    try { await persistActivities(store); } catch { return sendJson(response, 500, { error: "Création JSON impossible." }); }
+    try { await persistActivities(store); }
+    catch (error) {
+      console.error(`[data] création Proto05 impossible : ${error.code || "ERROR"}/${error.reasonCode || "UNKNOWN"} ${(error.differencePaths || []).join(",")}`);
+      return sendJson(response, 500, { error: "Création impossible." });
+    }
     return sendJson(response, 201, activityResponse(store, activity));
   }
   if (url.pathname === "/api/proto05/activities" || /^\/api\/proto05\/activities\/[^/]+(?:\/authoring)?$/.test(url.pathname)) {
@@ -3430,7 +3580,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       store.activities[index] = next;
       store.updatedAt = new Date().toISOString();
       try { await persistActivities(store); }
-      catch (error) { console.error(`[data] sauvegarde Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Sauvegarde JSON impossible." }); }
+      catch (error) { console.error(`[data] sauvegarde Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Sauvegarde impossible." }); }
       return sendJson(response, 200, activityResponse(store, next));
     }
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: isDetail ? "GET, PUT, DELETE" : "GET" });
@@ -3462,7 +3612,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
 
 async function handleApi(request, response, url) {
   if (url.pathname === "/api/health") return handleApiInReadContext(request, response, url);
-  if (DATA_MODE !== "json" && !["GET", "HEAD"].includes(request.method)) {
+  if (["compare", "mariadb-readonly"].includes(DATA_MODE) && !["GET", "HEAD"].includes(request.method)) {
     return sendJson(response, 409, readonlyMutationPayload(DATA_MODE));
   }
   if (DATA_MODE === "json") return handleApiInReadContext(request, response, url);

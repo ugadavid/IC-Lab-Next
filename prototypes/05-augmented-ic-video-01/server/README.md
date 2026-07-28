@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.47
+# Serveur autonome du Prototype 05 — 0.1.48
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -7,10 +7,10 @@ l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la ra
 npm start
 ```
 
-## Modes de lecture
+## Modes de données
 
-`PROTO05_DATA_MODE` accepte exactement `json`, `compare` ou
-`mariadb-readonly`.
+`PROTO05_DATA_MODE` accepte exactement `json`, `compare`,
+`mariadb-readonly` ou `mariadb`.
 
 - `json` est le mode par défaut. Il ne charge pas le client MariaDB et conserve
   les lectures et écritures JSON historiques.
@@ -18,12 +18,15 @@ npm start
   répond avec la représentation JSON et refuse toute mutation.
 - `mariadb-readonly` sert les lectures depuis MariaDB, sans fallback JSON, et
   refuse toute mutation.
+- `mariadb` sert toutes les lectures depuis MariaDB et y exécute les mutations
+  dans des transactions relues avant commit, sans lecture, écriture ou fallback
+  JSON.
 
 Les paramètres MariaDB sont conservés localement dans `../.env.local`, ignoré
 par Git. `../.env.example` documente uniquement les noms attendus et ne doit
 jamais recevoir de mot de passe réel.
 
-Depuis ce répertoire, les deux modes MariaDB se lancent ainsi :
+Depuis ce répertoire, les modes MariaDB se lancent ainsi :
 
 ```powershell
 $env:PROTO05_DATA_MODE = 'compare'
@@ -37,10 +40,20 @@ $env:PROTO05_DATA_MODE = 'mariadb-readonly'
 node --env-file=../.env.local server.js
 ```
 
+Le mode d’écriture transactionnelle utilise la même configuration locale :
+
+```powershell
+$env:PROTO05_DATA_MODE = 'mariadb'
+node --env-file=../.env.local server.js
+```
+
 Le serveur vérifie au démarrage l’identité, la base, les grants et une lecture
-réelle. Une configuration incomplète, un compte non strictement readonly ou une
-connexion indisponible arrête explicitement le démarrage. `Ctrl+C` réalise
-l’arrêt propre.
+réelle. Les modes de lecture exigent le compte strictement readonly ; le mode
+`mariadb` exige uniquement `SELECT`, `INSERT`, `UPDATE`, `DELETE` et,
+facultativement, `SHOW VIEW` sur la base Proto05. Tout privilège global,
+structurel, délégué ou visant une autre base bloque le démarrage. Une
+configuration ou une connexion indisponible est également bloquante.
+`Ctrl+C` réalise l’arrêt propre.
 
 Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `GET /teacher/preview/:activityId`, `GET /teacher/edit/:activityId`,

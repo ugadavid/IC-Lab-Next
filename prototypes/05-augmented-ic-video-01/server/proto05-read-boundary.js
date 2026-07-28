@@ -23,7 +23,9 @@ function createProto05ReadBoundary({
     },
     async readSnapshot(context = {}) {
       if (mode === "json") return jsonAdapter.readSnapshot(context);
-      if (mode === "mariadb-readonly") return mariadbAdapter.readSnapshot(context);
+      if (mode === "mariadb-readonly" || mode === "mariadb") {
+        return mariadbAdapter.readSnapshot(context);
+      }
 
       const [jsonSnapshot, mariadbSnapshot] = await Promise.all([
         jsonAdapter.readSnapshot(context),

@@ -24,6 +24,12 @@ const {
   mapMariaDbTablesToSnapshot,
   projectMariaDbSnapshotForApplication
 } = require("../proto05-mariadb-readonly");
+const {
+  assertApplicationGrants,
+  createMariaDbWriteAdapter,
+  tablePlan
+} = require("../proto05-mariadb-write");
+const { createProto05WriteBoundary } = require("../proto05-write-boundary");
 const { projectCanonicalLibrary } = require("../media-library-runtime");
 const { startTemporaryProto05Server } = require("./helpers/temporary-proto05-server");
 
@@ -81,6 +87,7 @@ test("sélecteur de mode strict et configuration MariaDB différée", () => {
   assert.equal(dataModeFromEnvironment({}), "json");
   assert.equal(dataModeFromEnvironment({ PROTO05_DATA_MODE: "compare" }), "compare");
   assert.equal(dataModeFromEnvironment({ PROTO05_DATA_MODE: "mariadb-readonly" }), "mariadb-readonly");
+  assert.equal(dataModeFromEnvironment({ PROTO05_DATA_MODE: "mariadb" }), "mariadb");
   assert.throws(() => dataModeFromEnvironment({ PROTO05_DATA_MODE: "hybrid" }), /invalide/);
   assert.deepEqual(
     mariadbConfigurationFromEnvironment({
@@ -107,6 +114,135 @@ test("sélecteur de mode strict et configuration MariaDB différée", () => {
     }),
     /PROTO05_MARIADB_PASSWORD/
   );
+});
+
+test("grants applicatifs MariaDB limités aux écritures de données Proto05", () => {
+  const config = { ...testConfiguration(), user: "proto05_application" };
+  const valid = [
+    { grant: "GRANT USAGE ON *.* TO `proto05_application`@`%`" },
+    { grant: "GRANT SELECT, INSERT, UPDATE, DELETE, SHOW VIEW ON `ic_augmented_video`.* TO `proto05_application`@`%`" }
+  ];
+  assert.deepEqual(assertApplicationGrants(valid, config), {
+    readonly: false,
+    privileges: ["DELETE", "INSERT", "SELECT", "SHOW VIEW", "UPDATE"]
+  });
+  for (const forbidden of [
+    "ALTER",
+    "CREATE",
+    "DROP",
+    "EXECUTE",
+    "GRANT OPTION"
+  ]) {
+    const grant = forbidden === "GRANT OPTION"
+      ? "GRANT SELECT, INSERT, UPDATE, DELETE ON `ic_augmented_video`.* TO `proto05_application`@`%` WITH GRANT OPTION"
+      : `GRANT ${forbidden} ON \`ic_augmented_video\`.* TO \`proto05_application\`@\`%\``;
+    assert.throws(() => assertApplicationGrants([...valid, { grant }], config));
+  }
+  assert.throws(() => assertApplicationGrants([
+    ...valid,
+    { grant: "GRANT SELECT ON `ic_hub`.* TO `proto05_application`@`%`" }
+  ], config), /hors du périmètre/);
+});
+
+test("plan relationnel distingue insert, update, delete et préserve les lignes identiques", () => {
+  const definition = { name: "activities", pk: ["id"] };
+  const plan = tablePlan(
+    definition,
+    [{ id: "same", title: "A" }, { id: "update", title: "Avant" }, { id: "delete", title: "X" }],
+    [{ id: "same", title: "A" }, { id: "update", title: "Après" }, { id: "insert", title: "Y" }]
+  );
+  assert.deepEqual(plan.inserts.map(row => row.id), ["insert"]);
+  assert.deepEqual(plan.updates.map(change => change.desired.id), ["update"]);
+  assert.deepEqual(plan.deletes.map(row => row.id), ["delete"]);
+});
+
+test("frontière d’écriture conserve JSON, autorise mariadb et refuse les modes de lecture", async () => {
+  const calls = [];
+  const json = createProto05WriteBoundary({
+    mode: "json",
+    jsonAdapter: { async writeSnapshot(snapshot) { calls.push(["json", snapshot]); } }
+  });
+  await json.writeSnapshot({ id: "json" });
+  const maria = createProto05WriteBoundary({
+    mode: "mariadb",
+    jsonAdapter: { async writeSnapshot() { throw new Error("fallback JSON"); } },
+    mariadbAdapter: { async writeSnapshot(snapshot) { calls.push(["mariadb", snapshot]); } }
+  });
+  await maria.writeSnapshot({ id: "mariadb" });
+  assert.deepEqual(calls.map(call => call[0]), ["json", "mariadb"]);
+  for (const mode of ["compare", "mariadb-readonly"]) {
+    const readonly = createProto05WriteBoundary({
+      mode,
+      jsonAdapter: { async writeSnapshot() {} }
+    });
+    await assert.rejects(() => readonly.writeSnapshot({}), error => (
+      error.code === "PROTO05_READONLY_MODE"
+    ));
+  }
+});
+
+test("une erreur forcée après la première écriture déclenche un rollback sans commit", async () => {
+  const tables = await migrationTables();
+  const canonical = canonicalJsonSnapshot();
+  const snapshot = {
+    ...canonical,
+    videoLibrary: projectCanonicalLibrary(canonical.videoLibrary)
+  };
+  snapshot.activities.activities[0].title += " [rollback]";
+  snapshot.activities.updatedAt = new Date().toISOString();
+  Object.defineProperty(snapshot, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: canonical.videoLibrary
+  });
+  let rolledBack = 0;
+  let committed = 0;
+  let mutations = 0;
+  const mysql = {
+    async createConnection(options) {
+      return {
+        async query(sql) {
+          if (/^SET SESSION/.test(sql) || /^SET TRANSACTION/.test(sql)) return [[], []];
+          if (sql.startsWith("SELECT CURRENT_USER")) {
+            return [[{ account: `${options.user}@%`, database_name: options.database }], []];
+          }
+          if (sql === "SHOW GRANTS") return [[
+            { grant: `GRANT USAGE ON *.* TO \`${options.user}\`@\`%\`` },
+            { grant: `GRANT SELECT, INSERT, UPDATE, DELETE, SHOW VIEW ON \`${options.database}\`.* TO \`${options.user}\`@\`%\`` }
+          ], []];
+          if (sql.startsWith("SELECT GET_LOCK")) return [[{ acquired: 1 }], []];
+          if (sql.startsWith("SELECT RELEASE_LOCK")) return [[{ released: 1 }], []];
+          const select = /^SELECT \* FROM `([a-z0-9_]+)`/.exec(sql);
+          if (select) return [structuredClone(tables[select[1]] || []), []];
+          if (/^(?:INSERT|UPDATE|DELETE)\s/i.test(sql)) {
+            mutations += 1;
+            return [{ affectedRows: 1 }, []];
+          }
+          throw new Error(`Requête inattendue : ${sql}`);
+        },
+        async beginTransaction() {},
+        async rollback() { rolledBack += 1; },
+        async commit() { committed += 1; },
+        async end() {}
+      };
+    }
+  };
+  const adapter = createMariaDbWriteAdapter({
+    config: { ...testConfiguration(), user: "proto05_application" },
+    prototypeDirectory,
+    mysql
+  });
+  await assert.rejects(
+    () => adapter.writeSnapshot(snapshot, {
+      operation: "forced-rollback-test",
+      failAfterStatements: 1
+    }),
+    error => error.code === "PROTO05_FORCED_ROLLBACK"
+  );
+  assert.equal(mutations, 1);
+  assert.equal(rolledBack, 1);
+  assert.equal(committed, 0);
 });
 
 test("validation des grants strictement readonly", () => {

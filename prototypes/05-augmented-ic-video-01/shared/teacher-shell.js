@@ -149,8 +149,9 @@
     const normalized = String(message || "").toLocaleLowerCase("fr");
     if (/échec|erreur|refus|indisponible|impossible/.test(normalized)) return "error";
     if (/enregistrement en cours|enregistrement…|sauvegarde en cours/.test(normalized)) return "saving";
-    if (/non enregistr|sauvegardez|ajouté au brouillon|modifi/.test(normalized)) return "dirty";
+    if (/non enregistr/.test(normalized)) return "dirty";
     if (/enregistré|enregistrées|sauvegardé|sauvegardée/.test(normalized)) return "saved";
+    if (/sauvegardez|ajouté au brouillon|modifi/.test(normalized)) return "dirty";
     return null;
   }
 
@@ -161,6 +162,22 @@
       saved: "Enregistré",
       error: "Échec de l’enregistrement"
     }[state] || "Enregistré";
+  }
+
+  function transitionSaveState(current, event) {
+    const transitions = {
+      "local-change": "dirty",
+      "save-start": "saving",
+      "save-success": "saved",
+      "save-error": "error"
+    };
+    return transitions[event] || current || "saved";
+  }
+
+  function messageAfterLocalChange(message) {
+    return saveStateFromMessage(message) === "saved"
+      ? "Modifications non enregistrées."
+      : message;
   }
 
   function installSaveMirror(context) {
@@ -200,7 +217,7 @@
     }
 
     button.addEventListener("click", () => {
-      setState("saving");
+      setState(transitionSaveState(status.dataset.state, "save-start"));
       if (context.route === "edit" && source.form) source.form.requestSubmit(source);
       else source.click();
       syncButton();
@@ -231,7 +248,13 @@
     if (main) {
       const markDirty = event => {
         if (event.target.closest(".teacher-shell")) return;
-        setState("dirty");
+        setState(transitionSaveState(status.dataset.state, "local-change"));
+        if (sourceStatus) {
+          const nextMessage = messageAfterLocalChange(sourceStatus.textContent);
+          if (nextMessage === sourceStatus.textContent) return;
+          sourceStatus.dataset.state = "dirty";
+          sourceStatus.textContent = nextMessage;
+        }
       };
       main.addEventListener("input", markDirty, true);
       main.addEventListener("change", markDirty, true);
@@ -310,6 +333,8 @@
     activityItems,
     activityStatusLabel,
     saveStateFromMessage,
+    transitionSaveState,
+    messageAfterLocalChange,
     updateActivity,
     setSaveState() {},
     boot

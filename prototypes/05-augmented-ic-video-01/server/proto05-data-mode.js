@@ -1,6 +1,6 @@
 "use strict";
 
-const DATA_MODES = Object.freeze(["json", "compare", "mariadb-readonly"]);
+const DATA_MODES = Object.freeze(["json", "compare", "mariadb-readonly", "mariadb"]);
 
 function dataModeFromEnvironment(environment = process.env) {
   const value = String(environment.PROTO05_DATA_MODE || "json").trim();
