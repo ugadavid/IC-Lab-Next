@@ -11,12 +11,10 @@ const { startTemporaryProto05Server } = require("./helpers/temporary-proto05-ser
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
 const canonicalDataFile = path.join(prototypeDirectory, "data", "activities.json");
-const video = {
-  id: "video-proto05-uga-37004",
-  title: "Vidéo augmentée IC — source UGA",
-  kind: "hls",
-  proxyUrl: "/api/hls/uga-37004/livestream.m3u8",
-  durationMs: 939217
+const videoRef = {
+  schemaVersion: "0.1",
+  assetId: "media-proto05-video-proto05-uga-37004",
+  playableId: "video-proto05-uga-37004"
 };
 
 function clone(value) {
@@ -32,7 +30,7 @@ function validActivity(id = "validation-fixture") {
     description: "",
     instruction: "",
     pedagogicalQuestion: "",
-    video: clone(video),
+    videoRef: clone(videoRef),
     transcription: { id: `transcription-${id}`, languageId: "fr", segmentIds: ["segment-1"] },
     segments: [{ id: "segment-1", startMs: 0, endMs: 1000, text: "Segment", speakerIds: ["speaker-1"], languageIds: ["fr"], phenomenonIds: ["phenomenon-1"] }],
     speakers: [{ id: "speaker-1", label: "Locuteur" }],
@@ -58,7 +56,6 @@ function authoringPayload(activity) {
     description: activity.description,
     instruction: activity.instruction,
     pedagogicalQuestion: activity.pedagogicalQuestion,
-    videoId: activity.video.id,
     videoRef: activity.videoRef,
     segments: activity.segments,
     languages: activity.languages,
@@ -121,7 +118,7 @@ test("création vide et validation d’intégrité sur serveur temporaire", { ti
     createdResponse = await fetch(`${temporary.baseUrl}/api/proto05/activities`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ title: "Brouillon vide", description: "", videoId: video.id })
+      body: JSON.stringify({ title: "Brouillon vide", description: "", videoRef })
     });
     createdPayload = await createdResponse.json();
     const empty = createdPayload.activity;
@@ -176,13 +173,11 @@ test("création vide et validation d’intégrité sur serveur temporaire", { ti
     assert.equal(savedResponse.status, 200);
     assert.deepEqual(savedPayload.activity, createdPayload.activity);
     const stored = clone(createdPayload.activity);
+    delete stored.video;
     delete stored.videoSource;
-    delete stored.videoRef;
     delete stored.pedagogicalIdentitySummary;
     const persistedActivity = clone(persisted.activities.find(activity => activity.id === createdPayload.activity.id));
     const backupActivity = clone(backup.activities.find(activity => activity.id === createdPayload.activity.id));
-    delete persistedActivity.videoRef;
-    delete backupActivity.videoRef;
     assert.deepEqual(persistedActivity, stored);
     assert.deepEqual(backupActivity, stored);
   });

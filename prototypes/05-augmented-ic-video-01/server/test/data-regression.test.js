@@ -10,6 +10,7 @@ const { startTemporaryProto05Server } = require("./helpers/temporary-proto05-ser
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
 const canonicalDataFile = path.join(prototypeDirectory, "data", "activities.json");
+const videoLibraryFile = path.join(prototypeDirectory, "data", "video-library.json");
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -19,7 +20,6 @@ function addUnknownSentinels(store) {
   const activity = store.activities[0];
   store.testUnknownStoreField = { preserved: "store" };
   activity.testUnknownActivityField = { preserved: "activity" };
-  activity.video.testUnknownVideoField = "video";
   activity.transcription.testUnknownTranscriptionField = "transcription";
   activity.segments[0].testUnknownSegmentField = "segment";
   activity.speakers[0].testUnknownSpeakerField = "speaker";
@@ -37,7 +37,7 @@ function authoringPayload(activity, changes = {}) {
     description: activity.description,
     instruction: activity.instruction || "",
     pedagogicalQuestion: activity.pedagogicalQuestion || "",
-    videoId: activity.video.id,
+    videoRef: activity.videoRef,
     segments: activity.segments,
     languages: activity.languages,
     languageIntervals: activity.languageIntervals,
@@ -136,9 +136,8 @@ function referenceIssues(activity) {
   return issues;
 }
 
-function timingIssues(activity) {
+function timingIssues(activity, duration) {
   const issues = [];
-  const duration = activity.video.durationMs;
   if (!Number.isInteger(duration) || duration <= 0) issues.push("durée vidéo invalide");
   const checkRange = (item, label) => {
     if (!Number.isInteger(item.startMs) || !Number.isInteger(item.endMs)) issues.push(`${label}: temps non entier`);
@@ -165,7 +164,6 @@ function assertUnknownSentinels(store) {
   const activity = store.activities[0];
   assert.deepEqual(store.testUnknownStoreField, { preserved: "store" });
   assert.deepEqual(activity.testUnknownActivityField, { preserved: "activity" });
-  assert.equal(activity.video.testUnknownVideoField, "video");
   assert.equal(activity.transcription.testUnknownTranscriptionField, "transcription");
   assert.equal(activity.segments[0].testUnknownSegmentField, "segment");
   assert.equal(activity.speakers[0].testUnknownSpeakerField, "speaker");
@@ -180,9 +178,15 @@ function assertUnknownSentinels(store) {
 test("non-régression des données historiques Proto05", { timeout: 15000 }, async context => {
   const canonicalHashBefore = sha256(canonicalDataFile);
   const canonicalStore = JSON.parse(fs.readFileSync(canonicalDataFile, "utf8"));
+  const videoLibrary = JSON.parse(fs.readFileSync(videoLibraryFile, "utf8"));
   const initialStore = clone(canonicalStore);
   addUnknownSentinels(initialStore);
   const initialActivity = initialStore.activities[0];
+  const canonicalPlayable = videoLibrary.playables.find(playable =>
+    playable.id === initialActivity.videoRef.playableId &&
+    playable.assetId === initialActivity.videoRef.assetId
+  );
+  const canonicalDuration = canonicalPlayable?.technicalMetadata?.durationMs;
   const initialOrders = collectionOrders(initialActivity);
   const temporary = await startTemporaryProto05Server(initialStore, "proto05-data-regression-");
   const initialTemporaryHash = sha256(temporary.dataFile);
@@ -254,7 +258,7 @@ test("non-régression des données historiques Proto05", { timeout: 15000 }, asy
   });
 
   await context.test("les temps sont valides et synchronisés", () => {
-    assert.deepEqual(timingIssues(initialActivity), []);
+    assert.deepEqual(timingIssues(initialActivity, canonicalDuration), []);
   });
 
   if (executionError) {

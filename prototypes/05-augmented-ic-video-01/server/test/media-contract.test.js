@@ -64,7 +64,7 @@ test("résout la référence YouTube existante et conserve sa projection", () =>
   assert.deepEqual(mediaRefForCatalogEntry(entry), { schemaVersion: "0.1", assetId: "media-proto05-video-proto05-youtube-fg4h0-v3otk", playableId: entry.id });
 });
 
-test("PUT authoring conserve activity.video et accepte videoRef sur une copie", async () => {
+test("PUT authoring persiste videoRef et reprojette activity.video sur une copie", async () => {
   const store = JSON.parse(fs.readFileSync(dataFile, "utf8"));
   const server = await startTemporaryProto05Server(store);
   try {
@@ -75,7 +75,6 @@ test("PUT authoring conserve activity.video et accepte videoRef sur une copie", 
       description: activity.description,
       instruction: activity.instruction,
       pedagogicalQuestion: activity.pedagogicalQuestion,
-      videoId: activity.video.id,
       videoRef: activity.videoRef,
       segments: activity.segments,
       speakers: activity.speakers,
@@ -92,6 +91,11 @@ test("PUT authoring conserve activity.video et accepte videoRef sur une copie", 
     assert.equal(saved.body.activity.video.id, activity.video.id);
     assert.deepEqual(saved.body.activity.videoRef, activity.videoRef);
     assert.equal(saved.body.activity.videoSource.url, activity.video.proxyUrl);
+    const persisted = JSON.parse(fs.readFileSync(server.dataFile, "utf8")).activities
+      .find(item => item.id === activity.id);
+    assert.deepEqual(persisted.videoRef, activity.videoRef);
+    assert.equal("video" in persisted, false);
+    assert.equal("videoSource" in persisted, false);
   } finally {
     await server.cleanup();
   }

@@ -60,7 +60,7 @@ test("ajoute une source locale, directe et HLS par la route Library", async () =
   } finally { await server.cleanup(); }
 });
 
-test("résout un playable existant et conserve activity.video", async () => {
+test("résout un playable existant et projette activity.video", async () => {
   const store = JSON.parse(fs.readFileSync(activitiesFile, "utf8"));
   const server = await startTemporaryProto05Server(store);
   try {

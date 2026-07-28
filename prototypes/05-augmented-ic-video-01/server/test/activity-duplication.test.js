@@ -52,7 +52,7 @@ function normalizeCopy(copy, source) {
 
 function authoredData(activity) {
   return {
-    video: activity.video,
+    videoRef: activity.videoRef,
     transcription: activity.transcription,
     segments: activity.segments,
     speakers: activity.speakers,
@@ -74,7 +74,7 @@ function allInternalIds(activity) {
   ];
 }
 
-function emptyDraft(id, title, video) {
+function emptyDraft(id, title, videoRef) {
   return {
     id,
     version: "0.1.0",
@@ -83,7 +83,7 @@ function emptyDraft(id, title, video) {
     description: "Fixture de brouillon",
     instruction: "",
     pedagogicalQuestion: "",
-    video: clone(video),
+    videoRef: clone(videoRef),
     transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] },
     segments: [],
     speakers: [],
@@ -112,15 +112,15 @@ test("duplication d’une activité Proto05", { timeout: 15000 }, async context 
   const initialStore = clone(canonicalStore);
   let mbolo = initialStore.activities.find(activity => activity.title === "MboloTest");
   if (!mbolo) {
-    mbolo = emptyDraft("proto05-test-draft-mbolo", "MboloTest", historical.video);
+    mbolo = emptyDraft("proto05-test-draft-mbolo", "MboloTest", historical.videoRef);
     initialStore.activities.push(mbolo);
   }
   let lbinz = initialStore.activities.find(activity => activity.title === "Lbinz");
   if (!lbinz) {
-    lbinz = emptyDraft("proto05-test-draft-lbinz", "Lbinz", historical.video);
+    lbinz = emptyDraft("proto05-test-draft-lbinz", "Lbinz", historical.videoRef);
     initialStore.activities.push(lbinz);
   }
-  const emptyCopyCandidate = emptyDraft("proto05-test-valid-empty-draft", "Brouillon vide valide", historical.video);
+  const emptyCopyCandidate = emptyDraft("proto05-test-valid-empty-draft", "Brouillon vide valide", historical.videoRef);
   initialStore.activities.push(emptyCopyCandidate);
   const fixtureHistorical = initialStore.activities.find(activity => activity.id === historical.id);
   fixtureHistorical.studentObservations = [{ id: "student-observation-1" }];
@@ -195,7 +195,11 @@ test("duplication d’une activité Proto05", { timeout: 15000 }, async context 
     assert.equal(historicalCopy.instruction, fixtureHistorical.instruction);
     assert.equal(historicalCopy.pedagogicalQuestion, fixtureHistorical.pedagogicalQuestion);
     assert.equal(historicalCopy.status, "draft");
-    assert.deepEqual(historicalCopy.video, fixtureHistorical.video);
+    assert.deepEqual(historicalCopy.videoRef, fixtureHistorical.videoRef);
+    const persistedCopy = afterHistorical.activities.find(activity => activity.id === historicalCopy.id);
+    assert.deepEqual(persistedCopy.videoRef, fixtureHistorical.videoRef);
+    assert.equal("video" in persistedCopy, false);
+    assert.equal("videoSource" in persistedCopy, false);
   });
 
   await context.test("les volumes et données auteur historiques sont copiés", () => {

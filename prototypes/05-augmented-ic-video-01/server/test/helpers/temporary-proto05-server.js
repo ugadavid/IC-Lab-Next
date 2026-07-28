@@ -70,6 +70,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   const temporaryVideoLibraryWorkspaceDirectory = path.join(temporaryDataDirectory, "video-library-workspaces");
   const languageCatalogFile = path.join(temporaryReferenceDirectory, "languages.json");
   fs.copyFileSync(path.join(serverDirectory, "server.js"), serverFile);
+  fs.copyFileSync(path.join(serverDirectory, "activity-video-projection.js"), path.join(temporaryServerDirectory, "activity-video-projection.js"));
   fs.copyFileSync(path.join(serverDirectory, "media-contract.js"), path.join(temporaryServerDirectory, "media-contract.js"));
   fs.copyFileSync(path.join(serverDirectory, "library-contract.js"), path.join(temporaryServerDirectory, "library-contract.js"));
   fs.copyFileSync(path.join(serverDirectory, "pedagogical-identity.js"), path.join(temporaryServerDirectory, "pedagogical-identity.js"));
@@ -78,15 +79,6 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   if (options.videoLibrary) fs.writeFileSync(videoLibraryFile, `${JSON.stringify(options.videoLibrary, null, 2)}\n`, "utf8");
   fs.cpSync(sourceVideoLibraryMediaDirectory, temporaryVideoLibraryMediaDirectory, { recursive: true });
   const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
-  const knownVideoIds = new Set(videoCatalog.videos.map(video => video.id));
-  for (const activity of store.activities || []) {
-    if (activity.video?.id && activity.video.provider !== "local" && !knownVideoIds.has(activity.video.id)) {
-      const proxyUrl = "/api/hls/uga-37004/livestream.m3u8";
-      activity.video.proxyUrl = proxyUrl;
-      videoCatalog.videos.push({ id: activity.video.id, title: activity.video.title || "Fixture vidÃ©o", provider: "uga", sourceUrl: "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8", proxyUrl, durationMs: activity.video.durationMs ?? null, authorized: true });
-      knownVideoIds.add(activity.video.id);
-    }
-  }
   fs.writeFileSync(videoCatalogFile, `${JSON.stringify(videoCatalog, null, 2)}\n`, "utf8");
   for (const file of ["teacher.html", "teacher-create.html", "teacher-edit.html", "teacher-videos.html", "teacher-video-detail.html", "teacher-anonymization.html", "teacher-author.html", "teacher-guided.html", "index-0.0.9.html"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, file), path.join(prototypeDirectory, file));

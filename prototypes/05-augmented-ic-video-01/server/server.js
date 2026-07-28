@@ -10,8 +10,7 @@ const { spawn, spawnSync } = require("node:child_process");
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 const {
-  mediaRefForCatalogEntry,
-  resolveVideoRef
+  mediaRefForCatalogEntry
 } = require("./media-contract");
 const {
   libraryFromCatalog,
@@ -27,6 +26,10 @@ const {
   canonicalFromRuntime,
   assertWritableCanonical
 } = require("./media-library-runtime");
+const {
+  projectActivityVideo,
+  projectActivityVideoSource
+} = require("./activity-video-projection");
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 const {
   assertPedagogicalLineage,
@@ -38,7 +41,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.45";
+const VERSION = "0.1.46";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(ROOT_DIR, "data");
@@ -316,12 +319,25 @@ function safeDataFile() {
   return file;
 }
 
+function activityForStorage(activity) {
+  const stored = { ...activity };
+  delete stored.video;
+  delete stored.videoSource;
+  return stored;
+}
+
+function storeForPersistence(store) {
+  return {
+    ...store,
+    activities: (store.activities || []).map(activityForStorage)
+  };
+}
+
 async function readActivities() {
   try {
     const parsed = JSON.parse(await fs.readFile(safeDataFile(), "utf8"));
     if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.activities)) throw new Error("JSON d’activités invalide.");
-    parsed.activities = parsed.activities.map(normalizeActivityOverlays);
-    parsed.activities.forEach(validateActivityVideoReference);
+    parsed.activities = parsed.activities.map(activity => activityForStorage(normalizeActivityOverlays(activity)));
     return parsed;
   } catch (error) {
     console.error(`[data] lecture impossible : ${error.message}`);
@@ -473,61 +489,77 @@ function normalizeActivityOverlays(activity) {
   return next;
 }
 
-function validateActivityVideoReference(activity) {
-  const video = activity?.video;
-  const catalogEntry = VIDEO_CATALOG.find(entry => entry.id === video?.id && entry.authorized);
-  if (catalogEntry) {
-    if (catalogEntry.provider === "youtube" && (video.provider !== "youtube" || video.videoId !== catalogEntry.videoId || video.embedUrl !== catalogEntry.embedUrl)) throw new Error("Une activité référence une source YouTube incohérente.");
-    if (catalogEntry.provider === "uga" && video.proxyUrl !== catalogEntry.proxyUrl) throw new Error("Une activité référence une source HLS incohérente.");
-    return;
-  }
-  if (activity?.videoRef) {
-    const playable = resolveLibraryPlayable(activity.videoRef, VIDEO_LIBRARY);
-    if (!video || video.id !== playable.id) throw new Error("La projection activity.video ne correspond pas au playable Library.");
-    return;
-  }
-  throw new Error("Une activité référence une source vidéo absente ou non validée.");
+function unresolvedActivityPlayable(message = "La référence vidéo de l’activité ne peut pas être résolue.") {
+  const error = new Error(message);
+  error.code = "ACTIVITY_PLAYABLE_UNRESOLVED";
+  return error;
 }
 
-function activityVideoRef(activity) {
-  if (activity?.videoRef) {
-    try { return resolveLibraryPlayable(activity.videoRef, VIDEO_LIBRARY) && { schemaVersion: "0.1", assetId: activity.videoRef.assetId, playableId: activity.videoRef.playableId }; }
-    catch {}
+function activityProjectionErrorPayload(error, fallback) {
+  return {
+    status: error?.code === "ACTIVITY_PLAYABLE_UNRESOLVED" ? 409 : 500,
+    body: {
+      code: error?.code || "ACTIVITY_PROJECTION_FAILED",
+      error: error?.message || fallback
+    }
+  };
+}
+
+function normalizedActivityVideoRef(videoRef) {
+  if (!videoRef || typeof videoRef !== "object" || Array.isArray(videoRef)) throw unresolvedActivityPlayable("videoRef doit être un objet.");
+  const { assetId, playableId } = videoRef;
+  if (typeof assetId !== "string" || !assetId || typeof playableId !== "string" || !playableId) {
+    throw unresolvedActivityPlayable("videoRef doit contenir assetId et playableId.");
   }
-  const entry = VIDEO_CATALOG.find(item => item.id === activity?.video?.id && item.authorized);
-  if (!entry) throw new Error("Impossible de construire videoRef pour cette activitÃ©.");
-  if (activity?.videoRef) {
-    if (activity.videoRef.playableId !== entry.id) throw new Error("videoRef ne correspond pas Ã  activity.video.");
-    return activity.videoRef;
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId);
+  if (!asset || !playable) throw unresolvedActivityPlayable();
+  return { schemaVersion: "0.1", assetId, playableId };
+}
+
+function activityVideoRefFromCatalogId(videoId) {
+  const entry = VIDEO_CATALOG.find(item => item.id === videoId && item.authorized);
+  if (!entry) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
+  return normalizedActivityVideoRef(mediaRefForCatalogEntry(entry));
+}
+
+function selectedActivityVideoRef(payload, currentVideoRef = null) {
+  const fromCatalog = payload.videoId !== undefined ? activityVideoRefFromCatalogId(payload.videoId) : null;
+  const explicit = payload.videoRef !== undefined ? normalizedActivityVideoRef(payload.videoRef) : null;
+  if (fromCatalog && explicit && (fromCatalog.assetId !== explicit.assetId || fromCatalog.playableId !== explicit.playableId)) {
+    throw new Error("videoId et videoRef doivent désigner le même playable.");
   }
-  return mediaRefForCatalogEntry(entry);
+  if (explicit || fromCatalog) return explicit || fromCatalog;
+  if (currentVideoRef) return normalizedActivityVideoRef(currentVideoRef);
+  throw unresolvedActivityPlayable("Une référence vidéo canonique est obligatoire.");
 }
 
 function resolveActivityVideo(activity) {
-  validateActivityVideoReference(activity);
-  const videoRef = activityVideoRef(activity);
-  try {
-    return { videoRef, source: resolveLibraryPlayable(videoRef, VIDEO_LIBRARY) };
-  } catch (libraryError) {
-    return { videoRef, source: resolveVideoRef(videoRef, VIDEO_CATALOG) };
-  }
+  const videoRef = normalizedActivityVideoRef(activity?.videoRef);
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === videoRef.assetId);
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === videoRef.playableId && item.assetId === videoRef.assetId);
+  if (!asset || !playable) throw unresolvedActivityPlayable();
+  const source = projectActivityVideoSource(playableForClient(playable));
+  return {
+    videoRef,
+    video: projectActivityVideo(asset, source),
+    source
+  };
 }
 
 function activityForResponse(activity) {
   const resolved = resolveActivityVideo(activity);
   return {
-    ...activity,
+    ...activityForStorage(activity),
     videoRef: resolved.videoRef,
+    video: resolved.video,
     videoSource: resolved.source,
     pedagogicalIdentitySummary: summarizePedagogicalIdentity(activity)
   };
 }
 
 function activityForLibraryResponse(activity) {
-  return {
-    ...activity,
-    pedagogicalIdentitySummary: summarizePedagogicalIdentity(activity)
-  };
+  return activityForResponse(activity);
 }
 
 function readRequestBody(request, limit = 64 * 1024) {
@@ -567,26 +599,6 @@ function validateMetadataPatch(payload) {
     throw new Error("pedagogicalIdentity doit être un objet.");
   }
   return payload;
-}
-
-function activityVideoFromCatalog(video, current = {}) {
-  if (video.provider === "youtube") {
-    return { ...current, id: video.id, title: video.title, provider: "youtube", videoId: video.videoId, embedUrl: video.embedUrl, durationMs: video.durationMs };
-  }
-  return { ...current, id: video.id, title: video.title, ...(current.provider ? { provider: "uga" } : {}), kind: "hls", proxyUrl: video.proxyUrl, durationMs: video.durationMs };
-}
-
-function activityVideoFromLibrary(asset, playable, current = {}) {
-  const clientPlayable = playableForClient(playable);
-  const projection = { ...current, id: clientPlayable.id, title: asset.title, kind: clientPlayable.kind, durationMs: clientPlayable.durationMs ?? null };
-  if (clientPlayable.provider) projection.provider = clientPlayable.provider;
-  if (clientPlayable.videoId) { projection.videoId = clientPlayable.videoId; projection.embedUrl = clientPlayable.embedUrl; }
-  if (clientPlayable.url) projection.url = clientPlayable.url;
-  if (clientPlayable.manifestUrl) projection.manifestUrl = clientPlayable.manifestUrl;
-  if (clientPlayable.originUrl) projection.sourceUrl = clientPlayable.originUrl;
-  if (clientPlayable.proxyUrl) projection.proxyUrl = clientPlayable.proxyUrl;
-  if (clientPlayable.storageKey) projection.storageKey = clientPlayable.storageKey;
-  return projection;
 }
 
 function integerTime(value, label, durationMs = Infinity) {
@@ -638,8 +650,10 @@ function validateReferences(values, available, label) {
 
 function validateActivityIntegrity(activity) {
   requireObject(activity, "L’activité");
-  validateActivityVideoReference(activity);
-  const durationMs = activity.video?.durationMs || Infinity;
+  const resolvedVideo = resolveActivityVideo(activity);
+  const durationMs = Number.isInteger(resolvedVideo.source.durationMs) && resolvedVideo.source.durationMs > 0
+    ? resolvedVideo.source.durationMs
+    : Infinity;
   const identifiers = {
     speakers: collectionIdentifiers(activity, "speakers", "Chaque locuteur"),
     languages: collectionIdentifiers(activity, "languages", "Chaque langue"),
@@ -759,37 +773,20 @@ function validateAuthoringPatch(payload, current) {
   const allowed = new Set(["title", "description", "instruction", "pedagogicalQuestion", "videoId", "videoRef", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "overlays", "layerConfiguration"]);
   const unknown = Object.keys(payload).filter(key => !allowed.has(key));
   if (unknown.length) throw new Error(`Champ non autorisé : ${unknown.join(", ")}.`);
-  validateMetadataPatch(Object.fromEntries(Object.entries(payload).filter(([key]) => ["title", "description", "instruction", "pedagogicalQuestion", "videoId"].includes(key))));
-  const next = { ...current };
+  validateMetadataPatch(Object.fromEntries(Object.entries(payload).filter(([key]) => ["title", "description", "instruction", "pedagogicalQuestion", "videoId", "videoRef"].includes(key))));
+  const next = activityForStorage(current);
   for (const key of ["title", "description", "instruction", "pedagogicalQuestion", "segments", "speakers", "languages", "languageIntervals", "phenomena", "layers", "teacherAnnotations", "overlays", "layerConfiguration"]) if (payload[key] !== undefined) next[key] = payload[key];
-  if (payload.videoRef !== undefined) {
-    const resolved = resolveActivityVideo({ ...next, videoRef: payload.videoRef });
-    if (resolved.videoRef.playableId !== next.video?.id) throw new Error("videoRef doit correspondre à la vidéo de l’activité.");
-    next.videoRef = resolved.videoRef;
-  }
+  next.videoRef = selectedActivityVideoRef(payload, current.videoRef);
   next.transcription = { ...(current.transcription || {}), segmentIds: (next.segments || []).map(segment => segment.id) };
-  if (payload.videoId !== undefined) {
-    const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId && entry.authorized);
-    next.video = activityVideoFromCatalog(video, current.video);
-  }
   validateSharedLanguageSelection(next.languages);
   validateActivityIntegrity(next);
   return next;
 }
 
-function draftActivity(videoId, metadata = {}) {
-  const video = VIDEO_CATALOG.find(entry => entry.id === videoId && entry.authorized);
-  if (!video) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
-  const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
-  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", pedagogicalIdentity: metadata.pedagogicalIdentity || createEmptyPedagogicalIdentity(id), video: activityVideoFromCatalog(video), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
-}
-
 function draftActivityFromVideoRef(videoRef, metadata = {}) {
-  const playable = resolveLibraryPlayable(videoRef, VIDEO_LIBRARY);
-  const asset = VIDEO_LIBRARY.assets.find(item => item.id === videoRef.assetId);
-  if (!asset) throw new Error("Asset vidÃ©o introuvable.");
+  const normalizedVideoRef = normalizedActivityVideoRef(videoRef);
   const id = `proto05-draft-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
-  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activitÃ©", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", pedagogicalIdentity: metadata.pedagogicalIdentity || createEmptyPedagogicalIdentity(id), videoRef: { schemaVersion: "0.1", assetId: asset.id, playableId: playable.id }, video: activityVideoFromLibrary(asset, playable), transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
+  return { id, version: "0.1.0", status: "draft", title: metadata.title || "Nouvelle activité", description: metadata.description || "", instruction: metadata.instruction || "", pedagogicalQuestion: metadata.pedagogicalQuestion || "", pedagogicalIdentity: metadata.pedagogicalIdentity || createEmptyPedagogicalIdentity(id), videoRef: normalizedVideoRef, transcription: { id: `transcription-${id}`, languageId: null, segmentIds: [] }, segments: [], speakers: [], languages: [], languageIntervals: [], layers: [], phenomena: [], teacherAnnotations: [], overlays: [], layerConfiguration: { id: `layer-config-${id}`, defaultVisibleLayerIds: [], learnerVisibleLayerIds: [], teacherVisibleLayerIds: [], allowLearnerToggle: true } };
 }
 
 function uniqueCopyActivityId(activities) {
@@ -827,13 +824,12 @@ function remapReferences(values, identifiers, label) {
 function duplicateActivity(source, activities) {
   if (!source || typeof source !== "object") throw new Error("Activité source invalide.");
   validateActivityIntegrity(source);
-  const videoId = source.video && source.video.id;
   validateMetadataPatch({
     title: source.title,
     description: source.description,
     instruction: source.instruction || "",
     pedagogicalQuestion: source.pedagogicalQuestion || "",
-    ...(source.videoRef ? { videoRef: source.videoRef } : { videoId })
+    videoRef: source.videoRef
   });
   if (!source.transcription || typeof source.transcription !== "object") throw new Error("Transcription source invalide.");
   if (!source.layerConfiguration || typeof source.layerConfiguration !== "object") throw new Error("Configuration de couches source invalide.");
@@ -894,8 +890,7 @@ function duplicateActivity(source, activities) {
     instruction: source.instruction || "",
     pedagogicalQuestion: source.pedagogicalQuestion || "",
     pedagogicalIdentity: pedagogicalIdentityForDuplicate(source, id),
-    ...(source.videoRef ? { videoRef: { ...source.videoRef } } : {}),
-    video: { ...source.video },
+    videoRef: { ...source.videoRef },
     transcription: {
       ...source.transcription,
       id: `transcription-${id}`,
@@ -929,9 +924,10 @@ async function persistActivities(store) {
     const file = safeDataFile();
     const backup = `${file}.bak`;
     const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
+    const stored = storeForPersistence(store);
     await fs.copyFile(file, backup);
     try {
-      await fs.writeFile(temp, `${JSON.stringify(store, null, 2)}\n`, "utf8");
+      await fs.writeFile(temp, `${JSON.stringify(stored, null, 2)}\n`, "utf8");
       await fs.rename(temp, file);
     } finally {
       try { await fs.unlink(temp); } catch {}
@@ -1176,12 +1172,9 @@ function localStorageScopeForPlayable(playable) {
 
 function activityDependencyRelations(activity, assetId, sourceIds, playableIds, playables, sources) {
   const ref = activity?.videoRef || {};
-  const video = activity?.video || {};
   const relations = [];
-  if (ref.assetId === assetId || video.assetId === assetId) relations.push("asset");
-  if (playableIds.has(ref.playableId) || playableIds.has(video.id)) relations.push("playable");
-  if (sourceIds.has(ref.sourceId) || sourceIds.has(video.sourceId)) relations.push("source");
-  if (video.storageKey && playables.some(playable => localStorageKeyForPlayable(playable, sources.find(source => source.id === playable.sourceId)) === video.storageKey)) relations.push("storage-key");
+  if (ref.assetId === assetId) relations.push("asset");
+  if (playableIds.has(ref.playableId)) relations.push("playable");
   return [...new Set(relations)];
 }
 
@@ -1306,9 +1299,7 @@ function localCopyConflicts(assetId, playableId, activities) {
   if (!storageKey) throw Object.assign(new Error("La copie locale ne possède pas de fichier géré valide."), { statusCode: 409 });
   const activityDependencies = (activities || []).filter(activity => {
     const ref = activity?.videoRef || {};
-    const video = activity?.video || {};
-    return ref.playableId === playableId || video.id === playableId || ref.sourceId === source?.id || video.sourceId === source?.id || video.storageKey === storageKey
-      || ((ref.assetId === assetId || video.assetId === assetId) && !ref.playableId && !video.id);
+    return ref.playableId === playableId || (ref.assetId === assetId && !ref.playableId);
   }).map(activity => ({ id: activity.id, title: activity.title || "Activité sans titre" }));
   const sharedReferences = VIDEO_LIBRARY.playables.filter(item => item.id !== playableId && localStorageKeyForPlayable(item, VIDEO_LIBRARY.sources.find(sourceItem => sourceItem.id === item.sourceId)) === storageKey).map(item => {
     const asset = VIDEO_LIBRARY.assets.find(candidate => candidate.id === item.assetId);
@@ -2846,7 +2837,8 @@ async function handleApi(request, response, url) {
       const [store, classification] = await Promise.all([readActivities(), readActivityLibraryClassification()]);
       return sendJson(response, 200, activityLibraryPayload(store, classification));
     } catch (error) {
-      return sendJson(response, 500, { error: error.message || "Bibliothèque d’activités indisponible." });
+      const failure = activityProjectionErrorPayload(error, "Bibliothèque d’activités indisponible.");
+      return sendJson(response, failure.status, failure.body);
     }
   }
   const activityFolderRoute = /^\/api\/proto05\/activity-library\/folders(?:\/([^/]+))?$/.exec(url.pathname);
@@ -3204,10 +3196,10 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     try { payload = JSON.parse(await readRequestBody(request)); }
     catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
     try {
-      const playable = resolveLibraryPlayable(payload, VIDEO_LIBRARY);
-      const asset = VIDEO_LIBRARY.assets.find(item => item.id === payload.assetId);
-      const next = { ...store.activities[index], videoRef: { schemaVersion: "0.1", assetId: payload.assetId, playableId: payload.playableId } };
-      next.video = activityVideoFromLibrary(asset, playable, next.video);
+      const next = {
+        ...activityForStorage(store.activities[index]),
+        videoRef: normalizedActivityVideoRef(payload)
+      };
       validateActivityIntegrity(next);
       store.activities[index] = next;
       store.updatedAt = new Date().toISOString();
@@ -3230,7 +3222,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       const resolved = resolveActivityVideo(activity);
       return sendJson(response, 200, { activityId: id, videoRef: resolved.videoRef, source: resolved.source });
     } catch (error) {
-      return sendJson(response, 400, { error: error.message || "Source vidÃ©o introuvable." });
+      return sendJson(response, error.code === "ACTIVITY_PLAYABLE_UNRESOLVED" ? 409 : 400, { code: error.code || "ACTIVITY_VIDEO_INVALID", error: error.message || "Source vidéo introuvable." });
     }
   }
   const duplicateMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)\/duplicate$/);
@@ -3293,7 +3285,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     const store = await readActivities();
     let activity;
     try {
-      activity = payload.videoRef ? draftActivityFromVideoRef(payload.videoRef, payload) : draftActivity(payload.videoId, payload);
+      activity = draftActivityFromVideoRef(selectedActivityVideoRef(payload), payload);
       validateActivityIntegrity(activity);
       assertPedagogicalLineage(activity, [...store.activities, activity]);
     }
@@ -3328,21 +3320,12 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       try { payload = validateMetadataPatch(JSON.parse(await readRequestBody(request))); }
       catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
       const current = store.activities[index];
-      const next = { ...current };
+      const next = activityForStorage(current);
       for (const key of ["title", "description", "instruction", "pedagogicalQuestion"]) if (payload[key] !== undefined) next[key] = payload[key];
       if (payload.pedagogicalIdentity !== undefined) {
         next.pedagogicalIdentity = normalizePedagogicalIdentityStates(payload.pedagogicalIdentity);
       }
-      if (payload.videoId !== undefined) {
-        const video = VIDEO_CATALOG.find(entry => entry.id === payload.videoId);
-        next.video = activityVideoFromCatalog(video, current.video);
-      }
-      if (payload.videoRef !== undefined) {
-        const playable = resolveLibraryPlayable(payload.videoRef, VIDEO_LIBRARY);
-        const asset = VIDEO_LIBRARY.assets.find(item => item.id === payload.videoRef.assetId);
-        next.videoRef = { schemaVersion: "0.1", assetId: asset.id, playableId: playable.id };
-        next.video = activityVideoFromLibrary(asset, playable, current.video);
-      }
+      if (payload.videoId !== undefined || payload.videoRef !== undefined) next.videoRef = selectedActivityVideoRef(payload, current.videoRef);
       try {
         validateActivityIntegrity(next);
         assertPedagogicalLineage(next, store.activities.map((activity, activityIndex) => activityIndex === index ? next : activity));
@@ -3357,16 +3340,26 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: isDetail ? "GET, PUT, DELETE" : "GET" });
     const store = await readActivities();
     if (url.pathname === "/api/proto05/activities") {
-      return sendJson(response, 200, {
-        schemaVersion: store.schemaVersion || "0.1",
-        updatedAt: store.updatedAt || null,
-        activities: store.activities.map(activityForLibraryResponse)
-      });
+      try {
+        return sendJson(response, 200, {
+          schemaVersion: store.schemaVersion || "0.1",
+          updatedAt: store.updatedAt || null,
+          activities: store.activities.map(activityForLibraryResponse)
+        });
+      } catch (error) {
+        const failure = activityProjectionErrorPayload(error, "Projection des activités impossible.");
+        return sendJson(response, failure.status, failure.body);
+      }
     }
     const id = decodeURIComponent(url.pathname.slice("/api/proto05/activities/".length));
     const activity = store.activities.find((entry) => entry && entry.id === id);
     if (!activity) return sendJson(response, 404, { error: "Activité introuvable." });
-    return sendJson(response, 200, activityResponse(store, activity));
+    try {
+      return sendJson(response, 200, activityResponse(store, activity));
+    } catch (error) {
+      const failure = activityProjectionErrorPayload(error, "Projection de l’activité impossible.");
+      return sendJson(response, failure.status, failure.body);
+    }
   }
   return sendJson(response, 404, { error: "Route API introuvable." });
 }
@@ -3607,7 +3600,7 @@ async function serveStatic(request, response, url) {
   }
   if (/^\/teacher\/guided\/[^/]+$/.test(url.pathname)) {
     const target = path.join(ROOT_DIR, "teacher-guided.html");
-    const file = Buffer.from((await fs.readFile(target, "utf8")).replace("</head>", "<script src=\"/shared/ic-video-player.js\"></script></head>").replace("</body>", "<script>attachVideo=()=>{upgradeICVideoElement(video,state.activity.video).catch(error=>$('#status').textContent=error.message)};</script></body>"));
+    const file = Buffer.from((await fs.readFile(target, "utf8")).replace("</head>", "<script src=\"/shared/ic-video-player.js\"></script></head>").replace("</body>", "<script>attachVideo=()=>{upgradeICVideoElement(video,state.activity.videoSource).catch(error=>$('#status').textContent=error.message)};</script></body>"));
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
   }

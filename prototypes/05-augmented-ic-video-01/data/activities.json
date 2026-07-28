@@ -1,18 +1,16 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-26T17:30:42.426Z",
+  "updatedAt": "2026-07-28T06:52:54.152Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
       "version": "0.1.2",
       "title": "Vidéo augmentée d’intercompréhension",
       "description": "Lecture synchronisée de moments plurilingues, avec annotations pédagogiques IC.",
-      "video": {
-        "id": "video-proto05-uga-37004",
-        "title": "Vidéo augmentée IC — source UGA",
-        "kind": "hls",
-        "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
-        "durationMs": 939217
+      "videoRef": {
+        "schemaVersion": "0.1",
+        "assetId": "media-proto05-video-proto05-uga-37004",
+        "playableId": "video-proto05-uga-37004"
       },
       "languageIntervals": [
         {
@@ -896,14 +894,10 @@
       "description": "Yop",
       "instruction": "",
       "pedagogicalQuestion": "",
-      "video": {
-        "id": "video-proto05-youtube-ev9rfkfhfa0",
-        "title": "Intercompréhension Catalan-Français",
-        "kind": "hls",
-        "proxyUrl": "/api/hls/uga-37004/livestream.m3u8",
-        "provider": "youtube",
-        "videoId": "eV9RFKFhfa0",
-        "embedUrl": "https://www.youtube.com/embed/eV9RFKFhfa0?si=b0uIF3FV83dTrIIF"
+      "videoRef": {
+        "schemaVersion": "0.1",
+        "assetId": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
+        "playableId": "video-proto05-youtube-ev9rfkfhfa0"
       },
       "transcription": {
         "id": "transcription-proto05-draft-1784230655360-d1182f",

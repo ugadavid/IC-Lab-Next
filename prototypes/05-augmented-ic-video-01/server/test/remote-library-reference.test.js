@@ -218,7 +218,7 @@ test("référence distante : analyse HLS/directe sans écriture, confirmation ca
   const associated = await association.json();
   assert.equal(associated.activity.video.kind, "hls");
   assert.match(associated.activity.video.manifestUrl, /^\/api\/proto05\/library\/remote-hls\//);
-  assert.match(associated.activity.video.sourceUrl, /master\.m3u8\?token=kept$/);
+  assert.match(associated.activity.videoSource.originUrl, /master\.m3u8\?token=kept$/);
 
   const blockedDelete = await fetch(`${server.baseUrl}/api/proto05/library/assets/${encodeURIComponent(created.payload.assetId)}`, { method: "DELETE" });
   assert.equal(blockedDelete.status, 409, "une référence associée conserve la protection d’usage");
