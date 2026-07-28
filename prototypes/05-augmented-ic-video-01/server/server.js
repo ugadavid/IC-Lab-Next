@@ -9,6 +9,7 @@ const net = require("node:net");
 const { spawn, spawnSync } = require("node:child_process");
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
+const { AsyncLocalStorage } = require("node:async_hooks");
 const {
   mediaRefForCatalogEntry
 } = require("./media-contract");
@@ -30,6 +31,13 @@ const {
   projectActivityVideo,
   projectActivityVideoSource
 } = require("./activity-video-projection");
+const {
+  dataModeFromEnvironment,
+  mariadbConfigurationFromEnvironment,
+  readonlyMutationPayload
+} = require("./proto05-data-mode");
+const { createMariaDbReadonlyAdapter } = require("./proto05-mariadb-readonly");
+const { createProto05ReadBoundary } = require("./proto05-read-boundary");
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 const {
   assertPedagogicalLineage,
@@ -41,9 +49,14 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.46";
+const VERSION = "0.1.47";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
+const DATA_MODE = dataModeFromEnvironment(process.env);
+const MARIADB_CONFIGURATION = DATA_MODE === "json"
+  ? null
+  : mariadbConfigurationFromEnvironment(process.env);
+const READ_CONTEXT = new AsyncLocalStorage();
 const DATA_DIR = path.join(ROOT_DIR, "data");
 const DATA_FILE = path.join(DATA_DIR, "activities.json");
 const ACTIVITY_LIBRARY_FILE = path.join(DATA_DIR, "activity-library.json");
@@ -174,7 +187,11 @@ function loadVideoCatalog() {
   }));
 }
 
-let VIDEO_CATALOG = loadVideoCatalog();
+let JSON_VIDEO_CATALOG = DATA_MODE === "mariadb-readonly" ? freezeVideoCatalog([]) : loadVideoCatalog();
+
+function activeVideoCatalog() {
+  return READ_CONTEXT.getStore()?.videoCatalog?.videos || JSON_VIDEO_CATALOG;
+}
 
 function safeVideoLibraryFile() {
   const root = path.resolve(DATA_DIR);
@@ -193,7 +210,34 @@ function loadVideoLibrary() {
   return validateLibraryShape(projectCanonicalLibrary(CANONICAL_LIBRARY));
 }
 
-let VIDEO_LIBRARY = loadVideoLibrary();
+let JSON_VIDEO_LIBRARY = DATA_MODE === "mariadb-readonly" ? null : loadVideoLibrary();
+
+function activeVideoLibrary() {
+  const library = READ_CONTEXT.getStore()?.videoLibrary || JSON_VIDEO_LIBRARY;
+  if (!library) throw new Error("Aucune Library vidéo n’est disponible hors du contexte MariaDB.");
+  return library;
+}
+
+const VIDEO_LIBRARY = new Proxy({}, {
+  get(_target, property) {
+    const library = activeVideoLibrary();
+    return Reflect.get(library, property, library);
+  },
+  set(_target, property, value) {
+    if (READ_CONTEXT.getStore()) throw new Error("Mutation de la Library interdite dans un contexte de lecture.");
+    return Reflect.set(JSON_VIDEO_LIBRARY, property, value, JSON_VIDEO_LIBRARY);
+  },
+  has(_target, property) {
+    return Reflect.has(activeVideoLibrary(), property);
+  },
+  ownKeys() {
+    return Reflect.ownKeys(activeVideoLibrary());
+  },
+  getOwnPropertyDescriptor(_target, property) {
+    const descriptor = Reflect.getOwnPropertyDescriptor(activeVideoLibrary(), property);
+    return descriptor ? { ...descriptor, configurable: true } : undefined;
+  }
+});
 
 function safeRelativeMediaPath(rootDirectory, storageKey) {
   if (typeof storageKey !== "string" || !storageKey || storageKey.startsWith("/") || storageKey.includes("\\") || storageKey.split("/").some(part => !part || part === "." || part === "..")) throw new Error("Clé de média locale invalide.");
@@ -301,8 +345,12 @@ function loadLanguageCatalog() {
   });
   return Object.freeze(languages);
 }
-const LANGUAGE_CATALOG = loadLanguageCatalog();
+const LANGUAGE_CATALOG = DATA_MODE === "mariadb-readonly" ? Object.freeze([]) : loadLanguageCatalog();
 const LANGUAGE_CATALOG_BY_ID = new Map(LANGUAGE_CATALOG.map(language => [language.id, language]));
+
+function activeLanguageCatalog() {
+  return READ_CONTEXT.getStore()?.languageCatalog?.languages || LANGUAGE_CATALOG;
+}
 let writeQueue = Promise.resolve();
 
 function sendJson(response, status, payload, headers = {}) {
@@ -333,7 +381,7 @@ function storeForPersistence(store) {
   };
 }
 
-async function readActivities() {
+async function readJsonActivities() {
   try {
     const parsed = JSON.parse(await fs.readFile(safeDataFile(), "utf8"));
     if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.activities)) throw new Error("JSON d’activités invalide.");
@@ -343,6 +391,10 @@ async function readActivities() {
     console.error(`[data] lecture impossible : ${error.message}`);
     throw new Error("Données Proto05 absentes ou JSON invalide.");
   }
+}
+
+async function readActivities() {
+  return READ_CONTEXT.getStore()?.activities || readJsonActivities();
 }
 
 function safeActivityLibraryFile() {
@@ -396,7 +448,7 @@ function normalizeActivityLibraryClassification(value) {
   };
 }
 
-async function readActivityLibraryClassification() {
+async function readJsonActivityLibraryClassification() {
   const file = safeActivityLibraryFile();
   try {
     return normalizeActivityLibraryClassification(JSON.parse(await fs.readFile(file, "utf8")));
@@ -405,6 +457,10 @@ async function readActivityLibraryClassification() {
     console.error(`[data] classement des activités illisible : ${error.message}`);
     throw new Error("Classement des activités absent ou invalide.");
   }
+}
+
+async function readActivityLibraryClassification() {
+  return READ_CONTEXT.getStore()?.activityLibrary || readJsonActivityLibraryClassification();
 }
 
 async function persistActivityLibraryClassification(classification) {
@@ -518,7 +574,7 @@ function normalizedActivityVideoRef(videoRef) {
 }
 
 function activityVideoRefFromCatalogId(videoId) {
-  const entry = VIDEO_CATALOG.find(item => item.id === videoId && item.authorized);
+  const entry = activeVideoCatalog().find(item => item.id === videoId && item.authorized);
   if (!entry) throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   return normalizedActivityVideoRef(mediaRefForCatalogEntry(entry));
 }
@@ -588,7 +644,7 @@ function validateMetadataPatch(payload) {
       throw new Error(`Le champ ${key} doit être une chaîne de 5000 caractères maximum.`);
     }
   }
-  if (payload.videoId !== undefined && (typeof payload.videoId !== "string" || !VIDEO_CATALOG.some(video => video.id === payload.videoId && video.authorized))) {
+  if (payload.videoId !== undefined && (typeof payload.videoId !== "string" || !activeVideoCatalog().some(video => video.id === payload.videoId && video.authorized))) {
     throw new Error("La vidéo sélectionnée n’est pas autorisée.");
   }
   if (payload.videoRef !== undefined) {
@@ -999,7 +1055,7 @@ async function persistCanonicalLibrary(canonical) {
   next.updatedAt = new Date().toISOString();
   await writeCanonicalVideoLibrary(next);
   CANONICAL_LIBRARY = next;
-  VIDEO_LIBRARY = projectCanonicalLibrary(next);
+  JSON_VIDEO_LIBRARY = projectCanonicalLibrary(next);
   return VIDEO_LIBRARY;
 }
 
@@ -1399,7 +1455,7 @@ async function persistLibraryMutation(nextLibrary) {
   nextLibrary.updatedAt = new Date().toISOString();
   validateLibraryShape(nextLibrary);
   await persistVideoLibrary(nextLibrary);
-  VIDEO_LIBRARY = nextLibrary;
+  JSON_VIDEO_LIBRARY = nextLibrary;
 }
 
 function libraryFolderFromInput(payload) {
@@ -1485,7 +1541,7 @@ async function importLocalLibraryMedia(request, url) {
   const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
   nextLibrary.updatedAt = importedAt;
   nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
-  try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
+  try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); JSON_VIDEO_LIBRARY = nextLibrary; }
   catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
   return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
 }
@@ -1844,7 +1900,7 @@ async function copyDirectLibraryMedia(request, url) {
     const asset = { id: assetId, title, status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance, metadata: { originalUrl: originalUrl.toString(), finalUrl: response.url || originalUrl.toString(), redirects, sizeBytes, sha256, mimeType: contentType, durationMs: null }, rights: {} };
     const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
     nextLibrary.updatedAt = importedAt; nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
-    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
+    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); JSON_VIDEO_LIBRARY = nextLibrary; }
     catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
     return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
   } catch (error) {
@@ -2807,7 +2863,7 @@ function catalogEntryFromInput(payload) {
   if (payload.provider === "youtube") source = validateYouTubeLink(link);
   else source = validateUgaLink(link);
   const id = payload.provider === "youtube" ? `video-proto05-youtube-${source.videoId.toLowerCase()}` : `video-proto05-uga-${source.key.split("/").pop().replace(".m3u8", "")}`;
-  if (VIDEO_CATALOG.some(video => video.id === id)) throw new Error("Cette source vidéo existe déjà dans le catalogue.");
+  if (activeVideoCatalog().some(video => video.id === id)) throw new Error("Cette source vidéo existe déjà dans le catalogue.");
   return { id, title, provider: payload.provider, ...(payload.provider === "youtube" ? source : { source: "UGA", sourceType: "hls-proxy", mimeType: "application/vnd.apple.mpegurl", durationMs: null, ...source }), authorized: true };
 }
 
@@ -2815,19 +2871,59 @@ function activityResponse(store, activity) {
   return { schemaVersion: store.schemaVersion || "0.1", updatedAt: store.updatedAt || null, activity: activityForResponse(activity) };
 }
 
-async function handleApi(request, response, url) {
+const JSON_READ_ADAPTER = Object.freeze({
+  async readSnapshot() {
+    const [activities, activityLibrary] = await Promise.all([
+      readJsonActivities(),
+      readJsonActivityLibraryClassification()
+    ]);
+    return {
+      activities,
+      activityLibrary,
+      languageCatalog: {
+        languages: structuredClone(LANGUAGE_CATALOG)
+      },
+      videoCatalog: {
+        schemaVersion: "0.1",
+        videos: structuredClone(JSON_VIDEO_CATALOG)
+      },
+      videoLibrary: structuredClone(JSON_VIDEO_LIBRARY)
+    };
+  }
+});
+
+let READ_BOUNDARY = null;
+
+function proto05ReadBoundary() {
+  if (READ_BOUNDARY) return READ_BOUNDARY;
+  const mariadbAdapter = DATA_MODE === "json"
+    ? null
+    : createMariaDbReadonlyAdapter({
+        config: MARIADB_CONFIGURATION,
+        prototypeDirectory: ROOT_DIR,
+        mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null
+      });
+  READ_BOUNDARY = createProto05ReadBoundary({
+    mode: DATA_MODE,
+    jsonAdapter: JSON_READ_ADAPTER,
+    mariadbAdapter
+  });
+  return READ_BOUNDARY;
+}
+
+async function handleApiInReadContext(request, response, url) {
   if (url.pathname === "/api/health") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
-    return sendJson(response, 200, { ok: true, service: SERVICE, version: VERSION, port: PORT });
+    return sendJson(response, 200, { ok: true, service: SERVICE, version: VERSION, port: PORT, dataMode: DATA_MODE });
   }
   if (url.pathname === "/api/proto05/video-catalog") {
-    if (request.method === "GET") return sendJson(response, 200, { videos: VIDEO_CATALOG });
+    if (request.method === "GET") return sendJson(response, 200, { videos: activeVideoCatalog() });
     if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, POST" });
     let entry;
     try { entry = catalogEntryFromInput(JSON.parse(await readRequestBody(request))); }
     catch (error) { return sendJson(response, 400, { error: error.message || "Source vidéo invalide." }); }
-    const nextCatalog = freezeVideoCatalog([...VIDEO_CATALOG, entry]);
-    try { await persistVideoCatalog(nextCatalog); VIDEO_CATALOG = nextCatalog; }
+    const nextCatalog = freezeVideoCatalog([...activeVideoCatalog(), entry]);
+    try { await persistVideoCatalog(nextCatalog); JSON_VIDEO_CATALOG = nextCatalog; }
     catch (error) { console.error(`[data] catalogue vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement du catalogue impossible." }); }
     return sendJson(response, 201, { video: entry });
   }
@@ -3024,7 +3120,7 @@ async function handleApi(request, response, url) {
     nextLibrary.assets.push(created.asset);
     nextLibrary.sources.push(created.source);
     nextLibrary.playables.push(created.playable);
-    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); VIDEO_LIBRARY = nextLibrary; }
+    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); JSON_VIDEO_LIBRARY = nextLibrary; }
     catch (error) { console.error(`[data] Library vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement de la Library impossible." }); }
     return sendJson(response, 201, { asset: libraryAssetDetails(created.asset) });
   }
@@ -3209,7 +3305,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
   }
   if (url.pathname === "/api/proto05/language-catalog") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
-    return sendJson(response, 200, { languages: LANGUAGE_CATALOG });
+    return sendJson(response, 200, { languages: activeLanguageCatalog() });
   }
   const resolutionMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)\/video-resolution$/);
   if (resolutionMatch) {
@@ -3362,6 +3458,28 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     }
   }
   return sendJson(response, 404, { error: "Route API introuvable." });
+}
+
+async function handleApi(request, response, url) {
+  if (url.pathname === "/api/health") return handleApiInReadContext(request, response, url);
+  if (DATA_MODE !== "json" && !["GET", "HEAD"].includes(request.method)) {
+    return sendJson(response, 409, readonlyMutationPayload(DATA_MODE));
+  }
+  if (DATA_MODE === "json") return handleApiInReadContext(request, response, url);
+  if (READ_CONTEXT.getStore()) return handleApiInReadContext(request, response, url);
+  try {
+    const snapshot = await proto05ReadBoundary().readSnapshot({
+      operation: `${request.method} ${url.pathname}`
+    });
+    return await READ_CONTEXT.run(snapshot, () => handleApiInReadContext(request, response, url));
+  } catch (error) {
+    console.error(`[data] ${DATA_MODE} ${request.method} ${url.pathname}: ${error.message}`);
+    return sendJson(response, 503, {
+      code: "PROTO05_READ_BACKEND_UNAVAILABLE",
+      error: `Lecture ${DATA_MODE} indisponible.`,
+      dataMode: DATA_MODE
+    });
+  }
 }
 
 function hlsPathIsAllowed(url) {
@@ -3636,9 +3754,21 @@ async function serveStatic(request, response, url) {
   }
 }
 
+function requestNeedsReadContext(request, url) {
+  if (DATA_MODE === "json" || READ_CONTEXT.getStore()) return false;
+  if (!["GET", "HEAD"].includes(request.method)) return false;
+  if (!url.pathname.startsWith("/api/")) return false;
+  return !(
+    url.pathname === "/api/health"
+    || url.pathname.startsWith("/api/hls/")
+    || url.pathname.startsWith("/api/proto05/library/media/")
+    || url.pathname.match(/^\/api\/proto05\/library\/hls-preparations\/[^/]+\/media$/)
+  );
+}
+
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
-  try {
+  const routeRequest = async () => {
     if (await servePreparationMedia(request, response, url)) return;
     if (await serveLibraryMedia(request, response, url)) return;
     if (await handleRemoteLibraryMedia(request, response, url)) return;
@@ -3646,6 +3776,15 @@ const server = http.createServer(async (request, response) => {
     if (await handleHlsGateway(request, response, url)) return;
     if (url.pathname.startsWith("/api/")) return await handleApi(request, response, url);
     return await serveStatic(request, response, url);
+  };
+  try {
+    if (requestNeedsReadContext(request, url)) {
+      const snapshot = await proto05ReadBoundary().readSnapshot({
+        operation: `${request.method} ${url.pathname}`
+      });
+      return await READ_CONTEXT.run(snapshot, routeRequest);
+    }
+    return await routeRequest();
   } catch (error) {
     console.error(`[server] ${request.method} ${url.pathname}: ${error.stack || error.message}`);
     if (!response.headersSent) sendJson(response, 500, { error: error.message || "Erreur serveur." });
@@ -3658,6 +3797,7 @@ async function shutdownServer(signal) {
   shutdownPromise = (async () => {
     console.log(`[shutdown] ${signal}: arrêt des téléchargements de la Library.`);
     await shutdownLibraryDownloads();
+    await READ_BOUNDARY?.close?.();
     await new Promise(resolve => {
       const force = setTimeout(() => server.closeAllConnections?.(), 500);
       force.unref();
@@ -3671,12 +3811,16 @@ async function shutdownServer(signal) {
 process.once("SIGINT", () => { void shutdownServer("SIGINT").finally(() => process.exit(0)); });
 process.once("SIGTERM", () => { void shutdownServer("SIGTERM").finally(() => process.exit(0)); });
 
-Promise.all([
-  fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true }),
-  cleanupIncompleteWorkspaceDownloads()
-])
-  .then(() => server.listen(PORT, "127.0.0.1", () => console.log(`[startup] ${SERVICE} ${VERSION} sur http://127.0.0.1:${PORT}/`)))
+Promise.all(DATA_MODE === "json"
+  ? [
+      fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true }),
+      cleanupIncompleteWorkspaceDownloads()
+    ]
+  : []
+)
+  .then(() => proto05ReadBoundary().verify())
+  .then(() => server.listen(PORT, "127.0.0.1", () => console.log(`[startup] ${SERVICE} ${VERSION} (${DATA_MODE}) sur http://127.0.0.1:${PORT}/`)))
   .catch(error => {
-    console.error(`[startup] nettoyage des téléchargements incomplets impossible : ${error.message}`);
+    console.error(`[startup] ${error.message}`);
     process.exitCode = 1;
   });

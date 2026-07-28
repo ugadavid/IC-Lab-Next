@@ -7,12 +7,10 @@
     "description": "Activité isolée pour les tests de visibilité étudiant.",
     "instruction": "Observer les couches proposées.",
     "pedagogicalQuestion": "Quelles couches sont visibles ?",
-    "video": {
-      "id": "test-video",
-      "title": "Vidéo de test sans réseau",
-      "kind": "hls",
-      "proxyUrl": "/test/no-video.m3u8",
-      "durationMs": 60000
+    "videoRef": {
+      "schemaVersion": "0.1",
+      "assetId": "media-proto05-video-proto05-uga-37004",
+      "playableId": "video-proto05-uga-37004"
     },
     "transcription": {
       "id": "test-transcription",

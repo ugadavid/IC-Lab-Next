@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.42
+# Serveur autonome du Prototype 05 — 0.1.47
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -6,6 +6,41 @@ l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la ra
 ```powershell
 npm start
 ```
+
+## Modes de lecture
+
+`PROTO05_DATA_MODE` accepte exactement `json`, `compare` ou
+`mariadb-readonly`.
+
+- `json` est le mode par défaut. Il ne charge pas le client MariaDB et conserve
+  les lectures et écritures JSON historiques.
+- `compare` lit les deux stockages, journalise les divergences sémantiques,
+  répond avec la représentation JSON et refuse toute mutation.
+- `mariadb-readonly` sert les lectures depuis MariaDB, sans fallback JSON, et
+  refuse toute mutation.
+
+Les paramètres MariaDB sont conservés localement dans `../.env.local`, ignoré
+par Git. `../.env.example` documente uniquement les noms attendus et ne doit
+jamais recevoir de mot de passe réel.
+
+Depuis ce répertoire, les deux modes MariaDB se lancent ainsi :
+
+```powershell
+$env:PROTO05_DATA_MODE = 'compare'
+node --env-file=../.env.local server.js
+```
+
+ou :
+
+```powershell
+$env:PROTO05_DATA_MODE = 'mariadb-readonly'
+node --env-file=../.env.local server.js
+```
+
+Le serveur vérifie au démarrage l’identité, la base, les grants et une lecture
+réelle. Une configuration incomplète, un compte non strictement readonly ou une
+connexion indisponible arrête explicitement le démarrage. `Ctrl+C` réalise
+l’arrêt propre.
 
 Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `GET /teacher/preview/:activityId`, `GET /teacher/edit/:activityId`,
