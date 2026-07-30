@@ -157,13 +157,108 @@
     return { valid: true, issue: null };
   }
 
+  function layerReferences(activity, layerId) {
+    return {
+      phenomena: (activity.phenomena || []).filter(item => item.layerId === layerId),
+      overlays: (activity.overlays || []).filter(item => (item.layerIds || []).includes(layerId))
+    };
+  }
+
+  function layerDeletionIssue(activity, layerId) {
+    const references = layerReferences(activity, layerId);
+    const parts = [];
+    if (references.phenomena.length) {
+      parts.push(`${references.phenomena.length} phénomène(s)`);
+    }
+    if (references.overlays.length) {
+      parts.push(`${references.overlays.length} overlay(s)`);
+    }
+    return parts.length
+      ? `Suppression refusée : cette couche est encore référencée par ${parts.join(" et ")}.`
+      : null;
+  }
+
+  function deleteLayer(activity, layerId) {
+    const issue = layerDeletionIssue(activity, layerId);
+    if (issue) return { deleted: false, issue, references: layerReferences(activity, layerId) };
+    const before = (activity.layers || []).length;
+    activity.layers = (activity.layers || []).filter(item => item.id !== layerId);
+    if (activity.layerConfiguration) {
+      for (const key of [
+        "defaultVisibleLayerIds",
+        "learnerVisibleLayerIds",
+        "teacherVisibleLayerIds"
+      ]) {
+        activity.layerConfiguration[key] = (activity.layerConfiguration[key] || [])
+          .filter(id => id !== layerId);
+      }
+    }
+    return {
+      deleted: activity.layers.length < before,
+      issue: null,
+      references: { phenomena: [], overlays: [] }
+    };
+  }
+
+  function segmentDependencies(activity, segmentId) {
+    const phenomena = (activity.phenomena || []).filter(item => item.segmentId === segmentId);
+    const annotations = (activity.teacherAnnotations || []).filter(item => item.segmentId === segmentId);
+    const annotationIds = new Set(annotations.map(item => item.id));
+    const overlays = (activity.overlays || []).filter(
+      item => item.annotationId && annotationIds.has(item.annotationId)
+    );
+    return { phenomena, annotations, overlays };
+  }
+
+  function deleteSegmentCascade(activity, segmentId) {
+    const dependencies = segmentDependencies(activity, segmentId);
+    const annotationIds = new Set(dependencies.annotations.map(item => item.id));
+    const before = (activity.segments || []).length;
+    activity.segments = (activity.segments || []).filter(item => item.id !== segmentId);
+    if (activity.transcription && Array.isArray(activity.transcription.segmentIds)) {
+      activity.transcription.segmentIds = activity.transcription.segmentIds
+        .filter(id => id !== segmentId);
+    }
+    activity.languageIntervals = (activity.languageIntervals || []).map(item => {
+      if (item.segmentId !== segmentId) return item;
+      const { segmentId: removedSegmentId, ...detached } = item;
+      return detached;
+    });
+    activity.phenomena = (activity.phenomena || []).filter(item => item.segmentId !== segmentId);
+    activity.teacherAnnotations = (activity.teacherAnnotations || [])
+      .filter(item => item.segmentId !== segmentId);
+    activity.overlays = (activity.overlays || []).filter(
+      item => !item.annotationId || !annotationIds.has(item.annotationId)
+    );
+    const phenomenonIdsBySegment = new Map(
+      (activity.segments || []).map(segment => [segment.id, []])
+    );
+    for (const phenomenon of activity.phenomena || []) {
+      phenomenonIdsBySegment.get(phenomenon.segmentId)?.push(phenomenon.id);
+    }
+    for (const segment of activity.segments || []) {
+      if (segment.phenomenonIds !== undefined) {
+        segment.phenomenonIds = phenomenonIdsBySegment.get(segment.id) || [];
+      }
+    }
+    return {
+      deleted: activity.segments.length < before,
+      dependencies
+    };
+  }
+
   return {
     applyLanguageIntervalBounds,
     buildAuthoringPayload,
+    deleteLayer,
+    deleteSegmentCascade,
     ensureActivityLanguage,
+    layerDeletionIssue,
+    layerReferences,
     languageIntervalTimeIssue,
     phenomenonIssue,
     preparePhenomenon,
-    renderLanguageOptions
+    renderLanguageOptions,
+    segmentDependencies
   };
 });

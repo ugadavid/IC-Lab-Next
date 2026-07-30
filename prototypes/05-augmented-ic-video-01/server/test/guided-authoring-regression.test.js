@@ -10,11 +10,15 @@ const test = require("node:test");
 const {
   applyLanguageIntervalBounds,
   buildAuthoringPayload,
+  deleteLayer,
+  deleteSegmentCascade,
   ensureActivityLanguage,
+  layerDeletionIssue,
   languageIntervalTimeIssue,
   phenomenonIssue,
   preparePhenomenon,
-  renderLanguageOptions
+  renderLanguageOptions,
+  segmentDependencies
 } = require("../../shared/guided-authoring-contract");
 const {
   messageAfterLocalChange,
@@ -795,6 +799,235 @@ async function exercisePlayableLayerPersistence(server) {
   }
 }
 
+async function exerciseUpdateDeleteLifecycle(server, marker, inspectDatabase = false) {
+  let activityId = null;
+  const ids = {
+    speaker: `speaker-${marker}`,
+    secondSpeaker: `speaker-two-${marker}`,
+    segment: `segment-${marker}`,
+    interval: `interval-${marker}`,
+    firstLayer: `layer-one-${marker}`,
+    secondLayer: `layer-two-${marker}`,
+    phenomenon: `phenomenon-${marker}`,
+    overlay: `overlay-${marker}`
+  };
+  const save = activity => jsonRequest(
+    server.baseUrl,
+    `/api/proto05/activities/${encodeURIComponent(activityId)}/authoring`,
+    {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(buildAuthoringPayload(activity))
+    }
+  );
+
+  try {
+    const list = await jsonRequest(server.baseUrl, "/api/proto05/activities");
+    assert.equal(list.response.status, 200);
+    const source = await jsonRequest(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(list.body.activities[0].id)}`
+    );
+    assert.equal(source.response.status, 200);
+    const created = await jsonRequest(server.baseUrl, "/api/proto05/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: `[TEST ${marker}] cycle modification suppression`,
+        description: "",
+        instruction: "",
+        pedagogicalQuestion: "",
+        videoRef: source.body.activity.videoRef
+      })
+    });
+    assert.equal(created.response.status, 201, created.body.error);
+    activityId = created.body.activity.id;
+
+    let activity = created.body.activity;
+    activity.speakers = [
+      { id: ids.speaker, label: "Locuteur initial" },
+      { id: ids.secondSpeaker, label: "Locuteur conservé" }
+    ];
+    activity.languages = [
+      { id: "fr", code: "FR", label: "Français" },
+      { id: "es", code: "ES", label: "Espagnol" }
+    ];
+    activity.segments = [{
+      id: ids.segment,
+      startMs: 0,
+      endMs: 5000,
+      text: "Segment initial",
+      speakerIds: [ids.speaker],
+      languageIds: ["fr"],
+      phenomenonIds: [ids.phenomenon]
+    }];
+    activity.languageIntervals = [{
+      id: ids.interval,
+      languageId: "fr",
+      startMs: 0,
+      endMs: 5000
+    }];
+    activity.layers = [
+      { id: ids.firstLayer, label: "Couche initiale", description: "", color: "#4d7dbc" },
+      { id: ids.secondLayer, label: "Couche conservée", description: "", color: "#57a675" }
+    ];
+    activity.phenomena = [{
+      id: ids.phenomenon,
+      segmentId: ids.segment,
+      layerId: ids.firstLayer,
+      startMs: 1000,
+      endMs: 2000
+    }];
+    activity.overlays = [{
+      id: ids.overlay,
+      startMs: 1000,
+      endMs: 3000,
+      title: "Overlay initial",
+      text: "Contenu initial",
+      layerIds: [ids.secondLayer]
+    }];
+    activity.layerConfiguration = {
+      ...activity.layerConfiguration,
+      defaultVisibleLayerIds: [ids.firstLayer],
+      learnerVisibleLayerIds: [ids.firstLayer, ids.secondLayer],
+      teacherVisibleLayerIds: [ids.firstLayer, ids.secondLayer]
+    };
+
+    let saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+
+    activity.speakers[0].label = "Locuteur modifié";
+    activity.segments[0].text = "Segment modifié";
+    activity.segments[0].speakerIds = [ids.secondSpeaker];
+    activity.languageIntervals[0].languageId = "es";
+    activity.layers[0].label = "Couche modifiée";
+    activity.layers[0].description = "Description modifiée";
+    activity.phenomena[0].startMs = 2000;
+    activity.phenomena[0].endMs = 3000;
+    activity.overlays[0].title = "Overlay modifié";
+    activity.overlays[0].text = "Contenu modifié";
+    activity.overlays[0].startMs = 1500;
+    activity.overlays[0].endMs = 3500;
+
+    saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+    assert.equal(activity.speakers[0].label, "Locuteur modifié");
+    assert.equal(activity.segments[0].text, "Segment modifié");
+    assert.deepEqual(activity.segments[0].speakerIds, [ids.secondSpeaker]);
+    assert.equal(activity.languageIntervals[0].languageId, "es");
+    assert.equal(activity.layers[0].label, "Couche modifiée");
+    assert.equal(activity.phenomena[0].startMs, 2000);
+    assert.equal(activity.overlays[0].title, "Overlay modifié");
+    assert.doesNotMatch(JSON.stringify(activity), /Locuteur initial|Segment initial|Couche initiale|Overlay initial/);
+
+    await server.restart();
+    let reloaded = await jsonRequest(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}`
+    );
+    assert.equal(reloaded.response.status, 200);
+    activity = reloaded.body.activity;
+    assert.equal(activity.speakers[0].label, "Locuteur modifié");
+    assert.deepEqual(activity.segments[0].speakerIds, [ids.secondSpeaker]);
+    assert.equal(activity.overlays[0].title, "Overlay modifié");
+
+    activity.languageIntervals = [];
+    saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+    assert.equal(activity.languageIntervals.length, 0);
+    assert.equal(activity.overlays.length, 1);
+
+    activity.overlays = [];
+    saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+    assert.equal(activity.overlays.length, 0);
+    assert.equal(activity.phenomena.length, 1);
+
+    activity.phenomena = [];
+    activity.segments[0].phenomenonIds = [];
+    saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+    assert.equal(activity.phenomena.length, 0);
+    assert.equal(activity.segments.length, 1);
+
+    activity.segments = [];
+    activity.transcription.segmentIds = [];
+    saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+    assert.equal(activity.segments.length, 0);
+    assert.equal(activity.speakers.length, 2);
+
+    assert.equal(deleteLayer(activity, ids.firstLayer).deleted, true);
+    assert.equal(deleteLayer(activity, ids.secondLayer).deleted, true);
+    saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+    assert.equal(activity.layers.length, 0);
+    assert.deepEqual(activity.layerConfiguration.defaultVisibleLayerIds, []);
+    assert.deepEqual(activity.layerConfiguration.learnerVisibleLayerIds, []);
+    assert.deepEqual(activity.layerConfiguration.teacherVisibleLayerIds, []);
+
+    activity.speakers = [];
+    saved = await save(activity);
+    assert.equal(saved.response.status, 200, saved.body.error);
+    activity = saved.body.activity;
+    assert.equal(activity.speakers.length, 0);
+
+    for (const route of [
+      `/teacher/preview/${encodeURIComponent(activityId)}`,
+      `/student/${encodeURIComponent(activityId)}`
+    ]) {
+      const response = await fetch(`${server.baseUrl}${route}`);
+      assert.equal(response.status, 200);
+    }
+
+    if (inspectDatabase) {
+      const database = await mariaDbConnection();
+      try {
+        for (const table of [
+          "activity_language_intervals",
+          "activity_overlays",
+          "activity_overlay_layers",
+          "activity_phenomena",
+          "activity_segments",
+          "activity_segment_speakers",
+          "activity_layers",
+          "activity_layer_visibility",
+          "activity_speakers"
+        ]) {
+          const [[remaining]] = await database.query(
+            `SELECT COUNT(*) AS \`count\` FROM \`${table}\` WHERE \`activity_id\` = ?`,
+            [activityId]
+          );
+          assert.equal(Number(remaining.count), 0, table);
+        }
+      } finally {
+        await database.end();
+      }
+    }
+  } finally {
+    if (activityId) {
+      const deleted = await jsonRequest(
+        server.baseUrl,
+        `/api/proto05/activities/${encodeURIComponent(activityId)}`,
+        { method: "DELETE" }
+      );
+      assert.equal(deleted.response.status, 200, deleted.body.error);
+      const missing = await jsonRequest(
+        server.baseUrl,
+        `/api/proto05/activities/${encodeURIComponent(activityId)}`
+      );
+      assert.equal(missing.response.status, 404);
+    }
+  }
+}
+
 test("le contrat guidé conserve les locuteurs et guide la création d’un phénomène valide", () => {
   const activity = {
     video: { durationMs: 20_000 },
@@ -847,6 +1080,97 @@ test("l’indicateur suit enregistré → modification → non enregistré → s
   assert.equal(state, "saving");
   state = transitionSaveState(state, "save-success");
   assert.equal(state, "saved");
+});
+
+test("les suppressions programmatiques rendent l’atelier non enregistré", () => {
+  for (const message of [
+    "Overlay supprimé. Enregistrez pour confirmer.",
+    "Couche supprimée. Enregistrez pour confirmer.",
+    "Locuteur supprimé. Enregistrez pour confirmer.",
+    "Segment et éléments liés supprimés. Enregistrez pour confirmer."
+  ]) {
+    assert.equal(saveStateFromMessage(message), "dirty", message);
+  }
+});
+
+test("les suppressions relationnelles de l’atelier respectent les références", () => {
+  const activity = {
+    transcription: { segmentIds: ["segment-one", "segment-two"] },
+    speakers: [{ id: "speaker-one", label: "Locuteur" }],
+    segments: [
+      { id: "segment-one", phenomenonIds: ["phenomenon-one"] },
+      { id: "segment-two", phenomenonIds: [] }
+    ],
+    languageIntervals: [
+      { id: "interval-one", segmentId: "segment-one" },
+      { id: "interval-two" }
+    ],
+    layers: [
+      { id: "layer-one", label: "Couche liée" },
+      { id: "layer-two", label: "Couche libre" }
+    ],
+    phenomena: [{
+      id: "phenomenon-one",
+      segmentId: "segment-one",
+      layerId: "layer-one"
+    }],
+    teacherAnnotations: [{
+      id: "annotation-one",
+      segmentId: "segment-one",
+      note: "",
+      pedagogicalQuestion: ""
+    }],
+    overlays: [
+      { id: "overlay-one", annotationId: "annotation-one", layerIds: ["layer-one"] },
+      { id: "overlay-two", layerIds: ["layer-two"] }
+    ],
+    layerConfiguration: {
+      defaultVisibleLayerIds: ["layer-one", "layer-two"],
+      learnerVisibleLayerIds: ["layer-one", "layer-two"],
+      teacherVisibleLayerIds: ["layer-one", "layer-two"]
+    }
+  };
+
+  assert.match(layerDeletionIssue(activity, "layer-one"), /phénomène/i);
+  assert.match(layerDeletionIssue(activity, "layer-two"), /overlay/i);
+  assert.equal(deleteLayer(activity, "layer-one").deleted, false);
+  assert.equal(activity.layers.length, 2);
+
+  const dependencies = segmentDependencies(activity, "segment-one");
+  assert.deepEqual(dependencies.phenomena.map(item => item.id), ["phenomenon-one"]);
+  assert.deepEqual(dependencies.annotations.map(item => item.id), ["annotation-one"]);
+  assert.deepEqual(dependencies.overlays.map(item => item.id), ["overlay-one"]);
+
+  const cascade = deleteSegmentCascade(activity, "segment-one");
+  assert.equal(cascade.deleted, true);
+  assert.deepEqual(activity.transcription.segmentIds, ["segment-two"]);
+  assert.deepEqual(activity.segments.map(item => item.id), ["segment-two"]);
+  assert.deepEqual(activity.phenomena, []);
+  assert.deepEqual(activity.teacherAnnotations, []);
+  assert.deepEqual(activity.overlays.map(item => item.id), ["overlay-two"]);
+  assert.equal(Object.prototype.hasOwnProperty.call(activity.languageIntervals[0], "segmentId"), false);
+
+  activity.overlays = [];
+  assert.equal(deleteLayer(activity, "layer-two").deleted, true);
+  assert.deepEqual(activity.layers.map(item => item.id), ["layer-one"]);
+  assert.deepEqual(activity.layerConfiguration.defaultVisibleLayerIds, ["layer-one"]);
+  assert.deepEqual(activity.layerConfiguration.learnerVisibleLayerIds, ["layer-one"]);
+  assert.deepEqual(activity.layerConfiguration.teacherVisibleLayerIds, ["layer-one"]);
+});
+
+test("les parcours réels de l’atelier utilisent les gardes et l’état sale partagés", () => {
+  const guidedPage = fs.readFileSync(
+    path.join(prototypeDirectory, "teacher-guided.html"),
+    "utf8"
+  );
+  const overlayScript = fs.readFileSync(
+    path.join(prototypeDirectory, "guided-overlays.js"),
+    "utf8"
+  );
+  assert.match(guidedPage, /Proto05GuidedAuthoring\.deleteLayer\(state\.activity,x\.id\)/);
+  assert.match(guidedPage, /Proto05GuidedAuthoring\.deleteSegmentCascade\(state\.activity,segment\.id\)/);
+  assert.match(guidedPage, /markGuidedDirty\('Locuteur supprimé\./);
+  assert.match(overlayScript, /markGuidedDirty\('Overlay supprimé\./);
 });
 
 test("le menu Langue est produit depuis le référentiel et inscrit la sélection dans l’activité", () => {
@@ -1059,6 +1383,20 @@ test("JSON sauvegarde et recharge un locuteur et un phénomène jetables", { tim
   }
 });
 
+test("JSON modifie puis supprime sans orphelin toutes les entités guidées", {
+  timeout: 45_000
+}, async () => {
+  const temporary = await startTemporaryProto05Server(
+    clone(canonicalStore()),
+    "proto05-guided-update-delete-json-"
+  );
+  try {
+    await exerciseUpdateDeleteLifecycle(temporary, "update-delete-json");
+  } finally {
+    await temporary.cleanup();
+  }
+});
+
 test("MariaDB sauvegarde et recharge un locuteur et un phénomène jetables", {
   timeout: 60_000,
   skip: process.env.PROTO05_RUN_MARIADB_INTEGRATION !== "1"
@@ -1066,6 +1404,18 @@ test("MariaDB sauvegarde et recharge un locuteur et un phénomène jetables", {
   const server = await startMariaDbServer();
   try {
     await exerciseSpeakerAndPhenomenonPersistence(server, "mariadb");
+  } finally {
+    await server.cleanup();
+  }
+});
+
+test("MariaDB modifie puis supprime sans orphelin toutes les entités guidées", {
+  timeout: 90_000,
+  skip: process.env.PROTO05_RUN_MARIADB_INTEGRATION !== "1"
+}, async () => {
+  const server = await startMariaDbServer();
+  try {
+    await exerciseUpdateDeleteLifecycle(server, "update-delete-mariadb", true);
   } finally {
     await server.cleanup();
   }

@@ -151,7 +151,7 @@
     if (/enregistrement en cours|enregistrement…|sauvegarde en cours/.test(normalized)) return "saving";
     if (/non enregistr/.test(normalized)) return "dirty";
     if (/enregistré|enregistrées|sauvegardé|sauvegardée/.test(normalized)) return "saved";
-    if (/sauvegardez|ajouté au brouillon|modifi/.test(normalized)) return "dirty";
+    if (/enregistrez|sauvegardez|ajouté au brouillon|modifi|supprim/.test(normalized)) return "dirty";
     return null;
   }
 
