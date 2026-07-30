@@ -6,6 +6,7 @@
   <title>Fiche vidéo · IC-Lab</title>
   <script src="/vendor/hls.js/hls.min.js"></script>
   <script src="/shared/ic-video-player.js"></script>
+  <script src="/shared/video-metadata-contract.js"></script>
   <style>
     :root{font-family:system-ui,sans-serif;color:#172033;background:#f6f7fb}
     *{box-sizing:border-box}
@@ -15,12 +16,14 @@
     h1{margin:.35rem 0;overflow-wrap:anywhere}
     h2{margin:0;font-size:1.05rem}
     h3{margin:.2rem 0 .5rem;overflow-wrap:anywhere}
-    button,.button,input,select{font:inherit;border:1px solid #9aa5b8;border-radius:7px;padding:.55rem}
+    button,.button,input,select,textarea{font:inherit;border:1px solid #9aa5b8;border-radius:7px;padding:.55rem}
     button,.button{background:#164e63;color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
     button.secondary,.button.secondary{background:#fff;color:#164e63}
     button.danger{background:#fff;color:#b91c1c;border-color:#fca5a5}
     button:disabled{opacity:.55;cursor:not-allowed}
-    input,select{width:100%;background:#fff;color:#172033}
+    input,select,textarea{width:100%;background:#fff;color:#172033}
+    textarea{min-height:7rem;resize:vertical}
+    [aria-invalid="true"]{border-color:#b91c1c;outline:2px solid #fecaca}
     .topbar{display:flex;justify-content:space-between;gap:1rem;align-items:start;margin-bottom:1rem}
     .back{font-weight:650}
     .version,.muted,.meta{font-size:.86rem;color:#475569;overflow-wrap:anywhere}
@@ -31,7 +34,7 @@
     .status:empty{display:none}
     .status.error{color:#a21caf}
     .status.ok{color:#166534}
-    .hero,.section{background:#fff;border:1px solid #dbe1ea;border-radius:14px;padding:1rem;box-shadow:0 2px 16px #17203312;margin-bottom:1rem}
+    .hero,.section,.edit-shell{background:#fff;border:1px solid #dbe1ea;border-radius:14px;padding:1rem;box-shadow:0 2px 16px #17203312;margin-bottom:1rem}
     .hero{display:grid;grid-template-columns:minmax(240px,360px) minmax(0,1fr);gap:1rem;align-items:start}
     .visual{width:100%;aspect-ratio:16/9;border-radius:8px;background:linear-gradient(135deg,#164e63,#0f172a);display:grid;place-content:center;text-align:center;color:#fff;overflow:hidden}
     .visual::before{content:"▶";font-size:2.25rem}
@@ -55,13 +58,25 @@
     .preview[hidden]{display:none}
     .preview-mount{width:100%;aspect-ratio:16/9;background:#0f172a;border-radius:8px;overflow:hidden}
     .preview-mount video,.preview-mount iframe{display:block;width:100%;height:100%}
-    .classification{display:grid;grid-template-columns:minmax(200px,320px) minmax(0,1fr);gap:1rem}
-    .field{margin:0 0 .75rem;padding:0;border:0}
+    .definition-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem 1.25rem;margin:0}
+    .definition-grid>div{min-width:0;border-bottom:1px solid #eef2f7;padding-bottom:.55rem}
+    .definition-grid dt{font-size:.78rem;color:#64748b;margin-bottom:.18rem}
+    .definition-grid dd{margin:0;overflow-wrap:anywhere}
+    .usage-list,.family-list{margin:.5rem 0;padding-left:1.2rem}
+    .profile-summary{margin:.4rem 0 0;white-space:pre-wrap}
+    .edit-shell>header{display:flex;justify-content:space-between;gap:1rem;align-items:start;margin-bottom:1rem}
+    .edit-section{border:1px solid #dbe1ea;border-radius:10px;margin-bottom:.75rem;background:#f8fafc}
+    .edit-section>summary{cursor:pointer;font-weight:700;padding:.85rem 1rem}
+    .edit-section__body{padding:0 1rem 1rem}
+    .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.85rem 1rem}
+    .field{margin:0;padding:0;border:0;min-width:0}
+    .field.wide{grid-column:1/-1}
     .field label,.field legend{display:block;font-weight:650;font-size:.9rem;margin-bottom:.3rem}
-    .tag-options{display:flex;flex-wrap:wrap;gap:.35rem}
-    .tag-option{display:flex;gap:.35rem;align-items:center;border-radius:999px;padding:.18rem .5rem;background:#fef3c7;color:#92400e;font-size:.78rem}
-    .tag-option input{width:auto}
-    .usage-list{margin:.5rem 0;padding-left:1.2rem}
+    .field-error{min-height:1.1rem;margin:.25rem 0 0;color:#b91c1c;font-size:.8rem}
+    .language-options,.tag-options{display:flex;flex-wrap:wrap;gap:.4rem}
+    .option-pill{display:flex;gap:.35rem;align-items:center;border-radius:999px;padding:.25rem .55rem;background:#e2e8f0;font-size:.82rem}
+    .option-pill input{width:auto}
+    .edit-actions{display:flex;justify-content:flex-end;gap:.5rem;position:sticky;bottom:.5rem;background:#fff;padding:.75rem;border:1px solid #dbe1ea;border-radius:10px}
     dialog{width:min(520px,calc(100% - 2rem));max-height:90vh;overflow:auto;border:1px solid #dbe1ea;border-radius:14px;background:#fff;color:#172033;padding:1.25rem;box-shadow:0 12px 45px #17203344}
     dialog::backdrop{background:#17203355}
     dialog h2{margin-top:0}
@@ -71,10 +86,12 @@
       body{padding:.8rem}
       .topbar{display:block}
       .version{display:block;margin-top:.35rem}
-      .hero,.classification,.grid{grid-template-columns:1fr}
+      .hero,.grid,.form-grid,.definition-grid{grid-template-columns:1fr}
       .summary{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .section-head{display:block}
-      .section-head>button{margin-top:.75rem}
+      .section-head,.edit-shell>header{display:block}
+      .section-head>button,.edit-shell>header>button{margin-top:.75rem}
+      .field.wide{grid-column:auto}
+      .edit-actions{position:static}
     }
   </style>
   <link rel="stylesheet" href="/shared/teacher-shell.css">
@@ -92,86 +109,785 @@
   <dialog id="actionDialog"></dialog>
   <script>
   (() => {
-    const app=document.getElementById('app'),status=document.getElementById('status'),dialog=document.getElementById('actionDialog');
-    const params=new URLSearchParams(location.search),returnTo=params.get('return');
-    if(returnTo?.startsWith('/teacher/videos'))document.getElementById('backLink').href=returnTo;
-    let asset=null,activities=[],players=new Map(),downloadTimer=null;
-    const esc=value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-    const duration=ms=>Number.isFinite(ms)&&ms>0?`${Math.floor(ms/60000)} min ${String(Math.round(ms/1000)%60).padStart(2,'0')} s`:'Durée non renseignée';
-    const date=value=>value?new Intl.DateTimeFormat('fr-FR',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value)):'Date non renseignée';
-    const availability=value=>value==='available'?'Disponible':value==='unavailable'?'Indisponible':'Disponibilité non vérifiée';
-    const kind=value=>({hls:'HLS distant','direct-url':'Fichier distant','local-file':'Fichier local','derived-output':'Dérivation locale',youtube:'YouTube'}[value]||value||'Type non renseigné');
-    const api=async(url,options={})=>{const response=await fetch(url,{headers:{'content-type':'application/json',...(options.headers||{})},...options});const payload=await response.json().catch(()=>({}));if(!response.ok)throw Object.assign(new Error(payload.error||`Erreur HTTP ${response.status}`),{status:response.status,payload});return payload};
-    function setStatus(message='',type=''){status.textContent=message;status.className=`status ${type}`.trim()}
-    function sourceHost(){const source=asset.sources?.find(item=>item.role==='original-remote')||asset.sources?.[0];const raw=source?.originUrl||source?.sourceUrl||source?.url;try{return new URL(raw,location.origin).hostname}catch{return source?.provider==='local'?'Fichier local':source?.provider||'Origine non renseignée'}}
-    function destroyPlayers(){players.forEach(player=>player.destroy?.());players.clear()}
-    function playable(id){return asset.playables?.find(item=>item.id===id)}
-    function accessMeta(entry){return [kind(entry.kind),availability(entry.availability),entry.durationMs?duration(entry.durationMs):null,entry.width&&entry.height?`${entry.width} × ${entry.height}`:null,date(entry.createdAt)].filter(Boolean).map(esc).join(' · ')}
-    function previewMarkup(id){return `<div class="preview" data-preview="${esc(id)}" hidden><div class="preview-mount"></div></div>`}
-    function entryMarkup(entry,role){
-      const preview=entry.url?`<button type="button" class="secondary" data-action="preview" data-playable="${esc(entry.id)}">Prévisualiser</button>`:'';
-      const workshop=role==='working-copy'?`<button type="button" data-action="workshop" data-playable="${esc(entry.id)}">Ouvrir dans l’atelier d’anonymisation</button>`:'';
-      const download=['working-copy','derivation-local'].includes(role)&&entry.url?`<a class="button secondary" href="${esc(entry.url)}" download>Récupérer sur mon disque</a>`:'';
-      const remove=role==='working-copy'?`<button type="button" class="danger" data-action="delete-copy" data-playable="${esc(entry.id)}">Supprimer la copie de travail</button>`:role==='derivation-local'?`<button type="button" class="danger" data-action="delete-derivation" data-derivation="${esc(entry.derivationId)}">Supprimer la tentative</button>`:'';
-      const associate=role==='published-remote'?`<button type="button" data-action="associate" data-playable="${esc(entry.id)}">Associer à l’activité</button>`:'';
-      const recipe=role==='derivation-local'&&entry.recipe?`<details><summary>Résumé de la recette</summary><p>${esc(entry.recipe.mode==='temporal'?'Masques temporels':'Masques fixes')} · Flou ${esc(entry.recipe.blur?.label||'configuré')} · ${Number(entry.recipe.temporalMasks?.length||entry.recipe.masks?.length||0)} masque(s)</p></details>`:'';
-      return `<article class="access-card" data-access="${esc(entry.id)}"><h3>${esc(entry.label||entry.name||'Accès vidéo')}</h3><p class="meta">${accessMeta(entry)}</p>${recipe}<div class="actions">${preview}${workshop}${download}${associate}${remove}</div>${previewMarkup(entry.id)}</article>`;
+    const app = document.getElementById("app");
+    const status = document.getElementById("status");
+    const dialog = document.getElementById("actionDialog");
+    const backLink = document.getElementById("backLink");
+    const params = new URLSearchParams(location.search);
+    const returnTo = params.get("return");
+    if (returnTo?.startsWith("/teacher/videos")) backLink.href = returnTo;
+
+    const Meta = window.Proto05VideoMetadata;
+    let asset = null;
+    let activities = [];
+    let players = new Map();
+    let downloadTimer = null;
+    let editing = false;
+    let initialEditPayload = null;
+
+    const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    })[char]);
+    const duration = ms => Number.isFinite(ms) && ms > 0
+      ? `${Math.floor(ms / 60000)} min ${String(Math.round(ms / 1000) % 60).padStart(2, "0")} s`
+      : "Non renseignée";
+    const date = value => value
+      ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(value))
+      : "Non renseignée";
+    const dateOnly = value => value
+      ? new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`))
+      : "Non renseignée";
+    const availability = value => ({
+      available: "Disponible",
+      "missing-local": "Fichier local absent",
+      "unreachable-remote": "Source distante injoignable",
+      blocked: "Bloquée",
+      pending: "En préparation",
+      unknown: "Non vérifiée"
+    })[value] || "Non renseignée";
+    const kind = value => ({
+      hls: "HLS distant",
+      "direct-url": "Fichier distant",
+      "local-file": "Fichier local",
+      "derived-output": "Dérivation locale",
+      "youtube-embed": "YouTube"
+    })[value] || value || "Non renseigné";
+    const fileSize = bytes => Number.isFinite(bytes) && bytes >= 0
+      ? new Intl.NumberFormat("fr-FR", { style: "unit", unit: bytes >= 1048576 ? "megabyte" : "kilobyte", maximumFractionDigits: 1 }).format(bytes / (bytes >= 1048576 ? 1048576 : 1024))
+      : "Non renseignée";
+    const shown = value => value === null || value === undefined || value === "" ? "Non renseigné" : String(value);
+    const api = async (url, options = {}) => {
+      const response = await fetch(url, {
+        headers: { "content-type": "application/json", ...(options.headers || {}) },
+        ...options
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw Object.assign(new Error(payload.error || `Erreur HTTP ${response.status}`), {
+          status: response.status,
+          payload
+        });
+      }
+      return payload;
+    };
+
+    function setStatus(message = "", type = "") {
+      status.textContent = message;
+      status.className = `status ${type}`.trim();
     }
-    function groupMarkup(items,role,empty){return items?.length?items.map(item=>entryMarkup(item,role)).join(''):`<div class="empty">${esc(empty)}</div>`}
-    function usageMarkup(){
-      const usage=asset.usage||{},items=usage.items||usage.references||[];
-      if(!usage.whetherUsed&&!items.length)return '<p class="muted">Cette vidéo n’est utilisée dans aucune activité.</p>';
-      return `<p>${Number(usage.activityCount||items.length)} activité(s) utilisent cette vidéo.</p>${items.length?`<ul class="usage-list">${items.map(item=>`<li>${esc(item.title||item.name||item.activityTitle||'Activité')}</li>`).join('')}</ul>`:''}`;
+
+    function sourceHost() {
+      const source = asset.sources?.find(item => item.role === "original-remote") || asset.sources?.[0];
+      const raw = source?.originUrl || source?.sourceUrl || source?.url || source?.origin?.originUrl;
+      try { return new URL(raw, location.origin).hostname; }
+      catch { return source?.provider === "local" ? "Fichier local" : source?.provider || "Origine non renseignée"; }
     }
-    function render(){
+
+    function destroyPlayers() {
+      players.forEach(player => player.destroy?.());
+      players.clear();
+    }
+
+    function playable(id) {
+      return asset.playables?.find(item => item.id === id);
+    }
+
+    function accessMeta(entry) {
+      return [
+        kind(entry.kind),
+        availability(entry.availability),
+        Number.isFinite(entry.durationMs) ? duration(entry.durationMs) : null,
+        entry.width && entry.height ? `${entry.width} × ${entry.height}` : null,
+        date(entry.createdAt)
+      ].filter(Boolean).map(esc).join(" · ");
+    }
+
+    function previewMarkup(id) {
+      return `<div class="preview" data-preview="${esc(id)}" hidden><div class="preview-mount"></div></div>`;
+    }
+
+    function entryMarkup(entry, role) {
+      const previewButton = entry.url
+        ? `<button type="button" class="secondary" data-action="preview" data-playable="${esc(entry.id)}">Prévisualiser</button>`
+        : "";
+      const workshop = role === "working-copy"
+        ? `<button type="button" data-action="workshop" data-playable="${esc(entry.id)}">Ouvrir dans l’atelier d’anonymisation</button>`
+        : "";
+      const download = ["working-copy", "derivation-local"].includes(role) && entry.url
+        ? `<a class="button secondary" href="${esc(entry.url)}" download>Récupérer sur mon disque</a>`
+        : "";
+      const remove = role === "working-copy"
+        ? `<button type="button" class="danger" data-action="delete-copy" data-playable="${esc(entry.id)}">Supprimer la copie de travail</button>`
+        : role === "derivation-local"
+          ? `<button type="button" class="danger" data-action="delete-derivation" data-derivation="${esc(entry.derivationId)}">Supprimer la tentative</button>`
+          : "";
+      const associate = role === "published-remote"
+        ? `<button type="button" data-action="associate" data-playable="${esc(entry.id)}">Associer à l’activité</button>`
+        : "";
+      const recipe = role === "derivation-local" && entry.recipe
+        ? `<details><summary>Résumé de la recette</summary><p>${esc(entry.recipe.mode === "temporal" ? "Masques temporels" : "Masques fixes")} · Flou ${esc(entry.recipe.blur?.label || "configuré")} · ${Number(entry.recipe.temporalMasks?.length || entry.recipe.masks?.length || 0)} masque(s)</p></details>`
+        : "";
+      return `<article class="access-card" data-access="${esc(entry.id)}">
+        <h3>${esc(entry.label || entry.name || "Accès vidéo")}</h3>
+        <p class="meta">${accessMeta(entry)}</p>
+        ${recipe}
+        <div class="actions">${previewButton}${workshop}${download}${associate}${remove}</div>
+        ${previewMarkup(entry.id)}
+      </article>`;
+    }
+
+    function groupMarkup(items, role, empty) {
+      return items?.length
+        ? items.map(item => entryMarkup(item, role)).join("")
+        : `<div class="empty">${esc(empty)}</div>`;
+    }
+
+    function usageMarkup() {
+      const usage = asset.usage || {};
+      const items = usage.activities || usage.items || usage.references || [];
+      if (!usage.whetherUsed && !items.length) {
+        return "<p class=\"muted\">Cette vidéo n’est utilisée dans aucune activité.</p>";
+      }
+      return `<p>${Number(usage.activityCount || items.length)} activité(s) utilisent cette vidéo.</p>
+        ${items.length ? `<ul class="usage-list">${items.map(item => `<li>${esc(item.title || item.name || item.activityTitle || "Activité")}</li>`).join("")}</ul>` : ""}`;
+    }
+
+    function visibleTags() {
+      return (asset.tags || []).filter(tag => tag.normalizedName !== "untag");
+    }
+
+    function identityMarkup() {
+      const profile = Meta.editableProfile(asset);
+      const languageById = new Map((asset.languageCatalog || []).map(language => [language.id, language.label || language.name || language.id]));
+      const languages = profile.languageIds.map(id => languageById.get(id) || id);
+      const folder = asset.folders?.find(item => item.id === asset.folderId);
+      const tags = (asset.tagIds || [])
+        .map(id => visibleTags().find(tag => tag.id === id))
+        .filter(Boolean);
+      return `<section class="section">
+        <div class="section-head">
+          <div><h2>Identité éditoriale</h2><p class="muted">Informations humaines, distinctes du fichier et de ses versions techniques.</p></div>
+          <button type="button" data-action="edit-metadata">Modifier la fiche</button>
+        </div>
+        <dl class="definition-grid">
+          <div><dt>Statut ou usage</dt><dd>${esc(Meta.optionLabel(Meta.USAGES, profile.usage))}</dd></div>
+          <div><dt>Contexte ou projet</dt><dd>${esc(shown(profile.context))}</dd></div>
+          <div><dt>Auteur, déposant ou responsable</dt><dd>${esc(shown(profile.responsibleParty))}</dd></div>
+          <div><dt>Date de captation ou création</dt><dd>${esc(dateOnly(profile.captureDate))}</dd></div>
+          <div><dt>Langues présentes</dt><dd>${esc(languages.length ? languages.join(", ") : "Non renseignées")}</dd></div>
+          <div><dt>Dossier</dt><dd>${esc(folder?.name || "Non classée")}</dd></div>
+          <div class="wide"><dt>Description</dt><dd class="profile-summary">${esc(shown(profile.description))}</dd></div>
+          <div class="wide"><dt>Notes internes</dt><dd class="profile-summary">${esc(shown(profile.notes))}</dd></div>
+          <div class="wide"><dt>Étiquettes</dt><dd>${tags.length ? tags.map(tag => `<span class="chip">${esc(tag.name)}</span>`).join("") : "Aucune étiquette"}</dd></div>
+        </dl>
+      </section>`;
+    }
+
+    function provenanceMarkup() {
+      const profile = Meta.editableProfile(asset);
+      return `<section class="section">
+        <div class="section-head"><div><h2>Provenance et droits</h2><p class="muted">Une absence de renseignement ne vaut ni autorisation ni consentement.</p></div></div>
+        <dl class="definition-grid">
+          <div><dt>Provenance déclarée</dt><dd>${esc(shown(profile.source))}</dd></div>
+          <div><dt>URL d’origine</dt><dd>${profile.originUrl ? `<a href="${esc(profile.originUrl)}" rel="noreferrer">${esc(profile.originUrl)}</a>` : "Non renseignée"}</dd></div>
+          <div><dt>Conditions d’utilisation ou licence</dt><dd>${esc(shown(profile.license))}</dd></div>
+          <div><dt>Consentement ou autorisation</dt><dd>${esc(shown(profile.consent))}</dd></div>
+          <div><dt>Restrictions</dt><dd>${esc(shown(profile.restrictions))}</dd></div>
+          <div><dt>Confidentialité</dt><dd>${esc(Meta.optionLabel(Meta.CONFIDENTIALITIES, profile.confidentiality))}</dd></div>
+        </dl>
+      </section>`;
+    }
+
+    function technicalMarkup() {
+      const technical = asset.technicalSummary || {};
+      const lineage = asset.lineageSummary || {};
+      const dimensions = technical.width && technical.height ? `${technical.width} × ${technical.height}` : "Non renseignées";
+      return `<section class="section">
+        <div class="section-head"><div><h2>Informations techniques et filiation</h2><p class="muted">Données calculées ou contrôlées par l’application, non modifiables ici.</p></div></div>
+        <dl class="definition-grid">
+          <div><dt>Nom du fichier physique</dt><dd>${esc(shown(technical.fileName))}</dd></div>
+          <div><dt>Format / type MIME</dt><dd>${esc(shown(technical.mimeType))}</dd></div>
+          <div><dt>Durée détectée</dt><dd>${esc(duration(technical.durationMs))}</dd></div>
+          <div><dt>Dimensions</dt><dd>${esc(dimensions)}</dd></div>
+          <div><dt>Taille du fichier</dt><dd>${esc(fileSize(technical.sizeBytes))}</dd></div>
+          <div><dt>Disponibilité locale</dt><dd>${technical.localFilePresent ? "Fichier local présent" : "Aucun fichier local présent"}</dd></div>
+          <div><dt>Date d’import ou déclaration</dt><dd>${esc(date(technical.importedAt))}</dd></div>
+          <div><dt>Empreinte SHA-256</dt><dd>${esc(shown(technical.sha256))}</dd></div>
+          <div><dt>Famille</dt><dd>${esc(lineage.familyRoot?.title || lineage.familyRoot?.id || "Non renseignée")}</dd></div>
+          <div><dt>Source parente</dt><dd>${esc(lineage.parent?.title || "Aucune : vidéo racine")}</dd></div>
+          <div><dt>Sources déclarées</dt><dd>${Number(lineage.sourceCount || 0)}</dd></div>
+          <div><dt>Versions dérivées</dt><dd>${Number(lineage.derivedVersions?.length || 0)}</dd></div>
+        </dl>
+        ${lineage.derivedVersions?.length ? `<ul class="family-list">${lineage.derivedVersions.map(item => `<li><a href="/teacher/videos/${encodeURIComponent(item.id)}">${esc(item.title || item.id)}</a></li>`).join("")}</ul>` : ""}
+      </section>`;
+    }
+
+    function renderView() {
       destroyPlayers();
-      const groups=asset.versionsAndAccess||{},counts={original:(groups.originalRemote||[]).length,copy:(groups.workingCopy||[]).length,derivations:(groups.derivations||[]).length,published:(groups.publishedRemote||[]).length};
-      const tags=(asset.tagIds||[]).map(id=>asset.tags?.find(tag=>tag.id===id)).filter(Boolean),folder=asset.folders?.find(item=>item.id===asset.folderId);
-      const mainPlayable=playable(asset.defaultPlayableId)||asset.playables?.[0]||{};
-      app.className='';
-      app.innerHTML=`
+      const groups = asset.versionsAndAccess || {};
+      const counts = {
+        original: (groups.originalRemote || []).length,
+        copy: (groups.workingCopy || []).length,
+        derivations: (groups.derivations || []).length,
+        published: (groups.publishedRemote || []).length
+      };
+      const folder = asset.folders?.find(item => item.id === asset.folderId);
+      const tags = (asset.tagIds || []).map(id => visibleTags().find(tag => tag.id === id)).filter(Boolean);
+      const mainPlayable = playable(asset.defaultPlayableId) || asset.playables?.[0] || {};
+      const bestDuration = asset.technicalSummary?.durationMs ?? mainPlayable.durationMs ?? null;
+      app.className = "";
+      app.innerHTML = `
         <section class="hero">
           <div class="visual" aria-label="Visuel de la vidéo"><span>${esc(kind(mainPlayable.kind))}</span></div>
-          <div class="hero-copy"><p class="eyebrow">Fiche vidéo</p><h1>${esc(asset.title||'Vidéo sans titre')}</h1>
-            <div class="chips"><span class="chip">${esc(sourceHost())}</span><span class="chip">${esc(duration(mainPlayable.durationMs||asset.technicalMetadata?.durationMs))}</span><span class="chip">${esc(availability(mainPlayable.availability))}</span>${folder?`<span class="chip">Dossier · ${esc(folder.name)}</span>`:''}${tags.map(tag=>`<span class="chip">${esc(tag.name)}</span>`).join('')}</div>
-            <div class="summary"><div class="metric"><strong>${counts.original}</strong><span>originale</span></div><div class="metric"><strong>${counts.copy}</strong><span>copie de travail</span></div><div class="metric"><strong>${counts.derivations}</strong><span>dérivation(s)</span></div><div class="metric"><strong>${counts.published}</strong><span>publiée(s)</span></div></div>
+          <div class="hero-copy">
+            <p class="eyebrow">Fiche Vidéo++</p>
+            <h1>${esc(asset.title || "Vidéo sans titre")}</h1>
+            <div class="chips">
+              <span class="chip">${esc(sourceHost())}</span>
+              <span class="chip">${esc(duration(bestDuration))}</span>
+              <span class="chip">${esc(availability(mainPlayable.availability))}</span>
+              ${folder ? `<span class="chip">Dossier · ${esc(folder.name)}</span>` : ""}
+              ${tags.map(tag => `<span class="chip">${esc(tag.name)}</span>`).join("")}
+            </div>
+            <div class="summary">
+              <div class="metric"><strong>${counts.original}</strong><span>originale</span></div>
+              <div class="metric"><strong>${counts.copy}</strong><span>copie de travail</span></div>
+              <div class="metric"><strong>${counts.derivations}</strong><span>dérivation(s)</span></div>
+              <div class="metric"><strong>${counts.published}</strong><span>publiée(s)</span></div>
+            </div>
           </div>
         </section>
-        <section class="section"><div class="section-head"><div><h2>Sources et travail</h2><p class="muted">L’originale reste distincte de la copie locale utilisée pour travailler.</p></div>${asset.download?.canDownload?'<button type="button" data-action="create-copy">Créer une copie locale de travail</button>':''}</div><div class="grid">${groupMarkup(groups.originalRemote,'original-remote','Aucune originale distante qualifiée.')}${groupMarkup(groups.workingCopy,'working-copy','Aucune copie locale de travail.')}</div></section>
-        <section class="section"><div class="section-head"><div><h2>Dérivations locales</h2><p class="muted">Chaque tentative est conservée et contrôlée indépendamment.</p></div></div><div class="grid derivation-grid">${groupMarkup(groups.derivations,'derivation-local','Aucune dérivation locale.')}</div></section>
-        <section class="section"><div class="section-head"><div><h2>Versions publiées</h2><p class="muted">Accès destinés à être associés explicitement aux activités.</p></div><button type="button" class="secondary" data-action="add-published">Ajouter une version publiée</button></div><div class="grid">${groupMarkup(groups.publishedRemote,'published-remote','Aucune version publiée.')}${groups.legacy?.length?groupMarkup(groups.legacy,'legacy-unknown',''):''}</div></section>
-        <section class="section"><div class="section-head"><div><h2>Usages et classement</h2><p class="muted">Le classement modifie uniquement la fiche de la Library.</p></div></div><div class="classification"><div>${usageMarkup()}</div><form id="classificationForm"><div class="field"><label for="folder">Dossier</label><select id="folder"><option value="">Non classée</option>${(asset.folders||[]).map(item=>`<option value="${esc(item.id)}" ${item.id===asset.folderId?'selected':''}>${esc(item.name)}</option>`).join('')}</select></div><fieldset class="field"><legend>Tags</legend><div class="tag-options">${(asset.tags||[]).map(item=>`<label class="tag-option"><input type="checkbox" value="${esc(item.id)}" ${(asset.tagIds||[]).includes(item.id)?'checked':''}>${esc(item.name)}</label>`).join('')||'<span class="muted">Aucun tag disponible.</span>'}</div></fieldset><div class="actions"><button type="submit">Enregistrer le classement</button></div></form></div></section>
-        <section class="section"><div class="section-head"><div><h2>Actions générales</h2><p class="muted">Les suppressions restent protégées par une confirmation et les dépendances serveur.</p></div></div><div class="general-actions"><button type="button" class="danger" data-action="remove-asset">Retirer de la Library</button>${asset.deletion?.canDeleteFile?'<button type="button" class="danger" data-action="remove-physical">Supprimer de la Library et du disque</button>':''}</div></section>`;
-      bind();
-      document.title=`${asset.title||'Fiche vidéo'} · IC-Lab`;
+        ${identityMarkup()}
+        ${provenanceMarkup()}
+        ${technicalMarkup()}
+        <section class="section">
+          <div class="section-head">
+            <div><h2>Sources et travail</h2><p class="muted">L’originale reste distincte de la copie locale utilisée pour travailler.</p></div>
+            ${asset.download?.canDownload ? "<button type=\"button\" data-action=\"create-copy\">Créer une copie locale de travail</button>" : ""}
+          </div>
+          <div class="grid">
+            ${groupMarkup(groups.originalRemote, "original-remote", "Aucune originale distante qualifiée.")}
+            ${groupMarkup(groups.workingCopy, "working-copy", "Aucune copie locale de travail.")}
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-head"><div><h2>Dérivations locales</h2><p class="muted">Chaque tentative est conservée et contrôlée indépendamment.</p></div></div>
+          <div class="grid derivation-grid">${groupMarkup(groups.derivations, "derivation-local", "Aucune dérivation locale.")}</div>
+        </section>
+        <section class="section">
+          <div class="section-head">
+            <div><h2>Versions publiées</h2><p class="muted">Accès qualifiés comme publiés et associables aux activités.</p></div>
+            <button type="button" class="secondary" data-action="add-published">Ajouter une version publiée</button>
+          </div>
+          <div class="grid">${groupMarkup(groups.publishedRemote, "published-remote", "Aucune version publiée.")}</div>
+        </section>
+        ${groups.legacy?.length ? `<section class="section"><div class="section-head"><div><h2>Accès historiques non qualifiés</h2><p class="muted">Ces accès ne sont pas présentés comme des versions publiées tant que leur rôle n’est pas établi.</p></div></div><div class="grid">${groupMarkup(groups.legacy, "legacy-unknown", "")}</div></section>` : ""}
+        <section class="section">
+          <div class="section-head"><div><h2>Activités utilisant la vidéo</h2><p class="muted">Références calculées depuis les activités, jamais saisies dans cette fiche.</p></div></div>
+          ${usageMarkup()}
+        </section>
+        <section class="section">
+          <div class="section-head"><div><h2>Actions générales</h2><p class="muted">Le dialogue décrit précisément la portée avant toute confirmation.</p></div></div>
+          <div class="general-actions">
+            <button type="button" class="danger" data-action="remove-asset">Retirer l’entrée de la vidéothèque</button>
+            ${asset.deletion?.canDeleteFile ? "<button type=\"button\" class=\"danger\" data-action=\"remove-physical\">Retirer l’entrée et supprimer le fichier</button>" : ""}
+          </div>
+        </section>`;
+      bindView();
+      document.title = `${asset.title || "Fiche vidéo"} · IC-Lab`;
     }
-    async function reload(message){const payload=await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}`);asset=payload.asset;render();if(message)setStatus(message,'ok')}
-    async function preview(id,button){
-      const entry=playable(id),shell=document.querySelector(`[data-preview="${CSS.escape(id)}"]`),mount=shell?.querySelector('.preview-mount');if(!entry||!shell||!mount)return;
-      const current=players.get(id);if(current){current.destroy();players.delete(id);shell.hidden=true;button.textContent='Prévisualiser';return}
-      shell.hidden=false;button.disabled=true;mount.replaceChildren();
-      try{const player=window.createICVideoPlayer({container:mount}),value=entry.role==='derivation-local'?{...entry,provider:'local'}:entry;await player.load(value);players.set(id,player);button.textContent='Fermer l’aperçu';setStatus('Aperçu chargé.','ok')}
-      catch(error){shell.hidden=true;setStatus(`Aperçu indisponible : ${error.message}`,'error')}finally{button.disabled=false}
+
+    function optionMarkup(options, selected) {
+      return options.map(option => `<option value="${esc(option.value)}" ${option.value === (selected || "") ? "selected" : ""}>${esc(option.label)}</option>`).join("");
     }
-    async function workshop(id){setStatus('Préparation de la copie de travail…');try{const entry=playable(id),result=await api('/api/proto05/library/hls-preparations',{method:'POST',body:JSON.stringify({assetId:asset.id,playableId:id,sourceId:entry.sourceId})});const poll=async()=>{const payload=await api(`/api/proto05/library/hls-preparations/${encodeURIComponent(result.job.id)}`);if(payload.job.status==='completed'){location.href=`/teacher/anonymization/${encodeURIComponent(result.job.id)}`;return}if(['failed','cancelled'].includes(payload.job.status))throw new Error(payload.job.error||'Préparation impossible.');setTimeout(()=>poll().catch(error=>setStatus(error.message,'error')),500)};poll()}catch(error){setStatus(error.message,'error')}}
-    function openAssociation(id){dialog.innerHTML=`<h2>Associer à une activité</h2><p class="muted">Seule cette version publiée sera associée.</p><label for="activitySelect">Activité</label><select id="activitySelect"><option value="">Choisir une activité</option>${activities.map(item=>`<option value="${esc(item.id)}">${esc(item.title||item.name||item.id)}</option>`).join('')}</select><div class="actions"><button type="button" class="secondary" data-dialog-close>Annuler</button><button type="button" data-confirm-association>Associer</button></div>`;dialog.showModal();dialog.querySelector('[data-dialog-close]').onclick=()=>dialog.close();dialog.querySelector('[data-confirm-association]').onclick=async()=>{const activityId=dialog.querySelector('#activitySelect').value;if(!activityId)return;try{await api(`/api/proto05/activities/${encodeURIComponent(activityId)}/video-ref`,{method:'PUT',body:JSON.stringify({assetId:asset.id,playableId:id})});dialog.close();await reload('Version publiée associée à l’activité.')}catch(error){setStatus(error.message,'error')}}}
-    async function addPublished(){const url=await Proto05TeacherDialogs.prompt({title:'Ajouter une version publiée',message:`Rattachez une URL distante publiée à « ${asset.title||asset.id} ».`,label:'URL distante',inputType:'url',confirmLabel:'Analyser',validate:value=>Proto05TeacherShell.requiredPromptIssue(value,'L’URL distante est obligatoire.')});if(url===null)return;try{const analyzed=await api('/api/proto05/library/remote-reference/analyze',{method:'POST',body:JSON.stringify({url:url.trim(),title:`${asset.title||asset.id} — version publiée`})});const confirmed=await Proto05TeacherDialogs.confirm({title:'Ajouter cette version publiée ?',message:'La version analysée sera rattachée à la fiche existante.',details:[`Type : ${analyzed.analysis.kind}`,`Hôte : ${analyzed.analysis.domain}`,`URL finale : ${analyzed.analysis.finalUrl}`],confirmLabel:'Ajouter la version',trigger:document.activeElement});if(!confirmed)return;await api('/api/proto05/library/remote-reference/confirm',{method:'POST',body:JSON.stringify({token:analyzed.token,assetId:asset.id})});await reload('Version distante publiée ajoutée.')}catch(error){setStatus(error.message,'error')}}
-    async function removeCopy(id){const copy=(asset.localCopies||[]).find(item=>item.playableId===id);if(!copy)return;const confirmed=await Proto05TeacherDialogs.confirm({title:'Supprimer la copie locale ?',message:`La copie locale de travail de « ${asset.title} » sera supprimée.`,details:['La référence distante et les dérivations seront conservées.'],confirmLabel:'Supprimer la copie',destructive:true,trigger:document.activeElement});if(!confirmed)return;try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/local-copies/${encodeURIComponent(id)}`,{method:'DELETE'});await reload('Copie locale de travail supprimée.')}catch(error){setStatus(error.message,'error')}}
-    async function removeDerivation(id){const entry=asset.versionsAndAccess?.derivations?.find(item=>item.derivationId===id);const confirmed=await Proto05TeacherDialogs.confirm({title:'Supprimer la tentative ?',message:`La tentative « ${entry?.label||'sélectionnée'} » sera supprimée.`,confirmLabel:'Supprimer la tentative',destructive:true,trigger:document.activeElement});if(!confirmed)return;try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/derivations/${encodeURIComponent(id)}`,{method:'DELETE'});await reload('Tentative de dérivation supprimée.')}catch(error){setStatus(error.message,'error')}}
-    async function removeAsset(physical){const confirmed=await Proto05TeacherDialogs.confirm({title:physical?'Supprimer la vidéo et son fichier ?':'Retirer la vidéo de la vidéothèque ?',message:physical?`« ${asset.title} » sera supprimée de la vidéothèque et du disque.`:`« ${asset.title} » sera retirée de la vidéothèque.`,details:[physical?'Le fichier sera réellement supprimé.':'Les fichiers présents sur le disque seront conservés.'],confirmLabel:physical?'Supprimer la vidéo et le fichier':'Retirer la vidéo',destructive:true,trigger:document.activeElement});if(!confirmed)return;try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}${physical?'/physical':''}`,{method:'DELETE'});location.href=document.getElementById('backLink').href}catch(error){const details=(error.payload?.conflicts||[]).flatMap(item=>item.items||[]).map(item=>item.title||item.id).join(', ');setStatus([error.message,details].filter(Boolean).join(' · '),'error')}}
-    async function createCopy(){
-      try{const options=await api(`/api/proto05/library/download-options/${encodeURIComponent(asset.id)}?playableId=${encodeURIComponent(asset.download.sourcePlayableId||'')}`);dialog.innerHTML=`<h2>Créer une copie locale de travail</h2><p class="muted">Cette copie sert à l’anonymisation et ne remplace aucune vidéo d’activité.</p><p>${esc(kind(options.sourceKind))} · ${esc(options.host)} · ${esc(options.quality||'Qualité automatique')} · ${esc(duration(options.durationMs))}</p><label for="copyName">Nom du fichier</label><input id="copyName" maxlength="180" value="${esc(options.proposedFileName)}"><div id="downloadProgress"></div><div class="actions"><button type="button" class="secondary" data-dialog-close>Annuler</button><button type="button" data-start-copy ${options.ffmpeg?.available?'':'disabled'}>Télécharger</button></div>`;dialog.showModal();dialog.querySelector('[data-dialog-close]').onclick=()=>dialog.close();dialog.querySelector('[data-start-copy]').onclick=async event=>{event.currentTarget.disabled=true;try{const started=await api('/api/proto05/library/downloads',{method:'POST',body:JSON.stringify({assetId:asset.id,playableId:options.playableId,fileName:dialog.querySelector('#copyName').value.trim()})});const progress=dialog.querySelector('#downloadProgress');const poll=async()=>{const payload=await api(`/api/proto05/library/downloads/${encodeURIComponent(started.job.id)}`),job=payload.job;progress.innerHTML=`<p>${esc(job.stateLabel||job.status)} · ${Number(job.progress)||0} %</p><progress max="100" value="${Number(job.progress)||0}"></progress>`;if(job.status==='completed'){dialog.close();await reload('Copie locale de travail terminée.');return}if(['failed','cancelled'].includes(job.status))throw new Error(job.error||'Création de copie interrompue.');downloadTimer=setTimeout(()=>poll().catch(error=>setStatus(error.message,'error')),500)};poll()}catch(error){setStatus(error.message,'error')}}}catch(error){setStatus(error.message,'error')}
+
+    function formField({ id, label, value = "", type = "text", wide = false, textarea = false, maxlength = null }) {
+      const control = textarea
+        ? `<textarea id="${id}" name="${id}" ${maxlength ? `maxlength="${maxlength}"` : ""}>${esc(value)}</textarea>`
+        : `<input id="${id}" name="${id}" type="${type}" value="${esc(value)}" ${maxlength ? `maxlength="${maxlength}"` : ""}>`;
+      return `<div class="field ${wide ? "wide" : ""}">
+        <label for="${id}">${label}</label>${control}
+        <p class="field-error" id="${id}Error"></p>
+      </div>`;
     }
-    function bind(){
-      app.querySelectorAll('[data-action]').forEach(control=>control.addEventListener('click',()=>{const action=control.dataset.action;if(action==='preview')preview(control.dataset.playable,control);else if(action==='workshop')workshop(control.dataset.playable);else if(action==='associate')openAssociation(control.dataset.playable);else if(action==='add-published')addPublished();else if(action==='delete-copy')removeCopy(control.dataset.playable);else if(action==='delete-derivation')removeDerivation(control.dataset.derivation);else if(action==='create-copy')createCopy();else if(action==='remove-asset')removeAsset(false);else if(action==='remove-physical')removeAsset(true)}));
-      document.getElementById('classificationForm').addEventListener('submit',async event=>{event.preventDefault();const folderId=document.getElementById('folder').value||null,tagIds=[...event.currentTarget.querySelectorAll('input:checked')].map(input=>input.value);try{await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/classification`,{method:'PUT',body:JSON.stringify({folderId,tagIds})});await reload('Classement enregistré.')}catch(error){setStatus(error.message,'error')}});
+
+    function renderEdit() {
+      destroyPlayers();
+      const profile = Meta.editableProfile(asset);
+      const visible = visibleTags();
+      app.className = "";
+      app.innerHTML = `<form id="metadataForm" class="edit-shell" novalidate>
+        <header>
+          <div><p class="eyebrow">Fiche Vidéo++</p><h1>Modifier la fiche</h1><p class="muted">Les informations techniques et le nom du fichier ne seront pas modifiés.</p></div>
+        </header>
+        <details class="edit-section" open>
+          <summary>Identité éditoriale</summary>
+          <div class="edit-section__body form-grid">
+            ${formField({ id: "title", label: "Titre principal", value: profile.title, maxlength: Meta.LIMITS.title })}
+            <div class="field"><label for="usage">Statut ou usage</label><select id="usage" name="usage">${optionMarkup(Meta.USAGES, profile.usage)}</select><p class="field-error" id="usageError"></p></div>
+            ${formField({ id: "description", label: "Description libre", value: profile.description, textarea: true, wide: true, maxlength: Meta.LIMITS.description })}
+            ${formField({ id: "context", label: "Contexte ou projet d’origine", value: profile.context, maxlength: Meta.LIMITS.context })}
+            ${formField({ id: "responsibleParty", label: "Auteur, déposant ou responsable", value: profile.responsibleParty, maxlength: Meta.LIMITS.responsibleParty })}
+            ${formField({ id: "captureDate", label: "Date de captation ou création", value: profile.captureDate, type: "date" })}
+            <fieldset class="field"><legend>Langues présentes</legend><div class="language-options">${(asset.languageCatalog || []).map(language => `<label class="option-pill"><input type="checkbox" name="languageIds" value="${esc(language.id)}" ${profile.languageIds.includes(language.id) ? "checked" : ""}>${esc(language.label || language.name || language.id)}</label>`).join("") || "<span class=\"muted\">Référentiel indisponible.</span>"}</div><p class="field-error" id="languageIdsError"></p></fieldset>
+            ${formField({ id: "notes", label: "Notes internes", value: profile.notes, textarea: true, wide: true, maxlength: Meta.LIMITS.notes })}
+          </div>
+        </details>
+        <details class="edit-section">
+          <summary>Provenance et droits</summary>
+          <div class="edit-section__body form-grid">
+            ${formField({ id: "source", label: "Provenance ou source de la vidéo", value: profile.source, textarea: true, wide: true, maxlength: Meta.LIMITS.source })}
+            ${formField({ id: "originUrl", label: "URL d’origine", value: profile.originUrl, type: "url", wide: true, maxlength: Meta.LIMITS.originUrl })}
+            ${formField({ id: "license", label: "Conditions d’utilisation ou licence", value: profile.license, textarea: true, maxlength: Meta.LIMITS.license })}
+            ${formField({ id: "consent", label: "Consentement ou autorisation", value: profile.consent, textarea: true, maxlength: Meta.LIMITS.consent })}
+            ${formField({ id: "restrictions", label: "Restrictions éventuelles", value: profile.restrictions, textarea: true, maxlength: Meta.LIMITS.restrictions })}
+            <div class="field"><label for="confidentiality">Niveau de confidentialité</label><select id="confidentiality" name="confidentiality">${optionMarkup(Meta.CONFIDENTIALITIES, profile.confidentiality)}</select><p class="field-error" id="confidentialityError"></p></div>
+          </div>
+        </details>
+        <details class="edit-section">
+          <summary>Classement</summary>
+          <div class="edit-section__body form-grid">
+            <div class="field"><label for="folderId">Dossier</label><select id="folderId" name="folderId"><option value="">Non classée</option>${(asset.folders || []).map(folder => `<option value="${esc(folder.id)}" ${folder.id === profile.folderId ? "selected" : ""}>${esc(folder.name)}</option>`).join("")}</select><p class="field-error" id="folderIdError"></p></div>
+            <fieldset class="field"><legend>Étiquettes</legend><div class="tag-options">${visible.map(tag => `<label class="option-pill"><input type="checkbox" name="tagIds" value="${esc(tag.id)}" ${profile.tagIds.includes(tag.id) ? "checked" : ""}>${esc(tag.name)}</label>`).join("") || "<span class=\"muted\">Aucune étiquette disponible.</span>"}</div><p class="field-error" id="tagIdsError"></p></fieldset>
+          </div>
+        </details>
+        <div class="edit-actions">
+          <button type="button" class="secondary" data-action="cancel-edit">Annuler</button>
+          <button type="submit" data-save-metadata>Enregistrer</button>
+        </div>
+      </form>`;
+      const form = document.getElementById("metadataForm");
+      initialEditPayload = JSON.stringify(readEditPayload(form));
+      form.addEventListener("input", clearFieldErrorFromEvent);
+      form.addEventListener("change", clearFieldErrorFromEvent);
+      form.addEventListener("submit", saveMetadata);
+      form.querySelector('[data-action="cancel-edit"]').addEventListener("click", () => cancelEditing());
+      document.getElementById("title").focus();
     }
-    async function init(){
-      let id;try{id=decodeURIComponent(location.pathname.split('/').filter(Boolean).at(-1)||'')}catch{id=''}
-      try{const [detail,activityPayload]=await Promise.all([api(`/api/proto05/library/assets/${encodeURIComponent(id)}`),api('/api/proto05/activities')]);asset=detail.asset;activities=activityPayload.activities||[];render()}
-      catch(error){if(error.status===404){app.className='not-found';app.innerHTML='<p class="eyebrow">Vidéo introuvable</p><h1>Cette fiche n’existe pas</h1><p class="muted">La référence demandée est absente de la Library ou a été retirée.</p><p><a class="button" href="/teacher/videos">Retour à la vidéothèque</a></p>';document.title='Vidéo introuvable · IC-Lab'}else{app.className='not-found';app.innerHTML=`<h1>Chargement impossible</h1><p class="muted">${esc(error.message)}</p><p><a class="button" href="/teacher/videos">Retour à la vidéothèque</a></p>`}}
+
+    function readEditPayload(form = document.getElementById("metadataForm")) {
+      const value = name => form.elements.namedItem(name)?.value || "";
+      const hiddenTagIds = (asset.tagIds || []).filter(id => {
+        const tag = (asset.tags || []).find(item => item.id === id);
+        return tag?.normalizedName === "untag";
+      });
+      return {
+        title: value("title"),
+        description: value("description"),
+        usage: value("usage"),
+        context: value("context"),
+        responsibleParty: value("responsibleParty"),
+        captureDate: value("captureDate"),
+        languageIds: [...form.querySelectorAll('[name="languageIds"]:checked')].map(input => input.value),
+        notes: value("notes"),
+        source: value("source"),
+        originUrl: value("originUrl"),
+        license: value("license"),
+        consent: value("consent"),
+        restrictions: value("restrictions"),
+        confidentiality: value("confidentiality"),
+        folderId: value("folderId") || null,
+        tagIds: [...new Set([
+          ...hiddenTagIds,
+          ...[...form.querySelectorAll('[name="tagIds"]:checked')].map(input => input.value)
+        ])]
+      };
     }
-    window.addEventListener('beforeunload',()=>{destroyPlayers();clearTimeout(downloadTimer)});
+
+    function editIsDirty() {
+      const form = document.getElementById("metadataForm");
+      return Boolean(form && JSON.stringify(readEditPayload(form)) !== initialEditPayload);
+    }
+
+    function clearFieldErrors() {
+      document.querySelectorAll(".field-error").forEach(node => { node.textContent = ""; });
+      document.querySelectorAll("[aria-invalid]").forEach(node => node.removeAttribute("aria-invalid"));
+    }
+
+    function clearFieldErrorFromEvent(event) {
+      const name = event.target.name;
+      if (!name) return;
+      const error = document.getElementById(`${name}Error`);
+      if (error) error.textContent = "";
+      event.target.removeAttribute("aria-invalid");
+      if (["languageIds", "tagIds"].includes(name)) {
+        event.target.closest("fieldset")?.removeAttribute("aria-invalid");
+      }
+    }
+
+    function showFieldErrors(fieldErrors) {
+      clearFieldErrors();
+      let first = null;
+      for (const [name, message] of Object.entries(fieldErrors || {})) {
+        const error = document.getElementById(`${name}Error`);
+        const control = document.getElementById(name)
+          || document.querySelector(`[name="${CSS.escape(name)}"]`)?.closest("fieldset");
+        if (error) error.textContent = message;
+        control?.setAttribute("aria-invalid", "true");
+        first ||= control;
+      }
+      first?.focus?.();
+    }
+
+    async function saveMetadata(event) {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const payload = readEditPayload(form);
+      const validation = Meta.validateProfile(payload, {
+        knownLanguageIds: (asset.languageCatalog || []).map(language => language.id)
+      });
+      if (!validation.valid) {
+        showFieldErrors(validation.fieldErrors);
+        setStatus("La fiche contient des informations à corriger.", "error");
+        return;
+      }
+      clearFieldErrors();
+      const saveButton = form.querySelector("[data-save-metadata]");
+      saveButton.disabled = true;
+      setStatus("Enregistrement de la fiche…");
+      try {
+        const result = await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/metadata`, {
+          method: "PUT",
+          body: JSON.stringify(payload)
+        });
+        asset = result.asset;
+        editing = false;
+        initialEditPayload = null;
+        renderView();
+        setStatus("Fiche enregistrée.", "ok");
+      } catch (error) {
+        showFieldErrors(error.payload?.fieldErrors || {});
+        setStatus(error.message, "error");
+        saveButton.disabled = false;
+      }
+    }
+
+    async function cancelEditing(destination = null) {
+      if (editIsDirty()) {
+        const confirmed = await Proto05TeacherDialogs.confirm({
+          title: "Abandonner les modifications ?",
+          message: "Les informations saisies depuis le dernier enregistrement seront perdues.",
+          confirmLabel: "Abandonner",
+          destructive: true,
+          trigger: document.activeElement
+        });
+        if (!confirmed) return false;
+      }
+      editing = false;
+      initialEditPayload = null;
+      if (destination) location.href = destination;
+      else {
+        renderView();
+        setStatus("Modifications annulées.");
+      }
+      return true;
+    }
+
+    async function reload(message) {
+      const payload = await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}`);
+      asset = payload.asset;
+      editing = false;
+      initialEditPayload = null;
+      renderView();
+      if (message) setStatus(message, "ok");
+    }
+
+    async function preview(id, button) {
+      const entry = playable(id);
+      const shell = document.querySelector(`[data-preview="${CSS.escape(id)}"]`);
+      const mount = shell?.querySelector(".preview-mount");
+      if (!entry || !shell || !mount) return;
+      const current = players.get(id);
+      if (current) {
+        current.destroy();
+        players.delete(id);
+        shell.hidden = true;
+        button.textContent = "Prévisualiser";
+        return;
+      }
+      shell.hidden = false;
+      button.disabled = true;
+      mount.replaceChildren();
+      try {
+        const player = window.createICVideoPlayer({ container: mount });
+        const value = entry.role === "derivation-local" ? { ...entry, provider: "local" } : entry;
+        await player.load(value);
+        players.set(id, player);
+        button.textContent = "Fermer l’aperçu";
+        setStatus("Aperçu chargé.", "ok");
+      } catch (error) {
+        shell.hidden = true;
+        setStatus(`Aperçu indisponible : ${error.message}`, "error");
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    async function workshop(id) {
+      setStatus("Préparation de la copie de travail…");
+      try {
+        const entry = playable(id);
+        const result = await api("/api/proto05/library/hls-preparations", {
+          method: "POST",
+          body: JSON.stringify({ assetId: asset.id, playableId: id, sourceId: entry.sourceId })
+        });
+        const poll = async () => {
+          const payload = await api(`/api/proto05/library/hls-preparations/${encodeURIComponent(result.job.id)}`);
+          if (payload.job.status === "completed") {
+            location.href = `/teacher/anonymization/${encodeURIComponent(result.job.id)}`;
+            return;
+          }
+          if (["failed", "cancelled"].includes(payload.job.status)) {
+            throw new Error(payload.job.error || "Préparation impossible.");
+          }
+          setTimeout(() => poll().catch(error => setStatus(error.message, "error")), 500);
+        };
+        poll();
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    }
+
+    function openAssociation(id) {
+      dialog.innerHTML = `<h2>Associer à une activité</h2>
+        <p class="muted">Seule cette version publiée sera associée.</p>
+        <label for="activitySelect">Activité</label>
+        <select id="activitySelect"><option value="">Choisir une activité</option>${activities.map(item => `<option value="${esc(item.id)}">${esc(item.title || item.name || item.id)}</option>`).join("")}</select>
+        <div class="actions"><button type="button" class="secondary" data-dialog-close>Annuler</button><button type="button" data-confirm-association>Associer</button></div>`;
+      dialog.showModal();
+      dialog.querySelector("[data-dialog-close]").onclick = () => dialog.close();
+      dialog.querySelector("[data-confirm-association]").onclick = async () => {
+        const activityId = dialog.querySelector("#activitySelect").value;
+        if (!activityId) return;
+        try {
+          await api(`/api/proto05/activities/${encodeURIComponent(activityId)}/video-ref`, {
+            method: "PUT",
+            body: JSON.stringify({ assetId: asset.id, playableId: id })
+          });
+          dialog.close();
+          await reload("Version publiée associée à l’activité.");
+        } catch (error) {
+          setStatus(error.message, "error");
+        }
+      };
+    }
+
+    async function addPublished() {
+      const url = await Proto05TeacherDialogs.prompt({
+        title: "Ajouter une version publiée",
+        message: `Rattachez une URL distante publiée à « ${asset.title || asset.id} ».`,
+        label: "URL distante",
+        inputType: "url",
+        confirmLabel: "Analyser",
+        validate: value => Proto05TeacherShell.requiredPromptIssue(value, "L’URL distante est obligatoire.")
+      });
+      if (url === null) return;
+      try {
+        const analyzed = await api("/api/proto05/library/remote-reference/analyze", {
+          method: "POST",
+          body: JSON.stringify({ url: url.trim(), title: `${asset.title || asset.id} — version publiée` })
+        });
+        const confirmed = await Proto05TeacherDialogs.confirm({
+          title: "Ajouter cette version publiée ?",
+          message: "La version analysée sera rattachée à la fiche existante.",
+          details: [
+            `Type : ${analyzed.analysis.kind}`,
+            `Hôte : ${analyzed.analysis.domain}`,
+            `URL finale : ${analyzed.analysis.finalUrl}`
+          ],
+          confirmLabel: "Ajouter la version",
+          trigger: document.activeElement
+        });
+        if (!confirmed) return;
+        await api("/api/proto05/library/remote-reference/confirm", {
+          method: "POST",
+          body: JSON.stringify({ token: analyzed.token, assetId: asset.id })
+        });
+        await reload("Version distante publiée ajoutée.");
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    }
+
+    async function removeCopy(id) {
+      const copy = (asset.localCopies || []).find(item => item.playableId === id);
+      if (!copy) return;
+      const confirmed = await Proto05TeacherDialogs.confirm({
+        title: "Supprimer cette version locale ?",
+        message: `La copie locale de travail de « ${asset.title} » sera supprimée.`,
+        details: ["La fiche, la référence distante et les dérivations seront conservées."],
+        confirmLabel: "Supprimer la copie",
+        destructive: true,
+        trigger: document.activeElement
+      });
+      if (!confirmed) return;
+      try {
+        await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/local-copies/${encodeURIComponent(id)}`, { method: "DELETE" });
+        await reload("Copie locale de travail supprimée.");
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    }
+
+    async function removeDerivation(id) {
+      const entry = asset.versionsAndAccess?.derivations?.find(item => item.derivationId === id);
+      const confirmed = await Proto05TeacherDialogs.confirm({
+        title: "Supprimer cette version dérivée ?",
+        message: `La tentative « ${entry?.label || "sélectionnée"} » sera supprimée.`,
+        details: ["La fiche vidéo et les autres versions seront conservées."],
+        confirmLabel: "Supprimer la tentative",
+        destructive: true,
+        trigger: document.activeElement
+      });
+      if (!confirmed) return;
+      try {
+        await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/derivations/${encodeURIComponent(id)}`, { method: "DELETE" });
+        await reload("Tentative de dérivation supprimée.");
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    }
+
+    async function removeAsset(physical) {
+      const understanding = asset.deletionUnderstanding || {};
+      const usageLabel = Meta.optionLabel(Meta.USAGES, asset.editorialMetadata?.usage);
+      const family = asset.lineageSummary?.familyRoot?.title || asset.lineageSummary?.familyRoot?.id || "Non renseignée";
+      const details = [
+        `Titre éditorial : ${asset.title || "Non renseigné"}`,
+        `Nom du fichier : ${understanding.fileName || "Non renseigné"}`,
+        `Statut ou usage : ${usageLabel}`,
+        `Famille : ${family}`,
+        `${Number(understanding.sourceCount || 0)} source(s)`,
+        `${Number(understanding.derivedVersionCount || 0)} version(s) dérivée(s)`,
+        `${Number(understanding.publishedVersionCount || 0)} version(s) publiée(s)`,
+        `${Number(understanding.activityCount || 0)} activité(s) utilisatrice(s)`,
+        understanding.physicalFilePresent ? "Un fichier physique local est présent." : "Aucun fichier physique local n’est présent.",
+        physical ? understanding.physicalRemovalScope : understanding.catalogRemovalScope
+      ];
+      const confirmed = await Proto05TeacherDialogs.confirm({
+        title: physical ? "Retirer l’entrée et supprimer le fichier ?" : "Retirer cette entrée de la vidéothèque ?",
+        message: physical
+          ? "Cette action concerne l’entrée complète et son unique fichier local géré."
+          : "Cette action retire l’entrée complète, pas seulement une version particulière.",
+        details,
+        confirmLabel: physical ? "Retirer et supprimer le fichier" : "Retirer l’entrée",
+        destructive: true,
+        trigger: document.activeElement
+      });
+      if (!confirmed) return;
+      try {
+        await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}${physical ? "/physical" : ""}`, { method: "DELETE" });
+        location.href = backLink.href;
+      } catch (error) {
+        const conflicts = (error.payload?.conflicts || [])
+          .flatMap(item => item.items || [])
+          .map(item => item.title || item.id)
+          .join(", ");
+        setStatus([error.message, conflicts].filter(Boolean).join(" · "), "error");
+      }
+    }
+
+    async function createCopy() {
+      try {
+        const options = await api(`/api/proto05/library/download-options/${encodeURIComponent(asset.id)}?playableId=${encodeURIComponent(asset.download.sourcePlayableId || "")}`);
+        dialog.innerHTML = `<h2>Créer une copie locale de travail</h2>
+          <p class="muted">Cette copie sert à l’anonymisation et ne remplace aucune vidéo d’activité.</p>
+          <p>${esc(kind(options.sourceKind))} · ${esc(options.host)} · ${esc(options.quality || "Qualité automatique")} · ${esc(duration(options.durationMs))}</p>
+          <label for="copyName">Nom du fichier</label>
+          <input id="copyName" maxlength="180" value="${esc(options.proposedFileName)}">
+          <div id="downloadProgress"></div>
+          <div class="actions"><button type="button" class="secondary" data-dialog-close>Annuler</button><button type="button" data-start-copy ${options.ffmpeg?.available ? "" : "disabled"}>Télécharger</button></div>`;
+        dialog.showModal();
+        dialog.querySelector("[data-dialog-close]").onclick = () => dialog.close();
+        dialog.querySelector("[data-start-copy]").onclick = async event => {
+          event.currentTarget.disabled = true;
+          try {
+            const started = await api("/api/proto05/library/downloads", {
+              method: "POST",
+              body: JSON.stringify({
+                assetId: asset.id,
+                playableId: options.playableId,
+                fileName: dialog.querySelector("#copyName").value.trim()
+              })
+            });
+            const progress = dialog.querySelector("#downloadProgress");
+            const poll = async () => {
+              const payload = await api(`/api/proto05/library/downloads/${encodeURIComponent(started.job.id)}`);
+              const job = payload.job;
+              progress.innerHTML = `<p>${esc(job.stateLabel || job.status)} · ${Number(job.progress) || 0} %</p><progress max="100" value="${Number(job.progress) || 0}"></progress>`;
+              if (job.status === "completed") {
+                dialog.close();
+                await reload("Copie locale de travail terminée.");
+                return;
+              }
+              if (["failed", "cancelled"].includes(job.status)) {
+                throw new Error(job.error || "Création de copie interrompue.");
+              }
+              downloadTimer = setTimeout(() => poll().catch(error => setStatus(error.message, "error")), 500);
+            };
+            poll();
+          } catch (error) {
+            setStatus(error.message, "error");
+          }
+        };
+      } catch (error) {
+        setStatus(error.message, "error");
+      }
+    }
+
+    function bindView() {
+      app.querySelectorAll("[data-action]").forEach(control => control.addEventListener("click", () => {
+        const action = control.dataset.action;
+        if (action === "preview") preview(control.dataset.playable, control);
+        else if (action === "workshop") workshop(control.dataset.playable);
+        else if (action === "associate") openAssociation(control.dataset.playable);
+        else if (action === "add-published") addPublished();
+        else if (action === "delete-copy") removeCopy(control.dataset.playable);
+        else if (action === "delete-derivation") removeDerivation(control.dataset.derivation);
+        else if (action === "create-copy") createCopy();
+        else if (action === "remove-asset") removeAsset(false);
+        else if (action === "remove-physical") removeAsset(true);
+        else if (action === "edit-metadata") {
+          editing = true;
+          setStatus("");
+          renderEdit();
+        }
+      }));
+    }
+
+    async function init() {
+      let id;
+      try { id = decodeURIComponent(location.pathname.split("/").filter(Boolean).at(-1) || ""); }
+      catch { id = ""; }
+      try {
+        const [detail, activityPayload] = await Promise.all([
+          api(`/api/proto05/library/assets/${encodeURIComponent(id)}`),
+          api("/api/proto05/activities")
+        ]);
+        asset = detail.asset;
+        activities = activityPayload.activities || [];
+        renderView();
+      } catch (error) {
+        if (error.status === 404) {
+          app.className = "not-found";
+          app.innerHTML = `<p class="eyebrow">Vidéo introuvable</p><h1>Cette fiche n’existe pas</h1><p class="muted">La référence demandée est absente de la vidéothèque ou a été retirée.</p><p><a class="button" href="/teacher/videos">Retour à la vidéothèque</a></p>`;
+          document.title = "Vidéo introuvable · IC-Lab";
+        } else {
+          app.className = "not-found";
+          app.innerHTML = `<h1>Chargement impossible</h1><p class="muted">${esc(error.message)}</p><p><a class="button" href="/teacher/videos">Retour à la vidéothèque</a></p>`;
+        }
+      }
+    }
+
+    backLink.addEventListener("click", event => {
+      if (!editing || !editIsDirty()) return;
+      event.preventDefault();
+      cancelEditing(backLink.href);
+    });
+    window.addEventListener("beforeunload", () => {
+      destroyPlayers();
+      clearTimeout(downloadTimer);
+    });
     init();
   })();
   </script>

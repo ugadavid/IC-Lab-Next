@@ -20,21 +20,22 @@ async function startOrigin() {
   const requests = [];
   const server = http.createServer((request, response) => {
     requests.push({ method: request.method, url: request.url, range: request.headers.range || null });
-    if (request.url === "/master.m3u8") {
+    const pathname = new URL(request.url, "http://127.0.0.1").pathname;
+    if (pathname === "/master.m3u8") {
       const body = "#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=900000,RESOLUTION=1280x720\nmedia.m3u8\n";
       response.writeHead(200, { "content-type": "application/vnd.apple.mpegurl", "content-length": Buffer.byteLength(body) });
       return request.method === "HEAD" ? response.end() : response.end(body);
     }
-    if (request.url === "/media.m3u8") {
+    if (pathname === "/media.m3u8") {
       const body = "#EXTM3U\n#EXT-X-TARGETDURATION:6\n#EXTINF:6,\nsegment-001.ts\n#EXTINF:6,\nsegment-002.ts\n#EXT-X-ENDLIST\n";
       response.writeHead(200, { "content-type": "application/vnd.apple.mpegurl", "content-length": Buffer.byteLength(body) });
       return request.method === "HEAD" ? response.end() : response.end(body);
     }
-    if (request.url === "/segment-001.ts" || request.url === "/segment-002.ts") {
+    if (pathname === "/segment-001.ts" || pathname === "/segment-002.ts") {
       response.writeHead(200, { "content-type": "video/mp2t", "content-length": segment.length });
       return request.method === "HEAD" ? response.end() : response.end(segment);
     }
-    if (request.url === "/direct.mp4") {
+    if (pathname.endsWith(".mp4")) {
       response.writeHead(200, { "content-type": "video/mp4", "content-length": directVideo.length, "accept-ranges": "bytes" });
       return request.method === "HEAD" ? response.end() : response.end(directVideo);
     }
@@ -94,7 +95,7 @@ function chromiumDownloadRunner(assetId) {
   const fail=error=>{document.body.dataset.error=encodeURIComponent(error.stack||error.message);document.body.dataset.testState='failed'};
   (async()=>{try{
     const frame=document.getElementById('library');await new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
-    const win=frame.contentWindow,doc=frame.contentDocument,errors=[];
+    const win=frame.contentWindow;let doc=frame.contentDocument;const errors=[];
     win.addEventListener('error',event=>errors.push(event.message));win.addEventListener('unhandledrejection',event=>errors.push(String(event.reason)));
     const card=await until(()=>doc.querySelector('[data-asset-card="${assetId}"]'));
     const menuButton=await until(()=>card.querySelector('.asset-secondary-menu>button'));
@@ -121,6 +122,50 @@ function chromiumDownloadRunner(assetId) {
     preview.click();await until(()=>workingCard.querySelector('.preview-mount video'));
     const previewOpened=!workingCard.querySelector('.preview').hidden;
     done({menusInitiallyClosed,summary,sawProgress,completed,previewOpened,listView,gridView,errors});
+  }catch(error){fail(error)}})();
+  <\/script></body></html>`;
+}
+
+function chromiumNoResurrectionRunner(deletedAssetId, copiedAssetId, untouchedAssetId) {
+  return `<!doctype html><html><body data-test-state="running"><iframe id="library" src="/teacher/videos" style="width:1400px;height:900px"></iframe><script>
+  const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+  const until=async callback=>{for(let index=0;index<300;index++){const value=callback();if(value)return value;await wait(50)}throw new Error('Délai Chromium dépassé')};
+  const done=value=>{document.body.dataset.results=encodeURIComponent(JSON.stringify(value));document.body.dataset.testState='done'};
+  const fail=error=>{document.body.dataset.error=encodeURIComponent(error.stack||error.message);document.body.dataset.testState='failed'};
+  (async()=>{try{
+    const frame=document.getElementById('library');await new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+    const win=frame.contentWindow;let doc=frame.contentDocument;const errors=[];
+    win.addEventListener('error',event=>errors.push(event.message));win.addEventListener('unhandledrejection',event=>errors.push(String(event.reason)));
+    const deleted=await until(()=>doc.querySelector('[data-asset-card="${deletedAssetId}"]'));
+    const deletedMenuButton=deleted.querySelector('.asset-secondary-menu>button');deletedMenuButton.click();
+    const remove=[...deletedMenuButton.nextElementSibling.querySelectorAll('button')].find(button=>button.textContent.includes('Retirer de la Library'));
+    if(!remove)throw new Error('Action de retrait absente');remove.click();
+    const dialog=await until(()=>doc.querySelector('.teacher-dialog'));
+    const reloaded=new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+    dialog.querySelector('.teacher-dialog__danger').click();await reloaded;doc=frame.contentDocument;
+    await until(()=>!doc.querySelector('[data-asset-card="${deletedAssetId}"]'));
+    const copied=await until(()=>doc.querySelector('[data-asset-card="${copiedAssetId}"]'));
+    const copiedMenuButton=copied.querySelector('.asset-secondary-menu>button');copiedMenuButton.click();
+    const download=[...copiedMenuButton.nextElementSibling.querySelectorAll('button')].find(button=>button.textContent.includes('Créer une copie locale de travail'));
+    if(!download)throw new Error('Action de copie absente');download.click();
+    const panel=await until(()=>doc.querySelector('.download-panel'));
+    const start=await until(()=>panel.querySelector('.start-download:not(:disabled)'));start.click();
+    let persisted=false;
+    for(let index=0;index<300&&!persisted;index++){const current=await (await fetch('/api/proto05/library/assets',{cache:'no-store'})).json();persisted=Boolean(current.assets.find(item=>item.id==='${copiedAssetId}')?.localCopies?.length);if(!persisted)await wait(50)}
+    if(!persisted)throw new Error('La copie de travail n’est pas devenue persistante');
+    const copyReloaded=new Promise(resolve=>frame.addEventListener('load',resolve,{once:true}));
+    win.location.reload();await copyReloaded;doc=frame.contentDocument;
+    await until(()=>[...doc.querySelectorAll('[data-asset-card="${copiedAssetId}"] .asset-delete-menu button')].some(button=>button.textContent.includes('Supprimer la copie de travail')));
+    const response=await fetch('/api/proto05/library/assets',{cache:'no-store'});const payload=await response.json();
+    const copiedAsset=payload.assets.find(item=>item.id==='${copiedAssetId}');
+    done({
+      deletedAbsent:!payload.assets.some(item=>item.id==='${deletedAssetId}')&&!doc.querySelector('[data-asset-card="${deletedAssetId}"]'),
+      copiedPresent:Boolean(copiedAsset&&doc.querySelector('[data-asset-card="${copiedAssetId}"]')),
+      untouchedPresent:payload.assets.some(item=>item.id==='${untouchedAssetId}')&&Boolean(doc.querySelector('[data-asset-card="${untouchedAssetId}"]')),
+      localCopyCount:copiedAsset?.localCopies?.length||0,
+      storageKey:copiedAsset?.localCopies?.[0]?.storageKey||null,
+      errors
+    });
   }catch(error){fail(error)}})();
   <\/script></body></html>`;
 }
@@ -230,6 +275,74 @@ test("une URL vidéo directe utilise la même tâche FFmpeg et devient immédiat
   assert.equal(asset.playables.find(item => item.id === asset.defaultPlayableId).kind, "direct-url");
   assert.ok(origin.requests.some(item => item.method === "HEAD" && item.url === "/direct.mp4"));
   assert.ok(origin.requests.some(item => item.method === "GET" && item.url === "/direct.mp4"));
+});
+
+test("le parcours enseignant supprimer puis copier ne restaure aucune entrée JSON supprimée", { timeout: 30000 }, async context => {
+  const chromium = findChromium();
+  assert.ok(chromium, "Chrome, Edge ou Chromium est requis pour la recette Mission 145.");
+  const origin = await startOrigin();
+  const server = await startTemporaryProto05Server(structuredClone(activities), "proto05-library-no-resurrection-", {
+    env: testEnvironment()
+  });
+  const profile = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-library-no-resurrection-profile-"));
+  context.after(async () => {
+    await server.cleanup();
+    await new Promise(resolve => origin.server.close(resolve));
+    fs.rmSync(profile, { recursive: true, force: true });
+  });
+
+  const deleted = await createRemoteReference(server.baseUrl, `${origin.baseUrl}/m145-deleted.mp4`, "M145 supprimée");
+  const copied = await createRemoteReference(server.baseUrl, `${origin.baseUrl}/m145-copied.mp4`, "M145 copiée");
+  const untouched = await createRemoteReference(server.baseUrl, `${origin.baseUrl}/m145-untouched.mp4`, "M145 témoin");
+  assert.equal(new Set([deleted.assetId, copied.assetId, untouched.assetId]).size, 3);
+  const before = JSON.parse(fs.readFileSync(server.videoLibraryFile, "utf8"));
+  const untouchedWitness = {
+    asset: structuredClone(before.assets.find(item => item.id === untouched.assetId)),
+    sources: structuredClone(before.sources.filter(item => item.assetId === untouched.assetId)),
+    playables: structuredClone(before.playables.filter(item => item.assetId === untouched.assetId))
+  };
+
+  fs.writeFileSync(
+    path.join(server.root, "prototype", "no-resurrection-runner.html"),
+    chromiumNoResurrectionRunner(deleted.assetId, copied.assetId, untouched.assetId),
+    "utf8"
+  );
+  const dom = await runChromium(
+    chromium,
+    `${server.baseUrl}/no-resurrection-runner.html`,
+    profile,
+    { virtualTimeBudget: 18000, timeout: 28000, windowSize: "1440,1000" }
+  );
+  const browser = readBrowserResults(dom);
+  assert.deepEqual(browser.errors, []);
+  assert.equal(browser.deletedAbsent, true);
+  assert.equal(browser.copiedPresent, true);
+  assert.equal(browser.untouchedPresent, true);
+  assert.equal(browser.localCopyCount, 1);
+  const afterCopy = JSON.parse(fs.readFileSync(server.videoLibraryFile, "utf8"));
+  assert.equal(afterCopy.assets.some(item => item.id === deleted.assetId), false);
+  assert.equal(afterCopy.sources.some(item => item.assetId === deleted.assetId), false);
+  assert.equal(afterCopy.playables.some(item => item.assetId === deleted.assetId), false);
+  assert.deepEqual(afterCopy.assets.find(item => item.id === untouched.assetId), untouchedWitness.asset);
+  assert.deepEqual(afterCopy.sources.filter(item => item.assetId === untouched.assetId), untouchedWitness.sources);
+  assert.deepEqual(afterCopy.playables.filter(item => item.assetId === untouched.assetId), untouchedWitness.playables);
+  assert.equal(afterCopy.sources.filter(item => item.assetId === copied.assetId).length, 2);
+  assert.equal(afterCopy.playables.filter(item => item.assetId === copied.assetId).length, 2);
+  assert.ok(fs.existsSync(path.join(server.videoLibraryWorkspaceDirectory, browser.storageKey)));
+  const backup = JSON.parse(fs.readFileSync(`${server.videoLibraryFile}.bak`, "utf8"));
+  assert.equal(backup.assets.some(item => item.id === deleted.assetId), false, "la sauvegarde précédant la copie ne restaure pas le catalogue supprimé");
+
+  await server.restart();
+  const afterRestart = await requestJson(server.baseUrl, "/api/proto05/library/assets");
+  assert.equal(afterRestart.response.status, 200);
+  assert.equal(afterRestart.body.assets.some(item => item.id === deleted.assetId), false);
+  assert.equal(afterRestart.body.assets.some(item => item.id === copied.assetId), true);
+  assert.equal(afterRestart.body.assets.some(item => item.id === untouched.assetId), true);
+  assert.equal(
+    afterRestart.body.assets.find(item => item.id === copied.assetId).localCopies.length,
+    1
+  );
+  context.diagnostic(`Recette Chromium Mission 145 exécutée avec ${chromium}.`);
 });
 
 test("une source HLS canonique historique provider UGA est résolue depuis son URL d'origine", { timeout: 15000 }, async t => {

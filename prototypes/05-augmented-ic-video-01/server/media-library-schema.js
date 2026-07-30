@@ -19,7 +19,7 @@ const PLAYABLE_KINDS = new Set(["local-file", "direct-url", "hls", "youtube-embe
 const TRANSPORTS = new Set(["file", "http", "https", "hls", "youtube-iframe"]);
 const BUSINESS_ROLES = new Set(["original-remote", "working-copy", "derivation-local", "published-remote"]);
 
-/** @typedef {{ id:string, title:string, description?:string|null, lifecycle:"active"|"archived", folderId:string|null, defaultPlayableId:string|null, parentAssetId:string|null, familyRootAssetId:string, derivationTypes:string[], tagIds:string[], provenance:Object, technicalMetadata:Object, rights:Object, createdAt:string, updatedAt:string }} MediaAsset */
+/** @typedef {{ id:string, title:string, description?:string|null, editorialMetadata?:Object, lifecycle:"active"|"archived", folderId:string|null, defaultPlayableId:string|null, parentAssetId:string|null, familyRootAssetId:string, derivationTypes:string[], tagIds:string[], provenance:Object, technicalMetadata:Object, rights:Object, createdAt:string, updatedAt:string }} MediaAsset */
 /** @typedef {{ id:string, assetId:string, kind:string, provider:string, origin:Object, transport:string, mimeType:string|null, provenance:Object, createdAt:string }} MediaSource */
 /** @typedef {{ id:string, assetId:string, sourceId:string, kind:string, availability:string, availabilityReason:string|null, location:Object, technicalMetadata:Object, provenance:Object, createdAt:string, updatedAt:string }} Playable */
 /** @typedef {{ id:string, type:string, sourceAssetId:string, sourcePlayableId:string, sourcePreparationId:string|null, outputAssetId:string|null, outputPlayableId:string|null, publishedPlayableId:string|null, status:string, progress:number, createdAt:string, startedAt:string|null, finishedAt:string|null, error:Object|null, parameters:Object, engine:string, engineVersion:string, ffmpegVersion:string|null, runtimeJobId:string|null, diagnostics:Object }} MediaTreatment */
@@ -132,6 +132,12 @@ function validateAsset(result, asset, index, maps) {
     && typeof asset.description !== "string"
   ) {
     addProblem(result, "INVALID_ASSET_DESCRIPTION", "error", `${path}.description`, `${path}.description doit être une chaîne ou null.`, id);
+  }
+  if (
+    asset.editorialMetadata !== undefined
+    && !isObject(asset.editorialMetadata)
+  ) {
+    addProblem(result, "INVALID_ASSET_EDITORIAL_METADATA", "error", `${path}.editorialMetadata`, `${path}.editorialMetadata doit être un objet lorsqu’il est renseigné.`, id);
   }
   if (!ASSET_LIFECYCLES.has(asset.lifecycle)) addProblem(result, "INVALID_ASSET_LIFECYCLE", "error", `${path}.lifecycle`, `Cycle de vie inconnu : ${String(asset.lifecycle)}.`, id);
   if (asset.folderId !== null && asset.folderId !== undefined) { validateId(result, asset.folderId, `${path}.folderId`, id); maps.foldersReferenced.push({ id: asset.folderId, path: `${path}.folderId`, assetId: id }); }

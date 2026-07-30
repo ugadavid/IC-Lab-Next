@@ -12,6 +12,7 @@ const sourceLanguageCatalogFile = path.resolve(sourcePrototypeDirectory, "..", "
 const sourceVideoCatalogFile = path.join(sourcePrototypeDirectory, "data", "video-catalog.json");
 const sourceVideoLibraryFile = path.join(sourcePrototypeDirectory, "data", "video-library.json");
 const sourceVideoLibraryMediaDirectory = path.join(sourcePrototypeDirectory, "data", "video-library-media");
+const sourceVideoLibraryWorkspaceDirectory = path.join(sourcePrototypeDirectory, "data", "video-library-workspaces");
 
 async function freePort() {
   const server = http.createServer();
@@ -80,6 +81,9 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   fs.copyFileSync(sourceVideoLibraryFile, videoLibraryFile);
   if (options.videoLibrary) fs.writeFileSync(videoLibraryFile, `${JSON.stringify(options.videoLibrary, null, 2)}\n`, "utf8");
   fs.cpSync(sourceVideoLibraryMediaDirectory, temporaryVideoLibraryMediaDirectory, { recursive: true });
+  if (options.copyVideoLibraryWorkspaces && fs.existsSync(sourceVideoLibraryWorkspaceDirectory)) {
+    fs.cpSync(sourceVideoLibraryWorkspaceDirectory, temporaryVideoLibraryWorkspaceDirectory, { recursive: true });
+  }
   const videoCatalog = JSON.parse(fs.readFileSync(sourceVideoCatalogFile, "utf8"));
   fs.writeFileSync(videoCatalogFile, `${JSON.stringify(videoCatalog, null, 2)}\n`, "utf8");
   if (options.activityLibrary) {
@@ -110,7 +114,7 @@ async function startTemporaryProto05Server(store, prefix = "proto05-server-test-
   );
   const temporarySharedDirectory = path.join(prototypeDirectory, "shared");
   fs.mkdirSync(temporarySharedDirectory, { recursive: true });
-  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js", "teacher-shell.css", "teacher-shell.js", "guided-authoring-contract.js", "activity-library.css", "activity-library.js"]) {
+  for (const file of ["ic-timeline.js", "ic-timeline.css", "ic-video-player.js", "teacher-shell.css", "teacher-shell.js", "guided-authoring-contract.js", "video-metadata-contract.js", "activity-library.css", "activity-library.js"]) {
     fs.copyFileSync(path.join(sourcePrototypeDirectory, "shared", file), path.join(temporarySharedDirectory, file));
   }
   fs.copyFileSync(path.join(sourcePrototypeDirectory, "guided-overlays.js"), path.join(prototypeDirectory, "guided-overlays.js"));

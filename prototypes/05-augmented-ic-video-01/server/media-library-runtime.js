@@ -145,6 +145,19 @@ function canonicalFromRuntime(runtime, previousCanonical) {
     const runtimeAsset = runtime.assets.find(item => item.id === asset.id);
     if (runtimeAsset) {
       if (typeof runtimeAsset.title === "string") asset.title = runtimeAsset.title;
+      if (Object.prototype.hasOwnProperty.call(runtimeAsset, "description")) {
+        if (runtimeAsset.description === null) delete asset.description;
+        else asset.description = runtimeAsset.description;
+      }
+      if (Object.prototype.hasOwnProperty.call(runtimeAsset, "editorialMetadata")) {
+        asset.editorialMetadata = clone(runtimeAsset.editorialMetadata);
+      }
+      if (runtimeAsset.provenance && typeof runtimeAsset.provenance === "object") {
+        asset.provenance = clone(runtimeAsset.provenance);
+      }
+      if (runtimeAsset.rights && typeof runtimeAsset.rights === "object") {
+        asset.rights = clone(runtimeAsset.rights);
+      }
       if (runtimeAsset.defaultPlayableId !== undefined) asset.defaultPlayableId = runtimeAsset.defaultPlayableId;
       if (Object.prototype.hasOwnProperty.call(runtimeAsset, "folderId")) asset.folderId = runtimeAsset.folderId;
       if (Array.isArray(runtimeAsset.tagIds)) asset.tagIds = clone(runtimeAsset.tagIds);

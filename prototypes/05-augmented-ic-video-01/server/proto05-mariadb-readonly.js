@@ -394,6 +394,9 @@ function mapVideoLibrary(tables) {
       id: row.id,
       title: row.title,
       ...(row.description !== null ? { description: row.description } : {}),
+      ...(row.editorial_metadata_json !== null && row.editorial_metadata_json !== undefined
+        ? { editorialMetadata: jsonValue(row.editorial_metadata_json, {}) }
+        : {}),
       lifecycle: row.lifecycle,
       folderId: row.folder_id,
       defaultPlayableId: row.default_playable_id,

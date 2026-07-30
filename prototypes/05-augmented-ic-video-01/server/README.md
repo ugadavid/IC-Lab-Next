@@ -7,6 +7,13 @@ l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la ra
 npm start
 ```
 
+Cette commande directe conserve provisoirement le mode historique `json`. Le
+launcher officiel `scripts/windows/start-proto05.bat` charge la configuration
+locale non versionnée et impose explicitement le mode `mariadb`, afin qu’un
+démarrage enseignant ordinaire ne puisse pas retomber silencieusement sur le
+catalogue JSON. Les modes historiques restent disponibles pour les tests et
+l’audit de sortie jusqu’à leur retrait explicite.
+
 ## Modes de données
 
 `PROTO05_DATA_MODE` accepte exactement `json`, `compare`,
@@ -64,6 +71,24 @@ Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `DELETE /api/proto05/activities/:id`.
 Les méthodes non prévues sont refusées (`405`) et les chemins traversants sont
 rejetés.
+
+## Fiche Vidéo++
+
+`GET /api/proto05/library/assets/:id` expose l’identité éditoriale, les
+déclarations de provenance et de droits, ainsi que les projections techniques,
+de filiation, d’usage et de suppression. `PUT
+/api/proto05/library/assets/:id/metadata` modifie uniquement les champs
+éditoriaux déclaratifs, le dossier et les tags. Les noms physiques, localisations,
+sources, playables, traitements, identifiants et relations de filiation restent
+en lecture seule.
+
+En MariaDB, `media_assets.title` et `media_assets.description` restent dédiés ;
+les autres informations éditoriales sont stockées dans
+`editorial_metadata_json`. La provenance déclarée et les droits conservent leurs
+colonnes JSON existantes. La migration
+`database/migrations/006_proto05_video_plus_metadata_schema.sql` ajoute
+uniquement la colonne éditoriale nullable et sa contrainte `JSON_VALID`, sans
+réécrire les lignes existantes.
 
 ## Harmonisation des états de saisie (0.1.42)
 

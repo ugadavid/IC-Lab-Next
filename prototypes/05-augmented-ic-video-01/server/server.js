@@ -45,6 +45,9 @@ const { createProto05ReadBoundary } = require("./proto05-read-boundary");
 const { createProto05WriteBoundary } = require("./proto05-write-boundary");
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 const {
+  validateProfile: validateVideoMetadataProfile
+} = require("../shared/video-metadata-contract");
+const {
   assertPedagogicalLineage,
   createEmptyPedagogicalIdentity,
   normalizePedagogicalIdentityStates,
@@ -196,7 +199,11 @@ function loadVideoCatalog() {
 let JSON_VIDEO_CATALOG = MARIADB_IS_AUTHORITY ? freezeVideoCatalog([]) : loadVideoCatalog();
 
 function activeVideoCatalog() {
-  return READ_CONTEXT.getStore()?.videoCatalog?.videos || JSON_VIDEO_CATALOG;
+  const context = READ_CONTEXT.getStore();
+  return videoCatalogWithLibraryTitles(
+    context?.videoCatalog?.videos || JSON_VIDEO_CATALOG,
+    context?.videoLibrary || JSON_VIDEO_LIBRARY
+  );
 }
 
 function safeVideoLibraryFile() {
@@ -228,6 +235,17 @@ function activeVideoLibrary() {
   const library = READ_CONTEXT.getStore()?.videoLibrary || JSON_VIDEO_LIBRARY;
   if (!library) throw new Error("Aucune Library vidéo n’est disponible hors du contexte MariaDB.");
   return library;
+}
+
+function videoCatalogWithLibraryTitles(videos, library) {
+  if (!library) return videos;
+  const assets = new Map((library.assets || []).map(asset => [asset.id, asset]));
+  const playables = new Map((library.playables || []).map(playable => [playable.id, playable]));
+  return videos.map(video => {
+    const playable = playables.get(video.id);
+    const title = assets.get(playable?.assetId)?.title;
+    return title && title !== video.title ? { ...video, title } : video;
+  });
 }
 
 const VIDEO_LIBRARY = new Proxy({}, {
@@ -1091,20 +1109,35 @@ async function renameWithWindowsRetries(source, target, options = {}) {
   throw lastError;
 }
 
+async function commitCanonicalVideoLibrary(canonical) {
+  const file = safeVideoLibraryFile();
+  assertWritableCanonical(canonical);
+  const backup = `${file}.bak`;
+  const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
+  await fs.copyFile(file, backup);
+  try {
+    await fs.writeFile(temp, `${JSON.stringify(canonical, null, 2)}\n`, "utf8");
+    await renameWithWindowsRetries(temp, file);
+    CANONICAL_LIBRARY = canonical;
+  } finally {
+    try { await fs.unlink(temp); } catch {}
+  }
+}
+
 async function writeCanonicalVideoLibrary(canonical) {
+  const operation = writeQueue.then(() => commitCanonicalVideoLibrary(canonical));
+  writeQueue = operation.catch(() => {});
+  return operation;
+}
+
+async function mutateCanonicalVideoLibrary(mutator) {
   const operation = writeQueue.then(async () => {
-    const file = safeVideoLibraryFile();
-    assertWritableCanonical(canonical);
-    const backup = `${file}.bak`;
-    const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-    await fs.copyFile(file, backup);
-    try {
-      await fs.writeFile(temp, `${JSON.stringify(canonical, null, 2)}\n`, "utf8");
-      await renameWithWindowsRetries(temp, file);
-      CANONICAL_LIBRARY = canonical;
-    } finally {
-      try { await fs.unlink(temp); } catch {}
-    }
+    const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
+    await mutator(canonical);
+    canonical.updatedAt = new Date().toISOString();
+    await commitCanonicalVideoLibrary(canonical);
+    JSON_VIDEO_LIBRARY = projectCanonicalLibrary(canonical);
+    return canonical;
   });
   writeQueue = operation.catch(() => {});
   return operation;
@@ -1117,8 +1150,16 @@ async function persistVideoLibrary(library) {
   ));
   if (DATA_MODE === "mariadb") {
     canonical.updatedAt = new Date().toISOString();
+    const context = READ_CONTEXT.getStore();
+    const videoCatalog = {
+      ...(context?.videoCatalog || { schemaVersion: "0.1" }),
+      videos: videoCatalogWithLibraryTitles(
+        context?.videoCatalog?.videos || [],
+        projectCanonicalLibrary(canonical)
+      )
+    };
     await persistMariaDbSnapshot(
-      { videoLibrary: projectCanonicalLibrary(canonical) },
+      { videoLibrary: projectCanonicalLibrary(canonical), videoCatalog },
       { operation: "media-library", canonicalVideoLibrary: canonical }
     );
     return;
@@ -1140,6 +1181,69 @@ async function persistCanonicalLibrary(canonical) {
   CANONICAL_LIBRARY = next;
   JSON_VIDEO_LIBRARY = projectCanonicalLibrary(next);
   return VIDEO_LIBRARY;
+}
+
+async function persistWorkingCopyMutation(mutation) {
+  if (DATA_MODE === "mariadb") {
+    const context = READ_CONTEXT.getStore();
+    if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
+    const snapshot = structuredClone(context);
+    Object.defineProperty(snapshot, "canonicalVideoLibrary", {
+      configurable: true,
+      enumerable: false,
+      writable: true,
+      value: structuredClone(context.canonicalVideoLibrary)
+    });
+    const queued = writeQueue.then(() => proto05WriteBoundary().appendWorkingCopy(
+      snapshot,
+      mutation,
+      {
+        failAfterStatements: process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS
+          ? Number(process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS)
+          : null
+      }
+    ));
+    writeQueue = queued.catch(() => {});
+    const result = await queued;
+    Object.assign(context, result.snapshot);
+    Object.defineProperty(context, "canonicalVideoLibrary", {
+      configurable: true,
+      enumerable: false,
+      writable: true,
+      value: result.snapshot.canonicalVideoLibrary
+    });
+    return result;
+  }
+  const canonical = await mutateCanonicalVideoLibrary(next => {
+    const asset = next.assets.find(item => item.id === mutation.assetId);
+    const expectedPlayable = next.playables.find(item => (
+      item.id === mutation.expectedPlayableId && item.assetId === mutation.assetId
+    ));
+    if (!asset || !expectedPlayable) {
+      throw new Error("La vidéo source de la copie de travail n’existe plus.");
+    }
+    if (
+      next.sources.some(item => item.id === mutation.source.id)
+      || next.playables.some(item => (
+        item.id === mutation.playable.id
+        || (item.assetId === mutation.assetId
+          && item.technicalMetadata?.sha256 === mutation.playable.technicalMetadata?.sha256)
+      ))
+    ) {
+      throw new Error("Une copie locale équivalente existe déjà pour cet asset.");
+    }
+    next.sources.push(structuredClone(mutation.source));
+    next.playables.push(structuredClone(mutation.playable));
+    asset.updatedAt = mutation.updatedAt;
+  });
+  return {
+    operation: "media-working-copy",
+    statements: 0,
+    snapshot: {
+      videoLibrary: projectCanonicalLibrary(canonical),
+      canonicalVideoLibrary: canonical
+    }
+  };
 }
 
 function libraryAssetFromInput(payload) {
@@ -1199,13 +1303,59 @@ function libraryAssetDetails(asset, usage = null) {
     const playable = playables.find(item => localStorageKeyForPlayable(item, sources.find(source => source.id === item.sourceId)) === candidate.storageKey);
     return { ...candidate, playableId: playable?.id || null, sourceId: playable?.sourceId || null, role: explicitRole(playable), isDefault: playable?.id === asset.defaultPlayableId };
   });
+  const projectedAccesses = projectAssetAccesses(asset, sources, playables, VIDEO_LIBRARY.treatments || []);
+  const defaultPlayable = playables.find(playable => playable.id === asset.defaultPlayableId) || playables[0] || null;
+  const technicalPlayable = [defaultPlayable, ...playables].find(playable => (
+    Number.isFinite(playable?.technicalMetadata?.durationMs)
+    || Number.isFinite(playable?.technicalMetadata?.width)
+    || Number.isFinite(playable?.technicalMetadata?.sizeBytes)
+    || playable?.technicalMetadata?.sha256
+  )) || defaultPlayable;
+  const technicalSource = sources.find(source => source.id === technicalPlayable?.sourceId) || sources[0] || null;
+  const storageKey = technicalPlayable
+    ? localStorageKeyForPlayable(technicalPlayable, technicalSource)
+    : null;
+  const fileName = technicalPlayable?.technicalMetadata?.fileName
+    || storageKey && path.basename(storageKey)
+    || technicalSource?.origin?.originalFileName
+    || asset.provenance?.originalFileName
+    || null;
+  const rootId = asset.familyRootAssetId || asset.id;
+  const familyMembers = VIDEO_LIBRARY.assets.filter(item => (
+    item.id !== asset.id
+    && (item.familyRootAssetId || item.id) === rootId
+  ));
+  const familyRoot = VIDEO_LIBRARY.assets.find(item => item.id === rootId) || asset;
+  const parent = asset.parentAssetId
+    ? VIDEO_LIBRARY.assets.find(item => item.id === asset.parentAssetId) || null
+    : null;
+  const publishedCount = projectedAccesses.publishedRemote.length;
   return {
     ...asset,
     sources,
     playables: playables.map(playableForClient),
     deletion: { canDeleteFile: localCandidates.length === 1 && !hasRemoteSource, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
     localCopies,
-    versionsAndAccess: projectAssetAccesses(asset, sources, playables, VIDEO_LIBRARY.treatments || []),
+    versionsAndAccess: projectedAccesses,
+    technicalSummary: {
+      fileName,
+      mimeType: technicalPlayable?.technicalMetadata?.mimeType || technicalSource?.mimeType || null,
+      durationMs: technicalPlayable?.technicalMetadata?.durationMs ?? null,
+      width: technicalPlayable?.technicalMetadata?.width ?? null,
+      height: technicalPlayable?.technicalMetadata?.height ?? null,
+      sizeBytes: technicalPlayable?.technicalMetadata?.sizeBytes ?? null,
+      sha256: technicalPlayable?.technicalMetadata?.sha256 ?? null,
+      availability: technicalPlayable?.availability || null,
+      localFilePresent: localCandidates.length > 0,
+      importedAt: technicalPlayable?.createdAt || technicalSource?.createdAt || asset.createdAt || null
+    },
+    lineageSummary: {
+      familyRoot: { id: familyRoot.id, title: familyRoot.title },
+      parent: parent ? { id: parent.id, title: parent.title } : null,
+      derivedVersions: familyMembers.map(item => ({ id: item.id, title: item.title })),
+      sourceCount: sources.length,
+      publishedCount
+    },
     download: {
       canDownload: Boolean(remoteCandidate) && localCopies.length === 0 && !activeDownload,
       active: Boolean(activeDownload),
@@ -1217,8 +1367,23 @@ function libraryAssetDetails(asset, usage = null) {
       destinationLabel: `Espace de travail de ${asset.title || asset.id}`
     },
     ...(usage ? { usage } : {}),
+    deletionUnderstanding: {
+      title: asset.title,
+      fileName,
+      sourceCount: sources.length,
+      derivedVersionCount: familyMembers.length,
+      publishedVersionCount: publishedCount,
+      activityCount: usage?.activityCount || 0,
+      activities: usage?.activities || [],
+      physicalFilePresent: localCandidates.length > 0,
+      catalogRemovalScope: "Retire l’entrée, ses sources et ses versions de la vidéothèque sans supprimer de fichier physique.",
+      physicalRemovalScope: localCandidates.length === 1 && !hasRemoteSource
+        ? "Retire l’entrée et supprime également son unique fichier local géré."
+        : "La suppression physique n’est pas proposée pour cette fiche."
+    },
     folders: VIDEO_LIBRARY.folders || [],
-    tags: VIDEO_LIBRARY.tags || []
+    tags: VIDEO_LIBRARY.tags || [],
+    languageCatalog: activeLanguageCatalog()
   };
 }
 
@@ -1407,10 +1572,11 @@ async function removeLibraryAsset(assetId, { physical = false } = {}) {
       throw error;
     }
   }
-  const nextLibrary = libraryMutationCopy();
-  nextLibrary.assets = nextLibrary.assets.filter(item => item.id !== assetId);
-  nextLibrary.sources = nextLibrary.sources.filter(source => !plan.sources.some(item => item.id === source.id));
-  nextLibrary.playables = nextLibrary.playables.filter(playable => !plan.playables.some(item => item.id === playable.id));
+  const nextCanonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
+  nextCanonical.assets = nextCanonical.assets.filter(item => item.id !== assetId);
+  nextCanonical.sources = nextCanonical.sources.filter(source => !plan.sources.some(item => item.id === source.id));
+  nextCanonical.playables = nextCanonical.playables.filter(playable => !plan.playables.some(item => item.id === playable.id));
+  assertWritableCanonical(nextCanonical);
   let transactionBackup = null;
   try {
     if (physicalFile) {
@@ -1418,7 +1584,7 @@ async function removeLibraryAsset(assetId, { physical = false } = {}) {
       await fs.copyFile(physicalFile.file, transactionBackup);
       await fs.unlink(physicalFile.file);
     }
-    await persistLibraryMutation(nextLibrary);
+    await persistCanonicalLibrary(nextCanonical);
     return { assetId, removedFromLibrary: true, deletedFile: Boolean(physicalFile), storageKey: physicalFile?.storageKey || null };
   } catch (error) {
     if (physicalFile && transactionBackup) {
@@ -1567,6 +1733,42 @@ function classificationFromInput(assetId, payload) {
   const tagIds = Array.isArray(payload?.tagIds) ? [...new Set(payload.tagIds)] : (Array.isArray(asset.tagIds) ? [...asset.tagIds] : []);
   if (tagIds.some(tagId => !(VIDEO_LIBRARY.tags || []).some(tag => tag.id === tagId))) throw new Error("Tag introuvable.");
   return { folderId, tagIds };
+}
+
+function compactDeclaredFields(value) {
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== null));
+}
+
+function videoMetadataFromInput(assetId, payload) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  if (!asset) {
+    const error = new Error("Asset vidéo introuvable.");
+    error.statusCode = 404;
+    throw error;
+  }
+  const validation = validateVideoMetadataProfile(payload, {
+    knownLanguageIds: activeLanguageCatalog().map(language => language.id)
+  });
+  if (!validation.valid) {
+    const error = new Error("La fiche contient des informations invalides.");
+    error.statusCode = 400;
+    error.fieldErrors = validation.fieldErrors;
+    throw error;
+  }
+  const value = validation.value;
+  if (value.folderId !== null && !(VIDEO_LIBRARY.folders || []).some(folder => folder.id === value.folderId)) {
+    validation.fieldErrors.folderId = "Le dossier sélectionné est introuvable.";
+  }
+  if (value.tagIds.some(tagId => !(VIDEO_LIBRARY.tags || []).some(tag => tag.id === tagId))) {
+    validation.fieldErrors.tagIds = "Une étiquette sélectionnée est introuvable.";
+  }
+  if (Object.keys(validation.fieldErrors).length) {
+    const error = new Error("La fiche contient des informations invalides.");
+    error.statusCode = 400;
+    error.fieldErrors = validation.fieldErrors;
+    throw error;
+  }
+  return { asset, value };
 }
 
 function safeImportedFileName(value) {
@@ -2226,7 +2428,10 @@ async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
   if (!stat?.isFile() || stat.size <= 0) throw new Error("FFmpeg n’a produit aucun fichier exploitable.");
   const probe = probeDownloadedMedia(ffmpegStatus, job.temporaryPath);
   const sha256 = await hashFile(job.temporaryPath);
-  const duplicate = VIDEO_LIBRARY.playables.find(item => item.assetId === job.assetId && item.sha256 === sha256);
+  const duplicate = VIDEO_LIBRARY.playables.find(item => (
+    item.assetId === job.assetId
+    && (item.sha256 === sha256 || item.technicalMetadata?.sha256 === sha256)
+  ));
   if (duplicate) throw new Error("Une copie locale équivalente existe déjà pour cet asset.");
   const storageKey = `${job.assetId}/source/${sha256.slice(0, 16)}-${job.fileName}`;
   const targetPath = safeLibraryMediaPath(storageKey, "workspace");
@@ -2243,33 +2448,35 @@ async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
     importedAt: now, ffmpegVersion: ffmpegStatus.version,
     sha256, sizeBytes: stat.size, originalFileName: job.fileName
   };
-  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
-  const asset = canonical.assets.find(item => item.id === job.assetId);
-  if (!asset || canonical.sources.some(item => item.id === sourceId) || canonical.playables.some(item => item.id === playableId)) throw new Error("La destination canonique de la copie existe déjà.");
-  canonical.sources.push({
-    id: sourceId, assetId: asset.id, kind: "local-file", provider: "local", role: "working-copy",
-    origin: { originalFileName: job.fileName, sourceAssetId: asset.id, sourcePlayableId: job.playableId },
+  const source = {
+    id: sourceId, assetId: job.assetId, kind: "local-file", provider: "local", role: "working-copy",
+    origin: { originalFileName: job.fileName, sourceAssetId: job.assetId, sourcePlayableId: job.playableId },
     transport: "file", mimeType, provenance, createdAt: now
-  });
-  canonical.playables.push({
-    id: playableId, assetId: asset.id, sourceId, kind: "local-file", provider: "local", role: "working-copy",
+  };
+  const playable = {
+    id: playableId, assetId: job.assetId, sourceId, kind: "local-file", provider: "local", role: "working-copy",
     availability: "available", availabilityReason: null,
     location: { storageScope: "workspace", storageKey }, technicalMetadata: metadata,
     provenance, createdAt: now, updatedAt: now
-  });
-  asset.updatedAt = now;
+  };
   await fs.mkdir(path.dirname(targetPath), { recursive: true });
   await renameWithWindowsRetries(job.temporaryPath, targetPath);
   try {
-    await persistCanonicalLibrary(canonical);
+    await persistWorkingCopyMutation({
+      assetId: job.assetId,
+      expectedPlayableId: job.playableId,
+      source,
+      playable,
+      updatedAt: now
+    });
   } catch (error) {
     try { await fs.unlink(targetPath); } catch (rollbackError) { error.message += ` Nettoyage du fichier final impossible : ${rollbackError.message}`; }
     throw error;
   }
   job.finalPath = targetPath;
   job.storageKey = storageKey;
-  const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === asset.id);
-  return { assetId: asset.id, sourceId, playableId, storageKey, asset: libraryAssetDetails(projectedAsset) };
+  const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === job.assetId);
+  return { assetId: job.assetId, sourceId, playableId, storageKey, asset: libraryAssetDetails(projectedAsset) };
 }
 
 function parseFfmpegProgress(job, chunk) {
@@ -3196,6 +3403,51 @@ async function handleApiInReadContext(request, response, url) {
     if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
     try { const assetId = decodeURIComponent(classificationRoute[1]); const payload = JSON.parse(await readRequestBody(request)); const classification = classificationFromInput(assetId, payload); const nextLibrary = libraryMutationCopy(); const asset = nextLibrary.assets.find(item => item.id === assetId); asset.folderId = classification.folderId; asset.tagIds = classification.tagIds; await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { asset: libraryAssetDetails(asset) }); }
       catch (error) { return sendJson(response, 400, { error: error.message || "Classement impossible." }); }
+  }
+  const videoMetadataRoute = /^\/api\/proto05\/library\/assets\/([^/]+)\/metadata$/.exec(url.pathname);
+  if (videoMetadataRoute) {
+    if (request.method !== "PUT") {
+      return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
+    }
+    try {
+      const assetId = decodeURIComponent(videoMetadataRoute[1]);
+      const payload = JSON.parse(await readRequestBody(request));
+      const { value } = videoMetadataFromInput(assetId, payload);
+      const nextLibrary = libraryMutationCopy();
+      const target = nextLibrary.assets.find(item => item.id === assetId);
+      target.title = value.title;
+      target.description = value.description;
+      target.editorialMetadata = value.editorialMetadata;
+      target.folderId = value.folderId;
+      target.tagIds = value.tagIds;
+      target.provenance = { ...(target.provenance || {}) };
+      const declaredProvenance = compactDeclaredFields(value.declaredProvenance);
+      if (Object.keys(declaredProvenance).length) target.provenance.declared = declaredProvenance;
+      else delete target.provenance.declared;
+      target.rights = {
+        ...(target.rights || {}),
+        ...compactDeclaredFields(value.declaredRights)
+      };
+      for (const key of Object.keys(value.declaredRights)) {
+        if (value.declaredRights[key] === null) delete target.rights[key];
+      }
+      target.updatedAt = new Date().toISOString();
+      await persistLibraryMutation(nextLibrary);
+      const activities = (await readActivities()).activities || [];
+      const saved = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+      const plan = libraryAssetDeletionPlan(assetId, activities);
+      return sendJson(response, 200, {
+        asset: libraryAssetDetails(saved, libraryUsageSummary(plan))
+      });
+    } catch (error) {
+      return sendJson(response, error.statusCode || 400, {
+        error: error.message || "Enregistrement de la fiche impossible.",
+        fieldErrors: error.fieldErrors || {},
+        ...(error.code ? { code: error.code } : {}),
+        ...(error.reasonCode ? { reasonCode: error.reasonCode } : {}),
+        ...(error.differencePaths?.length ? { differencePaths: error.differencePaths } : {})
+      });
+    }
   }
   const localCopyDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/local-copies\/([^/]+)$/.exec(url.pathname);
   if (localCopyDeleteMatch) {

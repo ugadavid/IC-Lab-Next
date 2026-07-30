@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-07-30T12:18:13.808Z",
+  "updatedAt": "2026-07-30T13:34:11.234Z",
   "assets": [
     {
       "id": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
@@ -764,7 +764,16 @@
       },
       "rights": {},
       "createdAt": "2026-07-23T15:30:07.180Z",
-      "updatedAt": "2026-07-23T15:30:07.180Z"
+      "updatedAt": "2026-07-23T15:30:07.180Z",
+      "description": "Aucune idée de ce que c'est que cette vidéo !",
+      "editorialMetadata": {
+        "usage": null,
+        "context": null,
+        "responsibleParty": null,
+        "captureDate": null,
+        "languageIds": [],
+        "notes": null
+      }
     },
     {
       "id": "media-proto05-anonymized-d8f5f0f7949422b8cef030fc",
@@ -1132,7 +1141,7 @@
       },
       "rights": {},
       "createdAt": "2026-07-24T07:05:31.666Z",
-      "updatedAt": "2026-07-24T07:05:31.666Z"
+      "updatedAt": "2026-07-30T13:34:11.231Z"
     },
     {
       "id": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
@@ -1262,7 +1271,16 @@
       },
       "rights": {},
       "createdAt": "2026-07-24T20:54:14.167Z",
-      "updatedAt": "2026-07-25T16:28:38.820Z"
+      "updatedAt": "2026-07-25T16:28:38.820Z",
+      "description": "D'où viens tu ?",
+      "editorialMetadata": {
+        "usage": null,
+        "context": null,
+        "responsibleParty": null,
+        "captureDate": null,
+        "languageIds": [],
+        "notes": null
+      }
     }
   ],
   "sources": [
@@ -2473,6 +2491,32 @@
         "sizeBytes": 27393166
       },
       "createdAt": "2026-07-25T16:28:38.820Z"
+    },
+    {
+      "id": "source-media-proto05-video-proto05-uga-37004-download-b6ddd6a7229a7528",
+      "assetId": "media-proto05-video-proto05-uga-37004",
+      "kind": "local-file",
+      "provider": "local",
+      "role": "working-copy",
+      "origin": {
+        "originalFileName": "Video-augmentee-IC---source-UGA.mp4",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePlayableId": "video-proto05-uga-37004"
+      },
+      "transport": "file",
+      "mimeType": "video/mp4",
+      "provenance": {
+        "kind": "managed-remote-copy",
+        "creationType": "remote-copy",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePlayableId": "video-proto05-uga-37004",
+        "importedAt": "2026-07-30T13:34:11.231Z",
+        "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "sha256": "b6ddd6a7229a7528fda2af45d1033676088b9253984281082b051ac54c8cbf27",
+        "sizeBytes": 270502622,
+        "originalFileName": "Video-augmentee-IC---source-UGA.mp4"
+      },
+      "createdAt": "2026-07-30T13:34:11.231Z"
     }
   ],
   "playables": [
@@ -3385,6 +3429,51 @@
       },
       "createdAt": "2026-07-25T16:28:38.820Z",
       "updatedAt": "2026-07-25T16:28:38.820Z"
+    },
+    {
+      "id": "video-media-proto05-video-proto05-uga-37004-download-b6ddd6a7229a7528",
+      "assetId": "media-proto05-video-proto05-uga-37004",
+      "sourceId": "source-media-proto05-video-proto05-uga-37004-download-b6ddd6a7229a7528",
+      "kind": "local-file",
+      "provider": "local",
+      "role": "working-copy",
+      "availability": "available",
+      "availabilityReason": null,
+      "location": {
+        "storageScope": "workspace",
+        "storageKey": "media-proto05-video-proto05-uga-37004/source/b6ddd6a7229a7528-Video-augmentee-IC---source-UGA.mp4"
+      },
+      "technicalMetadata": {
+        "durationMs": 939238,
+        "width": 1920,
+        "height": 1080,
+        "frameRate": "60/1",
+        "videoCodec": "h264",
+        "audioCodec": "aac",
+        "hasAudio": true,
+        "mimeType": "video/mp4",
+        "sizeBytes": 270502622,
+        "sha256": "b6ddd6a7229a7528fda2af45d1033676088b9253984281082b051ac54c8cbf27",
+        "fileName": "Video-augmentee-IC---source-UGA.mp4",
+        "analyzedAt": "2026-07-30T13:34:11.231Z",
+        "analyzer": "ffprobe",
+        "analyzerVersion": null,
+        "status": "available",
+        "error": null
+      },
+      "provenance": {
+        "kind": "managed-remote-copy",
+        "creationType": "remote-copy",
+        "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+        "sourcePlayableId": "video-proto05-uga-37004",
+        "importedAt": "2026-07-30T13:34:11.231Z",
+        "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+        "sha256": "b6ddd6a7229a7528fda2af45d1033676088b9253984281082b051ac54c8cbf27",
+        "sizeBytes": 270502622,
+        "originalFileName": "Video-augmentee-IC---source-UGA.mp4"
+      },
+      "createdAt": "2026-07-30T13:34:11.231Z",
+      "updatedAt": "2026-07-30T13:34:11.231Z"
     }
   ],
   "treatments": [
@@ -3684,14 +3773,6 @@
       "sortOrder": 0,
       "createdAt": "2026-07-24T16:48:32.092Z",
       "updatedAt": "2026-07-24T16:48:32.092Z"
-    },
-    {
-      "id": "folder-proto05-1785413802942-d31d8c",
-      "name": "Nouveau dossier",
-      "parentFolderId": null,
-      "sortOrder": 1,
-      "createdAt": "2026-07-30T12:16:42.942Z",
-      "updatedAt": "2026-07-30T12:16:42.942Z"
     },
     {
       "id": "folder-proto05-1785413824167-8b2996",

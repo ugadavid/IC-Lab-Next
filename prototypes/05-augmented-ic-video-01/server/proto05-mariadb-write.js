@@ -230,6 +230,10 @@ function desiredApplicationSnapshot(snapshot) {
   };
 }
 
+function sqlTimestamp(value) {
+  return value ? new Date(value).toISOString().replace("T", " ").replace("Z", "") : null;
+}
+
 function createMariaDbWriteAdapter({
   config,
   prototypeDirectory,
@@ -293,6 +297,46 @@ function createMariaDbWriteAdapter({
     return tables;
   }
 
+  async function mappedWorkingCopyRows(snapshot, mutation) {
+    const canonicalLibrary = structuredClone(snapshot.canonicalVideoLibrary);
+    const asset = canonicalLibrary.assets.find(item => item.id === mutation.assetId);
+    const expectedPlayable = canonicalLibrary.playables.find(item => (
+      item.id === mutation.expectedPlayableId && item.assetId === mutation.assetId
+    ));
+    if (!asset || !expectedPlayable) {
+      throw new Error("La vidéo source de la copie de travail n’existe plus.");
+    }
+    if (
+      canonicalLibrary.sources.some(item => item.id === mutation.source.id)
+      || canonicalLibrary.playables.some(item => item.id === mutation.playable.id)
+    ) {
+      throw new Error("La destination canonique de la copie existe déjà.");
+    }
+    canonicalLibrary.sources.push(structuredClone(mutation.source));
+    canonicalLibrary.playables.push(structuredClone(mutation.playable));
+    asset.updatedAt = mutation.updatedAt;
+    canonicalLibrary.updatedAt = mutation.updatedAt;
+    const mapperInput = {
+      activities: snapshot.activities,
+      activityLibrary: snapshot.activityLibrary,
+      mediaLibrary: canonicalLibrary,
+      videoCatalog: snapshot.videoCatalog,
+      languages: snapshot.languageCatalog
+    };
+    const { relationalModelFromCanonicalSnapshot } = await contract();
+    const { model } = relationalModelFromCanonicalSnapshot(mapperInput, { prototypeDirectory });
+    const row = (table, column, value) => model.tables.get(table).rows
+      .map(entry => entry.data)
+      .find(entry => entry[column] === value);
+    return {
+      canonicalLibrary,
+      asset: row("media_assets", "id", mutation.assetId),
+      source: row("media_sources", "id", mutation.source.id),
+      playable: row("media_playables", "id", mutation.playable.id),
+      metadata: row("media_playable_metadata", "playable_id", mutation.playable.id)
+    };
+  }
+
   return Object.freeze({
     async verify() {
       const database = await connection();
@@ -337,6 +381,16 @@ function createMariaDbWriteAdapter({
           ? metadataRows(snapshot, canonicalLibrary)
           : model.tables.get(definition.name).rows.map(row => row.data)
       ]));
+      const canonicalAssets = new Map(canonicalLibrary.assets.map(asset => [asset.id, asset]));
+      desiredRows.media_assets = desiredRows.media_assets.map(row => {
+        const asset = canonicalAssets.get(row.id);
+        return {
+          ...row,
+          editorial_metadata_json: Object.prototype.hasOwnProperty.call(asset || {}, "editorialMetadata")
+            ? asset.editorialMetadata
+            : null
+        };
+      });
       const database = await connection();
       let statementCount = 0;
       let lockAcquired = false;
@@ -471,6 +525,136 @@ function createMariaDbWriteAdapter({
           : "PROTO05_MARIADB_WRITE_FAILED";
         wrapped.reasonCode = error?.code || "MARIA_TRANSACTION_ERROR";
         wrapped.differencePaths = error?.differencePaths || [];
+        throw wrapped;
+      } finally {
+        if (lockAcquired) {
+          try { await database.query("SELECT RELEASE_LOCK('proto05_transactional_write')"); } catch {}
+        }
+        await database.end();
+      }
+    },
+
+    async appendWorkingCopy(snapshot, mutation, {
+      failAfterStatements = null
+    } = {}) {
+      if (!snapshot?.canonicalVideoLibrary) {
+        throw new Error("Snapshot média canonique absent de la transaction MariaDB.");
+      }
+      if (
+        !mutation?.assetId
+        || !mutation?.expectedPlayableId
+        || !mutation?.source?.id
+        || !mutation?.playable?.id
+        || mutation.source.assetId !== mutation.assetId
+        || mutation.playable.assetId !== mutation.assetId
+        || mutation.playable.sourceId !== mutation.source.id
+      ) {
+        throw new Error("Mutation ciblée de copie de travail invalide.");
+      }
+      const desired = await mappedWorkingCopyRows(snapshot, mutation);
+      const database = await connection();
+      let statementCount = 0;
+      let lockAcquired = false;
+      const executeMutation = async command => {
+        await database.query(command.sql, command.values);
+        statementCount += 1;
+        if (Number.isInteger(failAfterStatements) && statementCount >= failAfterStatements) {
+          const forced = new Error("Échec forcé pendant la création de la copie de travail.");
+          forced.code = "PROTO05_FORCED_ROLLBACK";
+          throw forced;
+        }
+      };
+      try {
+        await verifyConnection(database);
+        const [[lock]] = await database.query("SELECT GET_LOCK('proto05_transactional_write', 10) AS acquired");
+        if (Number(lock.acquired) !== 1) throw new Error("Verrou applicatif MariaDB indisponible.");
+        lockAcquired = true;
+        await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+        await database.beginTransaction();
+        const beforeTables = await readTables(database);
+        const [assetRows] = await database.query(
+          "SELECT `id`, `deleted_at` FROM `media_assets` WHERE `id` = ? FOR UPDATE",
+          [mutation.assetId]
+        );
+        const [sourcePlayableRows] = await database.query(
+          "SELECT `id` FROM `media_playables` WHERE `id` = ? AND `asset_id` = ? AND `removed_at` IS NULL FOR UPDATE",
+          [mutation.expectedPlayableId, mutation.assetId]
+        );
+        if (assetRows.length !== 1 || assetRows[0].deleted_at !== null || sourcePlayableRows.length !== 1) {
+          throw new Error("La vidéo source de la copie de travail n’existe plus.");
+        }
+        const [existingSourceRows] = await database.query(
+          "SELECT `id` FROM `media_sources` WHERE `id` = ? FOR UPDATE",
+          [mutation.source.id]
+        );
+        const [existingPlayableRows] = await database.query(
+          "SELECT `id` FROM `media_playables` WHERE `id` = ? FOR UPDATE",
+          [mutation.playable.id]
+        );
+        if (existingSourceRows.length || existingPlayableRows.length) {
+          throw new Error("La destination canonique de la copie existe déjà.");
+        }
+
+        await executeMutation(buildInsert("media_sources", desired.source));
+        await executeMutation(buildInsert("media_playables", desired.playable));
+        if (desired.metadata) {
+          await executeMutation(buildInsert("media_playable_metadata", desired.metadata));
+        }
+        await executeMutation({
+          sql: "UPDATE `media_assets` SET `updated_at` = ? WHERE `id` = ? AND `deleted_at` IS NULL",
+          values: [desired.asset.updated_at, mutation.assetId]
+        });
+        await executeMutation({
+          sql: "UPDATE `data_projection_metadata` SET `source_updated_at_utc` = ? WHERE `document_key` = 'media-library'",
+          values: [sqlTimestamp(mutation.updatedAt)]
+        });
+
+        const resultingTables = await readTables(database);
+        const expectedDeltas = new Map([
+          ["media_sources", 1],
+          ["media_playables", 1],
+          ["media_playable_metadata", desired.metadata ? 1 : 0]
+        ]);
+        for (const [table] of READ_TABLES) {
+          const delta = resultingTables[table].length - beforeTables[table].length;
+          if (delta !== (expectedDeltas.get(table) || 0)) {
+            const error = new Error(`La cardinalité de ${table} a changé hors du périmètre ciblé.`);
+            error.code = "PROTO05_TARGETED_WRITE_SCOPE_VIOLATION";
+            throw error;
+          }
+        }
+        for (const [table, wanted, key] of [
+          ["media_sources", desired.source, mutation.source.id],
+          ["media_playables", desired.playable, mutation.playable.id],
+          ["media_playable_metadata", desired.metadata, mutation.playable.id]
+        ]) {
+          if (!wanted) continue;
+          const primaryKey = table === "media_playable_metadata" ? "playable_id" : "id";
+          const actual = resultingTables[table].find(row => row[primaryKey] === key);
+          if (!actual || rowChanged(actual, wanted)) {
+            const error = new Error(`La relecture ciblée de ${table} diverge.`);
+            error.code = "PROTO05_TARGETED_WRITE_RECONCILIATION_FAILED";
+            throw error;
+          }
+        }
+        const resultingSnapshot = projectMariaDbSnapshotForApplication(
+          mapMariaDbTablesToSnapshot(resultingTables)
+        );
+        await database.commit();
+        return {
+          operation: "media-working-copy",
+          statements: statementCount,
+          cardinalityDeltas: Object.fromEntries(expectedDeltas),
+          snapshot: resultingSnapshot
+        };
+      } catch (error) {
+        try { await database.rollback(); } catch {}
+        if (error?.code === "PROTO05_FORCED_ROLLBACK") throw error;
+        const wrapped = new Error("Création transactionnelle de la copie de travail impossible.");
+        wrapped.code = error?.code?.startsWith("PROTO05_TARGETED_")
+          ? error.code
+          : "PROTO05_MARIADB_WRITE_FAILED";
+        wrapped.reasonCode = error?.code || "MARIA_TARGETED_TRANSACTION_ERROR";
         throw wrapped;
       } finally {
         if (lockAcquired) {

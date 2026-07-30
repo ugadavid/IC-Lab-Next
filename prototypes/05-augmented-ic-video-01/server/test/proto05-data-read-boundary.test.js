@@ -166,10 +166,14 @@ test("frontière d’écriture conserve JSON, autorise mariadb et refuse les mod
   const maria = createProto05WriteBoundary({
     mode: "mariadb",
     jsonAdapter: { async writeSnapshot() { throw new Error("fallback JSON"); } },
-    mariadbAdapter: { async writeSnapshot(snapshot) { calls.push(["mariadb", snapshot]); } }
+    mariadbAdapter: {
+      async writeSnapshot(snapshot) { calls.push(["mariadb", snapshot]); },
+      async appendWorkingCopy(snapshot, mutation) { calls.push(["mariadb-working-copy", snapshot, mutation]); }
+    }
   });
   await maria.writeSnapshot({ id: "mariadb" });
-  assert.deepEqual(calls.map(call => call[0]), ["json", "mariadb"]);
+  await maria.appendWorkingCopy({ id: "snapshot" }, { id: "mutation" });
+  assert.deepEqual(calls.map(call => call[0]), ["json", "mariadb", "mariadb-working-copy"]);
   for (const mode of ["compare", "mariadb-readonly"]) {
     const readonly = createProto05WriteBoundary({
       mode,
@@ -245,6 +249,189 @@ test("une erreur forcée après la première écriture déclenche un rollback sa
   assert.equal(committed, 0);
 });
 
+test("la copie de travail MariaDB reste ciblée et sa défaillance annule toute la transaction", async () => {
+  const initialTables = await migrationTables();
+  const canonical = canonicalJsonSnapshot();
+  const snapshot = {
+    ...canonical,
+    videoLibrary: projectCanonicalLibrary(canonical.videoLibrary)
+  };
+  Object.defineProperty(snapshot, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: canonical.videoLibrary
+  });
+  const now = "2026-07-30T15:00:00.000Z";
+  const mutation = {
+    assetId: "media-proto05-video-proto05-uga-37004",
+    expectedPlayableId: "video-proto05-uga-37004",
+    updatedAt: now,
+    source: {
+      id: "source-m145-targeted-working-copy",
+      assetId: "media-proto05-video-proto05-uga-37004",
+      kind: "local-file",
+      provider: "local",
+      role: "working-copy",
+      transport: "file",
+      mimeType: "video/mp4",
+      origin: {
+        originalFileName: "m145-targeted.mp4",
+        sourceAssetId: "media-proto05-video-proto05-uga-37004",
+        sourcePlayableId: "video-proto05-uga-37004"
+      },
+      provenance: { kind: "managed-remote-copy", sourceAssetId: "media-proto05-video-proto05-uga-37004" },
+      createdAt: now
+    },
+    playable: {
+      id: "video-m145-targeted-working-copy",
+      assetId: "media-proto05-video-proto05-uga-37004",
+      sourceId: "source-m145-targeted-working-copy",
+      kind: "local-file",
+      provider: "local",
+      role: "working-copy",
+      availability: "available",
+      availabilityReason: null,
+      location: { storageScope: "workspace", storageKey: "m145/source/m145-targeted.mp4" },
+      technicalMetadata: {
+        status: "available",
+        mimeType: "video/mp4",
+        durationMs: 2000,
+        sizeBytes: 1024,
+        sha256: "a".repeat(64),
+        width: 640,
+        height: 360,
+        frameRate: 25,
+        videoCodec: "h264",
+        audioCodec: "aac",
+        hasAudio: true,
+        analyzer: "ffprobe",
+        analyzerVersion: null,
+        analyzedAt: now,
+        error: null,
+        fileName: "m145-targeted.mp4"
+      },
+      provenance: { kind: "managed-remote-copy", sourceAssetId: "media-proto05-video-proto05-uga-37004" },
+      createdAt: now,
+      updatedAt: now
+    }
+  };
+
+  function transactionalMysql(seed) {
+    const tables = structuredClone(seed);
+    const writes = [];
+    let transactionBackup = null;
+    let committed = 0;
+    let rolledBack = 0;
+    const mysql = {
+      async createConnection(options) {
+        return {
+          async query(sql, values = []) {
+            if (/^SET SESSION/.test(sql) || /^SET TRANSACTION/.test(sql)) return [[], []];
+            if (sql.startsWith("SELECT CURRENT_USER")) {
+              return [[{ account: `${options.user}@%`, database_name: options.database }], []];
+            }
+            if (sql === "SHOW GRANTS") return [[
+              { grant: `GRANT USAGE ON *.* TO \`${options.user}\`@\`%\`` },
+              { grant: `GRANT SELECT, INSERT, UPDATE, DELETE, SHOW VIEW ON \`${options.database}\`.* TO \`${options.user}\`@\`%\`` }
+            ], []];
+            if (sql.startsWith("SELECT GET_LOCK")) return [[{ acquired: 1 }], []];
+            if (sql.startsWith("SELECT RELEASE_LOCK")) return [[{ released: 1 }], []];
+            if (sql.startsWith("SELECT `id`, `deleted_at` FROM `media_assets`")) {
+              return [tables.media_assets.filter(row => row.id === values[0])
+                .map(row => ({ id: row.id, deleted_at: row.deleted_at })), []];
+            }
+            if (sql.startsWith("SELECT `id` FROM `media_playables` WHERE `id` = ? AND")) {
+              return [tables.media_playables.filter(row => (
+                row.id === values[0] && row.asset_id === values[1] && row.removed_at === null
+              )).map(row => ({ id: row.id })), []];
+            }
+            if (sql.startsWith("SELECT `id` FROM `media_sources`")) {
+              return [tables.media_sources.filter(row => row.id === values[0]).map(row => ({ id: row.id })), []];
+            }
+            if (sql.startsWith("SELECT `id` FROM `media_playables`")) {
+              return [tables.media_playables.filter(row => row.id === values[0]).map(row => ({ id: row.id })), []];
+            }
+            const select = /^SELECT \* FROM `([a-z0-9_]+)`/.exec(sql);
+            if (select) return [structuredClone(tables[select[1]] || []), []];
+            const insert = /^INSERT INTO `([a-z0-9_]+)` \((.+)\) VALUES/.exec(sql);
+            if (insert) {
+              const columns = [...insert[2].matchAll(/`([^`]+)`/g)].map(match => match[1]);
+              tables[insert[1]].push(Object.fromEntries(columns.map((column, index) => [column, values[index]])));
+              writes.push(sql);
+              return [{ affectedRows: 1 }, []];
+            }
+            if (sql.startsWith("UPDATE `media_assets` SET `updated_at`")) {
+              const row = tables.media_assets.find(item => item.id === values[1]);
+              if (row) row.updated_at = values[0];
+              writes.push(sql);
+              return [{ affectedRows: row ? 1 : 0 }, []];
+            }
+            if (sql.startsWith("UPDATE `data_projection_metadata`")) {
+              const row = tables.data_projection_metadata.find(item => item.document_key === "media-library");
+              if (row) row.source_updated_at_utc = values[0];
+              writes.push(sql);
+              return [{ affectedRows: row ? 1 : 0 }, []];
+            }
+            throw new Error(`Requête inattendue : ${sql}`);
+          },
+          async beginTransaction() { transactionBackup = structuredClone(tables); },
+          async rollback() {
+            for (const key of Object.keys(tables)) tables[key] = structuredClone(transactionBackup[key]);
+            rolledBack += 1;
+          },
+          async commit() { committed += 1; },
+          async end() {}
+        };
+      }
+    };
+    return {
+      mysql,
+      tables,
+      writes,
+      counters: () => ({ committed, rolledBack })
+    };
+  }
+
+  const successful = transactionalMysql(initialTables);
+  const adapter = createMariaDbWriteAdapter({
+    config: { ...testConfiguration(), user: "proto05_application" },
+    prototypeDirectory,
+    mysql: successful.mysql
+  });
+  const result = await adapter.appendWorkingCopy(snapshot, mutation);
+  assert.deepEqual(result.cardinalityDeltas, {
+    media_sources: 1,
+    media_playables: 1,
+    media_playable_metadata: 1
+  });
+  assert.equal(result.snapshot.canonicalVideoLibrary.sources.some(item => item.id === mutation.source.id), true);
+  assert.equal(result.snapshot.canonicalVideoLibrary.playables.some(item => item.id === mutation.playable.id), true);
+  assert.equal(successful.writes.some(sql => /^DELETE\b/i.test(sql)), false);
+  assert.deepEqual(
+    [...new Set(successful.writes.map(sql => (
+      /^INSERT INTO `([^`]+)`/.exec(sql)?.[1]
+      || /^UPDATE `([^`]+)`/.exec(sql)?.[1]
+    )).filter(Boolean))].sort(),
+    ["data_projection_metadata", "media_assets", "media_playable_metadata", "media_playables", "media_sources"]
+  );
+  assert.deepEqual(successful.counters(), { committed: 1, rolledBack: 0 });
+
+  const failing = transactionalMysql(initialTables);
+  const rollbackAdapter = createMariaDbWriteAdapter({
+    config: { ...testConfiguration(), user: "proto05_application" },
+    prototypeDirectory,
+    mysql: failing.mysql
+  });
+  await assert.rejects(
+    () => rollbackAdapter.appendWorkingCopy(snapshot, mutation, { failAfterStatements: 1 }),
+    error => error.code === "PROTO05_FORCED_ROLLBACK"
+  );
+  assert.equal(failing.tables.media_sources.some(row => row.id === mutation.source.id), false);
+  assert.equal(failing.tables.media_playables.some(row => row.id === mutation.playable.id), false);
+  assert.deepEqual(failing.counters(), { committed: 0, rolledBack: 1 });
+});
+
 test("validation des grants strictement readonly", () => {
   const config = testConfiguration();
   const valid = [
@@ -286,8 +473,8 @@ test("mapping relationnel complet équivalent aux contrats JSON canoniques", asy
   assert.equal(mapped.activities.activities[1].videoRef.playableId, "video-proto05-youtube-ev9rfkfhfa0");
   assert.ok(mapped.videoLibrary.playables.some(playable => playable.kind === "local-file"));
   assert.ok(mapped.videoLibrary.playables.some(playable => playable.availability === "missing-local"));
-  assert.equal(mapped.videoLibrary.folders.length, 1);
-  assert.equal(mapped.videoLibrary.tags.length, 3);
+  assert.equal(mapped.videoLibrary.folders.length, canonicalJsonSnapshot().videoLibrary.folders.length);
+  assert.equal(mapped.videoLibrary.tags.length, canonicalJsonSnapshot().videoLibrary.tags.length);
   const applicationComparison = compareCanonical(
     {
       ...canonicalJsonSnapshot(),

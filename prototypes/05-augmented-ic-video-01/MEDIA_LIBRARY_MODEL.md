@@ -32,6 +32,8 @@ Champs minimaux :
 |---|---|---|---|
 | `id` | string | obligatoire, stable | Identité logique. Conservé lors d’une copie locale ou d’une nouvelle représentation. |
 | `title` | string | obligatoire | Titre affiché et classable. |
+| `description` | string | facultatif | Description éditoriale libre ; une valeur vide retire le champ. |
+| `editorialMetadata` | object | facultatif | Usage, contexte, responsable, date de captation, langues et notes internes déclarés par l’utilisateur. |
 | `lifecycle` | enum | `active` / `archived`, défaut `active` | Cycle de vie logique. |
 | `folderId` | string | nullable | Dossier principal ; `null` signifie non classé. |
 | `defaultPlayableId` | string | nullable | Au plus un playable par défaut ; peut être nul si aucun playable disponible. |
@@ -51,6 +53,23 @@ persistées obligatoires et ne constituent jamais une seconde source de vérité
 
 Un asset peut exister sans playable disponible. Un asset manquant n’est donc
 pas supprimé ni rendu structurellement invalide.
+
+La fiche Vidéo++ sépare quatre catégories :
+
+- l’identité éditoriale humaine (`title`, `description`,
+  `editorialMetadata`, dossier et tags) ;
+- la provenance et les droits déclarés (`provenance.declared` et `rights`),
+  qui restent non renseignés tant qu’aucune information n’est fournie ;
+- les informations techniques calculées, portées par les sources et
+  playables ;
+- la filiation et les traitements, issus des relations canoniques et jamais
+  modifiables depuis la fiche éditoriale.
+
+`editorialMetadata` peut contenir `usage`, `context`, `responsibleParty`,
+`captureDate`, `languageIds` et `notes`. Les valeurs d’usage et de
+confidentialité sont des vocabulaires contrôlés par le contrat partagé de la
+fiche. Le titre éditorial ne renomme jamais un fichier physique, un
+`storageKey`, une source, un playable ou un identifiant de filiation.
 
 ### 2.2 `MediaSource`
 

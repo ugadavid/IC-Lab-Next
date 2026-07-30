@@ -753,6 +753,15 @@ const TECHNICAL_METADATA_SHAPE = Object.freeze({
   width: true
 });
 
+const EDITORIAL_METADATA_SHAPE = Object.freeze({
+  usage: true,
+  context: true,
+  responsibleParty: true,
+  captureDate: true,
+  languageIds: [true],
+  notes: true
+});
+
 const SOURCE_ORIGIN_SHAPE = Object.freeze({
   declaredLocal: true,
   derivationId: true,
@@ -900,6 +909,12 @@ function buildCoverageRegistry() {
   jsonCoverage(registry, "mediaLibrary", "assets[].rights", {}, {
     table: "media_assets",
     column: "rights_json",
+    builder: "buildMediaAssets",
+    selector: "media-asset"
+  });
+  jsonCoverage(registry, "mediaLibrary", "assets[].editorialMetadata", EDITORIAL_METADATA_SHAPE, {
+    table: "media_assets",
+    column: "editorial_metadata_json",
     builder: "buildMediaAssets",
     selector: "media-asset"
   });
@@ -1744,6 +1759,7 @@ function addSourceRows(model, sources, diagnostics, prototypeDirectory) {
       default_playable_id: asset.defaultPlayableId ?? null,
       title: asset.title,
       description: asset.description ?? null,
+      editorial_metadata_json: clone(asset.editorialMetadata) ?? null,
       lifecycle: asset.lifecycle,
       derivation_type: derivationTypes[0] ?? null,
       provenance_json: {

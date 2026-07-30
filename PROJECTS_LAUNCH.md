@@ -73,7 +73,8 @@ dans la stack Compose Dico-IC. Un port ouvert confirme seulement qu’un process
   [`scripts/windows/start-proto05.bat`](scripts/windows/start-proto05.bat).
 - **Dossier serveur** : `prototypes/05-augmented-ic-video-01/server`.
 - **Port** : `8791`.
-- **Démarrage direct** : `npm start` depuis le dossier serveur.
+- **Démarrage direct MariaDB** : définir `PROTO05_DATA_MODE=mariadb`, puis lancer
+  `node --env-file=../.env.local server.js` depuis le dossier serveur.
 - **Entrée racine** : <http://127.0.0.1:8791/> ; le serveur sert actuellement
   `index-0.0.8.html`.
 - **Vue étudiante** : <http://127.0.0.1:8791/student/:activityId>.
@@ -86,9 +87,9 @@ dans la stack Compose Dico-IC. Un port ouvert confirme seulement qu’un process
 - **Guide** :
   [README du serveur autonome](prototypes/05-augmented-ic-video-01/server/README.md).
 
-Le launcher global démarre Proto05 **avant IC-Hub**. Le serveur possède ses
-pages, son API et `data/activities.json`, mais sa chaîne vidéo n’est pas encore
-entièrement autonome :
+Le launcher global démarre Proto05 **avant IC-Hub** et impose son mode MariaDB
+avec la configuration locale non versionnée. Le serveur possède ses pages et
+son API, mais sa chaîne vidéo n’est pas encore entièrement autonome :
 
 - les requêtes HLS autorisées sont relayées par Proto05 vers le proxy strict
   d’IC-Hub sur `8790` ;
