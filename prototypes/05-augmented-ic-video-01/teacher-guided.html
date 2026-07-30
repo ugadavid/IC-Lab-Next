@@ -39,56 +39,59 @@ const saveBeforeLanguageIntervalValidation=save;save=async function(){if(selecte
 ensureGuidedSpeakerPanel();if(state.activity)render();
 </script><style>.guided-time-error{margin:0;color:#a83232;font-size:13px;font-weight:700}.guided-time-error[hidden]{display:none}.time-control.is-invalid{padding:4px;border-radius:6px;background:#fff3f3;color:#8f2525}.time-control input[aria-invalid="true"]{outline:2px solid #a83232;outline-offset:2px}.save-feedback-backdrop{position:fixed;inset:0;z-index:1000;display:grid;place-items:center;background:rgba(15,27,40,.24)}.save-feedback-modal{min-width:260px;max-width:calc(100vw - 32px);padding:18px 22px;border:1px solid #d9e0e8;border-radius:10px;background:#fff;box-shadow:0 14px 34px rgba(25,35,48,.2);text-align:center;font-weight:700}.save-feedback-modal.is-error{color:#a83232}.save-feedback-modal.is-success{color:#236b45}</style><script>const guidedSave=save,saveButton=$('#save');saveButton.onclick=async()=>{saveButton.disabled=true;try{await guidedSave()}catch(error){$('#status').textContent=`Échec de l’enregistrement : ${error?.message||'erreur réseau inconnue'}`}finally{saveButton.disabled=false}};</script>
 <style>.save-feedback-backdrop[hidden]{display:none}</style>
-<style>
-.guided-dependency-backdrop{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:24px;background:rgba(15,27,40,.48)}
-.guided-dependency-backdrop[hidden]{display:none}
-.guided-dependency-modal{width:min(680px,calc(100vw - 48px));max-height:calc(100vh - 48px);overflow:auto;padding:24px;background:#fff;border:1px solid #d9e0e8;border-radius:12px;box-shadow:0 18px 48px rgba(25,35,48,.28)}
-.guided-dependency-modal h2{margin:0 0 8px}.guided-dependency-modal h3{margin:18px 0 6px;font-size:15px}.guided-dependency-modal ul{margin:6px 0 0;padding-left:20px}.guided-dependency-modal li{margin:5px 0}.guided-dependency-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;flex-wrap:wrap}.guided-dependency-actions button{white-space:normal}
-</style>
+<script>
+function resetGuidedSelection(message='Sélectionnez un élément dans la timeline ou une liste.'){
+  selected=null;
+  $('#summary').textContent=message;
+  $('#editor').innerHTML='<p class="muted">Aucun élément sélectionné.</p>';
+  document.querySelectorAll('.item.active').forEach(element=>element.classList.remove('active'));
+  sharedTimeline?.setSelectedElement(null);
+}
+async function showGuidedDeletionRefusal(deletion,trigger){
+  const message=Proto05GuidedAuthoring.layerDeletionDialogMessage(deletion.references)
+    || deletion.issue
+    || 'Cette couche ne peut pas être supprimée.';
+  await Proto05TeacherDialogs.error({
+    title:'Suppression impossible',
+    message,
+    trigger
+  });
+}
+</script>
 <script>
 (function(){
-  let dependencyModal=null;
   const dependencyItems=(activity,segment)=>Proto05GuidedAuthoring.segmentDependencies(activity,segment.id);
-  const labelFor=(type,item)=>type==='phenomenon'?(layer(item.layerId)+' · '+(item.id||'phénomène')):type==='annotation'?((item.text||item.question||'Annotation pédagogique')+' · '+(item.id||'')):(item.title||item.text||'Overlay')+' · '+(item.id||'');
-  const showModal=(segment,dependencies)=>{
-    if(!dependencyModal){
-      dependencyModal=document.createElement('div');
-      dependencyModal.className='guided-dependency-backdrop';
-      dependencyModal.id='guidedDependencyModal';
-      dependencyModal.setAttribute('role','presentation');
-      document.body.append(dependencyModal);
-      dependencyModal.addEventListener('click',event=>{
-        if(event.target===dependencyModal) closeModal();
-        const target=event.target.closest('[data-guided-dependency-type]');
-        if(!target)return;
-        const type=target.dataset.guidedDependencyType,id=target.dataset.guidedDependencyId;
-        const item=type==='phenomenon'?(state.activity.phenomena||[]).find(x=>x.id===id):type==='annotation'?(state.activity.teacherAnnotations||[]).find(x=>x.id===id):(state.activity.overlays||[]).find(x=>x.id===id);
-        if(item){closeModal();select(item,type)}
-      });
-    }
-    const list=(type,title,items)=>items.length?'<h3>'+title+'</h3><ul>'+items.map(item=>'<li><button type="button" class="secondary" data-guided-dependency-type="'+type+'" data-guided-dependency-id="'+esc(item.id)+'">'+esc(labelFor(type,item))+'</button></li>').join('')+'</ul>':'';
-    dependencyModal.innerHTML='<div class="guided-dependency-modal" role="dialog" aria-modal="true" aria-labelledby="guidedDependencyTitle"><h2 id="guidedDependencyTitle">Suppression du segment</h2><p><strong>'+esc(segment.id)+'</strong> · '+esc(mm(segment.startMs))+' → '+esc(mm(segment.endMs))+'</p><p>'+esc(segment.text||'Segment sans texte')+'</p>'+(dependencies.phenomena.length||dependencies.annotations.length||dependencies.overlays.length?'<p>Les éléments suivants seront également supprimés :</p>':'<p>Aucune dépendance : seul ce segment sera supprimé.</p>')+list('phenomenon','Phénomènes rattachés',dependencies.phenomena)+list('annotation','Annotations pédagogiques rattachées',dependencies.annotations)+list('overlay','Overlays liés aux annotations supprimées',dependencies.overlays)+'<div class="guided-dependency-actions"><button type="button" id="guidedDependencyCancel" class="secondary">Annuler</button><button type="button" id="guidedDependencyConfirm">Supprimer le segment et les éléments liés</button></div><p id="guidedDependencyResult" class="status" aria-live="polite"></p></div>';
-    dependencyModal.hidden=false;
-    $('#guidedDependencyCancel').onclick=closeModal;
-    $('#guidedDependencyConfirm').onclick=()=>cascadeDelete(segment,dependencies);
-  };
-  const closeModal=()=>{if(dependencyModal)dependencyModal.hidden=true};
-  const cascadeDelete=(segment,dependencies)=>{
-    const confirmButton=$('#guidedDependencyConfirm'),cancelButton=$('#guidedDependencyCancel'),result=$('#guidedDependencyResult');
-    confirmButton.disabled=true;cancelButton.disabled=true;result.textContent='Suppression en cours…';
-    setTimeout(()=>{
-      const deletion=Proto05GuidedAuthoring.deleteSegmentCascade(state.activity,segment.id);
-      syncDerivedPhenomenonIds();selected=null;markGuidedDirty('Segment et éléments liés supprimés. Enregistrez pour confirmer.');render();
-      result.textContent='Suppression terminée : '+deletion.dependencies.phenomena.length+' phénomène(s), '+deletion.dependencies.annotations.length+' annotation(s) et '+deletion.dependencies.overlays.length+' overlay(s) lié(s) supprimé(s).';
-      cancelButton.disabled=false;cancelButton.textContent='Fermer';cancelButton.onclick=closeModal;
-    },0);
-  };
-  remove=function(){
+  const dependencyLabel=(kind,item)=>kind==='Phénomène'
+    ? `${kind} : ${layer(item.layerId)}`
+    : `${kind} : ${item.note||item.pedagogicalQuestion||item.title||item.text||item.id}`;
+  remove=async function(event){
     if(!selected||!selected.item)return;
     if(selected.type!=='segment'){
-      const key=selected.type==='interval'?'languageIntervals':'phenomena';state.activity[key]=(state.activity[key]||[]).filter(item=>item.id!==selected.item.id);if(selected.type==='phenomenon')syncDerivedPhenomenonIds();selected=null;$('#editor').innerHTML='<p class="muted">Élément supprimé. Enregistrez pour confirmer.</p>';$('#status').textContent='Modifications non enregistrées';render();return;
+      const key=selected.type==='interval'?'languageIntervals':'phenomena';state.activity[key]=(state.activity[key]||[]).filter(item=>item.id!==selected.item.id);if(selected.type==='phenomenon')syncDerivedPhenomenonIds();resetGuidedSelection('Élément supprimé.');markGuidedDirty('Élément supprimé. Enregistrez pour confirmer.');render();return;
     }
-    showModal(selected.item,dependencyItems(state.activity,selected.item));
+    const segment=selected.item,dependencies=dependencyItems(state.activity,segment);
+    const details=[
+      ...dependencies.phenomena.map(item=>dependencyLabel('Phénomène',item)),
+      ...dependencies.annotations.map(item=>dependencyLabel('Annotation',item)),
+      ...dependencies.overlays.map(item=>dependencyLabel('Overlay',item))
+    ];
+    const confirmed=await Proto05TeacherDialogs.confirm({
+      title:'Suppression du segment',
+      message:details.length
+        ? `${segment.text||'Ce segment'} sera supprimé avec les éléments qui en dépendent.`
+        : `${segment.text||'Ce segment'} sera supprimé.`,
+      details,
+      cancelLabel:'Annuler',
+      confirmLabel:details.length?'Supprimer le segment et les éléments liés':'Supprimer le segment',
+      destructive:true,
+      trigger:event?.currentTarget||document.activeElement
+    });
+    if(!confirmed)return;
+    Proto05GuidedAuthoring.deleteSegmentCascade(state.activity,segment.id);
+    syncDerivedPhenomenonIds();
+    resetGuidedSelection('Segment supprimé.');
+    markGuidedDirty('Segment et éléments liés supprimés. Enregistrez pour confirmer.');
+    render();
   };
 })();
 </script>
@@ -129,14 +132,14 @@ ensureGuidedSpeakerPanel();if(state.activity)render();
       const x=selected.item;
       $('#editor').innerHTML=`<div class="form"><label class="fullrow">Nom du locuteur<input id="guidedEditorSpeakerName" value="${esc(x.label||'')}" autocomplete="off"></label></div><button id="guidedEditorApply">Appliquer</button><button id="guidedEditorRemove" class="secondary">Supprimer</button>`;
       $('#guidedEditorApply').onclick=()=>{const label=$('#guidedEditorSpeakerName').value.trim();if(!label){$('#status').textContent='Le nom du locuteur est obligatoire.';return}x.label=label;if(selected.isNew)state.activity.speakers.push(x);selected.isNew=false;$('#status').textContent='Locuteur modifié. Enregistrez pour confirmer.';render()};
-      $('#guidedEditorRemove').onclick=()=>{const usage=guidedSpeakerUsage(x.id);if(!selected.isNew&&(usage.segments.length||usage.annotations.length)){$('#status').textContent=`Suppression refusée : ${x.label||'ce locuteur'} est encore référencé par ${usage.segments.length} segment(s) et ${usage.annotations.length} annotation(s).`;return}if(!selected.isNew)state.activity.speakers=state.activity.speakers.filter(item=>item.id!==x.id);selected=null;markGuidedDirty('Locuteur supprimé. Enregistrez pour confirmer.');render()};
+      $('#guidedEditorRemove').onclick=async event=>{const usage=guidedSpeakerUsage(x.id);if(!selected.isNew&&(usage.segments.length||usage.annotations.length)){await Proto05TeacherDialogs.error({title:'Suppression impossible',message:`Ce locuteur ne peut pas être supprimé, car il est encore utilisé par ${usage.segments.length} segment(s) et ${usage.annotations.length} annotation(s).`,trigger:event.currentTarget});return}if(!selected.isNew)state.activity.speakers=state.activity.speakers.filter(item=>item.id!==x.id);resetGuidedSelection('Locuteur supprimé.');markGuidedDirty('Locuteur supprimé. Enregistrez pour confirmer.');render()};
       return;
     }
     if(selected.type==='layer'){
       const x=selected.item,visible=learnerLayerIds().includes(x.id);
       $('#editor').innerHTML=`<div class="form"><label>Nom humain<input id="guidedEditorLayerLabel" value="${esc(x.label||'')}" autocomplete="off"></label><label>Couleur<select id="guidedEditorLayerColor">${guidedLayerPalette.map(color=>`<option value="${color}" ${color===(x.color||'')?'selected':''}>${color}</option>`).join('')}</select></label><label class="fullrow">Description<textarea id="guidedEditorLayerDescription">${esc(x.description||'')}</textarea></label><label class="fullrow"><input id="guidedEditorLayerVisible" type="checkbox" ${visible?'checked':''}> Afficher aux étudiants</label></div><button id="guidedEditorApply">Appliquer</button><button id="guidedEditorRemove" class="secondary">Supprimer</button>`;
       $('#guidedEditorApply').onclick=()=>{const label=$('#guidedEditorLayerLabel').value.trim();if(!label){$('#status').textContent='Le nom de la couche est obligatoire.';return}x.label=label;x.description=$('#guidedEditorLayerDescription').value.trim();x.color=$('#guidedEditorLayerColor').value;const ids=learnerLayerIds();state.activity.layerConfiguration.learnerVisibleLayerIds=$('#guidedEditorLayerVisible').checked?[...new Set([...ids,x.id])]:ids.filter(id=>id!==x.id);if(selected.isNew)state.activity.layers.push(x);selected.isNew=false;$('#status').textContent='Couche pédagogique modifiée. Enregistrez pour confirmer.';render()};
-      $('#guidedEditorRemove').onclick=()=>{if(!selected.isNew){const deletion=Proto05GuidedAuthoring.deleteLayer(state.activity,x.id);if(!deletion.deleted){$('#status').textContent=deletion.issue||'Suppression impossible.';return}}selected=null;markGuidedDirty('Couche supprimée. Enregistrez pour confirmer.');render()};
+      $('#guidedEditorRemove').onclick=async event=>{if(!selected.isNew){const deletion=Proto05GuidedAuthoring.deleteLayer(state.activity,x.id);if(!deletion.deleted){await showGuidedDeletionRefusal(deletion,event.currentTarget);return}}resetGuidedSelection('Couche supprimée.');markGuidedDirty('Couche supprimée. Enregistrez pour confirmer.');render()};
     }
   }
   renderEditor=function(){if(selected?.type==='speaker'||selected?.type==='layer'){guidedSetEditorTitle(selected.type);guidedRenderSpecialEditor();return}guidedOriginalRenderEditor();if(selected)guidedSetEditorTitle(selected.type)};

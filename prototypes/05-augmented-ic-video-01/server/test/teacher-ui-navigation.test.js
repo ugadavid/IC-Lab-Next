@@ -121,6 +121,156 @@ test("les actions métier existantes restent présentes dans leurs pages", () =>
   assert.ok(teacherPages.every(page => !source(page).includes("anonymization-advanced")));
 });
 
+test("les surfaces enseignantes utilisent les dialogues partagés sans appel natif", () => {
+  const auditedFiles = [
+    ...teacherPages,
+    "guided-overlays.js",
+    path.join("shared", "activity-library.js")
+  ];
+  const dialogUsers = [
+    "teacher-videos.html",
+    "teacher-video-detail.html",
+    path.join("shared", "activity-library.js")
+  ];
+  const nativeDialog = /\bwindow\.(?:alert|confirm|prompt)\s*\(|(?<![\w.])(?:alert|confirm|prompt)\s*\(/;
+  for (const file of auditedFiles) {
+    const source = fs.readFileSync(path.join(prototypeDirectory, file), "utf8");
+    assert.doesNotMatch(source, nativeDialog, file);
+  }
+  for (const file of dialogUsers) {
+    const source = fs.readFileSync(path.join(prototypeDirectory, file), "utf8");
+    assert.match(source, /Proto05TeacherDialogs\.(?:confirm|prompt)\(/, file);
+  }
+
+  const shellSource = fs.readFileSync(
+    path.join(prototypeDirectory, "shared", "teacher-shell.js"),
+    "utf8"
+  );
+  assert.match(shellSource, /aria-modal/);
+  assert.match(shellSource, /event\.key === "Escape"/);
+  assert.match(shellSource, /event\.key !== "Tab"/);
+  assert.match(shellSource, /trigger\?\.isConnected/);
+  assert.match(shellSource, /confirmButton\.disabled = true/);
+  assert.match(shellSource, /input\.setAttribute\("aria-invalid"/);
+});
+
+test("la validation d’un prompt partagé refuse le vide sans perdre sa valeur", () => {
+  assert.equal(
+    teacherShell.requiredPromptIssue("  ", "Le nom est obligatoire."),
+    "Le nom est obligatoire."
+  );
+  assert.equal(teacherShell.requiredPromptIssue("Nom conservé", "Le nom est obligatoire."), null);
+});
+
+test("le dialogue partagé valide dans la modale, piège le focus et le restitue", {
+  timeout: 25000
+}, async () => {
+  const chromium = findChromium();
+  assert.ok(chromium, "Chrome, Edge ou Chromium est requis pour le contrôle des dialogues.");
+  const store = {
+    schemaVersion: "0.1",
+    updatedAt: "test-only",
+    activities: [{ ...fixtureActivity, id: "teacher-dialog-fixture" }]
+  };
+  const temporary = await startTemporaryProto05Server(store, "proto05-teacher-dialog-");
+  const runnerFile = path.join(temporary.root, "prototype", "teacher-dialog-runner.html");
+  const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-teacher-dialog-profile-"));
+  fs.writeFileSync(runnerFile, `<!doctype html><html><head>
+  <link rel="stylesheet" href="/shared/teacher-shell.css">
+  <script src="/shared/teacher-shell.js"></script>
+  </head><body data-test-state="running"><button id="trigger">Ouvrir</button><script>
+  const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+  async function waitFor(predicate, label) {
+    const deadline = Date.now() + 8000;
+    while (Date.now() < deadline) {
+      try { if (predicate()) return; } catch {}
+      await pause(20);
+    }
+    throw new Error('Délai dépassé : ' + label);
+  }
+  (async () => {
+    const trigger = document.getElementById('trigger');
+    trigger.focus();
+    const promptResult = Proto05TeacherDialogs.prompt({
+      title: 'Nom du dossier',
+      message: 'Renseignez un nom.',
+      label: 'Nom',
+      initialValue: 'Valeur initiale',
+      confirmLabel: 'Créer',
+      trigger,
+      validate: value => Proto05TeacherShell.requiredPromptIssue(value, 'Le nom est obligatoire.')
+    });
+    await waitFor(() => document.querySelector('.teacher-dialog input'), 'ouverture du prompt');
+    const input = document.querySelector('.teacher-dialog input');
+    const create = [...document.querySelectorAll('.teacher-dialog button')].find(button => button.textContent === 'Créer');
+    input.value = '';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    create.click();
+    await waitFor(() => !document.querySelector('.teacher-dialog__validation').hidden, 'erreur intégrée');
+    const invalidValue = input.value;
+    const validationMessage = document.querySelector('.teacher-dialog__validation').textContent;
+    input.value = 'Valeur corrigée';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    const validationCleared = document.querySelector('.teacher-dialog__validation').hidden;
+    create.focus();
+    create.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    const trappedFocusLabel = document.activeElement.getAttribute('aria-label');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    const cancelled = await promptResult;
+    const focusRestored = document.activeElement === trigger;
+
+    let confirmations = 0;
+    const confirmResult = Proto05TeacherDialogs.confirm({
+      title: 'Confirmation',
+      message: 'Confirmer une fois.',
+      confirmLabel: 'Confirmer',
+      trigger
+    }).then(value => { confirmations += 1; return value; });
+    await waitFor(() => document.querySelector('.teacher-dialog__primary'), 'ouverture de la confirmation');
+    const confirm = document.querySelector('.teacher-dialog__primary');
+    confirm.click();
+    confirm.click();
+    const confirmed = await confirmResult;
+
+    document.body.dataset.results = encodeURIComponent(JSON.stringify({
+      invalidValue,
+      validationMessage,
+      validationCleared,
+      trappedFocusLabel,
+      cancelled,
+      focusRestored,
+      confirmed,
+      confirmations
+    }));
+    document.body.dataset.testState = 'done';
+  })().catch(error => {
+    document.body.dataset.error = encodeURIComponent(error.stack || error.message || String(error));
+    document.body.dataset.testState = 'failed';
+  });
+  </script></body></html>`, "utf8");
+
+  try {
+    const dom = await runChromium(
+      chromium,
+      `${temporary.baseUrl}/teacher-dialog-runner.html`,
+      profileDirectory,
+      { virtualTimeBudget: 12000, timeout: 20000, windowSize: "390,720" }
+    );
+    const results = readBrowserResults(dom);
+    assert.equal(results.invalidValue, "");
+    assert.equal(results.validationMessage, "Le nom est obligatoire.");
+    assert.equal(results.validationCleared, true);
+    assert.equal(results.trappedFocusLabel, "Fermer le dialogue");
+    assert.equal(results.cancelled, null);
+    assert.equal(results.focusRestored, true);
+    assert.equal(results.confirmed, true);
+    assert.equal(results.confirmations, 1);
+  } finally {
+    fs.rmSync(profileDirectory, { recursive: true, force: true });
+    await temporary.cleanup();
+  }
+});
+
 test("les routes enseignantes et les actifs partagés sont servis par une copie temporaire", { timeout: 15000 }, async () => {
   const store = {
     schemaVersion: "0.1",

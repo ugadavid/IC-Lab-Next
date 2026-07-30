@@ -1,6 +1,6 @@
 {
   "schemaVersion": "1.0",
-  "updatedAt": "2026-07-26T18:39:12.425Z",
+  "updatedAt": "2026-07-30T12:18:13.808Z",
   "assets": [
     {
       "id": "media-proto05-anonymized-1ae9eb2b32006bdcb57b0c96",
@@ -1138,12 +1138,14 @@
       "id": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
       "title": "Intercompréhension Catalan-Français",
       "lifecycle": "active",
-      "folderId": "folder-proto05-1784911712092-4e944d",
+      "folderId": "folder-proto05-1785413824167-8b2996",
       "defaultPlayableId": "video-proto05-youtube-ev9rfkfhfa0",
       "parentAssetId": null,
       "familyRootAssetId": "media-proto05-video-proto05-youtube-ev9rfkfhfa0",
       "derivationTypes": [],
-      "tagIds": [],
+      "tagIds": [
+        "tag-proto05-1784912318666-f422c8"
+      ],
       "provenance": {
         "creationType": "catalog-migration",
         "provider": "youtube",
@@ -3682,6 +3684,22 @@
       "sortOrder": 0,
       "createdAt": "2026-07-24T16:48:32.092Z",
       "updatedAt": "2026-07-24T16:48:32.092Z"
+    },
+    {
+      "id": "folder-proto05-1785413802942-d31d8c",
+      "name": "Nouveau dossier",
+      "parentFolderId": null,
+      "sortOrder": 1,
+      "createdAt": "2026-07-30T12:16:42.942Z",
+      "updatedAt": "2026-07-30T12:16:42.942Z"
+    },
+    {
+      "id": "folder-proto05-1785413824167-8b2996",
+      "name": "New dos",
+      "parentFolderId": null,
+      "sortOrder": 2,
+      "createdAt": "2026-07-30T12:17:04.167Z",
+      "updatedAt": "2026-07-30T12:17:04.167Z"
     }
   ],
   "tags": [

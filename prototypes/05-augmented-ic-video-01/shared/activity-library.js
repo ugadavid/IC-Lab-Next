@@ -358,7 +358,18 @@
     const title = button.dataset.deleteTitle;
     const card = button.closest("[data-activity-card]");
     const status = card.querySelector(".activity-card__status");
-    if (!confirm(`Supprimer définitivement l’activité « ${title} » (identifiant : ${activityId}) ?\n\nUne sauvegarde .bak sera créée avant la suppression.`)) {
+    const confirmed = await Proto05TeacherDialogs.confirm({
+      title: "Supprimer l’activité ?",
+      message: `L’activité « ${title} » sera définitivement supprimée.`,
+      details: [
+        `Identifiant : ${activityId}`,
+        "Une sauvegarde .bak sera créée avant la suppression."
+      ],
+      confirmLabel: "Supprimer l’activité",
+      destructive: true,
+      trigger: button
+    });
+    if (!confirmed) {
       status.textContent = "Suppression annulée. Aucune donnée modifiée.";
       return;
     }
@@ -425,7 +436,19 @@
       const remove = event.target.closest("[data-folder-delete]");
       if (!remove) return;
       const folder = state.folders.find(item => item.id === remove.dataset.folderDelete);
-      if (!folder || !confirm(`Supprimer le dossier « ${folder.name} » ?\n\nSes activités redeviendront non classées. Aucune activité ne sera supprimée.`)) return;
+      if (!folder) return;
+      const confirmed = await Proto05TeacherDialogs.confirm({
+        title: "Supprimer le dossier ?",
+        message: `Le dossier « ${folder.name} » sera supprimé.`,
+        details: [
+          "Ses activités redeviendront non classées.",
+          "Aucune activité ne sera supprimée."
+        ],
+        confirmLabel: "Supprimer le dossier",
+        destructive: true,
+        trigger: remove
+      });
+      if (!confirmed) return;
       try {
         await api(`/api/proto05/activity-library/folders/${encodeURIComponent(folder.id)}`, { method: "DELETE" });
         if (state.folder === folder.id) state.folder = "all";

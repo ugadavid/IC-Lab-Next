@@ -178,6 +178,21 @@
       : null;
   }
 
+  function layerDeletionDialogMessage(references) {
+    const phenomenonCount = references?.phenomena?.length || 0;
+    const overlayCount = references?.overlays?.length || 0;
+    if (phenomenonCount && overlayCount) {
+      return "Cette couche ne peut pas être supprimée, car elle est utilisée par un phénomène et un overlay.";
+    }
+    if (phenomenonCount) {
+      return "Cette couche ne peut pas être supprimée, car elle est utilisée par un phénomène.";
+    }
+    if (overlayCount) {
+      return "Cette couche ne peut pas être supprimée, car elle est utilisée par un overlay.";
+    }
+    return null;
+  }
+
   function deleteLayer(activity, layerId) {
     const issue = layerDeletionIssue(activity, layerId);
     if (issue) return { deleted: false, issue, references: layerReferences(activity, layerId) };
@@ -253,6 +268,7 @@
     deleteLayer,
     deleteSegmentCascade,
     ensureActivityLanguage,
+    layerDeletionDialogMessage,
     layerDeletionIssue,
     layerReferences,
     languageIntervalTimeIssue,

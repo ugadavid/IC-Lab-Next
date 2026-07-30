@@ -600,3 +600,164 @@ body.proto05-teacher-ui[data-teacher-route="anonymization"] > main.content {
     transition: none !important;
   }
 }
+
+body.teacher-dialog-open {
+  overflow: hidden;
+}
+
+.teacher-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: rgb(15 27 40 / 52%);
+}
+
+.teacher-dialog {
+  position: relative;
+  width: min(34rem, 100%);
+  max-height: calc(100vh - 2.5rem);
+  overflow: auto;
+  padding: 1.4rem;
+  border: 1px solid #cfd9e5;
+  border-radius: 14px;
+  background: #fff;
+  color: #20242c;
+  box-shadow: 0 24px 70px rgb(15 27 40 / 32%);
+}
+
+.teacher-dialog h2 {
+  margin: 0 2.25rem 0.65rem 0;
+  font-size: 1.25rem;
+}
+
+.teacher-dialog__message {
+  margin: 0;
+  line-height: 1.5;
+  white-space: pre-line;
+}
+
+.teacher-dialog__details {
+  margin: 0.9rem 0 0;
+  padding-left: 1.25rem;
+}
+
+.teacher-dialog__details li + li {
+  margin-top: 0.35rem;
+}
+
+.teacher-dialog__close {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: grid;
+  width: 2rem;
+  height: 2rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #ccd6e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #325f8f;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.teacher-dialog__field {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  font-weight: 700;
+}
+
+.teacher-dialog__field input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.7rem;
+  border: 1px solid #9eacba;
+  border-radius: 7px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.teacher-dialog__field input[aria-invalid="true"] {
+  border-color: #a83232;
+  outline: 2px solid rgb(168 50 50 / 24%);
+  outline-offset: 1px;
+}
+
+.teacher-dialog__validation {
+  margin: 0.45rem 0 0;
+  color: #8f2525;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.teacher-dialog__validation[hidden] {
+  display: none;
+}
+
+.teacher-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1.35rem;
+  flex-wrap: wrap;
+}
+
+.teacher-dialog__actions button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.9rem;
+  border: 1px solid #325f8f;
+  border-radius: 7px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.teacher-dialog__primary {
+  background: #325f8f;
+  color: #fff;
+}
+
+.teacher-dialog__secondary {
+  background: #fff;
+  color: #325f8f;
+}
+
+.teacher-dialog__danger {
+  border-color: #a83232 !important;
+  background: #a83232;
+  color: #fff;
+}
+
+.teacher-dialog--error {
+  border-top: 4px solid #b86b28;
+}
+
+.teacher-dialog--error h2 {
+  color: #7a4219;
+}
+
+@media (max-width: 520px) {
+  .teacher-dialog-backdrop {
+    padding: 0.75rem;
+  }
+
+  .teacher-dialog {
+    max-height: calc(100vh - 1.5rem);
+    padding: 1.1rem;
+  }
+
+  .teacher-dialog__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-dialog__actions button {
+    width: 100%;
+  }
+}

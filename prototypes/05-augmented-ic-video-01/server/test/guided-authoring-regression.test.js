@@ -13,6 +13,7 @@ const {
   deleteLayer,
   deleteSegmentCascade,
   ensureActivityLanguage,
+  layerDeletionDialogMessage,
   layerDeletionIssue,
   languageIntervalTimeIssue,
   phenomenonIssue,
@@ -1133,7 +1134,20 @@ test("les suppressions relationnelles de l’atelier respectent les références
 
   assert.match(layerDeletionIssue(activity, "layer-one"), /phénomène/i);
   assert.match(layerDeletionIssue(activity, "layer-two"), /overlay/i);
-  assert.equal(deleteLayer(activity, "layer-one").deleted, false);
+  const phenomenonRefusal = deleteLayer(activity, "layer-one");
+  assert.equal(phenomenonRefusal.deleted, false);
+  assert.equal(
+    layerDeletionDialogMessage(phenomenonRefusal.references),
+    "Cette couche ne peut pas être supprimée, car elle est utilisée par un phénomène et un overlay."
+  );
+  assert.equal(
+    layerDeletionDialogMessage({ phenomena: phenomenonRefusal.references.phenomena, overlays: [] }),
+    "Cette couche ne peut pas être supprimée, car elle est utilisée par un phénomène."
+  );
+  assert.equal(
+    layerDeletionDialogMessage({ phenomena: [], overlays: [{ id: "overlay-test" }] }),
+    "Cette couche ne peut pas être supprimée, car elle est utilisée par un overlay."
+  );
   assert.equal(activity.layers.length, 2);
 
   const dependencies = segmentDependencies(activity, "segment-one");
@@ -1169,8 +1183,11 @@ test("les parcours réels de l’atelier utilisent les gardes et l’état sale 
   );
   assert.match(guidedPage, /Proto05GuidedAuthoring\.deleteLayer\(state\.activity,x\.id\)/);
   assert.match(guidedPage, /Proto05GuidedAuthoring\.deleteSegmentCascade\(state\.activity,segment\.id\)/);
+  assert.match(guidedPage, /showGuidedDeletionRefusal\(deletion,event\.currentTarget\)/);
+  assert.match(guidedPage, /resetGuidedSelection\('Couche supprimée\.'\)/);
   assert.match(guidedPage, /markGuidedDirty\('Locuteur supprimé\./);
-  assert.match(overlayScript, /markGuidedDirty\('Overlay supprimé\./);
+  assert.match(overlayScript, /resetGuidedSelection\("Overlay supprimé\."\)/);
+  assert.match(overlayScript, /markGuidedDirty\("Overlay supprimé\./);
 });
 
 test("le menu Langue est produit depuis le référentiel et inscrit la sélection dans l’activité", () => {

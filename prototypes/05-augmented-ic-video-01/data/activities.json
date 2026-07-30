@@ -1,6 +1,6 @@
 {
   "schemaVersion": "0.1",
-  "updatedAt": "2026-07-28T06:52:54.152Z",
+  "updatedAt": "2026-07-30T12:14:56.795Z",
   "activities": [
     {
       "id": "proto05-augmented-video-01",
@@ -902,10 +902,37 @@
       "transcription": {
         "id": "transcription-proto05-draft-1784230655360-d1182f",
         "languageId": null,
-        "segmentIds": []
+        "segmentIds": [
+          "segment-guided-1785413516435"
+        ]
       },
-      "segments": [],
-      "speakers": [],
+      "segments": [
+        {
+          "id": "segment-guided-1785413516435",
+          "startMs": 0,
+          "endMs": 5000,
+          "text": "Segment 1",
+          "speakerIds": [
+            "speaker-1785413532424-2gbsvh"
+          ],
+          "languageIds": [
+            "fr"
+          ],
+          "phenomenonIds": [
+            "phenomenon-guided-1785413619243"
+          ]
+        }
+      ],
+      "speakers": [
+        {
+          "id": "speaker-1785413532424-2gbsvh",
+          "label": "Locutrice"
+        },
+        {
+          "id": "speaker-1785413558898-iupumn",
+          "label": "Locuteur"
+        }
+      ],
       "languages": [
         {
           "id": "fr",
@@ -944,8 +971,29 @@
           "endMs": 51000
         }
       ],
-      "layers": [],
-      "phenomena": [],
+      "layers": [
+        {
+          "id": "layer-guided-1785413590349",
+          "label": "Couche une",
+          "description": "la une",
+          "color": "#4d7dbc"
+        },
+        {
+          "id": "layer-guided-1785413604728",
+          "label": "Couche deux",
+          "description": "La deuze",
+          "color": "#4d7dbc"
+        }
+      ],
+      "phenomena": [
+        {
+          "id": "phenomenon-guided-1785413619243",
+          "segmentId": "segment-guided-1785413516435",
+          "layerId": "layer-guided-1785413590349",
+          "startMs": 0,
+          "endMs": 5000
+        }
+      ],
       "teacherAnnotations": [],
       "layerConfiguration": {
         "id": "layer-config-proto05-draft-1784230655360-d1182f",
@@ -954,7 +1002,18 @@
         "teacherVisibleLayerIds": [],
         "allowLearnerToggle": true
       },
-      "overlays": []
+      "overlays": [
+        {
+          "id": "overlay-guided-1785413651049",
+          "startMs": 0,
+          "endMs": 3000,
+          "title": "Pop pop pop",
+          "text": "Mouaip totti",
+          "layerIds": [
+            "layer-guided-1785413590349"
+          ]
+        }
+      ]
     }
   ]
 }

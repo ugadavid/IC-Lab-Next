@@ -2,7 +2,10 @@
   "use strict";
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
-  if (globalObject) globalObject.Proto05TeacherShell = api;
+  if (globalObject) {
+    globalObject.Proto05TeacherShell = api;
+    globalObject.Proto05TeacherDialogs = api.dialogs;
+  }
   if (typeof document !== "undefined" && typeof location !== "undefined") api.boot();
 })(typeof window !== "undefined" ? window : globalThis, function teacherShellFactory() {
   "use strict";
@@ -180,6 +183,204 @@
       : message;
   }
 
+  function requiredPromptIssue(value, message = "Renseignez une valeur.") {
+    return String(value ?? "").trim() ? null : message;
+  }
+
+  function createTeacherDialogs() {
+    let active = null;
+
+    function focusableElements(panel) {
+      return [...panel.querySelectorAll(
+        "button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href]"
+      )].filter(element => !element.hidden && element.getAttribute("aria-hidden") !== "true");
+    }
+
+    function open(options = {}) {
+      if (typeof document === "undefined") {
+        return Promise.reject(new Error("Les dialogues enseignants nécessitent un document."));
+      }
+      if (active) active.finish(active.cancelValue);
+
+      const kind = options.kind || "info";
+      const cancelValue = kind === "prompt" ? null : false;
+      const trigger = options.trigger instanceof Element ? options.trigger : document.activeElement;
+      const backdrop = document.createElement("div");
+      backdrop.className = "teacher-dialog-backdrop";
+      const panel = document.createElement("section");
+      panel.className = `teacher-dialog teacher-dialog--${kind}`;
+      panel.setAttribute("role", kind === "error" ? "alertdialog" : "dialog");
+      panel.setAttribute("aria-modal", "true");
+
+      const token = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const titleId = `teacher-dialog-title-${token}`;
+      const messageId = `teacher-dialog-message-${token}`;
+      const errorId = `teacher-dialog-error-${token}`;
+      panel.setAttribute("aria-labelledby", titleId);
+      panel.setAttribute("aria-describedby", messageId);
+
+      const closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "teacher-dialog__close";
+      closeButton.setAttribute("aria-label", "Fermer le dialogue");
+      closeButton.textContent = "×";
+
+      const title = document.createElement("h2");
+      title.id = titleId;
+      title.textContent = options.title || (kind === "error" ? "Action impossible" : "Information");
+      const message = document.createElement("p");
+      message.id = messageId;
+      message.className = "teacher-dialog__message";
+      message.textContent = options.message || "";
+      panel.append(closeButton, title, message);
+
+      if (Array.isArray(options.details) && options.details.length) {
+        const list = document.createElement("ul");
+        list.className = "teacher-dialog__details";
+        for (const detail of options.details) {
+          const item = document.createElement("li");
+          item.textContent = String(detail);
+          list.append(item);
+        }
+        panel.append(list);
+      }
+
+      let input = null;
+      let validation = null;
+      if (kind === "prompt") {
+        const label = document.createElement("label");
+        label.className = "teacher-dialog__field";
+        label.textContent = options.label || "Valeur";
+        input = document.createElement("input");
+        input.type = options.inputType || "text";
+        input.value = String(options.initialValue ?? "");
+        input.autocomplete = options.autocomplete || "off";
+        input.setAttribute("aria-describedby", errorId);
+        label.append(input);
+        validation = document.createElement("p");
+        validation.id = errorId;
+        validation.className = "teacher-dialog__validation";
+        validation.setAttribute("role", "alert");
+        validation.hidden = true;
+        panel.append(label, validation);
+      }
+
+      const actions = document.createElement("div");
+      actions.className = "teacher-dialog__actions";
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "teacher-dialog__secondary";
+      cancelButton.textContent = options.cancelLabel || (kind === "info" || kind === "error" ? "Fermer" : "Annuler");
+      actions.append(cancelButton);
+
+      let confirmButton = null;
+      if (kind === "confirm" || kind === "prompt") {
+        confirmButton = document.createElement("button");
+        confirmButton.type = "button";
+        confirmButton.className = options.destructive ? "teacher-dialog__danger" : "teacher-dialog__primary";
+        confirmButton.textContent = options.confirmLabel || (kind === "prompt" ? "Valider" : "Confirmer");
+        actions.append(confirmButton);
+      }
+      panel.append(actions);
+      backdrop.append(panel);
+      document.body.append(backdrop);
+      document.body.classList.add("teacher-dialog-open");
+
+      let settled = false;
+      let resolveResult;
+      const result = new Promise(resolve => { resolveResult = resolve; });
+      const finish = value => {
+        if (settled) return;
+        settled = true;
+        backdrop.remove();
+        document.body.classList.remove("teacher-dialog-open");
+        document.removeEventListener("keydown", onKeyDown, true);
+        active = null;
+        if (trigger?.isConnected && typeof trigger.focus === "function") trigger.focus();
+        resolveResult(value);
+      };
+      active = { finish, cancelValue };
+
+      const validatePrompt = () => {
+        if (!input) return null;
+        const issue = typeof options.validate === "function"
+          ? options.validate(input.value)
+          : null;
+        validation.textContent = issue || "";
+        validation.hidden = !issue;
+        input.setAttribute("aria-invalid", issue ? "true" : "false");
+        if (issue) input.focus();
+        return issue;
+      };
+
+      const submit = () => {
+        if (settled || confirmButton?.disabled) return;
+        if (kind === "prompt" && validatePrompt()) return;
+        if (confirmButton) confirmButton.disabled = true;
+        finish(kind === "prompt" ? input.value : true);
+      };
+
+      const onKeyDown = event => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          finish(cancelValue);
+          return;
+        }
+        if (event.key !== "Tab") return;
+        const focusables = focusableElements(panel);
+        if (!focusables.length) {
+          event.preventDefault();
+          panel.focus();
+          return;
+        }
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      };
+
+      closeButton.addEventListener("click", () => finish(cancelValue));
+      cancelButton.addEventListener("click", () => finish(cancelValue));
+      confirmButton?.addEventListener("click", submit);
+      input?.addEventListener("input", () => {
+        if (!validation.hidden) validatePrompt();
+      });
+      input?.addEventListener("keydown", event => {
+        if (event.key !== "Enter") return;
+        event.preventDefault();
+        submit();
+      });
+      backdrop.addEventListener("click", event => {
+        if (event.target === backdrop) finish(cancelValue);
+      });
+      document.addEventListener("keydown", onKeyDown, true);
+      queueMicrotask(() => (input || confirmButton || cancelButton || closeButton).focus());
+      return result;
+    }
+
+    return {
+      info(options) {
+        return open({ ...options, kind: "info" });
+      },
+      error(options) {
+        return open({ ...options, kind: "error" });
+      },
+      confirm(options) {
+        return open({ ...options, kind: "confirm" });
+      },
+      prompt(options) {
+        return open({ ...options, kind: "prompt" });
+      }
+    };
+  }
+
+  const dialogs = createTeacherDialogs();
+
   function installSaveMirror(context) {
     if (!["edit", "guided", "author"].includes(context.route)) return;
     const source = document.getElementById("save");
@@ -335,6 +536,8 @@
     saveStateFromMessage,
     transitionSaveState,
     messageAfterLocalChange,
+    requiredPromptIssue,
+    dialogs,
     updateActivity,
     setSaveState() {},
     boot
