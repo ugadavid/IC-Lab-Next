@@ -642,8 +642,8 @@ function createMariaDbReadonlyAdapter({
       await result.query("SET SESSION time_zone = '+00:00'");
       if (readonlySession) await result.query("SET SESSION TRANSACTION READ ONLY");
       return result;
-    } catch {
-      throw new Error("Connexion MariaDB readonly impossible.");
+    } catch (cause) {
+      throw new Error("Connexion MariaDB readonly impossible.", { cause });
     }
   }
 
@@ -681,7 +681,7 @@ function createMariaDbReadonlyAdapter({
         return projectMariaDbSnapshotForApplication(mapMariaDbTablesToSnapshot(tables));
       } catch (error) {
         if (error?.message?.startsWith("Connexion MariaDB")) throw error;
-        throw new Error("Lecture MariaDB readonly impossible.");
+        throw new Error("Lecture MariaDB readonly impossible.", { cause: error });
       } finally {
         await database.end();
       }

@@ -221,7 +221,10 @@ function validateTag(result, tag, index, maps) {
   }
   validateDate(result, tag.createdAt, `${path}.createdAt`, { required: true, entityId: id });
   validateDate(result, tag.updatedAt, `${path}.updatedAt`, { required: true, entityId: id });
-  const normalized = typeof tag.name === "string" ? tag.name.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, "-") : "";
+  const normalized = typeof tag.name === "string"
+    ? tag.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+    : "";
   if (tag.normalizedName !== normalized) addProblem(result, "INVALID_TAG_NORMALIZATION", "error", `${path}.normalizedName`, `${path}.normalizedName ne correspond pas à la normalisation contractuelle.`, id);
   maps.tags.set(id, tag);
   if (maps.normalizedTags.has(normalized)) addProblem(result, "DUPLICATE_TAG_NAME", "error", `${path}.name`, "Deux tags ont le même nom normalisé.", id);

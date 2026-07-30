@@ -1,10 +1,10 @@
 # Modèle canonique de la vidéothèque Proto05
 
-Statut : spécification documentaire cible, mission 098.
+Statut : contrat métier historique désormais persisté dans MariaDB.
 
-Ce document fixe le modèle fonctionnel de la Library vidéo de Proto05. Il ne
-constitue pas encore une migration ni une implémentation. Proto05 reste
-autonome et `data/video-library.json` reste le futur document canonique unique.
+Ce document fixe le modèle fonctionnel de la Library vidéo de Proto05. Depuis
+la Mission 146, MariaDB est l’autorité persistante unique ; le runtime ne lit
+et n’écrit aucun document métier JSON.
 
 ## 1. Principes
 

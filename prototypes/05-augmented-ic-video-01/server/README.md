@@ -4,63 +4,36 @@ Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
 
 ```powershell
-npm start
+node --env-file=../.env.local server.js
 ```
 
-Cette commande directe conserve provisoirement le mode historique `json`. Le
-launcher officiel `scripts/windows/start-proto05.bat` charge la configuration
-locale non versionnée et impose explicitement le mode `mariadb`, afin qu’un
-démarrage enseignant ordinaire ne puisse pas retomber silencieusement sur le
-catalogue JSON. Les modes historiques restent disponibles pour les tests et
-l’audit de sortie jusqu’à leur retrait explicite.
+## Autorité de données
 
-## Modes de données
-
-`PROTO05_DATA_MODE` accepte exactement `json`, `compare`,
-`mariadb-readonly` ou `mariadb`.
-
-- `json` est le mode par défaut. Il ne charge pas le client MariaDB et conserve
-  les lectures et écritures JSON historiques.
-- `compare` lit les deux stockages, journalise les divergences sémantiques,
-  répond avec la représentation JSON et refuse toute mutation.
-- `mariadb-readonly` sert les lectures depuis MariaDB, sans fallback JSON, et
-  refuse toute mutation.
-- `mariadb` sert toutes les lectures depuis MariaDB et y exécute les mutations
-  dans des transactions relues avant commit, sans lecture, écriture ou fallback
-  JSON.
+MariaDB est l’unique stockage métier du runtime. Il n’existe plus de sélecteur
+de backend, de mode de comparaison ni de repli JSON. Une configuration absente,
+une connexion indisponible, une identité inattendue ou des grants non conformes
+maintiennent le serveur HTTP dans un mode diagnostic fermé aux données métier :
+les routes métier répondent `503` et aucune autre source de données n’est
+consultée.
 
 Les paramètres MariaDB sont conservés localement dans `../.env.local`, ignoré
 par Git. `../.env.example` documente uniquement les noms attendus et ne doit
 jamais recevoir de mot de passe réel.
 
-Depuis ce répertoire, les modes MariaDB se lancent ainsi :
-
-```powershell
-$env:PROTO05_DATA_MODE = 'compare'
-node --env-file=../.env.local server.js
-```
-
-ou :
-
-```powershell
-$env:PROTO05_DATA_MODE = 'mariadb-readonly'
-node --env-file=../.env.local server.js
-```
-
-Le mode d’écriture transactionnelle utilise la même configuration locale :
-
-```powershell
-$env:PROTO05_DATA_MODE = 'mariadb'
-node --env-file=../.env.local server.js
-```
-
 Le serveur vérifie au démarrage l’identité, la base, les grants et une lecture
-réelle. Les modes de lecture exigent le compte strictement readonly ; le mode
-`mariadb` exige uniquement `SELECT`, `INSERT`, `UPDATE`, `DELETE` et,
+réelle. Le compte applicatif exige uniquement `SELECT`, `INSERT`, `UPDATE`, `DELETE` et,
 facultativement, `SHOW VIEW` sur la base Proto05. Tout privilège global,
-structurel, délégué ou visant une autre base bloque le démarrage. Une
-configuration ou une connexion indisponible est également bloquante.
+structurel, délégué ou visant une autre base maintient le mode diagnostic. Une
+configuration ou une connexion indisponible produit le même état fermé.
+`GET /api/health` expose une raison non sensible et
+`POST /api/diagnostics/mariadb/retry` permet de vérifier le rétablissement sans
+redémarrer le processus.
 `Ctrl+C` réalise l’arrêt propre.
+
+Les mutations sont transactionnelles et limitées aux identifiants réellement
+modifiés. Une relecture relationnelle est effectuée avant commit. Les anciens
+outils de migration conservés sous `database/migrations/` sont historiques et
+ne font pas partie du chemin de démarrage.
 
 Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `GET /teacher/preview/:activityId`, `GET /teacher/edit/:activityId`,

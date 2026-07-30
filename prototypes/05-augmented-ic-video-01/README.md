@@ -194,18 +194,14 @@ Ajouts et corrections :
 - gestion des erreurs hls.js et des erreurs du lecteur HTML ;
 - destruction de l’instance hls.js avant tout changement de source et à la fermeture de la page.
 
-La même version charge désormais l’activité en lecture seule depuis IC-Hub via
-`GET /api/proto05/activities/proto05-augmented-video-01`. Le fixture JSON sépare
+La même version chargeait alors l’activité en lecture seule depuis IC-Hub via
+`GET /api/proto05/activities/proto05-augmented-video-01`. Le modèle métier sépare
 la vidéo, la transcription, les segments, les locuteurs, les langues, les couches,
 les occurrences de phénomènes, les annotations enseignantes et la configuration
 de visibilité. Les temps synchronisés sont stockés en millisecondes entières.
 
 ## Évolution V0.0.6.2
 
-Le fichier servi par IC-Hub est désormais `index-0.0.6.2.html`. Les données métier
-appartiennent physiquement à ce prototype dans `data/activities.json`.
-
-IC-Hub conserve provisoirement la passerelle HTTP `/api/proto05/...` et lit ce
-fichier via un chemin serveur fixe et contrôlé. Il ne conserve plus aucune copie
-du fixture dans `prototypes/00-ic-hub/server/data/`. La création éventuelle d’un
-serveur autonome pour le prototype 05 fera l’objet d’une mission distincte.
+Ce passage décrit l’état historique V0.0.6.2. Depuis la Mission 146, MariaDB est
+l’autorité métier exclusive du serveur autonome Proto05. IC-Hub ne lit plus de
+fichier Proto05 et ne conserve qu’un relais HTTP de compatibilité en lecture.

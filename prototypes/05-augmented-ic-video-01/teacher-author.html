@@ -18,7 +18,7 @@ details.card[open] > summary{border-bottom:1px solid #e3e8ef;padding-bottom:8px}
 <body>
 <main>
 <h1 id="pageTitle">Atelier auteur</h1>
-<p class="notice">Brouillon local — aucune authentification ni gestion réelle des droits. Les données sont sauvegardées dans le JSON du prototype.</p>
+<p class="notice">Brouillon local — aucune authentification ni gestion réelle des droits. Les données sont sauvegardées dans MariaDB.</p>
 <div class="grid">
 <details class="card preview-card" open>
 <summary>Prévisualisation</summary>
@@ -234,5 +234,35 @@ const authorRenderAll=renderAll;renderAll=function(){ensureAuthorOverlays();auth
 $('#save').onclick=async()=>{if(state.relationIssue){$('#status').textContent=state.relationIssue;return}syncActivityLanguages();state.activity.segments=collect('#segments','segments');state.activity.languageIntervals=collect('#intervals','languageIntervals');state.activity.phenomena=collect('#phenomena','phenomena');syncDerivedPhenomenonIds();state.activity.layers=collect('#layers','layers');captureAnnotations();captureOverlays();const payload={title:fields.title.value,description:fields.description.value,instruction:fields.instruction.value,pedagogicalQuestion:fields.question.value,videoId:fields.video.value,segments:state.activity.segments,speakers:state.activity.speakers,languages:state.activity.languages,languageIntervals:state.activity.languageIntervals,phenomena:state.activity.phenomena,layers:state.activity.layers,teacherAnnotations:state.activity.teacherAnnotations,overlays:state.activity.overlays,layerConfiguration:state.activity.layerConfiguration};const r=await fetch('/api/proto05/activities/'+encodeURIComponent(id)+'/authoring',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});const p=await r.json();$('#status').textContent=r.ok?'Brouillon sauvegardé.':(p.error||'Sauvegarde refusée.');if(r.ok){state.activity=p.activity;renderAll()}};
 </script>
 <script>document.addEventListener('click',event=>{if(event.target.id!=='addOverlay')return;const segment=state.activity?.segments?.[0]||{startMs:0,endMs:1000};state.activity.overlays.push({id:`overlay-draft-${Date.now()}`,startMs:segment.startMs,endMs:segment.endMs,title:'',text:'',layerIds:[]});renderOverlays();$('#status').textContent='Overlay ajouté au brouillon. Sauvegardez pour confirmer.'});</script>
+<script src="/shared/authoring-mutation-state.js"></script>
+<script>
+const saveCanonicalAuthoring=Proto05AuthoringMutationState.singleFlight(async()=>{
+  if(state.relationIssue){$('#status').textContent=state.relationIssue;return}
+  const saveButton=$('#save');
+  saveButton.disabled=true;
+  syncActivityLanguages();
+  state.activity.segments=collect('#segments','segments');
+  state.activity.languageIntervals=collect('#intervals','languageIntervals');
+  state.activity.phenomena=collect('#phenomena','phenomena');
+  syncDerivedPhenomenonIds();
+  state.activity.layers=collect('#layers','layers');
+  captureAnnotations();
+  captureOverlays();
+  const payload={title:fields.title.value,description:fields.description.value,instruction:fields.instruction.value,pedagogicalQuestion:fields.question.value,videoId:fields.video.value,segments:state.activity.segments,speakers:state.activity.speakers,languages:state.activity.languages,languageIntervals:state.activity.languageIntervals,phenomena:state.activity.phenomena,layers:state.activity.layers,teacherAnnotations:state.activity.teacherAnnotations,overlays:state.activity.overlays,layerConfiguration:state.activity.layerConfiguration};
+  try{
+    const response=await fetch('/api/proto05/activities/'+encodeURIComponent(id)+'/authoring',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+    const body=await response.json().catch(()=>({}));
+    if(!response.ok){$('#status').textContent=body.error||'Sauvegarde refusée.';return}
+    Proto05AuthoringMutationState.applyCanonicalActivity(state,body,renderAll);
+    $('#status').textContent='Brouillon sauvegardé.';
+  }catch(error){
+    console.error('[authoring] sauvegarde impossible',error);
+    $('#status').textContent='Sauvegarde impossible : le serveur ne répond pas.';
+  }finally{
+    saveButton.disabled=false;
+  }
+});
+$('#save').onclick=saveCanonicalAuthoring;
+</script>
 </body>
 </html>

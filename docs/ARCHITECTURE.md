@@ -49,7 +49,7 @@ IC-Lab-Next/
 | Composant | Rôle actuel | Exécution | Données principales possédées |
 |---|---|---|---|
 | **00 — IC-Hub** | Portail public, parcours locaux de comptes/cours/activités et services transversaux | Serveur Node, port `8790` | Métadonnées Hub dans `server/data/`; sessions et runs runtime locaux; mode MariaDB Hub optionnel |
-| **05 — Vidéo augmentée** | Lecture et observation d’une vidéo IC, vues étudiant/enseignant et ateliers d’auteur | Serveur Node autonome, port `8791` | `data/activities.json`, sauvegarde locale `.bak`; observations étudiantes non persistées |
+| **05 — Vidéo augmentée** | Lecture et observation d’une vidéo IC, vues étudiant/enseignant et ateliers d’auteur | Serveur Node autonome, port `8791` | MariaDB `ic_augmented_video`; médias physiques dans les espaces locaux du prototype |
 | **06 — Agent vocal IC** | Bibliothèque, composition et exécution locale d’activités orales plurilingues | Serveur Node autonome, port `8788` | `server/data/activities.json`; fixtures de manifestes dans `data/proto06-manifests/` |
 | **07 — Informaticaire** | Mémoire, documentation et retrouvabilité des ressources IC | Application statique servie par IC-Hub | Corpus de démonstration suivi dans `data.js`; exports produits côté navigateur |
 | **08 — Dico-IC / Seven Sieves** | Service de connaissances plurilingues, administration et client de lecture guidée | Serveur Node/Express, port `3000`, connecté à MariaDB `3306` | Base `ic_dico` dans le volume Docker externe; état d’interface Seven Sieves local au navigateur |
@@ -80,7 +80,7 @@ pas une authentification commune automatiquement appliquée aux prototypes.
                                         |
 Navigateur ---- Proto05 :8791 --------> IC-Hub :8790
     |                 |                      |
-    |                 +-- JSON Proto05      +-- portail et données Hub
+    |                 +-- MariaDB :3306     +-- portail et données Hub
     |                                        +-- Informaticaire statique
     |
     +------------ Agent vocal :8788 <------ connecteur Hub local
@@ -145,15 +145,14 @@ bus de données entre tous les prototypes.
 | Propriétaire | Source ou stockage | Frontière actuelle |
 |---|---|---|
 | IC-Hub | `prototypes/00-ic-hub/server/data/*.json` | Comptes, cours, inscriptions, assignations, catalogues, propriété, configurations et manifestes publiés Hub. Les sessions, runs, corruptions et sauvegardes runtime sont ignorés par Git. |
-| Proto05 | `prototypes/05-augmented-ic-video-01/data/activities.json` | Source canonique actuelle de ses activités. Le serveur `8791` lit et écrit ce JSON; le Hub ne doit pas en conserver une copie. |
+| Proto05 | MariaDB `ic_augmented_video` | Autorité exclusive des activités, référentiels et métadonnées vidéo. Le serveur `8791` est l’unique frontière applicative; IC-Hub relaie seulement ses lectures par HTTP. |
 | Proto06 | `server/data/activities.json` | Activités du backend vocal. Le Hub les consulte par HTTP pour son connecteur; les manifestes publiés du Hub restent une donnée transversale distincte. |
 | Informaticaire | `data.js` | Corpus statique chargé par la page. Les contributions et exports sont préparés côté navigateur; le corpus n’est ni une base officielle ni une donnée Hub. |
 | Dico-IC | MariaDB `ic_dico` dans `ic_lab_next_mariadb_data` | Lexique, relations, formes et objets pédagogiques. Seven Sieves consomme l’API et ne lit jamais MariaDB directement. |
-| Workspace IC-Lab-Next | `shared/reference-data/languages.json` | Petit dictionnaire transversal en lecture seule. Il définit uniquement les identifiants stables et libellés communs des langues ; il ne possède ni activités ni annotations. |
+| Workspace IC-Lab-Next | `shared/reference-data/languages.json` | Source historique ayant alimenté la migration; elle n’est plus lue par le runtime Proto05. |
 
-Pour Proto05, ce dictionnaire est l’unique source de vérité des identifiants et
-libellés de langues. `activities.json` matérialise seulement la sélection de
-chaque activité et ses références (`transcription.languageId`,
+Pour Proto05, la table MariaDB `languages` est la source runtime des identifiants et
+libellés de langues. Les tables d’activité matérialisent leur sélection et leurs références (`transcription.languageId`,
 `segments[].languageIds`, `languageIntervals[].languageId`). Le serveur sert le
 dictionnaire en lecture seule, valide les sélections contre lui et conserve les
 identifiants globaux lors d’une duplication.
@@ -196,11 +195,11 @@ lecture et sa prévisualisation enseignant utilisent le même fichier
 │   -> catalogue vidéo contrôlé                                │
 │   -> référentiel de langues partagé en lecture seule          │
 │   -> lecture, création, mise à jour et suppression           │
-│   -> validation + écriture JSON atomique + copie .bak        │
+│   -> validation + transactions MariaDB ciblées               │
 └───────────────────────────┬──────────────────────────────────┘
                             │
                             v
-                  data/activities.json
+                  MariaDB ic_augmented_video
 ```
 
 ### Surfaces principales
@@ -351,8 +350,7 @@ Le rapport associé donne la liste complète des contrôles et contradictions :
 - [Index documentaire Dico-IC](../prototypes/08-dico-seven-sieves/docs/docs-index.md)
 - [Modèle conceptuel Dico-IC](../prototypes/08-dico-seven-sieves/docs/ic_dico_model_notes_md_v_1.md)
 - [Contrat d’analyse Dico-IC / Seven Sieves](../prototypes/08-dico-seven-sieves/docs/api-analysis-contract-v0.md)
-- [JSON courant de Proto05](../prototypes/05-augmented-ic-video-01/data/activities.json),
-  [extraction initiale du modèle](../reports/006_prototype_05_activity_json_extraction_report.md),
+- [Extraction historique du modèle](../reports/006_prototype_05_activity_json_extraction_report.md),
   [recentrage de sa propriété](../reports/007_prototype_05_data_ownership_relocation_report.md) et
   [modèle de visibilité des couches](../reports/025_prototype_05_layer_management_report.md)
 - [État récent de Proto05](../reports/026_prototype_05_daily_summary_2026-07-13.md)

@@ -173,7 +173,10 @@ function canonicalFromRuntime(runtime, previousCanonical) {
 function assertWritableCanonical(canonical) {
   const validation = validateMediaLibrary(canonical);
   if (!validation.valid || !validation.writeEligible) {
-    const error = new Error("La Library canonique ne peut pas être écrite.");
+    const detail = validation.problems?.[0];
+    const error = new Error(detail
+      ? `La Library canonique ne peut pas être écrite : ${detail.path} — ${detail.message}`
+      : "La Library canonique ne peut pas être écrite.");
     error.validation = validation;
     throw error;
   }

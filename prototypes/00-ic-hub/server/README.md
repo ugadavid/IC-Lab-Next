@@ -65,7 +65,9 @@ Authorization: Bearer <token>
 
 Le proxy HLS est l’unique exception publique sous `/api/` : le navigateur ne lui transmet jamais d’URL distante. L’identifiant `uga-37004` résout une source HTTPS inscrite en liste blanche côté serveur ; les redirections amont et les chemins sortant de son répertoire sont refusés.
 
-Le chargement Proto05 est une lecture seule du fixture propriétaire `prototypes/05-augmented-ic-video-01/data/activities.json`. IC-Hub ne conserve aucune copie de ces données dans son propre dossier `server/data/` : il fournit provisoirement la passerelle HTTP via un chemin serveur fixe et contrôlé. Les routes Proto05 n’exposent aucun POST, PUT ou DELETE et ne nécessitent pas d’authentification à ce stade. Une éventuelle séparation vers un serveur propre au prototype fera l’objet d’une mission ultérieure.
+Les routes de compatibilité Proto05 sont des relais HTTP en lecture seule vers
+le serveur autonome `127.0.0.1:8791` (origine configurable par
+`PROTO05_API_ORIGIN`). IC-Hub ne lit ni ne conserve les données métier Proto05.
 
 ## Pages
 

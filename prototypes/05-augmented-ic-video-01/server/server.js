@@ -22,7 +22,6 @@ const {
   resolveLibraryPlayable
 } = require("./library-contract");
 const {
-  readCanonicalMediaLibrary,
   projectCanonicalLibrary,
   canonicalFromRuntime,
   assertWritableCanonical
@@ -32,9 +31,7 @@ const {
   projectActivityVideoSource
 } = require("./activity-video-projection");
 const {
-  dataModeFromEnvironment,
-  mariadbConfigurationFromEnvironment,
-  readonlyMutationPayload
+  mariadbConfigurationFromEnvironment
 } = require("./proto05-data-mode");
 const { createMariaDbReadonlyAdapter } = require("./proto05-mariadb-readonly");
 const {
@@ -43,6 +40,12 @@ const {
 } = require("./proto05-mariadb-write");
 const { createProto05ReadBoundary } = require("./proto05-read-boundary");
 const { createProto05WriteBoundary } = require("./proto05-write-boundary");
+const {
+  classifyMariaDbError,
+  diagnosticPage,
+  safeMariaDbLogDetails,
+  unavailablePayload
+} = require("./mariadb-diagnostics");
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 const {
   validateProfile: validateVideoMetadataProfile
@@ -60,17 +63,16 @@ const PORT = Number(process.env.PORT || 8791);
 const VERSION = "0.1.48";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
-const DATA_MODE = dataModeFromEnvironment(process.env);
-const MARIADB_IS_AUTHORITY = DATA_MODE === "mariadb" || DATA_MODE === "mariadb-readonly";
-const MARIADB_CONFIGURATION = DATA_MODE === "json"
-  ? null
-  : mariadbConfigurationFromEnvironment(process.env);
+const STORAGE_AUTHORITY = "mariadb";
+let MARIADB_CONFIGURATION = null;
+let MARIADB_CONFIGURATION_ERROR = null;
+try {
+  MARIADB_CONFIGURATION = mariadbConfigurationFromEnvironment(process.env);
+} catch (error) {
+  MARIADB_CONFIGURATION_ERROR = error;
+}
 const READ_CONTEXT = new AsyncLocalStorage();
 const DATA_DIR = path.join(ROOT_DIR, "data");
-const DATA_FILE = path.join(DATA_DIR, "activities.json");
-const ACTIVITY_LIBRARY_FILE = path.join(DATA_DIR, "activity-library.json");
-const VIDEO_CATALOG_FILE = path.join(DATA_DIR, "video-catalog.json");
-const VIDEO_LIBRARY_FILE = path.join(DATA_DIR, "video-library.json");
 const VIDEO_LIBRARY_MEDIA_DIR = path.join(DATA_DIR, "video-library-media");
 const VIDEO_LIBRARY_WORKSPACES_DIR = path.join(DATA_DIR, "video-library-workspaces");
 const REMOTE_COPY_MAX_BYTES = Number(process.env.PROTO05_REMOTE_COPY_MAX_BYTES || 1024 * 1024 * 1024);
@@ -103,7 +105,6 @@ const INDEX_FILE = "index-0.0.9.html";
 const UGA_HLS_MEDIA_ORIGIN = "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
 const HLS_PREFIX = "/api/hls/";
-const LANGUAGE_CATALOG_FILE = path.resolve(process.env.PROTO05_LANGUAGE_CATALOG_FILE || path.join(ROOT_DIR, "..", "..", "shared", "reference-data", "languages.json"));
 const STATIC_TYPES = Object.freeze({
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -149,13 +150,6 @@ function freezeVideoCatalog(entries) {
   return Object.freeze(entries.map(entry => Object.freeze({ ...entry })));
 }
 
-function safeVideoCatalogFile() {
-  const root = path.resolve(DATA_DIR);
-  const file = path.resolve(VIDEO_CATALOG_FILE);
-  if (file !== root && !file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de catalogue invalide.");
-  return file;
-}
-
 function validateYouTubeLink(value) {
   const input = String(value || "").trim();
   if (/^[A-Za-z0-9_-]{11}$/.test(input)) return { videoId: input, embedUrl: `https://www.youtube.com/embed/${input}` };
@@ -175,65 +169,24 @@ function validateUgaLink(value) {
   return { sourceUrl: url.toString(), key: `uga-37004/${file}`, proxyUrl: `/api/hls/uga-37004/${file}` };
 }
 
-function loadVideoCatalog() {
-  const parsed = JSON.parse(fsSync.readFileSync(safeVideoCatalogFile(), "utf8"));
-  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.videos)) throw new Error("Catalogue vidéo Proto05 invalide.");
-  const ids = new Set();
-  return freezeVideoCatalog(parsed.videos.map(video => {
-    if (!video || typeof video !== "object" || typeof video.id !== "string" || !video.id || ids.has(video.id) || video.authorized !== true) throw new Error("Entrée vidéo Proto05 invalide.");
-    ids.add(video.id);
-    if (video.provider === "youtube") {
-      const checked = validateYouTubeLink(video.embedUrl);
-      if (checked.videoId !== video.videoId) throw new Error("Entrée YouTube Proto05 invalide.");
-      return { ...video, ...checked };
-    }
-    if (video.provider === "uga") {
-      const checked = validateUgaLink(video.sourceUrl || "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8");
-      if (video.proxyUrl !== checked.proxyUrl) throw new Error("Entrée HLS Proto05 invalide.");
-      return { ...video, ...checked };
-    }
-    throw new Error("Fournisseur vidéo Proto05 non autorisé.");
-  }));
-}
-
-let JSON_VIDEO_CATALOG = MARIADB_IS_AUTHORITY ? freezeVideoCatalog([]) : loadVideoCatalog();
-
 function activeVideoCatalog() {
   const context = READ_CONTEXT.getStore();
+  if (!context) throw new Error("Contexte MariaDB absent.");
   return videoCatalogWithLibraryTitles(
-    context?.videoCatalog?.videos || JSON_VIDEO_CATALOG,
-    context?.videoLibrary || JSON_VIDEO_LIBRARY
+    context.videoCatalog?.videos || [],
+    context.videoLibrary
   );
 }
 
-function safeVideoLibraryFile() {
-  const root = path.resolve(DATA_DIR);
-  const file = path.resolve(VIDEO_LIBRARY_FILE);
-  if (file !== root && !file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de Library vidéo invalide.");
-  return file;
-}
-
-let CANONICAL_LIBRARY = null;
-
-function loadVideoLibrary() {
-  const file = safeVideoLibraryFile();
-  if (!fsSync.existsSync(file)) throw new Error("Library vidéo canonique introuvable.");
-  const loaded = readCanonicalMediaLibrary(file);
-  CANONICAL_LIBRARY = loaded.canonical;
-  return validateLibraryShape(projectCanonicalLibrary(CANONICAL_LIBRARY));
-}
-
-let JSON_VIDEO_LIBRARY = MARIADB_IS_AUTHORITY ? null : loadVideoLibrary();
-
 function activeCanonicalVideoLibrary() {
-  const canonical = READ_CONTEXT.getStore()?.canonicalVideoLibrary || CANONICAL_LIBRARY;
+  const canonical = READ_CONTEXT.getStore()?.canonicalVideoLibrary;
   if (!canonical) throw new Error("Aucune Library vidéo canonique n’est disponible.");
   return canonical;
 }
 
 function activeVideoLibrary() {
-  const library = READ_CONTEXT.getStore()?.videoLibrary || JSON_VIDEO_LIBRARY;
-  if (!library) throw new Error("Aucune Library vidéo n’est disponible hors du contexte MariaDB.");
+  const library = READ_CONTEXT.getStore()?.videoLibrary;
+  if (!library) throw new Error("Contexte MariaDB absent pour la Library vidéo.");
   return library;
 }
 
@@ -253,10 +206,7 @@ const VIDEO_LIBRARY = new Proxy({}, {
     const library = activeVideoLibrary();
     return Reflect.get(library, property, library);
   },
-  set(_target, property, value) {
-    if (READ_CONTEXT.getStore()) throw new Error("Mutation de la Library interdite dans un contexte de lecture.");
-    return Reflect.set(JSON_VIDEO_LIBRARY, property, value, JSON_VIDEO_LIBRARY);
-  },
+  set() { throw new Error("Mutation directe de la Library interdite."); },
   has(_target, property) {
     return Reflect.has(activeVideoLibrary(), property);
   },
@@ -363,22 +313,10 @@ async function servePreparationMedia(request, response, url) {
   if (request.aborted || response.destroyed) return true; response.writeHead(status, headers); if (request.method === 'HEAD') { response.end(); return true; }
   const stream = fsSync.createReadStream(job.outputPath, { start, end }); const abort = () => { if (!stream.destroyed) stream.destroy(); }; request.once('aborted', abort); response.once('close', abort); try { await pipeline(stream, response); } catch (error) { if (!(request.aborted || response.destroyed || ['ERR_STREAM_PREMATURE_CLOSE', 'ECONNRESET', 'EPIPE'].includes(error?.code))) throw error; } finally { request.removeListener('aborted', abort); response.removeListener('close', abort); if (!stream.destroyed) stream.destroy(); } return true;
 }
-function loadLanguageCatalog() {
-  const parsed = JSON.parse(fsSync.readFileSync(LANGUAGE_CATALOG_FILE, "utf8"));
-  if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.languages)) throw new Error("Référentiel partagé des langues invalide.");
-  const identifiers = new Set();
-  const languages = parsed.languages.map(language => {
-    if (!language || typeof language !== "object" || Array.isArray(language) || typeof language.id !== "string" || !language.id || typeof language.label !== "string" || !language.label) throw new Error("Entrée invalide dans le référentiel partagé des langues.");
-    if (identifiers.has(language.id)) throw new Error(`Identifiant de langue partagé dupliqué : ${language.id}.`);
-    identifiers.add(language.id);
-    return Object.freeze({ id: language.id, label: language.label });
-  });
-  return Object.freeze(languages);
-}
-const LANGUAGE_CATALOG = MARIADB_IS_AUTHORITY ? Object.freeze([]) : loadLanguageCatalog();
-
 function activeLanguageCatalog() {
-  return READ_CONTEXT.getStore()?.languageCatalog?.languages || LANGUAGE_CATALOG;
+  const languages = READ_CONTEXT.getStore()?.languageCatalog?.languages;
+  if (!languages) throw new Error("Contexte MariaDB absent pour le référentiel des langues.");
+  return languages;
 }
 
 function activeLanguageCatalogById() {
@@ -391,13 +329,6 @@ function sendJson(response, status, payload, headers = {}) {
   const body = JSON.stringify(payload, null, 2);
   response.writeHead(status, { "content-type": "application/json; charset=utf-8", ...headers });
   response.end(body);
-}
-
-function safeDataFile() {
-  const root = path.resolve(DATA_DIR);
-  const file = path.resolve(DATA_FILE);
-  if (file !== root && !file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de données invalide.");
-  return file;
 }
 
 function activityForStorage(activity) {
@@ -414,27 +345,10 @@ function storeForPersistence(store) {
   };
 }
 
-async function readJsonActivities() {
-  try {
-    const parsed = JSON.parse(await fs.readFile(safeDataFile(), "utf8"));
-    if (!parsed || typeof parsed !== "object" || !Array.isArray(parsed.activities)) throw new Error("JSON d’activités invalide.");
-    parsed.activities = parsed.activities.map(activity => activityForStorage(normalizeActivityOverlays(activity)));
-    return parsed;
-  } catch (error) {
-    console.error(`[data] lecture impossible : ${error.message}`);
-    throw new Error("Données Proto05 absentes ou JSON invalide.");
-  }
-}
-
 async function readActivities() {
-  return READ_CONTEXT.getStore()?.activities || readJsonActivities();
-}
-
-function safeActivityLibraryFile() {
-  const root = path.resolve(DATA_DIR);
-  const file = path.resolve(ACTIVITY_LIBRARY_FILE);
-  if (file !== root && !file.startsWith(`${root}${path.sep}`)) throw new Error("Chemin de classement des activités invalide.");
-  return file;
+  const activities = READ_CONTEXT.getStore()?.activities;
+  if (!activities) throw new Error("Contexte MariaDB absent pour les activités.");
+  return structuredClone(activities);
 }
 
 function emptyActivityLibraryClassification() {
@@ -481,19 +395,10 @@ function normalizeActivityLibraryClassification(value) {
   };
 }
 
-async function readJsonActivityLibraryClassification() {
-  const file = safeActivityLibraryFile();
-  try {
-    return normalizeActivityLibraryClassification(JSON.parse(await fs.readFile(file, "utf8")));
-  } catch (error) {
-    if (error.code === "ENOENT") return emptyActivityLibraryClassification();
-    console.error(`[data] classement des activités illisible : ${error.message}`);
-    throw new Error("Classement des activités absent ou invalide.");
-  }
-}
-
 async function readActivityLibraryClassification() {
-  return READ_CONTEXT.getStore()?.activityLibrary || readJsonActivityLibraryClassification();
+  const classification = READ_CONTEXT.getStore()?.activityLibrary;
+  if (!classification) throw new Error("Contexte MariaDB absent pour le classement des activités.");
+  return structuredClone(classification);
 }
 
 async function persistActivityLibraryClassification(classification) {
@@ -501,28 +406,10 @@ async function persistActivityLibraryClassification(classification) {
     ...classification,
     updatedAt: new Date().toISOString()
   });
-  if (DATA_MODE === "mariadb") {
-    await persistMariaDbSnapshot(
-      { activityLibrary: normalized },
-      { operation: "activity-library" }
-    );
-    return normalized;
-  }
-  const operation = writeQueue.then(async () => {
-    const file = safeActivityLibraryFile();
-    const backup = `${file}.bak`;
-    const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-    await fs.mkdir(path.dirname(file), { recursive: true });
-    try { await fs.copyFile(file, backup); } catch (error) { if (error.code !== "ENOENT") throw error; }
-    try {
-      await fs.writeFile(temp, `${JSON.stringify(normalized, null, 2)}\n`, "utf8");
-      await fs.rename(temp, file);
-    } finally {
-      try { await fs.unlink(temp); } catch {}
-    }
-  });
-  writeQueue = operation.catch(() => {});
-  await operation;
+  await persistMariaDbSnapshot(
+    { activityLibrary: normalized },
+    { operation: "activity-library" }
+  );
   return normalized;
 }
 
@@ -552,10 +439,6 @@ function activityLibraryPayload(store, classification) {
 }
 
 async function removeActivityLibraryAssignment(activityId) {
-  if (DATA_MODE !== "mariadb") {
-    const file = safeActivityLibraryFile();
-    if (!fsSync.existsSync(file)) return;
-  }
   const classification = await readActivityLibraryClassification();
   if (!Object.prototype.hasOwnProperty.call(classification.assignments, activityId)) return;
   const assignments = { ...classification.assignments };
@@ -1018,78 +901,43 @@ function duplicateActivity(source, activities) {
 }
 
 async function persistActivities(store) {
-  if (DATA_MODE === "mariadb") {
-    const currentClassification = READ_CONTEXT.getStore()?.activityLibrary;
-    const activityIds = new Set((store.activities || []).map(activity => activity.id));
-    const assignments = Object.fromEntries(Object.entries(currentClassification?.assignments || {})
-      .filter(([activityId]) => activityIds.has(activityId)));
-    const classificationChanged = Object.keys(assignments).length
-      !== Object.keys(currentClassification?.assignments || {}).length;
-    await persistMariaDbSnapshot(
-      {
-        activities: storeForPersistence(store),
-        ...(classificationChanged
-          ? {
-              activityLibrary: normalizeActivityLibraryClassification({
-                ...currentClassification,
-                assignments,
-                updatedAt: new Date().toISOString()
-              })
-            }
-          : {})
-      },
-      { operation: "activities" }
-    );
-    return;
-  }
-  const operation = writeQueue.then(async () => {
-    const file = safeDataFile();
-    const backup = `${file}.bak`;
-    const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-    const stored = storeForPersistence(store);
-    await fs.copyFile(file, backup);
-    try {
-      await fs.writeFile(temp, `${JSON.stringify(stored, null, 2)}\n`, "utf8");
-      await fs.rename(temp, file);
-    } finally {
-      try { await fs.unlink(temp); } catch {}
-    }
-  });
-  writeQueue = operation.catch(() => {});
-  return operation;
+  const currentClassification = READ_CONTEXT.getStore()?.activityLibrary;
+  const activityIds = new Set((store.activities || []).map(activity => activity.id));
+  const assignments = Object.fromEntries(Object.entries(currentClassification?.assignments || {})
+    .filter(([activityId]) => activityIds.has(activityId)));
+  const classificationChanged = Object.keys(assignments).length
+    !== Object.keys(currentClassification?.assignments || {}).length;
+  await persistMariaDbSnapshot(
+    {
+      activities: storeForPersistence(store),
+      ...(classificationChanged
+        ? {
+            activityLibrary: normalizeActivityLibraryClassification({
+              ...currentClassification,
+              assignments,
+              updatedAt: new Date().toISOString()
+            })
+          }
+        : {})
+    },
+    { operation: "activities" }
+  );
 }
 
 async function persistVideoCatalog(videos) {
-  if (DATA_MODE === "mariadb") {
-    const runtimeLibrary = mergeCatalogIntoLibrary(activeVideoLibrary(), videos);
-    const canonical = assertWritableCanonical(canonicalFromRuntime(
-      runtimeLibrary,
-      activeCanonicalVideoLibrary()
-    ));
-    canonical.updatedAt = new Date().toISOString();
-    await persistMariaDbSnapshot(
-      {
-        videoCatalog: { schemaVersion: "0.1", videos: structuredClone(videos) },
-        videoLibrary: projectCanonicalLibrary(canonical)
-      },
-      { operation: "video-catalog", canonicalVideoLibrary: canonical }
-    );
-    return;
-  }
-  const operation = writeQueue.then(async () => {
-    const file = safeVideoCatalogFile();
-    const backup = `${file}.bak`;
-    const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-    await fs.copyFile(file, backup);
-    try {
-      await fs.writeFile(temp, `${JSON.stringify({ schemaVersion: "0.1", videos }, null, 2)}\n`, "utf8");
-      await fs.rename(temp, file);
-    } finally {
-      try { await fs.unlink(temp); } catch {}
-    }
-  });
-  writeQueue = operation.catch(() => {});
-  return operation;
+  const runtimeLibrary = mergeCatalogIntoLibrary(activeVideoLibrary(), videos);
+  const canonical = assertWritableCanonical(canonicalFromRuntime(
+    runtimeLibrary,
+    activeCanonicalVideoLibrary()
+  ));
+  canonical.updatedAt = new Date().toISOString();
+  await persistMariaDbSnapshot(
+    {
+      videoCatalog: { schemaVersion: "0.1", videos: structuredClone(videos) },
+      videoLibrary: projectCanonicalLibrary(canonical)
+    },
+    { operation: "video-catalog", canonicalVideoLibrary: canonical }
+  );
 }
 
 async function renameWithWindowsRetries(source, target, options = {}) {
@@ -1109,141 +957,65 @@ async function renameWithWindowsRetries(source, target, options = {}) {
   throw lastError;
 }
 
-async function commitCanonicalVideoLibrary(canonical) {
-  const file = safeVideoLibraryFile();
-  assertWritableCanonical(canonical);
-  const backup = `${file}.bak`;
-  const temp = `${file}.${process.pid}.${Date.now()}.${crypto.randomBytes(4).toString("hex")}.tmp`;
-  await fs.copyFile(file, backup);
-  try {
-    await fs.writeFile(temp, `${JSON.stringify(canonical, null, 2)}\n`, "utf8");
-    await renameWithWindowsRetries(temp, file);
-    CANONICAL_LIBRARY = canonical;
-  } finally {
-    try { await fs.unlink(temp); } catch {}
-  }
-}
-
-async function writeCanonicalVideoLibrary(canonical) {
-  const operation = writeQueue.then(() => commitCanonicalVideoLibrary(canonical));
-  writeQueue = operation.catch(() => {});
-  return operation;
-}
-
-async function mutateCanonicalVideoLibrary(mutator) {
-  const operation = writeQueue.then(async () => {
-    const canonical = JSON.parse(JSON.stringify(CANONICAL_LIBRARY));
-    await mutator(canonical);
-    canonical.updatedAt = new Date().toISOString();
-    await commitCanonicalVideoLibrary(canonical);
-    JSON_VIDEO_LIBRARY = projectCanonicalLibrary(canonical);
-    return canonical;
-  });
-  writeQueue = operation.catch(() => {});
-  return operation;
-}
-
 async function persistVideoLibrary(library) {
   const canonical = assertWritableCanonical(canonicalFromRuntime(
     library,
     activeCanonicalVideoLibrary()
   ));
-  if (DATA_MODE === "mariadb") {
-    canonical.updatedAt = new Date().toISOString();
-    const context = READ_CONTEXT.getStore();
-    const videoCatalog = {
-      ...(context?.videoCatalog || { schemaVersion: "0.1" }),
-      videos: videoCatalogWithLibraryTitles(
-        context?.videoCatalog?.videos || [],
-        projectCanonicalLibrary(canonical)
-      )
-    };
-    await persistMariaDbSnapshot(
-      { videoLibrary: projectCanonicalLibrary(canonical), videoCatalog },
-      { operation: "media-library", canonicalVideoLibrary: canonical }
-    );
-    return;
-  }
-  return writeCanonicalVideoLibrary(canonical);
+  canonical.updatedAt = new Date().toISOString();
+  const context = READ_CONTEXT.getStore();
+  const videoCatalog = {
+    ...(context?.videoCatalog || { schemaVersion: "0.1" }),
+    videos: videoCatalogWithLibraryTitles(
+      context?.videoCatalog?.videos || [],
+      projectCanonicalLibrary(canonical)
+    )
+  };
+  await persistMariaDbSnapshot(
+    { videoLibrary: projectCanonicalLibrary(canonical), videoCatalog },
+    { operation: "media-library", canonicalVideoLibrary: canonical }
+  );
 }
 
 async function persistCanonicalLibrary(canonical) {
   const next = assertWritableCanonical(JSON.parse(JSON.stringify(canonical)));
   next.updatedAt = new Date().toISOString();
-  if (DATA_MODE === "mariadb") {
-    await persistMariaDbSnapshot(
-      { videoLibrary: projectCanonicalLibrary(next) },
-      { operation: "media-library", canonicalVideoLibrary: next }
-    );
-    return VIDEO_LIBRARY;
-  }
-  await writeCanonicalVideoLibrary(next);
-  CANONICAL_LIBRARY = next;
-  JSON_VIDEO_LIBRARY = projectCanonicalLibrary(next);
+  await persistMariaDbSnapshot(
+    { videoLibrary: projectCanonicalLibrary(next) },
+    { operation: "media-library", canonicalVideoLibrary: next }
+  );
   return VIDEO_LIBRARY;
 }
 
 async function persistWorkingCopyMutation(mutation) {
-  if (DATA_MODE === "mariadb") {
-    const context = READ_CONTEXT.getStore();
-    if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
-    const snapshot = structuredClone(context);
-    Object.defineProperty(snapshot, "canonicalVideoLibrary", {
-      configurable: true,
-      enumerable: false,
-      writable: true,
-      value: structuredClone(context.canonicalVideoLibrary)
-    });
-    const queued = writeQueue.then(() => proto05WriteBoundary().appendWorkingCopy(
-      snapshot,
-      mutation,
-      {
-        failAfterStatements: process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS
-          ? Number(process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS)
-          : null
-      }
-    ));
-    writeQueue = queued.catch(() => {});
-    const result = await queued;
-    Object.assign(context, result.snapshot);
-    Object.defineProperty(context, "canonicalVideoLibrary", {
-      configurable: true,
-      enumerable: false,
-      writable: true,
-      value: result.snapshot.canonicalVideoLibrary
-    });
-    return result;
-  }
-  const canonical = await mutateCanonicalVideoLibrary(next => {
-    const asset = next.assets.find(item => item.id === mutation.assetId);
-    const expectedPlayable = next.playables.find(item => (
-      item.id === mutation.expectedPlayableId && item.assetId === mutation.assetId
-    ));
-    if (!asset || !expectedPlayable) {
-      throw new Error("La vidéo source de la copie de travail n’existe plus.");
-    }
-    if (
-      next.sources.some(item => item.id === mutation.source.id)
-      || next.playables.some(item => (
-        item.id === mutation.playable.id
-        || (item.assetId === mutation.assetId
-          && item.technicalMetadata?.sha256 === mutation.playable.technicalMetadata?.sha256)
-      ))
-    ) {
-      throw new Error("Une copie locale équivalente existe déjà pour cet asset.");
-    }
-    next.sources.push(structuredClone(mutation.source));
-    next.playables.push(structuredClone(mutation.playable));
-    asset.updatedAt = mutation.updatedAt;
+  const context = READ_CONTEXT.getStore();
+  if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
+  const snapshot = structuredClone(context);
+  Object.defineProperty(snapshot, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: structuredClone(context.canonicalVideoLibrary)
   });
-  return {
-    operation: "media-working-copy",
-    statements: 0,
-    snapshot: {
-      videoLibrary: projectCanonicalLibrary(canonical),
-      canonicalVideoLibrary: canonical
+  const queued = writeQueue.then(() => proto05WriteBoundary().appendWorkingCopy(
+    snapshot,
+    mutation,
+    {
+      failAfterStatements: process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS
+        ? Number(process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS)
+        : null
     }
-  };
+  ));
+  writeQueue = queued.catch(() => {});
+  const result = await queued;
+  Object.assign(context, result.snapshot);
+  Object.defineProperty(context, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: result.snapshot.canonicalVideoLibrary
+  });
+  return result;
 }
 
 function libraryAssetFromInput(payload) {
@@ -1704,7 +1476,6 @@ async function persistLibraryMutation(nextLibrary) {
   nextLibrary.updatedAt = new Date().toISOString();
   validateLibraryShape(nextLibrary);
   await persistVideoLibrary(nextLibrary);
-  JSON_VIDEO_LIBRARY = nextLibrary;
 }
 
 function libraryFolderFromInput(payload) {
@@ -1826,7 +1597,7 @@ async function importLocalLibraryMedia(request, url) {
   const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
   nextLibrary.updatedAt = importedAt;
   nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
-  try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); JSON_VIDEO_LIBRARY = nextLibrary; }
+  try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); }
   catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
   return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
 }
@@ -2185,7 +1956,7 @@ async function copyDirectLibraryMedia(request, url) {
     const asset = { id: assetId, title, status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance, metadata: { originalUrl: originalUrl.toString(), finalUrl: response.url || originalUrl.toString(), redirects, sizeBytes, sha256, mimeType: contentType, durationMs: null }, rights: {} };
     const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
     nextLibrary.updatedAt = importedAt; nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
-    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); JSON_VIDEO_LIBRARY = nextLibrary; }
+    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); }
     catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
     return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
   } catch (error) {
@@ -3161,49 +2932,79 @@ function activityResponse(store, activity) {
   return { schemaVersion: store.schemaVersion || "0.1", updatedAt: store.updatedAt || null, activity: activityForResponse(activity) };
 }
 
-const JSON_READ_ADAPTER = Object.freeze({
-  async readSnapshot() {
-    const [activities, activityLibrary] = await Promise.all([
-      readJsonActivities(),
-      readJsonActivityLibraryClassification()
-    ]);
-    return {
-      activities,
-      activityLibrary,
-      languageCatalog: {
-        languages: structuredClone(LANGUAGE_CATALOG)
-      },
-      videoCatalog: {
-        schemaVersion: "0.1",
-        videos: structuredClone(JSON_VIDEO_CATALOG)
-      },
-      videoLibrary: structuredClone(JSON_VIDEO_LIBRARY)
-    };
-  }
-});
-
 let READ_BOUNDARY = null;
 let WRITE_BOUNDARY = null;
 let MARIADB_WRITE_ADAPTER = null;
+let MARIADB_AVAILABILITY = Object.freeze({
+  status: "checking",
+  reason: "initializing",
+  checkedAt: null
+});
+let MARIADB_CHECK = null;
+
+function markMariaDbUnavailable(error) {
+  const reason = classifyMariaDbError(error);
+  MARIADB_AVAILABILITY = Object.freeze({
+    status: "unavailable",
+    reason,
+    checkedAt: new Date().toISOString()
+  });
+  console.error(`[mariadb] unavailable reason=${reason} details=${safeMariaDbLogDetails(error)}`);
+  return MARIADB_AVAILABILITY;
+}
+
+function verifyMariaDbAvailability() {
+  if (MARIADB_CHECK) return MARIADB_CHECK;
+  MARIADB_CHECK = Promise.resolve()
+    .then(() => {
+      if (MARIADB_CONFIGURATION_ERROR) throw MARIADB_CONFIGURATION_ERROR;
+      return proto05ReadBoundary().verify();
+    })
+    .then(verification => {
+      MARIADB_AVAILABILITY = Object.freeze({
+        status: "available",
+        reason: null,
+        checkedAt: new Date().toISOString()
+      });
+      return verification;
+    })
+    .catch(error => {
+      markMariaDbUnavailable(error);
+      throw error;
+    })
+    .finally(() => { MARIADB_CHECK = null; });
+  return MARIADB_CHECK;
+}
+
+function sendMariaDbUnavailable(response) {
+  return sendJson(response, 503, {
+    ...unavailablePayload(MARIADB_AVAILABILITY.reason),
+    code: "PROTO05_READ_BACKEND_UNAVAILABLE",
+    storageAuthority: STORAGE_AUTHORITY
+  }, { "retry-after": "3" });
+}
+
+function sendMariaDbDiagnosticPage(request, response) {
+  const file = Buffer.from(diagnosticPage(MARIADB_AVAILABILITY.reason));
+  response.writeHead(503, {
+    "content-type": "text/html; charset=utf-8",
+    "content-length": file.length,
+    "cache-control": "no-store",
+    "retry-after": "3"
+  });
+  return request.method === "HEAD" ? response.end() : response.end(file);
+}
 
 function proto05ReadBoundary() {
   if (READ_BOUNDARY) return READ_BOUNDARY;
-  const mariadbAdapter = DATA_MODE === "json"
-    ? null
-    : createMariaDbReadonlyAdapter({
-        config: MARIADB_CONFIGURATION,
-        prototypeDirectory: ROOT_DIR,
-        mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null,
-        ...(DATA_MODE === "mariadb"
-          ? {
-              grantValidator: assertApplicationGrants,
-              mode: "mariadb"
-            }
-          : {})
-      });
+  const mariadbAdapter = createMariaDbReadonlyAdapter({
+    config: MARIADB_CONFIGURATION,
+    prototypeDirectory: ROOT_DIR,
+    mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null,
+    grantValidator: assertApplicationGrants,
+    mode: STORAGE_AUTHORITY
+  });
   READ_BOUNDARY = createProto05ReadBoundary({
-    mode: DATA_MODE,
-    jsonAdapter: JSON_READ_ADAPTER,
     mariadbAdapter
   });
   return READ_BOUNDARY;
@@ -3211,20 +3012,12 @@ function proto05ReadBoundary() {
 
 function proto05WriteBoundary() {
   if (WRITE_BOUNDARY) return WRITE_BOUNDARY;
-  if (DATA_MODE === "mariadb") {
-    MARIADB_WRITE_ADAPTER = createMariaDbWriteAdapter({
-      config: MARIADB_CONFIGURATION,
-      prototypeDirectory: ROOT_DIR,
-      mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null
-    });
-  }
+  MARIADB_WRITE_ADAPTER = createMariaDbWriteAdapter({
+    config: MARIADB_CONFIGURATION,
+    prototypeDirectory: ROOT_DIR,
+    mysqlModulePath: process.env.PROTO05_MYSQL2_DIRECTORY || null
+  });
   WRITE_BOUNDARY = createProto05WriteBoundary({
-    mode: DATA_MODE,
-    jsonAdapter: Object.freeze({
-      async writeSnapshot() {
-        throw new Error("Les écritures JSON historiques ne passent pas par l’adaptateur MariaDB.");
-      }
-    }),
     mariadbAdapter: MARIADB_WRITE_ADAPTER
   });
   return WRITE_BOUNDARY;
@@ -3245,7 +3038,14 @@ async function persistMariaDbSnapshot(patch, {
     writable: true,
     value: structuredClone(canonicalVideoLibrary || context.canonicalVideoLibrary)
   });
-  const queued = writeQueue.then(() => proto05WriteBoundary().writeSnapshot(snapshot, {
+  const baseSnapshot = structuredClone(context);
+  Object.defineProperty(baseSnapshot, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: structuredClone(context.canonicalVideoLibrary)
+  });
+  const queued = writeQueue.then(() => proto05WriteBoundary().writeScopedSnapshot(baseSnapshot, snapshot, {
     operation,
     failAfterStatements
   }));
@@ -3264,7 +3064,12 @@ async function persistMariaDbSnapshot(patch, {
 async function handleApiInReadContext(request, response, url) {
   if (url.pathname === "/api/health") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
-    return sendJson(response, 200, { ok: true, service: SERVICE, version: VERSION, port: PORT, dataMode: DATA_MODE });
+    try {
+      await verifyMariaDbAvailability();
+      return sendJson(response, 200, { ok: true, status: "available", service: SERVICE, version: VERSION, port: PORT, storageAuthority: STORAGE_AUTHORITY });
+    } catch {
+      return sendMariaDbUnavailable(response);
+    }
   }
   if (url.pathname === "/api/proto05/video-catalog") {
     if (request.method === "GET") return sendJson(response, 200, { videos: activeVideoCatalog() });
@@ -3273,7 +3078,7 @@ async function handleApiInReadContext(request, response, url) {
     try { entry = catalogEntryFromInput(JSON.parse(await readRequestBody(request))); }
     catch (error) { return sendJson(response, 400, { error: error.message || "Source vidéo invalide." }); }
     const nextCatalog = freezeVideoCatalog([...activeVideoCatalog(), entry]);
-    try { await persistVideoCatalog(nextCatalog); JSON_VIDEO_CATALOG = nextCatalog; }
+    try { await persistVideoCatalog(nextCatalog); }
     catch (error) { console.error(`[data] catalogue vidéo Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Enregistrement du catalogue impossible." }); }
     return sendJson(response, 201, { video: entry });
   }
@@ -3515,7 +3320,7 @@ async function handleApiInReadContext(request, response, url) {
     nextLibrary.assets.push(created.asset);
     nextLibrary.sources.push(created.source);
     nextLibrary.playables.push(created.playable);
-    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); JSON_VIDEO_LIBRARY = nextLibrary; }
+    try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); }
     catch (error) {
       console.error(`[data] Library vidéo Proto05 impossible : ${error.code || "ERROR"}/${error.reasonCode || "UNKNOWN"} ${(error.differencePaths || []).join(",")}`);
       return sendJson(response, 500, { error: "Enregistrement de la Library impossible." });
@@ -3864,10 +3669,22 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
 
 async function handleApi(request, response, url) {
   if (url.pathname === "/api/health") return handleApiInReadContext(request, response, url);
-  if (["compare", "mariadb-readonly"].includes(DATA_MODE) && !["GET", "HEAD"].includes(request.method)) {
-    return sendJson(response, 409, readonlyMutationPayload(DATA_MODE));
+  if (url.pathname === "/api/diagnostics/mariadb/retry") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    try {
+      const verification = await verifyMariaDbAvailability();
+      return sendJson(response, 200, {
+        ok: true,
+        status: "available",
+        service: "mariadb",
+        storageAuthority: STORAGE_AUTHORITY,
+        readonly: verification.readonly === true
+      });
+    } catch {
+      return sendMariaDbUnavailable(response);
+    }
   }
-  if (DATA_MODE === "json") return handleApiInReadContext(request, response, url);
+  if (MARIADB_AVAILABILITY.status !== "available") return sendMariaDbUnavailable(response);
   if (READ_CONTEXT.getStore()) return handleApiInReadContext(request, response, url);
   try {
     const snapshot = await proto05ReadBoundary().readSnapshot({
@@ -3875,12 +3692,8 @@ async function handleApi(request, response, url) {
     });
     return await READ_CONTEXT.run(snapshot, () => handleApiInReadContext(request, response, url));
   } catch (error) {
-    console.error(`[data] ${DATA_MODE} ${request.method} ${url.pathname}: ${error.message}`);
-    return sendJson(response, 503, {
-      code: "PROTO05_READ_BACKEND_UNAVAILABLE",
-      error: `Lecture ${DATA_MODE} indisponible.`,
-      dataMode: DATA_MODE
-    });
+    markMariaDbUnavailable(error);
+    return sendMariaDbUnavailable(response);
   }
 }
 
@@ -4157,7 +3970,8 @@ async function serveStatic(request, response, url) {
 }
 
 function requestNeedsReadContext(request, url) {
-  if (DATA_MODE === "json" || READ_CONTEXT.getStore()) return false;
+  if (READ_CONTEXT.getStore()) return false;
+  if (MARIADB_AVAILABILITY.status !== "available") return false;
   if (!["GET", "HEAD"].includes(request.method)) return false;
   if (!url.pathname.startsWith("/api/")) return false;
   return !(
@@ -4171,6 +3985,13 @@ function requestNeedsReadContext(request, url) {
 const server = http.createServer(async (request, response) => {
   const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
   const routeRequest = async () => {
+    if (url.pathname === "/api/health" || url.pathname === "/api/diagnostics/mariadb/retry") {
+      return await handleApi(request, response, url);
+    }
+    if (MARIADB_AVAILABILITY.status !== "available") {
+      if (url.pathname.startsWith("/api/")) return sendMariaDbUnavailable(response);
+      return sendMariaDbDiagnosticPage(request, response);
+    }
     if (await servePreparationMedia(request, response, url)) return;
     if (await serveLibraryMedia(request, response, url)) return;
     if (await handleRemoteLibraryMedia(request, response, url)) return;
@@ -4181,15 +4002,21 @@ const server = http.createServer(async (request, response) => {
   };
   try {
     if (requestNeedsReadContext(request, url)) {
-      const snapshot = await proto05ReadBoundary().readSnapshot({
-        operation: `${request.method} ${url.pathname}`
-      });
+      let snapshot;
+      try {
+        snapshot = await proto05ReadBoundary().readSnapshot({
+          operation: `${request.method} ${url.pathname}`
+        });
+      } catch (error) {
+        markMariaDbUnavailable(error);
+        return sendMariaDbUnavailable(response);
+      }
       return await READ_CONTEXT.run(snapshot, routeRequest);
     }
     return await routeRequest();
   } catch (error) {
     console.error(`[server] ${request.method} ${url.pathname}: ${error.stack || error.message}`);
-    if (!response.headersSent) sendJson(response, 500, { error: error.message || "Erreur serveur." });
+    if (!response.headersSent) sendJson(response, 500, { error: "Erreur serveur." });
   }
 });
 
@@ -4213,16 +4040,9 @@ async function shutdownServer(signal) {
 process.once("SIGINT", () => { void shutdownServer("SIGINT").finally(() => process.exit(0)); });
 process.once("SIGTERM", () => { void shutdownServer("SIGTERM").finally(() => process.exit(0)); });
 
-Promise.all(DATA_MODE === "json"
-  ? [
-      fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true }),
-      cleanupIncompleteWorkspaceDownloads()
-    ]
-  : []
-)
-  .then(() => proto05ReadBoundary().verify())
-  .then(() => server.listen(PORT, "127.0.0.1", () => console.log(`[startup] ${SERVICE} ${VERSION} (${DATA_MODE}) sur http://127.0.0.1:${PORT}/`)))
-  .catch(error => {
-    console.error(`[startup] ${error.message}`);
-    process.exitCode = 1;
-  });
+server.listen(PORT, "127.0.0.1", () => {
+  console.log(`[startup] ${SERVICE} ${VERSION} (MariaDB obligatoire) sur http://127.0.0.1:${PORT}/`);
+  void verifyMariaDbAvailability()
+    .then(() => console.log("[startup] MariaDB disponible."))
+    .catch(() => console.error("[startup] Proto05 reste en mode diagnostic jusqu’au rétablissement de MariaDB."));
+});

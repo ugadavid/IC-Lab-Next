@@ -17,8 +17,7 @@ const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const DOCS_DIR = path.join(ROOT_DIR, "docs");
 const DATA_DIR = path.join(__dirname, "data");
 const WORKSPACE_DIR = path.resolve(ROOT_DIR, "..", "..");
-const PROTO05_DATA_DIR = path.join(WORKSPACE_DIR, "prototypes", "05-augmented-ic-video-01", "data");
-const PROTO05_DATA_FILE = path.join(PROTO05_DATA_DIR, "activities.json");
+const PROTO05_API_ORIGIN = process.env.PROTO05_API_ORIGIN || "http://127.0.0.1:8791";
 const HLS_JS_ASSET_PATH = path.join(__dirname, "node_modules", "hls.js", "dist", "hls.min.js");
 const HLS_PROXY_PREFIX = "/api/hls/";
 const HLS_SOURCES = Object.freeze({
@@ -628,26 +627,6 @@ async function readLocalJson(name) {
   }
 }
 
-function proto05DataFile() {
-  const dataRoot = path.resolve(PROTO05_DATA_DIR);
-  const dataFilePath = path.resolve(PROTO05_DATA_FILE);
-  if (dataFilePath !== dataRoot && !dataFilePath.startsWith(`${dataRoot}${path.sep}`)) {
-    throw new Error("Chemin de donnees Proto05 invalide.");
-  }
-  return dataFilePath;
-}
-
-async function readProto05Activities() {
-  const file = proto05DataFile();
-  try {
-    const parsed = JSON.parse(await fs.readFile(file, "utf8"));
-    return parsed && typeof parsed === "object" ? parsed : { schemaVersion: "0.1", activities: [] };
-  } catch (error) {
-    console.error(`[data] failed to read Proto05 activities: ${error.message}`);
-    throw new Error("Lecture JSON impossible: prototypes/05-augmented-ic-video-01/data/activities.json");
-  }
-}
-
 async function writeJson(name, data) {
   if (STORE_MODE === "mariadb" && mariaDbAvailable && mariaDbStore) {
     try {
@@ -1055,26 +1034,15 @@ async function handleProto05Activities(request, response, url) {
     return sendJson(response, 405, { error: "Methode non autorisee." });
   }
 
-  const store = await readProto05Activities();
-  const activities = Array.isArray(store.activities) ? store.activities : [];
-  if (listMatch) {
-    return sendJson(response, 200, {
-      schemaVersion: store.schemaVersion || "0.1",
-      updatedAt: store.updatedAt || null,
-      activities
-    });
+  try {
+    const target = new URL(url.pathname, PROTO05_API_ORIGIN);
+    const upstream = await fetch(target, { headers: { accept: "application/json" } });
+    const payload = await upstream.json();
+    return sendJson(response, upstream.status, payload);
+  } catch (error) {
+    console.error(`[proto05] API unavailable: ${error.message}`);
+    return sendJson(response, 503, { error: "API Proto05 indisponible." });
   }
-
-  const activityId = decodeURIComponent(detailMatch[1]);
-  const activity = activities.find((item) => item.id === activityId);
-  if (!activity) {
-    return sendJson(response, 404, { error: "Activite Proto05 introuvable." });
-  }
-  return sendJson(response, 200, {
-    schemaVersion: store.schemaVersion || "0.1",
-    updatedAt: store.updatedAt || null,
-    activity
-  });
 }
 
 const visibilityValues = new Set(["private", "course", "institution", "shared", "public"]);

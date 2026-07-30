@@ -1,6 +1,6 @@
 # État actuel d’IC-Lab-Next
 
-**Date de l’état documenté : 16 juillet 2026**
+**Date de l’état documenté : 30 juillet 2026**
 
 ## En bref
 
@@ -10,10 +10,11 @@ Windows global aligné sur leurs serveurs déclarés. Les contrôles documentair
 du 16 juillet n’ont démarré aucun service : les ports et versions ci-dessous
 décrivent le dépôt, pas leur disponibilité runtime instantanée.
 
-**Sécurisation Proto05 terminée.** La visibilité des couches, la sauvegarde en
-succès et en erreur ainsi que l’intégrité des données historiques sont couvertes
-par une suite complète de 31 tests réussis. Le fichier canonique
-`data/activities.json` est resté strictement inchangé.
+**Cutover Proto05 terminé.** MariaDB `ic_augmented_video` est l’unique autorité
+runtime. Le sélecteur de stockage, les lectures/écritures et sauvegardes JSON,
+ainsi que le repli JSON ont été retirés. Si MariaDB ou les grants applicatifs
+sont indisponibles, le serveur HTTP reste ouvert en mode diagnostic, toutes les
+routes métier répondent `503` et aucune donnée alternative n’est servie.
 
 **Prochaine étape.** Créer une nouvelle activité depuis l’atelier guidé, à
 partir d’un brouillon vide.
@@ -23,7 +24,7 @@ partir d’un brouillon vide.
 | Composant | État retenu | Version importante | Exécution |
 |---|---|---|---|
 | **IC-Hub** | Vérifié dans le dépôt; portail et services transversaux actifs dans l’architecture | serveur/portail `0.10.3`; Hub historique `0.9.6` | Node `8790` |
-| **Proto05 — Vidéo augmentée** | Fonctionnel; sécurisation automatisée terminée; encore provisoirement couplé au Hub | serveur `0.1.16`; moteur `index-0.0.9.html` | Node `8791` |
+| **Proto05 — Vidéo augmentée** | Fonctionnel; MariaDB exclusive; serveur autonome | serveur `0.1.48`; moteur `index-0.0.9.html` | Node `8791` |
 | **Proto06 — Agent vocal** | Actif et autonome; fonctions vocales dépendantes du navigateur | backend déclaré `1.1` (`package` `1.1.0`); runtime `1.2.3` | Node `8788` |
 | **Informaticaire** | Démonstrateur statique gelé | gel `0.6.5` | servi par IC-Hub, sans port propre |
 | **Dico-IC / Seven Sieves** | Actif en développement; API, administration et client réunis | contrat API `0.1`; package Node générique `1.0.0` | Node `3000` + MariaDB `3306` |
@@ -47,19 +48,17 @@ réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
 
 ### Vérifié
 
-- serveur autonome, pages, API et JSON propres sur `127.0.0.1:8791` ;
+- serveur autonome, pages et API sur `127.0.0.1:8791`, avec MariaDB obligatoire ;
 - vues étudiant et enseignant, création, édition, atelier avancé et atelier
   guidé ;
 - timeline IC partagée entre la vue étudiante et l’atelier guidé ;
 - gestion des couches et de leur visibilité étudiante ;
-- source d’activité dans
-  `prototypes/05-augmented-ic-video-01/data/activities.json` ;
-- écritures JSON validées, séquencées, atomiques et précédées d’une sauvegarde ;
+- données métier dans MariaDB `ic_augmented_video`, via des transactions ciblées
+  relues avant commit ;
 - suppression explicite depuis la bibliothèque, avec confirmation titre/ID,
   refus des identifiants invalides ou ambigus et conservation des autres
   activités ;
-- référentiel de langues partagé `fr`, `es`, `it`, `pt`, unique source de vérité
-  des identifiants et libellés utilisés par les cinq activités ;
+- référentiel de langues lu depuis la table MariaDB `languages` ;
 - locuteurs propres à chaque activité, gérés dans les ateliers avancé et guidé,
   sélectionnés par référence dans les segments, avec identifiants techniques
   générés et masqués, sans référentiel global ;
@@ -89,8 +88,9 @@ réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
 
 ## Données et services à préserver
 
-- **Proto05** : `data/activities.json` et ses volumes historiques ; ne pas
-  modifier ce fichier pour une simple recette.
+- **Proto05** : MariaDB `ic_augmented_video` et les médias physiques sous
+  `data/video-library-media/` et `data/video-library-workspaces/` ; toute recette
+  doit employer des identifiants jetables et les nettoyer.
 - **IC-Hub** : `server/data/`, ainsi que les sessions, runs et sauvegardes
   runtime locales ignorées par Git.
 - **Proto06** : `server/data/activities.json` et ses sauvegardes runtime.
@@ -104,13 +104,13 @@ réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
 
 ## Dernières validations réellement connues
 
-- **16 juillet 2026 — sécurisation Proto05** : les [rapports 031](reports/031_prototype_05_layer_visibility_tests_report.md),
+- **16 juillet 2026 — sécurisation Proto05 (état historique antérieur au cutover)** : les [rapports 031](reports/031_prototype_05_layer_visibility_tests_report.md),
   [032](reports/032_prototype_05_save_tests_report.md) et
   [033](reports/033_prototype_05_data_regression_tests_report.md) consignent la
   couverture de la visibilité des couches, de la sauvegarde en succès et en
   erreur, et de l’intégrité des données historiques. La suite complète compte
-  31 tests réussis et le SHA-256 de `data/activities.json` est identique avant
-  et après les contrôles.
+  31 tests réussis et le témoin JSON de l’époque est resté identique pendant
+  ces contrôles.
 - **13 juillet 2026 — Proto05** : le [rapport 026](reports/026_prototype_05_daily_summary_2026-07-13.md)
   consigne `npm run check`, le parsing JavaScript, le healthcheck `0.1.7` sur
   `8791` et des validations Chromium de la timeline, des couches, de la

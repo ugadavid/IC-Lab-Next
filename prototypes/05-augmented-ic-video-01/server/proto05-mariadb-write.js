@@ -2,7 +2,6 @@
 
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
-const { compareCanonical } = require("./proto05-canonical-compare");
 const {
   READ_TABLES,
   mapMariaDbTablesToSnapshot,
@@ -220,18 +219,137 @@ function buildDelete(definition, row) {
   };
 }
 
-function desiredApplicationSnapshot(snapshot) {
+function sqlTimestamp(value) {
+  return value ? new Date(value).toISOString().replace("T", " ").replace("Z", "") : null;
+}
+
+function changedIds(before = [], after = [], id = "id") {
+  const previous = new Map((before || []).map(item => [item[id], item]));
+  const next = new Map((after || []).map(item => [item[id], item]));
+  return new Set([...previous.keys(), ...next.keys()].filter(key => (
+    stableJson(previous.get(key)) !== stableJson(next.get(key))
+  )));
+}
+
+function changedAssignmentIds(before = {}, after = {}) {
+  return new Set([...Object.keys(before || {}), ...Object.keys(after || {})].filter(key => (
+    (before || {})[key] !== (after || {})[key]
+  )));
+}
+
+function mutationScope(baseSnapshot, desiredSnapshot) {
+  const baseLibrary = baseSnapshot.canonicalVideoLibrary;
+  const desiredLibrary = desiredSnapshot.canonicalVideoLibrary;
+  if (!baseLibrary || !desiredLibrary) {
+    throw new Error("Les projections média de départ et d’arrivée sont obligatoires.");
+  }
+  const activityIds = changedIds(
+    baseSnapshot.activities?.activities,
+    desiredSnapshot.activities?.activities
+  );
+  for (const id of changedAssignmentIds(
+    baseSnapshot.activityLibrary?.assignments,
+    desiredSnapshot.activityLibrary?.assignments
+  )) activityIds.add(id);
+  const assetIds = changedIds(baseLibrary.assets, desiredLibrary.assets);
+  const sourceIds = changedIds(baseLibrary.sources, desiredLibrary.sources);
+  const playableIds = changedIds(baseLibrary.playables, desiredLibrary.playables);
+  const treatmentIds = changedIds(baseLibrary.treatments, desiredLibrary.treatments);
+  for (const id of changedIds(
+    baseSnapshot.videoCatalog?.videos,
+    desiredSnapshot.videoCatalog?.videos
+  )) assetIds.add(id);
   return {
-    activities: snapshot.activities,
-    activityLibrary: snapshot.activityLibrary,
-    languageCatalog: snapshot.languageCatalog,
-    videoCatalog: snapshot.videoCatalog,
-    videoLibrary: snapshot.videoLibrary
+    activityIds,
+    activityFolderIds: changedIds(
+      baseSnapshot.activityLibrary?.folders,
+      desiredSnapshot.activityLibrary?.folders
+    ),
+    assetIds,
+    sourceIds,
+    playableIds,
+    treatmentIds,
+    mediaFolderIds: changedIds(baseLibrary.folders, desiredLibrary.folders),
+    mediaTagIds: changedIds(baseLibrary.tags, desiredLibrary.tags)
   };
 }
 
-function sqlTimestamp(value) {
-  return value ? new Date(value).toISOString().replace("T", " ").replace("Z", "") : null;
+function rowAllowed(table, row, scope, desiredRows, currentTables) {
+  if (table === "data_projection_metadata") {
+    const key = row.document_key;
+    if (key === "activities") return scope.activityIds.size > 0;
+    if (key === "activity-library") {
+      return scope.activityIds.size > 0 || scope.activityFolderIds.size > 0;
+    }
+    if (key === "media-library" || key === "video-catalog") {
+      return scope.assetIds.size > 0
+        || scope.sourceIds.size > 0
+        || scope.playableIds.size > 0
+        || scope.treatmentIds.size > 0
+        || scope.mediaFolderIds.size > 0
+        || scope.mediaTagIds.size > 0;
+    }
+    return false;
+  }
+  if (table === "languages") return false;
+  if (table === "activity_folders") return scope.activityFolderIds.has(row.id);
+  if (table === "activities") return scope.activityIds.has(row.id);
+  if (table.startsWith("activity_")) return scope.activityIds.has(row.activity_id);
+  if (table === "media_folders") return scope.mediaFolderIds.has(row.id);
+  if (table === "media_tags") return scope.mediaTagIds.has(row.id);
+  if (table === "media_assets") return scope.assetIds.has(row.id);
+  if (table === "media_sources") {
+    return scope.sourceIds.has(row.id) || scope.assetIds.has(row.asset_id);
+  }
+  if (table === "media_playables") {
+    return scope.playableIds.has(row.id)
+      || scope.sourceIds.has(row.source_id)
+      || scope.assetIds.has(row.asset_id);
+  }
+  if (table === "media_playable_metadata") {
+    if (scope.playableIds.has(row.playable_id)) return true;
+    const playable = [...(desiredRows.media_playables || []), ...(currentTables.media_playables || [])]
+      .find(item => item.id === row.playable_id);
+    return Boolean(playable && (
+      scope.sourceIds.has(playable.source_id) || scope.assetIds.has(playable.asset_id)
+    ));
+  }
+  if (table === "media_asset_tags") {
+    return scope.assetIds.has(row.asset_id) || scope.mediaTagIds.has(row.tag_id);
+  }
+  if (table === "media_treatments") {
+    return scope.treatmentIds.has(row.id)
+      || scope.assetIds.has(row.source_asset_id)
+      || scope.assetIds.has(row.output_asset_id);
+  }
+  return false;
+}
+
+function plansForScope(plans, scope, desiredRows, currentTables) {
+  let changes = 0;
+  const scoped = plans.map(plan => {
+    const allowed = row => rowAllowed(
+      plan.definition.name,
+      row,
+      scope,
+      desiredRows,
+      currentTables
+    );
+    const selected = {
+      ...plan,
+      deletes: plan.deletes.filter(allowed),
+      inserts: plan.inserts.filter(allowed),
+      updates: plan.updates.filter(change => allowed(change.current) && allowed(change.desired))
+    };
+    changes += selected.deletes.length + selected.inserts.length + selected.updates.length;
+    return selected;
+  });
+  if (changes === 0) {
+    const error = new Error("La mutation demandée ne produit aucune modification relationnelle.");
+    error.code = "PROTO05_EMPTY_TARGETED_WRITE";
+    throw error;
+  }
+  return { plans: scoped, changes };
 }
 
 function createMariaDbWriteAdapter({
@@ -355,7 +473,7 @@ function createMariaDbWriteAdapter({
       }
     },
 
-    async writeSnapshot(snapshot, {
+    async writeScopedSnapshot(baseSnapshot, snapshot, {
       operation = "mutation",
       failAfterStatements = null
     } = {}) {
@@ -411,11 +529,20 @@ function createMariaDbWriteAdapter({
         await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
         await database.beginTransaction();
         const currentTables = await readTables(database, true);
-        const plans = definitions.map(definition => tablePlan(
+        const allPlans = definitions.map(definition => tablePlan(
           definition,
           currentTables[definition.name] || [],
           desiredRows[definition.name]
         ));
+        const scope = mutationScope(baseSnapshot, snapshot);
+        const scoped = plansForScope(
+          allPlans,
+          scope,
+          desiredRows,
+          currentTables
+        );
+        const plans = scoped.plans;
+        const scopedChangeCount = scoped.changes;
 
         const mediaPlan = plans.find(plan => plan.definition.name === "media_assets");
         for (const change of [...(mediaPlan?.updates || []), ...(mediaPlan?.deletes || []).map(current => ({ current, desired: {} }))]) {
@@ -499,21 +626,11 @@ function createMariaDbWriteAdapter({
         const resultingSnapshot = projectMariaDbSnapshotForApplication(
           mapMariaDbTablesToSnapshot(resultingTables)
         );
-        const comparison = compareCanonical(
-          desiredApplicationSnapshot(snapshot),
-          resultingSnapshot,
-          { operation }
-        );
-        if (comparison.total) {
-          const error = new Error("La relecture transactionnelle diverge du snapshot demandé.");
-          error.code = "PROTO05_TRANSACTION_RECONCILIATION_FAILED";
-          error.differencePaths = comparison.differences.slice(0, 10).map(item => `${item.path}:${item.kind}`);
-          throw error;
-        }
         await database.commit();
         return {
           operation,
           statements: statementCount,
+          scopedChanges: scopedChangeCount,
           snapshot: resultingSnapshot
         };
       } catch (error) {
@@ -521,10 +638,13 @@ function createMariaDbWriteAdapter({
         if (error?.code === "PROTO05_FORCED_ROLLBACK") throw error;
         const wrapped = new Error("Écriture MariaDB transactionnelle impossible.");
         wrapped.code = error?.code === "SNAPSHOT_RELATIONAL_MAPPING_BLOCKED"
+          || error?.code?.startsWith("PROTO05_TARGETED_")
+          || error?.code === "PROTO05_EMPTY_TARGETED_WRITE"
           ? error.code
           : "PROTO05_MARIADB_WRITE_FAILED";
         wrapped.reasonCode = error?.code || "MARIA_TRANSACTION_ERROR";
-        wrapped.differencePaths = error?.differencePaths || [];
+        wrapped.differencePaths = error?.differencePaths
+          || (error?.code?.startsWith("PROTO05_TARGETED_") ? [error.message] : []);
         throw wrapped;
       } finally {
         if (lockAcquired) {
