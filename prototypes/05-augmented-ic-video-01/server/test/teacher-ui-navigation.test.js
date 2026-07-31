@@ -167,15 +167,10 @@ test("le dialogue partagé valide dans la modale, piège le focus et le restitue
 }, async () => {
   const chromium = findChromium();
   assert.ok(chromium, "Chrome, Edge ou Chromium est requis pour le contrôle des dialogues.");
-  const store = {
-    schemaVersion: "0.1",
-    updatedAt: "test-only",
-    activities: [{ ...fixtureActivity, id: "teacher-dialog-fixture" }]
-  };
+  const store = { schemaVersion: "0.1", updatedAt: "test-only", activities: [] };
   const temporary = await startTemporaryProto05Server(store, "proto05-teacher-dialog-");
-  const runnerFile = path.join(temporary.root, "prototype", "teacher-dialog-runner.html");
   const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-teacher-dialog-profile-"));
-  fs.writeFileSync(runnerFile, `<!doctype html><html><head>
+  const runnerUrl = temporary.writeRunner("teacher-dialog-runner.html", `<!doctype html><html><head>
   <link rel="stylesheet" href="/shared/teacher-shell.css">
   <script src="/shared/teacher-shell.js"></script>
   </head><body data-test-state="running"><button id="trigger">Ouvrir</button><script>
@@ -247,12 +242,12 @@ test("le dialogue partagé valide dans la modale, piège le focus et le restitue
     document.body.dataset.error = encodeURIComponent(error.stack || error.message || String(error));
     document.body.dataset.testState = 'failed';
   });
-  </script></body></html>`, "utf8");
+  </script></body></html>`);
 
   try {
     const dom = await runChromium(
       chromium,
-      `${temporary.baseUrl}/teacher-dialog-runner.html`,
+      `${temporary.baseUrl}${runnerUrl}`,
       profileDirectory,
       { virtualTimeBudget: 12000, timeout: 20000, windowSize: "390,720" }
     );
@@ -271,12 +266,8 @@ test("le dialogue partagé valide dans la modale, piège le focus et le restitue
   }
 });
 
-test("les routes enseignantes et les actifs partagés sont servis par une copie temporaire", { timeout: 15000 }, async () => {
-  const store = {
-    schemaVersion: "0.1",
-    updatedAt: "test-only",
-    activities: [{ ...fixtureActivity, id: "teacher-ui-fixture" }]
-  };
+test("les routes enseignantes et les actifs partagés sont servis par le runtime MariaDB isolé", { timeout: 15000 }, async () => {
+  const store = { schemaVersion: "0.1", updatedAt: "test-only", activities: [] };
   const temporary = await startTemporaryProto05Server(store, "proto05-teacher-ui-");
   try {
     const routes = [
@@ -327,9 +318,9 @@ test("la sauvegarde collante de la fiche conserve le formulaire et ses états", 
     activities: [{ ...fixtureActivity, id: "teacher-ui-save-fixture" }]
   };
   const temporary = await startTemporaryProto05Server(store, "proto05-teacher-ui-save-");
-  const runnerFile = path.join(temporary.root, "prototype", "teacher-ui-save-runner.html");
+  const activityId = temporary.activityId("teacher-ui-save-fixture");
   const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-teacher-ui-save-profile-"));
-  fs.writeFileSync(runnerFile, `<!doctype html><html><body data-test-state="running"><iframe id="page" src="/teacher/edit/teacher-ui-save-fixture"></iframe><script>
+  const runnerUrl = temporary.writeRunner("teacher-ui-save-runner.html", `<!doctype html><html><body data-test-state="running"><iframe id="page" src="/teacher/edit/${activityId}"></iframe><script>
   const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
   async function waitFor(predicate, label) {
     const deadline = Date.now() + 8000;
@@ -349,7 +340,7 @@ test("la sauvegarde collante de la fiche conserve le formulaire et ses états", 
     const dirtyState = page.querySelector('.teacher-shell__save-status').textContent.trim();
     page.querySelector('[data-teacher-shell-save]').click();
     await waitFor(() => page.querySelector('#status').textContent.includes('enregistrées'), 'sauvegarde par le socle');
-    const payload = await (await fetch('/api/proto05/activities/teacher-ui-save-fixture')).json();
+    const payload = await (await fetch('/api/proto05/activities/${activityId}')).json();
     document.body.dataset.results = encodeURIComponent(JSON.stringify({
       dirtyState,
       savedState: page.querySelector('.teacher-shell__save-status').textContent.trim(),
@@ -361,12 +352,12 @@ test("la sauvegarde collante de la fiche conserve le formulaire et ses états", 
     document.body.dataset.error = encodeURIComponent(error.stack || error.message || String(error));
     document.body.dataset.testState = 'failed';
   });
-  </script></body></html>`, "utf8");
+  </script></body></html>`);
 
   try {
     const dom = await runChromium(
       chromium,
-      `${temporary.baseUrl}/teacher-ui-save-runner.html`,
+      `${temporary.baseUrl}${runnerUrl}`,
       profileDirectory,
       { virtualTimeBudget: 12000, timeout: 20000, windowSize: "1440,1000" }
     );

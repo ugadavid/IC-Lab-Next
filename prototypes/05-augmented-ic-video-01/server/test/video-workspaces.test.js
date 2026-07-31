@@ -120,11 +120,15 @@ test("la route détaillée projette un asset et traite proprement un identifiant
 
 test("la fiche dédiée conserve les actions par rôle et normalise les dérivations locales", () => {
   const html = fs.readFileSync(path.resolve(__dirname, "../../teacher-video-detail.html"), "utf8");
-  assert.match(html, /entry\.role==='derivation-local'\?\{\.\.\.entry,provider:'local'\}:entry/);
+  assert.match(
+    html,
+    /entry\.role\s*===\s*["']derivation-local["']\s*\?\s*\{\s*\.\.\.entry,\s*provider:\s*["']local["']\s*\}\s*:\s*entry/
+  );
   assert.match(html, /Ouvrir dans l’atelier d’anonymisation/);
   assert.match(html, /Récupérer sur mon disque/);
   assert.match(html, /Supprimer la tentative/);
   assert.match(html, /Associer à l’activité/);
   assert.match(html, /Ajouter une version publiée/);
-  assert.match(html, /Enregistrer le classement/);
+  assert.match(html, /data-save-metadata/);
+  assert.match(html, /Fiche enregistrée\./);
 });

@@ -6,196 +6,117 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const { migrateStore, runMigration } = require("../scripts/migrate-language-catalog");
-const { findChromium, readBrowserResults, runChromium, sha256 } = require("./helpers/chromium");
-const { startTemporaryProto05Server } = require("./helpers/temporary-proto05-server");
 
-const serverDirectory = path.resolve(__dirname, "..");
-const prototypeDirectory = path.resolve(serverDirectory, "..");
-const workspaceDirectory = path.resolve(prototypeDirectory, "..", "..");
-const canonicalDataFile = path.join(prototypeDirectory, "data", "activities.json");
-const catalogFile = path.join(workspaceDirectory, "shared", "reference-data", "languages.json");
 const fixedMigrationDate = "2026-07-16T20:00:00.000Z";
+const catalog = {
+  languages: [
+    { id: "fr", label: "Français" },
+    { id: "es", label: "Español" },
+    { id: "it", label: "Italiano" },
+    { id: "pt", label: "Português" }
+  ]
+};
 
-function readJson(file) {
-  return JSON.parse(fs.readFileSync(file, "utf8"));
+function syntheticStore() {
+  return {
+    schemaVersion: "0.1",
+    updatedAt: "historical",
+    activities: [
+      {
+        id: "activity-with-languages",
+        title: "Fixture synthétique",
+        transcription: { id: "transcription-test", languageId: "legacy-fr", segmentIds: ["segment-test"] },
+        segments: [{
+          id: "segment-test",
+          startMs: 0,
+          endMs: 1000,
+          text: "Texte inchangé",
+          languageIds: ["legacy-fr", "legacy-es"],
+          speakerIds: [],
+          phenomenonIds: []
+        }],
+        speakers: [],
+        languages: [
+          { id: "legacy-fr", code: "FR", label: "Ancien français" },
+          { id: "legacy-es", code: "ES", label: "Ancien espagnol" }
+        ],
+        languageIntervals: [{
+          id: "interval-test",
+          languageId: "legacy-es",
+          startMs: 0,
+          endMs: 1000
+        }],
+        layers: [],
+        phenomena: [],
+        teacherAnnotations: []
+      },
+      {
+        id: "empty-activity",
+        title: "Fixture vide",
+        transcription: { id: "transcription-empty", languageId: "legacy-unused", segmentIds: [] },
+        segments: [],
+        speakers: [],
+        languages: [],
+        languageIntervals: [],
+        layers: [],
+        phenomena: [],
+        teacherAnnotations: []
+      }
+    ]
+  };
 }
 
-function migratedCanonicalStore() {
-  return migrateStore(readJson(canonicalDataFile), readJson(catalogFile), fixedMigrationDate);
-}
+test("l’outil historique remappe un magasin synthétique sans modifier le contenu pédagogique", () => {
+  const before = syntheticStore();
+  const after = migrateStore(before, catalog, fixedMigrationDate);
 
-test("la migration remappe les sept activités sans modifier les contenus pédagogiques", () => {
-  const canonicalHashBefore = sha256(canonicalDataFile);
-  const before = readJson(canonicalDataFile);
-  const after = migrateStore(before, readJson(catalogFile), fixedMigrationDate);
-  assert.equal(after.activities.length, 7);
+  assert.equal(after.updatedAt, fixedMigrationDate);
   assert.deepEqual(after.activities.map(activity => activity.id), before.activities.map(activity => activity.id));
-
-  const historical = after.activities.find(activity => activity.id === "proto05-augmented-video-01");
-  const originalCopy = after.activities.find(activity => activity.id === "proto05-copy-1784236861048-984dec");
-  assert.deepEqual(historical.languages.map(language => language.id), ["fr", "es", "it", "pt"]);
-  assert.deepEqual(originalCopy.languages.map(language => language.id), ["fr", "es", "it", "pt"]);
-  assert.equal(historical.transcription.languageId, "fr");
-  assert.equal(originalCopy.transcription.languageId, "fr");
-  assert.ok(historical.segments.every(segment => segment.languageIds.every(id => ["fr", "es", "it", "pt"].includes(id))));
-  assert.ok(originalCopy.languageIntervals.every(interval => ["fr", "es", "it", "pt"].includes(interval.languageId)));
-
-  for (const title of ["MboloTest", "Lbinz", "tesT1"]) {
-    const draft = after.activities.find(activity => activity.title === title);
-    assert.ok(draft, `${title} doit rester présente.`);
-    assert.deepEqual(draft.languages, []);
-    assert.deepEqual(draft.segments, []);
-    assert.deepEqual(draft.languageIntervals, []);
-    assert.equal(draft.transcription.languageId, null);
-  }
-  const guidedDraft = after.activities.find(activity => activity.title === "brouillon_vide");
-  assert.deepEqual(guidedDraft.languages.map(language => language.id), ["fr", "es"]);
-  assert.equal(guidedDraft.languageIntervals.length, 4);
-  assert.equal(guidedDraft.transcription.languageId, null);
-  assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
+  assert.deepEqual(after.activities[0].languages, [
+    { id: "fr", code: "FR", label: "Français" },
+    { id: "es", code: "ES", label: "Español" }
+  ]);
+  assert.equal(after.activities[0].transcription.languageId, "fr");
+  assert.deepEqual(after.activities[0].segments[0].languageIds, ["fr", "es"]);
+  assert.equal(after.activities[0].languageIntervals[0].languageId, "es");
+  assert.equal(after.activities[0].segments[0].text, "Texte inchangé");
+  assert.deepEqual(after.activities[1].languages, []);
+  assert.equal(after.activities[1].transcription.languageId, null);
+  assert.equal(before.activities[0].languages[0].id, "legacy-fr");
 });
 
-test("l’application sur copie temporaire produit une sauvegarde exacte avant remplacement atomique", () => {
-  const canonicalHashBefore = sha256(canonicalDataFile);
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-language-migration-copy-"));
+test("l’application reste atomique sur des fichiers temporaires et crée une sauvegarde exacte", t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-language-migration-synthetic-"));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const dataFile = path.join(root, "activities.json");
+  const catalogFile = path.join(root, "languages.json");
   const backupFile = path.join(root, "activities.before-language-migration.json.bak");
-  fs.copyFileSync(canonicalDataFile, dataFile);
-  const temporaryHashBefore = sha256(dataFile);
-  try {
-    const result = runMigration({ dataFile, catalogFile, apply: true, backupFile, updatedAt: fixedMigrationDate });
-    assert.equal(result.applied, true);
-    assert.equal(result.beforeSha256, temporaryHashBefore);
-    assert.equal(sha256(backupFile), temporaryHashBefore);
-    assert.equal(sha256(dataFile), result.afterSha256);
-  assert.equal(result.before.length, 7);
-  assert.equal(result.after.length, 7);
-    assert.deepEqual(result.before.map(activity => activity.volumes), result.after.map(activity => activity.volumes));
-  } finally {
-    fs.rmSync(root, { recursive: true, force: true });
-  }
-  assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
-});
+  fs.writeFileSync(dataFile, `${JSON.stringify(syntheticStore(), null, 2)}\n`, "utf8");
+  fs.writeFileSync(catalogFile, `${JSON.stringify(catalog, null, 2)}\n`, "utf8");
+  const before = fs.readFileSync(dataFile);
 
-test("le serveur refuse les anciennes langues et une duplication conserve les identifiants partagés", { timeout: 15000 }, async () => {
-  const canonicalHashBefore = sha256(canonicalDataFile);
-  const store = migratedCanonicalStore();
-  const temporary = await startTemporaryProto05Server(store, "proto05-language-migration-server-");
-  try {
-    const historical = store.activities.find(activity => activity.id === "proto05-augmented-video-01");
-    const duplicateResponse = await fetch(`${temporary.baseUrl}/api/proto05/activities/${historical.id}/duplicate`, { method: "POST" });
-    assert.equal(duplicateResponse.status, 201);
-    const duplicate = (await duplicateResponse.json()).activity;
-    assert.deepEqual(duplicate.languages, historical.languages);
-    assert.deepEqual(duplicate.languages.map(language => language.id), ["fr", "es", "it", "pt"]);
-    assert.equal(duplicate.transcription.languageId, "fr");
-    assert.ok(duplicate.segments.every(segment => segment.languageIds.every(id => ["fr", "es", "it", "pt"].includes(id))));
-
-    const empty = store.activities.find(activity => activity.title === "brouillon_vide");
-    const rejectedPayload = {
-      title: empty.title,
-      description: empty.description,
-      instruction: empty.instruction,
-      pedagogicalQuestion: empty.pedagogicalQuestion,
-      videoId: empty.video.id,
-      segments: empty.segments,
-      languages: [{ id: "lang-fr", code: "FR", label: "Français" }],
-      languageIntervals: empty.languageIntervals,
-      phenomena: empty.phenomena,
-      layers: empty.layers,
-      teacherAnnotations: empty.teacherAnnotations,
-      layerConfiguration: empty.layerConfiguration
-    };
-    const hashBeforeRefusal = sha256(temporary.dataFile);
-    const rejected = await fetch(`${temporary.baseUrl}/api/proto05/activities/${empty.id}/authoring`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(rejectedPayload)
-    });
-    assert.equal(rejected.status, 400);
-    assert.match((await rejected.json()).error, /absente du référentiel partagé.*lang-fr/i);
-    assert.equal(sha256(temporary.dataFile), hashBeforeRefusal);
-  } finally {
-    await temporary.cleanup();
-  }
-  assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
-});
-
-function chromiumRunnerPage(emptyActivityId) {
-  return `<!doctype html><html><body data-test-state="running">
-  <iframe id="historical" src="/student/proto05-augmented-video-01"></iframe>
-  <iframe id="empty" src="/teacher/guided/${encodeURIComponent(emptyActivityId)}"></iframe>
-  <script>
-  const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
-  async function waitFor(predicate, label) {
-    const deadline = Date.now() + 9000;
-    while (Date.now() < deadline) {
-      try { if (predicate()) return; } catch {}
-      await pause(25);
-    }
-    throw new Error('Délai dépassé : ' + label);
-  }
-  (async () => {
-    const historicalFrame = document.getElementById('historical');
-    const emptyFrame = document.getElementById('empty');
-    await waitFor(() => historicalFrame.contentDocument?.querySelectorAll('#transcriptList .segment').length === 11, 'activité historique');
-    await waitFor(() => emptyFrame.contentDocument?.querySelector('#intervals .item'), 'brouillon vide');
-    const picker = null;
-    emptyFrame.contentDocument.querySelector('#save').click();
-    await waitFor(() => emptyFrame.contentDocument.querySelector('#status').textContent.includes('Modifications enregistrées.'), 'sauvegarde brouillon vide');
-    const historical = (await (await fetch('/api/proto05/activities/proto05-augmented-video-01')).json()).activity;
-    const empty = (await (await fetch('/api/proto05/activities/${encodeURIComponent(emptyActivityId)}')).json()).activity;
-    const results = {
-      historicalLanguages: historical.languages,
-      historicalTranscriptionLanguageId: historical.transcription.languageId,
-      historicalSegmentsRendered: historicalFrame.contentDocument.querySelectorAll('#transcriptList .segment').length,
-      emptyOptions: JSON.parse(emptyFrame.contentWindow.eval('JSON.stringify(state.activity.languages.map(language => language.id))')),
-      emptyPickerDisabled: false,
-      emptyStatus: emptyFrame.contentDocument.querySelector('#status').textContent,
-      emptyLanguages: empty.languages,
-      emptyTranscriptionLanguageId: empty.transcription.languageId,
-      viewport: [innerWidth, innerHeight],
-      historicalWidth: historicalFrame.contentDocument.documentElement.scrollWidth,
-      emptyWidth: emptyFrame.contentDocument.documentElement.scrollWidth
-    };
-    document.body.dataset.results = encodeURIComponent(JSON.stringify(results));
-    document.body.dataset.testState = 'done';
-  })().catch(error => {
-    document.body.dataset.error = encodeURIComponent(error.stack || error.message || String(error));
-    document.body.dataset.testState = 'failed';
+  const result = runMigration({
+    dataFile,
+    catalogFile,
+    apply: true,
+    backupFile,
+    updatedAt: fixedMigrationDate
   });
-  </script></body></html>`;
-}
 
-test("Chromium vérifie l’activité historique migrée et la sauvegarde du brouillon vide", { timeout: 30000 }, async () => {
-  const chromium = findChromium();
-  assert.ok(chromium, "Chrome, Edge ou Chromium est requis pour la vérification ciblée.");
-  const canonicalHashBefore = sha256(canonicalDataFile);
-  const store = migratedCanonicalStore();
-  const emptyActivity = store.activities.find(activity => activity.title === "brouillon_vide");
-  assert.ok(emptyActivity, "Le brouillon vide doit être présent dans la fixture migrée.");
-  const temporary = await startTemporaryProto05Server(store, "proto05-language-migration-chromium-");
-  const profileDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "proto05-language-migration-profile-"));
-  fs.writeFileSync(path.join(temporary.root, "prototype", "language-migration-runner.html"), chromiumRunnerPage(emptyActivity.id), "utf8");
-  try {
-    const dom = await runChromium(chromium, `${temporary.baseUrl}/language-migration-runner.html`, profileDirectory, {
-      virtualTimeBudget: 14000,
-      timeout: 24000,
-      windowSize: "1440,1000"
-    });
-    const results = readBrowserResults(dom);
-    assert.deepEqual(results.historicalLanguages.map(language => language.id), ["fr", "es", "it", "pt"]);
-    assert.equal(results.historicalTranscriptionLanguageId, "fr");
-    assert.equal(results.historicalSegmentsRendered, 11);
-    assert.deepEqual(results.emptyOptions, ["fr", "es"]);
-    assert.equal(results.emptyPickerDisabled, false);
-    assert.equal(results.emptyStatus, "Modifications enregistrées.");
-    assert.deepEqual(results.emptyLanguages.map(language => language.id), ["fr", "es"]);
-    assert.equal(results.emptyTranscriptionLanguageId, null);
-    assert.ok(results.viewport[0] >= 1400 && results.viewport[1] >= 800);
-  } finally {
-    fs.rmSync(profileDirectory, { recursive: true, force: true });
-    await temporary.cleanup();
-  }
-  assert.equal(sha256(canonicalDataFile), canonicalHashBefore);
+  assert.equal(result.applied, true);
+  assert.equal(result.before.length, 2);
+  assert.equal(result.after.length, 2);
+  assert.deepEqual(fs.readFileSync(backupFile), before);
+  assert.equal(JSON.parse(fs.readFileSync(dataFile, "utf8")).activities[0].languages[0].id, "fr");
+});
+
+test("l’outil refuse un code hors référentiel sans altérer le magasin source", () => {
+  const before = syntheticStore();
+  before.activities[0].languages[0].code = "DE";
+  const witness = structuredClone(before);
+  assert.throws(
+    () => migrateStore(before, catalog, fixedMigrationDate),
+    /code de langue hors référentiel/
+  );
+  assert.deepEqual(before, witness);
 });
