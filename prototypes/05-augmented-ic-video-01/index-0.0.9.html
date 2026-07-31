@@ -873,12 +873,9 @@
             <div id="activeTime" class="active-time">Sélectionnez un segment pour commencer.</div>
           </div>
           <p id="annotationText" class="annotation-text">
-            Cette zone indique ce qui semble intéressant pour l’intercompréhension : changement de langue,
-            clarification, négociation du sens, répertoire plurilingue, etc.
+            Aucune annotation auteur active à cet instant.
           </p>
-          <p id="pedagogicalQuestion" class="pedagogical-question">
-            Question pédagogique : que peut-on observer dans ce segment ?
-          </p>
+          <p id="pedagogicalQuestion" class="pedagogical-question"></p>
           <p id="activityInstruction" class="pedagogical-question"></p>
           <div id="activeTags" class="tags"></div>
           <div class="copy-row">
@@ -928,7 +925,7 @@
     </main>
   </div>
 
-  <link rel="stylesheet" href="/shared/ic-timeline.css"><script src="/vendor/hls.js/hls.min.js"></script><script src="/shared/ic-video-player.js"></script><script src="/shared/ic-timeline.js"></script><script src="/shared/playable-transcription.js"></script><script src="/shared/playable-overlays.js"></script><script src="/shared/playable-layers.js"></script><script src="/shared/playable-phenomena.js"></script>
+  <link rel="stylesheet" href="/shared/ic-timeline.css"><script src="/vendor/hls.js/hls.min.js"></script><script src="/shared/ic-video-player.js"></script><script src="/shared/ic-timeline.js"></script><script src="/shared/playable-transcription.js"></script><script src="/shared/playable-annotations.js"></script><script src="/shared/playable-overlays.js"></script><script src="/shared/playable-layers.js"></script><script src="/shared/playable-phenomena.js"></script>
   <script>
     let hlsUrl = "";
     let videoPlayer = null;
@@ -1012,6 +1009,7 @@
       fallbackTimelineDuration = Number(activity.video?.durationMs || 0) / 1000 || 15 * 60 + 39;
       allOverlays = Proto05PlayableOverlays.projectOverlays(activity);
       allPhenomena = Proto05PlayablePhenomena.projectPhenomena(activity);
+      authoredAnnotations = Proto05PlayableAnnotations.projectAnnotations(activity);
 
       const languagesById = new Map((activity.languages || []).map(language => [language.id, language.code]));
       languageIntervals = (activity.languageIntervals || []).map(interval => ({ ...interval, code: languagesById.get(interval.languageId), start: interval.startMs / 1000, end: interval.endMs / 1000 })).filter(interval => interval.code);
@@ -1056,6 +1054,7 @@
     let observations = [];
     let hls = null;
     let playerState = "loading";
+    let authoredAnnotations = [];
     const activeLayers = new Set(allTags);
 
     streamLink.href = hlsUrl;
@@ -1331,16 +1330,13 @@
       }
     }
 
-    function buildLayeredNote(segment, visibleTags) {
-      if (!visibleTags.length) {
-        return "Ce segment continue d’exister dans la vidéo, mais aucune de ses couches d’observation n’est actuellement active.";
-      }
-
-      const layerText = visibleTags
-        .map(tag => tagLabels[tag] || tag)
-        .join(", ");
-
-      return `${segment.note}\n\nCouches observées ici : ${layerText}.`;
+    function renderAuthoredAnnotations(time) {
+      const presentation = Proto05PlayableAnnotations.presentationAtTime(authoredAnnotations, time);
+      annotationText.textContent = presentation.note || "Aucune annotation auteur active à cet instant.";
+      pedagogicalQuestion.textContent = presentation.questions.length
+        ? `Question pédagogique : ${presentation.questions.join(" · ")}`
+        : "";
+      return presentation.active;
     }
 
     function updateOverlay(segment) {
@@ -1401,10 +1397,7 @@
       });
 
       activeTime.textContent = `${formatTime(segment.start)} — ${formatTime(segment.end)} · ${segment.speaker}`;
-      annotationText.textContent = buildLayeredNote(segment, visibleTags);
-      pedagogicalQuestion.textContent = visibleTags.length
-        ? `Question pédagogique : ${segment.question}`
-        : "Question pédagogique : quelle couche faudrait-il réactiver pour observer ce segment ?";
+      renderAuthoredAnnotations(seek ? segment.start : video.currentTime);
       activeTags.innerHTML = visibleTags.length
         ? visibleTags.map(renderTag).join("")
         : `<span class="tag">aucune couche active ici</span>`;
@@ -1426,6 +1419,9 @@
 
     function clearActiveSegmentHighlight() {
       document.querySelectorAll(".segment").forEach(item => item.classList.remove("active"));
+      activeTime.textContent = "Aucun segment actif à cet instant.";
+      activeTags.innerHTML = "";
+      renderAuthoredAnnotations(video.currentTime);
     }
 
     function buildObservationText(segment) {
@@ -1434,7 +1430,7 @@
         `Locuteur : ${segment.speaker}`,
         `Texte : ${segment.text}`,
         `Tags : ${segment.tags.map(tag => tagLabels[tag] || tag).join(", ")}`,
-        `Note IC : ${segment.note}`,
+        `Annotation auteur : ${segment.note}`,
         `Question pédagogique : ${segment.question}`
       ].join("\n");
     }

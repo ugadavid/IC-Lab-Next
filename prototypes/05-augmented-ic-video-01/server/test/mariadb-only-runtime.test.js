@@ -12,8 +12,13 @@ const {
 } = require("../../shared/guided-authoring-contract");
 const {
   applyCanonicalActivity,
+  rebindSelection,
   singleFlight
 } = require("../../shared/authoring-mutation-state");
+const {
+  presentationAtTime,
+  projectAnnotations
+} = require("../../shared/playable-annotations");
 const {
   classifyMariaDbError,
   diagnosticPage,
@@ -182,6 +187,16 @@ test("la réponse canonique rend une annotation immédiatement et les clics rép
   assert.equal(renders, 1);
   assert.equal(state.activity.teacherAnnotations[0].note, "Visible");
 
+  const staleSelection = {
+    type: "annotation",
+    item: { id: "annotation-test", note: "Objet auteur désormais détaché" },
+    isNew: true
+  };
+  const rebound = rebindSelection(state.activity, staleSelection);
+  assert.equal(rebound.item, state.activity.teacherAnnotations[0]);
+  assert.equal(rebound.item.note, "Visible");
+  assert.equal(rebound.isNew, false);
+
   let requests = 0;
   const save = singleFlight(async () => {
     requests += 1;
@@ -282,8 +297,8 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
     };
     authored.segments = [{
       id: `segment-${marker}`,
-      startMs: 1000,
-      endMs: 3000,
+      startMs: 0,
+      endMs: 5000,
       text: "Segment MariaDB exclusif",
       speakerIds: [`speaker-${marker}`],
       languageIds: [language.id],
@@ -292,8 +307,8 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
     authored.languageIntervals = [{
       id: `interval-${marker}`,
       languageId: language.id,
-      startMs: 1000,
-      endMs: 3000
+      startMs: 0,
+      endMs: 5000
     }];
     authored.overlays = [{
       id: `overlay-${marker}`,
@@ -311,7 +326,7 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
     authored.teacherAnnotations = [{
       id: `annotation-${marker}`,
       segmentId: `segment-${marker}`,
-      note: "Annotation immédiatement visible",
+      note: "ANNOTATION-M147-DEBUT",
       pedagogicalQuestion: "Question test"
     }];
     const authoring = await request(
@@ -325,12 +340,17 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
     );
     assert.equal(authoring.response.status, 200, authoring.body.error);
     assert.equal(authoring.body.activity.segments[0].text, "Segment MariaDB exclusif");
-    assert.equal(authoring.body.activity.teacherAnnotations[0].note, "Annotation immédiatement visible");
+    assert.equal(authoring.body.activity.teacherAnnotations[0].note, "ANNOTATION-M147-DEBUT");
+    assert.equal(
+      presentationAtTime(projectAnnotations(authoring.body.activity), 2).note,
+      "ANNOTATION-M147-DEBUT"
+    );
+    assert.equal(presentationAtTime(projectAnnotations(authoring.body.activity), 6).note, "");
     const displayedState = { activity: created.body.activity };
     let displayedRenders = 0;
     applyCanonicalActivity(displayedState, authoring.body, () => { displayedRenders += 1; });
     assert.equal(displayedRenders, 1);
-    assert.equal(displayedState.activity.teacherAnnotations[0].note, "Annotation immédiatement visible");
+    assert.equal(displayedState.activity.teacherAnnotations[0].note, "ANNOTATION-M147-DEBUT");
     const updatedTitle = `[TEST ${marker}] modifiée`;
     const updated = await request(
       server.baseUrl,
@@ -369,10 +389,10 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
     assert.equal(reloaded.body.activity.title, updatedTitle);
     assert.equal(reloaded.body.activity.segments[0].text, "Segment MariaDB exclusif");
     assert.equal(reloaded.body.activity.overlays[0].id, `overlay-${marker}`);
-    assert.equal(reloaded.body.activity.teacherAnnotations[0].note, "Annotation immédiatement visible");
+    assert.equal(reloaded.body.activity.teacherAnnotations[0].note, "ANNOTATION-M147-DEBUT");
 
     const modifiedActivity = reloaded.body.activity;
-    modifiedActivity.teacherAnnotations[0].note = "Annotation modifiée et visible";
+    modifiedActivity.teacherAnnotations[0].note = "ANNOTATION-M147-MODIFIEE";
     const modifiedAnnotation = await request(
       server.baseUrl,
       `/api/proto05/activities/${encodeURIComponent(activityId)}/authoring`,
@@ -383,7 +403,8 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
       }
     );
     assert.equal(modifiedAnnotation.response.status, 200, modifiedAnnotation.body.error);
-    assert.equal(modifiedAnnotation.body.activity.teacherAnnotations[0].note, "Annotation modifiée et visible");
+    assert.equal(modifiedAnnotation.body.activity.teacherAnnotations[0].note, "ANNOTATION-M147-MODIFIEE");
+    assert.doesNotMatch(JSON.stringify(modifiedAnnotation.body.activity), /ANNOTATION-M147-DEBUT/);
 
     modifiedAnnotation.body.activity.overlays = modifiedAnnotation.body.activity.overlays
       .map(overlay => overlay.annotationId === `annotation-${marker}` ? { ...overlay, annotationId: undefined } : overlay);

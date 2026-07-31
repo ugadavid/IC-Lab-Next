@@ -13,12 +13,18 @@
       if (!phenomenaBySegmentId.has(phenomenon.segmentId)) phenomenaBySegmentId.set(phenomenon.segmentId, []);
       phenomenaBySegmentId.get(phenomenon.segmentId).push(phenomenon);
     }
-    const annotationsBySegmentId = new Map(
-      (activity.teacherAnnotations || []).map(annotation => [annotation.segmentId, annotation])
-    );
+    const annotationsBySegmentId = new Map();
+    for (const annotation of activity.teacherAnnotations || []) {
+      if (!annotationsBySegmentId.has(annotation.segmentId)) annotationsBySegmentId.set(annotation.segmentId, []);
+      annotationsBySegmentId.get(annotation.segmentId).push(annotation);
+    }
+    for (const annotations of annotationsBySegmentId.values()) {
+      annotations.sort((left, right) => left.id.localeCompare(right.id));
+    }
 
     return (activity.segments || []).map(segment => {
-      const annotation = annotationsBySegmentId.get(segment.id);
+      const annotations = annotationsBySegmentId.get(segment.id) || [];
+      const annotationIds = new Set(annotations.map(annotation => annotation.id));
       const tags = (phenomenaBySegmentId.get(segment.id) || [])
         .map(phenomenon => phenomenon.layerId)
         .filter(Boolean);
@@ -34,9 +40,14 @@
           .map(languageId => languagesById.get(languageId))
           .filter(Boolean),
         tags,
-        note: annotation?.note || "",
-        question: annotation?.pedagogicalQuestion || "",
-        overlays: annotation ? overlays.filter(overlay => overlay.annotationId === annotation.id) : []
+        annotations: annotations.map(annotation => ({
+          id: annotation.id,
+          note: annotation.note || "",
+          question: annotation.pedagogicalQuestion || ""
+        })),
+        note: annotations.map(annotation => annotation.note || "").filter(Boolean).join("\n\n"),
+        question: annotations.map(annotation => annotation.pedagogicalQuestion || "").filter(Boolean).join(" · "),
+        overlays: overlays.filter(overlay => annotationIds.has(overlay.annotationId))
       };
     });
   }
