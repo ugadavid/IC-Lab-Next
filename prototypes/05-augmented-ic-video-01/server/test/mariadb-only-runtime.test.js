@@ -33,6 +33,11 @@ const {
   inspectLocalMediaAvailability,
   readAvailabilityRows
 } = require("../local-media-availability-reconciliation");
+const {
+  READ_TABLES,
+  createMariaDbReadonlyAdapter,
+  runConsistentReadSnapshot
+} = require("../proto05-mariadb-readonly");
 
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
@@ -185,6 +190,56 @@ async function mediaCardinalities(database) {
     (SELECT COUNT(*) FROM media_folders) media_folders,
     (SELECT COUNT(*) FROM media_tags) media_tags`);
   return Object.fromEntries(Object.entries(row).map(([key, value]) => [key, Number(value)]));
+}
+
+async function readTableCardinalities(database) {
+  const counts = {};
+  for (const [table] of READ_TABLES) {
+    const [[row]] = await database.query(`SELECT COUNT(*) count FROM \`${table}\``);
+    counts[table] = Number(row.count);
+  }
+  return counts;
+}
+
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
+function instrumentedMysqlPool(metrics) {
+  return {
+    createPool(options) {
+      const pool = mysql.createPool(options);
+      return {
+        async getConnection() {
+          const database = await pool.getConnection();
+          metrics.acquired += 1;
+          metrics.active += 1;
+          metrics.maximumActive = Math.max(metrics.maximumActive, metrics.active);
+          const release = database.release.bind(database);
+          let released = false;
+          database.release = () => {
+            if (!released) {
+              released = true;
+              metrics.released += 1;
+              metrics.active -= 1;
+            }
+            return release();
+          };
+          return database;
+        },
+        async end() {
+          metrics.poolEnds += 1;
+          await pool.end();
+        }
+      };
+    }
+  };
 }
 
 async function importTemporaryMedia(server, marker, mission = "M150") {
@@ -1056,5 +1111,515 @@ test("la réconciliation locale MariaDB suit le disque, refuse un état concurre
       await database.end();
     }
     await server.stop();
+  }
+});
+
+test("le snapshot partagé commit, rollback et libère sans masquer l'erreur initiale", async () => {
+  const events = [];
+  function fakeDatabase({ rollbackError = null, releaseError = null } = {}) {
+    return {
+      async query(sql) { events.push(sql); return [[]]; },
+      async commit() { events.push("COMMIT"); },
+      async rollback() {
+        events.push("ROLLBACK");
+        if (rollbackError) throw rollbackError;
+      },
+      async release() {
+        events.push("RELEASE");
+        if (releaseError) throw releaseError;
+      }
+    };
+  }
+
+  const successDatabase = fakeDatabase();
+  const value = await runConsistentReadSnapshot({
+    acquireConnection: async () => successDatabase,
+    project: async database => {
+      await database.query("SELECT first_part");
+      await database.query("SELECT second_part");
+      return "snapshot-complet";
+    }
+  });
+  assert.equal(value, "snapshot-complet");
+  assert.deepEqual(events, [
+    "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+    "START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT",
+    "SELECT first_part",
+    "SELECT second_part",
+    "COMMIT",
+    "RELEASE"
+  ]);
+
+  events.length = 0;
+  const original = new Error("projection-interrompue");
+  const rollbackError = new Error("rollback-secondaire");
+  const releaseError = new Error("release-secondaire");
+  await assert.rejects(
+    runConsistentReadSnapshot({
+      acquireConnection: async () => fakeDatabase({ rollbackError, releaseError }),
+      project: async () => { throw original; }
+    }),
+    error => {
+      assert.equal(error, original);
+      assert.deepEqual(error.cleanupFailures.map(item => item.phase), ["rollback", "release"]);
+      return true;
+    }
+  );
+  assert.deepEqual(events, [
+    "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ",
+    "START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT",
+    "ROLLBACK",
+    "RELEASE"
+  ]);
+});
+
+test("les projections MariaDB restent sur un snapshot unique pendant des commits concurrents", {
+  timeout: 90_000
+}, async () => {
+  const marker = `mission152-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const server = await startServer();
+  const files = [];
+  const assetIds = [];
+  let database = null;
+  let adapter = null;
+  let baseline = null;
+  let metadataBefore = null;
+  let activityId = null;
+  let folderId = null;
+  let tagId = null;
+  let treatmentId = null;
+  const metrics = { acquired: 0, released: 0, active: 0, maximumActive: 0, poolEnds: 0 };
+
+  async function completesBeforeDeadline(promise, message) {
+    let timeout;
+    try {
+      return await Promise.race([
+        promise,
+        new Promise((_, reject) => {
+          timeout = setTimeout(() => reject(new Error(message)), 3_000);
+        })
+      ]);
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
+  async function pausedSnapshot(table, mutate) {
+    const reached = deferred();
+    const resume = deferred();
+    const connections = new Set();
+    let paused = false;
+    const snapshotPromise = adapter.readSnapshot({
+      afterTableRead: async event => {
+        connections.add(event.database);
+        if (event.table !== table || paused) return;
+        paused = true;
+        reached.resolve();
+        await resume.promise;
+      }
+    });
+    await completesBeforeDeadline(
+      Promise.race([
+        reached.promise,
+        snapshotPromise.then(
+          () => { throw new Error(`Le snapshot s'est terminé avant la table ${table}.`); },
+          error => { throw error; }
+        )
+      ]),
+      `Le snapshot n'a pas atteint la table ${table}.`
+    );
+    try {
+      await completesBeforeDeadline(
+        mutate(),
+        `Le writer est resté bloqué pendant le snapshot arrêté après ${table}.`
+      );
+    } finally {
+      resume.resolve();
+    }
+    const snapshot = await snapshotPromise;
+    assert.equal(connections.size, 1, "Toutes les tables doivent utiliser le même objet connexion.");
+    return snapshot;
+  }
+
+  try {
+    await server.ready();
+    database = await testDatabaseConnection();
+    baseline = await readTableCardinalities(database);
+    [metadataBefore] = await database.query(
+      "SELECT document_key, source_updated_at_utc FROM data_projection_metadata ORDER BY document_key"
+    );
+
+    const sourceAsset = await importTemporaryMedia(server, `${marker}-source`, "M152");
+    const childAsset = await importTemporaryMedia(server, `${marker}-child`, "M152");
+    assetIds.push(sourceAsset.assetId, childAsset.assetId);
+    files.push(sourceAsset.file, childAsset.file);
+    const [[sourcePlayableRow]] = await database.query(
+      `SELECT mp.source_id, mp.availability, ms.provider
+       FROM media_playables mp
+       JOIN media_sources ms ON ms.id = mp.source_id
+       WHERE mp.id = ?`,
+      [sourceAsset.playableId]
+    );
+    assert.ok(["available", "unknown"].includes(sourcePlayableRow.availability));
+    assert.equal(sourcePlayableRow.provider, "local");
+
+    const folder = await request(server.baseUrl, "/api/proto05/library/folders", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: `[TEST M152] dossier ${marker}` })
+    });
+    assert.equal(folder.response.status, 201, folder.body.error);
+    folderId = folder.body.folder.id;
+    const tag = await request(server.baseUrl, "/api/proto05/library/tags", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: `[TEST M152] tag ${marker}` })
+    });
+    assert.equal(tag.response.status, 201, tag.body.error);
+    tagId = tag.body.tag.id;
+
+    const created = await request(server.baseUrl, "/api/proto05/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: `[TEST M152] activité ${marker}`,
+        description: "",
+        instruction: "",
+        pedagogicalQuestion: "",
+        videoRef: { assetId: sourceAsset.assetId, playableId: sourceAsset.playableId }
+      })
+    });
+    assert.equal(created.response.status, 201, created.body.error);
+    activityId = created.body.activity.id;
+    const languageCatalog = await request(server.baseUrl, "/api/proto05/language-catalog");
+    const language = languageCatalog.body.languages[0];
+    const authored = created.body.activity;
+    const segmentId = `segment-${marker}`;
+    const layerId = `layer-${marker}`;
+    const phenomenonId = `phenomenon-${marker}`;
+    const annotationId = `annotation-${marker}`;
+    const newAnnotationId = `annotation-new-${marker}`;
+    const intervalId = `interval-${marker}`;
+    ensureActivityLanguage(authored, language);
+    authored.transcription = {
+      ...authored.transcription,
+      languageId: language.id,
+      segmentIds: [segmentId]
+    };
+    authored.layers = [{ id: layerId, label: "Couche M152", description: "", color: "#4d7dbc" }];
+    authored.layerConfiguration = {
+      ...authored.layerConfiguration,
+      learnerVisibleLayerIds: [layerId],
+      teacherVisibleLayerIds: [layerId]
+    };
+    authored.segments = [{
+      id: segmentId,
+      startMs: 0,
+      endMs: 5000,
+      text: "SEGMENT-M152-AVANT",
+      speakerIds: [],
+      languageIds: [language.id],
+      phenomenonIds: [phenomenonId]
+    }];
+    authored.languageIntervals = [{
+      id: intervalId,
+      languageId: language.id,
+      startMs: 0,
+      endMs: 5000,
+      segmentId
+    }];
+    authored.phenomena = [{
+      id: phenomenonId,
+      segmentId,
+      layerId,
+      startMs: 1000,
+      endMs: 2000
+    }];
+    authored.teacherAnnotations = [{
+      id: annotationId,
+      segmentId,
+      note: "ANNOTATION-M152-AVANT",
+      pedagogicalQuestion: ""
+    }];
+    const authoring = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}/authoring`,
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(buildAuthoringPayload(authored))
+      }
+    );
+    assert.equal(authoring.response.status, 200, authoring.body.error);
+
+    loadTestEnvironment();
+    const config = mariadbConfigurationFromEnvironment(process.env);
+    adapter = createMariaDbReadonlyAdapter({
+      config,
+      prototypeDirectory,
+      mysql: instrumentedMysqlPool(metrics),
+      grantValidator: () => ({ readonly: true, privileges: ["SELECT"] }),
+      mode: "mariadb-test"
+    });
+
+    const initialAssetTitle = `[TEST M152] ${marker}-source`;
+    const updatedAssetTitle = `${initialAssetTitle} modifié`;
+    treatmentId = `treatment-${marker}`;
+    const assetSnapshot = await pausedSnapshot("media_assets", async () => {
+      await database.beginTransaction();
+      try {
+        await database.query(
+          "UPDATE media_assets SET title = ?, folder_id = ? WHERE id = ?",
+          [updatedAssetTitle, folderId, sourceAsset.assetId]
+        );
+        await database.query(
+          "UPDATE media_sources SET provider = 'mission152-provider' WHERE id = ?",
+          [sourcePlayableRow.source_id]
+        );
+        await database.query(
+          "UPDATE media_playables SET availability = 'blocked', availability_reason = NULL WHERE id = ?",
+          [sourceAsset.playableId]
+        );
+        await database.query(
+          `UPDATE media_assets
+           SET parent_asset_id = ?, family_root_asset_id = ?,
+               provenance_json = JSON_REMOVE(
+                 COALESCE(provenance_json, JSON_OBJECT()),
+                 '$._migration.originalParentAssetId',
+                 '$._migration.originalFamilyRootAssetId'
+               )
+           WHERE id = ?`,
+          [sourceAsset.assetId, sourceAsset.assetId, childAsset.assetId]
+        );
+        await database.query(
+          "INSERT INTO media_asset_tags (asset_id, tag_id) VALUES (?, ?)",
+          [sourceAsset.assetId, tagId]
+        );
+        await database.query(
+          `INSERT INTO media_treatments (
+            id, source_asset_id, source_playable_id, output_asset_id, output_playable_id,
+            published_playable_id, type, label, status, progress, retained,
+            source_preparation_id, runtime_job_id, engine, engine_version, ffmpeg_version,
+            parameters_json, diagnostics_json, error_json,
+            created_at, started_at, updated_at, finished_at
+          ) VALUES (?, ?, ?, ?, ?, NULL, 'mission152-fixture', ?, 'running', 50, 0,
+            NULL, NULL, 'mission152', '1', NULL, '{}', '{}', NULL,
+            CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3), NULL)`,
+          [
+            treatmentId,
+            sourceAsset.assetId,
+            sourceAsset.playableId,
+            childAsset.assetId,
+            childAsset.playableId,
+            `[TEST M152] traitement ${marker}`
+          ]
+        );
+        await database.commit();
+      } catch (error) {
+        await database.rollback();
+        throw error;
+      }
+    });
+    const oldAsset = assetSnapshot.videoLibrary.assets.find(item => item.id === sourceAsset.assetId);
+    const oldChild = assetSnapshot.videoLibrary.assets.find(item => item.id === childAsset.assetId);
+    assert.equal(oldAsset.title, initialAssetTitle);
+    assert.equal(oldAsset.folderId, null);
+    assert.deepEqual(oldAsset.tagIds, []);
+    assert.equal(oldChild.parentAssetId, null);
+    assert.equal(
+      assetSnapshot.videoLibrary.sources.find(item => item.id === sourcePlayableRow.source_id).provider,
+      "local"
+    );
+    assert.equal(
+      assetSnapshot.videoLibrary.playables.find(item => item.id === sourceAsset.playableId).availability,
+      sourcePlayableRow.availability
+    );
+    assert.equal(assetSnapshot.videoLibrary.treatments.some(item => item.id === treatmentId), false);
+
+    const nextAssetSnapshot = await adapter.readSnapshot();
+    const nextAsset = nextAssetSnapshot.videoLibrary.assets.find(item => item.id === sourceAsset.assetId);
+    const nextChild = nextAssetSnapshot.videoLibrary.assets.find(item => item.id === childAsset.assetId);
+    assert.equal(nextAsset.title, updatedAssetTitle);
+    assert.equal(nextAsset.folderId, folderId);
+    assert.deepEqual(nextAsset.tagIds, [tagId]);
+    assert.equal(nextChild.parentAssetId, sourceAsset.assetId);
+    assert.equal(
+      nextAssetSnapshot.videoLibrary.sources.find(item => item.id === sourcePlayableRow.source_id).provider,
+      "mission152-provider"
+    );
+    assert.equal(
+      nextAssetSnapshot.videoLibrary.playables.find(item => item.id === sourceAsset.playableId).availability,
+      "blocked"
+    );
+    assert.equal(nextAssetSnapshot.videoLibrary.treatments.some(item => item.id === treatmentId), true);
+
+    const updatedActivityTitle = `[TEST M152] activité ${marker} publiée`;
+    const activitySnapshot = await pausedSnapshot("activities", async () => {
+      await database.beginTransaction();
+      try {
+        await database.query(
+          "UPDATE activities SET title = ?, status = 'published' WHERE id = ?",
+          [updatedActivityTitle, activityId]
+        );
+        await database.query(
+          "UPDATE activity_segments SET text = 'SEGMENT-M152-APRES' WHERE activity_id = ? AND id = ?",
+          [activityId, segmentId]
+        );
+        await database.query(
+          "UPDATE activity_annotations SET note = 'ANNOTATION-M152-APRES' WHERE activity_id = ? AND id = ?",
+          [activityId, annotationId]
+        );
+        await database.query(
+          "UPDATE activity_phenomena SET start_ms = 1500, end_ms = 2500 WHERE activity_id = ? AND id = ?",
+          [activityId, phenomenonId]
+        );
+        await database.query(
+          `INSERT INTO activity_annotations (
+            activity_id, id, segment_id, note, pedagogical_question, sort_order
+          ) VALUES (?, ?, ?, 'ANNOTATION-M152-NOUVELLE', '', 1)`,
+          [activityId, newAnnotationId, segmentId]
+        );
+        await database.query(
+          "DELETE FROM activity_language_intervals WHERE activity_id = ? AND id = ?",
+          [activityId, intervalId]
+        );
+        await database.commit();
+      } catch (error) {
+        await database.rollback();
+        throw error;
+      }
+    });
+    const oldActivity = activitySnapshot.activities.activities.find(item => item.id === activityId);
+    assert.equal(oldActivity.title, `[TEST M152] activité ${marker}`);
+    assert.equal(oldActivity.status, "draft");
+    assert.equal(oldActivity.segments[0].text, "SEGMENT-M152-AVANT");
+    assert.equal(oldActivity.teacherAnnotations[0].note, "ANNOTATION-M152-AVANT");
+    assert.equal(oldActivity.teacherAnnotations.some(item => item.id === newAnnotationId), false);
+    assert.equal(oldActivity.phenomena[0].startMs, 1000);
+    assert.equal(oldActivity.languageIntervals.some(item => item.id === intervalId), true);
+
+    const nextActivitySnapshot = await adapter.readSnapshot();
+    const nextActivity = nextActivitySnapshot.activities.activities.find(item => item.id === activityId);
+    assert.equal(nextActivity.title, updatedActivityTitle);
+    assert.equal(nextActivity.status, "published");
+    assert.equal(nextActivity.segments[0].text, "SEGMENT-M152-APRES");
+    assert.equal(
+      nextActivity.teacherAnnotations.find(item => item.id === annotationId).note,
+      "ANNOTATION-M152-APRES"
+    );
+    assert.equal(
+      nextActivity.teacherAnnotations.find(item => item.id === newAnnotationId).note,
+      "ANNOTATION-M152-NOUVELLE"
+    );
+    assert.equal(nextActivity.phenomena[0].startMs, 1500);
+    assert.equal(nextActivity.languageIntervals.some(item => item.id === intervalId), false);
+
+    const internalError = new Error("M152-ERREUR-INTERNE");
+    await assert.rejects(
+      adapter.readSnapshot({
+        afterTableRead: ({ table }) => {
+          if (table === "activity_segments") throw internalError;
+        }
+      }),
+      error => error.cause === internalError
+    );
+    assert.equal(metrics.active, 0);
+    for (let repetition = 0; repetition < 3; repetition += 1) {
+      const recovered = await adapter.readSnapshot();
+      assert.ok(recovered.activities.activities.some(item => item.id === activityId));
+      assert.equal(metrics.active, 0);
+    }
+    assert.equal(metrics.acquired, metrics.released);
+    assert.equal(metrics.maximumActive, 1);
+  } finally {
+    try {
+      if (adapter) await adapter.close();
+      if (database) {
+        try {
+          if (treatmentId) await database.query("DELETE FROM media_treatments WHERE id = ?", [treatmentId]);
+          if (activityId) {
+            for (const table of [
+              "activity_overlay_layers",
+              "activity_overlays",
+              "activity_annotations",
+              "activity_phenomena",
+              "activity_layer_visibility",
+              "activity_layers",
+              "activity_language_intervals",
+              "activity_segment_speakers",
+              "activity_segment_languages",
+              "activity_segments",
+              "activity_transcriptions",
+              "activity_speakers",
+              "activity_languages",
+              "activity_media_links",
+              "activity_pedagogical_qualifications",
+              "activity_pedagogical_text_fields",
+              "activity_pedagogical_identities"
+            ]) {
+              await database.query(`DELETE FROM \`${table}\` WHERE activity_id = ?`, [activityId]);
+            }
+            await database.query("DELETE FROM activities WHERE id = ?", [activityId]);
+          }
+          if (assetIds.length) {
+            await database.query(
+              `DELETE FROM media_asset_tags WHERE asset_id IN (${assetIds.map(() => "?").join(",")})`,
+              assetIds
+            );
+            await database.query(
+              `UPDATE media_assets SET parent_asset_id = NULL, family_root_asset_id = NULL, folder_id = NULL
+               WHERE id IN (${assetIds.map(() => "?").join(",")})`,
+              assetIds
+            );
+            await database.query(
+              `UPDATE media_assets SET default_playable_id = NULL
+               WHERE id IN (${assetIds.map(() => "?").join(",")})`,
+              assetIds
+            );
+            await database.query(
+              `DELETE FROM media_playable_metadata WHERE playable_id IN (
+                 SELECT id FROM media_playables WHERE asset_id IN (${assetIds.map(() => "?").join(",")})
+               )`,
+              assetIds
+            );
+            await database.query(
+              `DELETE FROM media_playables WHERE asset_id IN (${assetIds.map(() => "?").join(",")})`,
+              assetIds
+            );
+            await database.query(
+              `DELETE FROM media_sources WHERE asset_id IN (${assetIds.map(() => "?").join(",")})`,
+              assetIds
+            );
+            await database.query(
+              `DELETE FROM media_assets WHERE id IN (${assetIds.map(() => "?").join(",")})`,
+              assetIds
+            );
+          }
+          if (folderId) await database.query("DELETE FROM media_folders WHERE id = ?", [folderId]);
+          if (tagId) await database.query("DELETE FROM media_tags WHERE id = ?", [tagId]);
+          if (metadataBefore) {
+            for (const row of metadataBefore) {
+              await database.query(
+                "UPDATE data_projection_metadata SET source_updated_at_utc = ? WHERE document_key = ?",
+                [row.source_updated_at_utc, row.document_key]
+              );
+            }
+          }
+          if (baseline) assert.deepEqual(await readTableCardinalities(database), baseline);
+        } finally {
+          await database.end();
+        }
+      }
+    } finally {
+      for (const file of files) {
+        const mediaRoot = path.resolve(prototypeDirectory, "data", "video-library-media");
+        const resolved = path.resolve(file);
+        assert.ok(resolved.startsWith(`${mediaRoot}${path.sep}`));
+        fs.rmSync(resolved, { force: true });
+      }
+      await server.stop();
+    }
+    assert.equal(metrics.active, 0);
+    if (adapter) assert.equal(metrics.poolEnds, 1);
   }
 });

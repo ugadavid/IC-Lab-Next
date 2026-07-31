@@ -612,6 +612,46 @@ function defaultMysqlModule(prototypeDirectory, configuredPath = null) {
   }
 }
 
+function attachCleanupFailure(error, phase, cleanupError) {
+  if (!error || typeof error !== "object") return;
+  const failures = Array.isArray(error.cleanupFailures) ? error.cleanupFailures : [];
+  failures.push(Object.freeze({ phase, error: cleanupError }));
+  Object.defineProperty(error, "cleanupFailures", {
+    configurable: true,
+    enumerable: false,
+    writable: false,
+    value: failures
+  });
+}
+
+async function runConsistentReadSnapshot({ acquireConnection, project }) {
+  const database = await acquireConnection();
+  let transactionStarted = false;
+  let primaryError = null;
+  try {
+    await database.query("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+    await database.query("START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT");
+    transactionStarted = true;
+    const value = await project(database);
+    await database.commit();
+    transactionStarted = false;
+    return value;
+  } catch (error) {
+    primaryError = error;
+    if (transactionStarted) {
+      try { await database.rollback(); }
+      catch (rollbackError) { attachCleanupFailure(error, "rollback", rollbackError); }
+    }
+    throw error;
+  } finally {
+    try { await database.release(); }
+    catch (releaseError) {
+      if (primaryError) attachCleanupFailure(primaryError, "release", releaseError);
+      else throw releaseError;
+    }
+  }
+}
+
 function createMariaDbReadonlyAdapter({
   config,
   prototypeDirectory,
@@ -622,27 +662,36 @@ function createMariaDbReadonlyAdapter({
   readonlySession = true
 }) {
   const client = mysql || defaultMysqlModule(prototypeDirectory, mysqlModulePath);
+  const pool = client.createPool({
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.database,
+    charset: "utf8mb4",
+    dateStrings: true,
+    decimalNumbers: false,
+    supportBigNumbers: true,
+    bigNumberStrings: true,
+    multipleStatements: false,
+    connectTimeout: 10_000,
+    waitForConnections: true,
+    connectionLimit: 6,
+    maxIdle: 6,
+    idleTimeout: 60_000,
+    queueLimit: 0
+  });
+  let closePromise = null;
 
   async function connection() {
+    let result = null;
     try {
-      const result = await client.createConnection({
-        host: config.host,
-        port: config.port,
-        user: config.user,
-        password: config.password,
-        database: config.database,
-        charset: "utf8mb4",
-        dateStrings: true,
-        decimalNumbers: false,
-        supportBigNumbers: true,
-        bigNumberStrings: true,
-        multipleStatements: false,
-        connectTimeout: 10_000
-      });
+      result = await pool.getConnection();
       await result.query("SET SESSION time_zone = '+00:00'");
       if (readonlySession) await result.query("SET SESSION TRANSACTION READ ONLY");
       return result;
     } catch (cause) {
+      try { result?.release(); } catch {}
       throw new Error("Connexion MariaDB readonly impossible.", { cause });
     }
   }
@@ -666,27 +715,35 @@ function createMariaDbReadonlyAdapter({
           ...grants
         };
       } finally {
-        await database.end();
+        database.release();
       }
     },
-    async readSnapshot() {
-      const database = await connection();
+    async readSnapshot({ afterTableRead = null } = {}) {
       try {
-        const tables = {};
-        for (const [table, orderBy, where] of READ_TABLES) {
-          const sql = `SELECT * FROM \`${table}\`${where ? ` WHERE ${where}` : ""} ORDER BY ${orderBy}`;
-          const [rows] = await database.query(sql);
-          tables[table] = rows;
-        }
-        return projectMariaDbSnapshotForApplication(mapMariaDbTablesToSnapshot(tables));
+        return await runConsistentReadSnapshot({
+          acquireConnection: connection,
+          project: async database => {
+            const tables = {};
+            for (const [index, [table, orderBy, where]] of READ_TABLES.entries()) {
+              const sql = `SELECT * FROM \`${table}\`${where ? ` WHERE ${where}` : ""} ORDER BY ${orderBy}`;
+              const [rows] = await database.query(sql);
+              tables[table] = rows;
+              if (typeof afterTableRead === "function") {
+                await afterTableRead({ database, table, index, rows });
+              }
+            }
+            return projectMariaDbSnapshotForApplication(mapMariaDbTablesToSnapshot(tables));
+          }
+        });
       } catch (error) {
         if (error?.message?.startsWith("Connexion MariaDB")) throw error;
         throw new Error("Lecture MariaDB readonly impossible.", { cause: error });
-      } finally {
-        await database.end();
       }
     },
-    async close() {}
+    async close() {
+      if (!closePromise) closePromise = pool.end();
+      return closePromise;
+    }
   });
 }
 
@@ -695,5 +752,6 @@ module.exports = {
   assertReadonlyGrants,
   createMariaDbReadonlyAdapter,
   mapMariaDbTablesToSnapshot,
-  projectMariaDbSnapshotForApplication
+  projectMariaDbSnapshotForApplication,
+  runConsistentReadSnapshot
 };

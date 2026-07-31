@@ -30,6 +30,21 @@ configuration ou une connexion indisponible produit le même état fermé.
 redémarrer le processus.
 `Ctrl+C` réalise l’arrêt propre.
 
+## Snapshots de lecture MariaDB
+
+Les projections applicatives composées sont construites depuis les 29 tables
+canoniques sur une seule connexion empruntée à un pool borné. Chaque projection
+ouvre une transaction courte `REPEATABLE READ` avec
+`START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT`, exécute toutes ses
+lectures, puis committe ou rollback avant de rendre la connexion au pool.
+
+Le snapshot est ainsi fixé dès l'ouverture : un commit concurrent n'apparaît
+jamais au milieu d'une projection, mais devient normalement visible à la
+requête HTTP suivante. Les lectures sont des lectures cohérentes InnoDB sans
+verrou métier explicite. La transaction est terminée avant le traitement de la
+route en mémoire ; elle n'englobe ni rendu de page, ni streaming, ni accès au
+système de fichiers ou au réseau.
+
 ## Réconciliation explicite de la disponibilité locale
 
 Le serveur ne transforme pas une lecture ordinaire en écriture de
