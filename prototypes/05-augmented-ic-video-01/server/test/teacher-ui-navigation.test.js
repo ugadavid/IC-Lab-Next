@@ -107,6 +107,8 @@ test("les pages enseignantes partagent le socle sans ajouter sa feuille à l’a
 test("les actions métier existantes restent présentes dans leurs pages", () => {
   const source = page => fs.readFileSync(path.join(prototypeDirectory, page), "utf8");
   const activityLibrarySource = fs.readFileSync(path.join(prototypeDirectory, "shared", "activity-library.js"), "utf8");
+  const videoLibrarySource = source("teacher-videos.html");
+  const videoDetailSource = source("teacher-video-detail.html");
   assert.match(activityLibrarySource, /data-duplicate-id/);
   assert.match(activityLibrarySource, /data-delete-id/);
   assert.match(source("teacher.html"), /href="\/teacher\/create">Ajouter une activité/);
@@ -114,9 +116,12 @@ test("les actions métier existantes restent présentes dans leurs pages", () =>
   assert.match(source("teacher-edit.html"), /id="save"/);
   assert.match(source("teacher-guided.html"), /id="save"/);
   assert.match(source("teacher-author.html"), /id="save"/);
-  assert.match(source("teacher-video-detail.html"), /data-action="workshop"/);
+  assert.match(videoDetailSource, /data-action="workshop"/);
+  assert.match(videoDetailSource, /preflight && preflight\.allowed === false/);
+  assert.match(videoLibrarySource, /window\.proto05OpenUsagePanel=openUsagePanel/);
+  assert.match(videoLibrarySource, /queueMicrotask\(\(\)=>window\.proto05OpenUsagePanel/);
   assert.match(source("teacher-anonymization.html"), /id="derive"/);
-  assert.doesNotMatch(source("teacher-videos.html"), /← Bibliothèque enseignant/);
+  assert.doesNotMatch(videoLibrarySource, /← Bibliothèque enseignant/);
   assert.doesNotMatch(source("teacher-create.html"), /← Bibliothèque enseignant|Ouvrir la Library/);
   assert.ok(teacherPages.every(page => !source(page).includes("anonymization-advanced")));
 });

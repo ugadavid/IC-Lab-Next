@@ -245,11 +245,20 @@
     function usageMarkup() {
       const usage = asset.usage || {};
       const items = usage.activities || usage.items || usage.references || [];
+      const other = usage.otherDependencies || {};
+      const otherItems = [
+        ...(other.derivations || []),
+        ...(other.treatments || []),
+        ...(other.sharedReferences || [])
+      ];
       if (!usage.whetherUsed && !items.length) {
-        return "<p class=\"muted\">Cette vidéo n’est utilisée dans aucune activité.</p>";
+        return `<p class="muted">Cette vidéo n’est utilisée dans aucune activité.</p>
+          ${usage.preflight?.catalog?.message ? `<p>${esc(usage.preflight.catalog.message)}</p>` : ""}`;
       }
       return `<p>${Number(usage.activityCount || items.length)} activité(s) utilisent cette vidéo.</p>
-        ${items.length ? `<ul class="usage-list">${items.map(item => `<li>${esc(item.title || item.name || item.activityTitle || "Activité")}</li>`).join("")}</ul>` : ""}`;
+        ${items.length ? `<ul class="usage-list">${items.map(item => `<li>${esc(item.title || item.name || item.activityTitle || "Activité")}</li>`).join("")}</ul>` : ""}
+        ${otherItems.length ? `<p>Autres dépendances :</p><ul class="usage-list">${otherItems.map(item => `<li>${esc(item.title || item.id)}${item.relationLabels?.length ? ` — ${esc(item.relationLabels.join(", "))}` : ""}</li>`).join("")}</ul>` : ""}
+        ${usage.preflight?.catalog?.message ? `<p>${esc(usage.preflight.catalog.message)}</p>` : ""}`;
     }
 
     function visibleTags() {
@@ -750,6 +759,13 @@
 
     async function removeAsset(physical) {
       const understanding = asset.deletionUnderstanding || {};
+      const preflight = physical
+        ? asset.usage?.preflight?.physical
+        : asset.usage?.preflight?.catalog;
+      if (preflight && preflight.allowed === false) {
+        setStatus(preflight.message || "Suppression refusée par le préflight.", "error");
+        return;
+      }
       const usageLabel = Meta.optionLabel(Meta.USAGES, asset.editorialMetadata?.usage);
       const family = asset.lineageSummary?.familyRoot?.title || asset.lineageSummary?.familyRoot?.id || "Non renseignée";
       const details = [

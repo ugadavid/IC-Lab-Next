@@ -1,6 +1,7 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const net = require("node:net");
 const path = require("node:path");
@@ -24,11 +25,23 @@ const {
   diagnosticPage,
   unavailablePayload
 } = require("../mariadb-diagnostics");
+const {
+  mariadbConfigurationFromEnvironment
+} = require("../proto05-data-mode");
 
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
 const workspaceDirectory = path.resolve(prototypeDirectory, "..", "..");
 const envFile = path.join(prototypeDirectory, ".env.local");
+const mysql = require(path.resolve(
+  prototypeDirectory,
+  "..",
+  "00-ic-hub",
+  "server",
+  "node_modules",
+  "mysql2",
+  "promise"
+));
 
 async function freePort() {
   return new Promise((resolve, reject) => {
@@ -133,6 +146,66 @@ async function request(baseUrl, pathname, options = {}) {
   const response = await fetch(`${baseUrl}${pathname}`, options);
   const body = await response.json();
   return { response, body };
+}
+
+let testEnvironmentLoaded = false;
+
+function loadTestEnvironment() {
+  if (testEnvironmentLoaded) return;
+  process.loadEnvFile(envFile);
+  testEnvironmentLoaded = true;
+}
+
+async function testDatabaseConnection() {
+  loadTestEnvironment();
+  const config = mariadbConfigurationFromEnvironment(process.env);
+  return mysql.createConnection({
+    ...config,
+    charset: "utf8mb4",
+    dateStrings: true,
+    multipleStatements: false
+  });
+}
+
+async function mediaCardinalities(database) {
+  const [[row]] = await database.query(`SELECT
+    (SELECT COUNT(*) FROM activities) activities,
+    (SELECT COUNT(*) FROM activity_media_links) activity_media_links,
+    (SELECT COUNT(*) FROM media_assets) media_assets,
+    (SELECT COUNT(*) FROM media_sources) media_sources,
+    (SELECT COUNT(*) FROM media_playables) media_playables,
+    (SELECT COUNT(*) FROM media_playable_metadata) media_playable_metadata,
+    (SELECT COUNT(*) FROM media_treatments) media_treatments,
+    (SELECT COUNT(*) FROM media_asset_tags) media_asset_tags,
+    (SELECT COUNT(*) FROM media_folders) media_folders,
+    (SELECT COUNT(*) FROM media_tags) media_tags`);
+  return Object.fromEntries(Object.entries(row).map(([key, value]) => [key, Number(value)]));
+}
+
+async function importTemporaryMedia(server, marker) {
+  const fileName = `${marker}.mp4`;
+  const imported = await request(
+    server.baseUrl,
+    `/api/proto05/library/import-local?title=${encodeURIComponent(`[TEST M150] ${marker}`)}`,
+    {
+      method: "POST",
+      headers: {
+        "content-type": "video/mp4",
+        "x-proto05-file-name": encodeURIComponent(fileName)
+      },
+      body: Buffer.from(`PROTO05-M150-${marker}-${crypto.randomBytes(12).toString("hex")}`)
+    }
+  );
+  assert.equal(imported.response.status, 201, imported.body.error);
+  assert.equal(imported.body.duplicate, false);
+  const playable = imported.body.asset.playables.find(item => item.id === imported.body.playableId);
+  assert.ok(playable?.storageKey, "Le fichier temporaire importé doit posséder une storageKey.");
+  return {
+    assetId: imported.body.assetId,
+    playableId: imported.body.playableId,
+    storageKey: playable.storageKey,
+    file: path.join(prototypeDirectory, "data", "video-library-media", playable.storageKey)
+  };
 }
 
 test("le runtime ne contient plus de backend métier JSON sélectionnable", () => {
@@ -438,6 +511,368 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
       if (tagId) await request(server.baseUrl, `/api/proto05/library/tags/${encodeURIComponent(tagId)}`, { method: "DELETE" });
       if (folderId) await request(server.baseUrl, `/api/proto05/library/folders/${encodeURIComponent(folderId)}`, { method: "DELETE" });
       if (activityId) await request(server.baseUrl, `/api/proto05/activities/${encodeURIComponent(activityId)}`, { method: "DELETE" });
+    }
+    await server.stop();
+  }
+});
+
+test("le préflight média MariaDB bloque les relations canoniques et nettoie uniquement les fixtures", {
+  timeout: 60_000
+}, async () => {
+  const marker = `mission150-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const server = await startServer();
+  const assets = [];
+  const files = [];
+  const activityIds = [];
+  const treatmentIds = [];
+  const folderIds = [];
+  const tagIds = [];
+  let database = null;
+  let baseline = null;
+
+  try {
+    await server.ready();
+    database = await testDatabaseConnection();
+    baseline = await mediaCardinalities(database);
+
+    const removable = await importTemporaryMedia(server, `${marker}-removable`);
+    assets.push(removable.assetId);
+    files.push(removable.file);
+    assert.equal(fs.existsSync(removable.file), true);
+
+    let detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(removable.assetId)}`
+    );
+    assert.equal(detail.response.status, 200);
+    assert.equal(detail.body.asset.usage.preflight.catalog.decision, "allowed");
+    assert.equal(detail.body.asset.usage.preflight.catalog.allowed, true);
+
+    const folder = await request(server.baseUrl, "/api/proto05/library/folders", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: `[TEST M150] dossier ${marker}` })
+    });
+    assert.equal(folder.response.status, 201, folder.body.error);
+    folderIds.push(folder.body.folder.id);
+    const tag = await request(server.baseUrl, "/api/proto05/library/tags", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: `[TEST M150] étiquette ${marker}` })
+    });
+    assert.equal(tag.response.status, 201, tag.body.error);
+    tagIds.push(tag.body.tag.id);
+    const classified = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(removable.assetId)}/classification`,
+      {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ folderId: folder.body.folder.id, tagIds: [tag.body.tag.id] })
+      }
+    );
+    assert.equal(classified.response.status, 200, classified.body.error);
+    detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(removable.assetId)}`
+    );
+    assert.equal(detail.body.asset.usage.preflight.catalog.decision, "allowed-with-cleanup");
+    assert.deepEqual(detail.body.asset.usage.cleanupDependencies, {
+      folder: [{ id: folder.body.folder.id }],
+      tags: [{ id: tag.body.tag.id }]
+    });
+    const removed = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(removable.assetId)}/physical`,
+      { method: "DELETE" }
+    );
+    assert.equal(removed.response.status, 200, removed.body.error);
+    assert.equal(removed.body.deletedFile, true);
+    assert.equal(fs.existsSync(removable.file), false);
+    const removedDetail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(removable.assetId)}`
+    );
+    assert.equal(removedDetail.response.status, 404);
+    assets.splice(assets.indexOf(removable.assetId), 1);
+
+    const folderStillExists = await database.query(
+      "SELECT COUNT(*) count FROM media_folders WHERE id = ?",
+      [folder.body.folder.id]
+    );
+    const tagStillExists = await database.query(
+      "SELECT COUNT(*) count FROM media_tags WHERE id = ?",
+      [tag.body.tag.id]
+    );
+    assert.equal(Number(folderStillExists[0][0].count), 1);
+    assert.equal(Number(tagStillExists[0][0].count), 1);
+    const removedFolder = await request(
+      server.baseUrl,
+      `/api/proto05/library/folders/${encodeURIComponent(folder.body.folder.id)}`,
+      { method: "DELETE" }
+    );
+    assert.equal(removedFolder.response.status, 200, removedFolder.body.error);
+    folderIds.length = 0;
+    const removedTag = await request(
+      server.baseUrl,
+      `/api/proto05/library/tags/${encodeURIComponent(tag.body.tag.id)}`,
+      { method: "DELETE" }
+    );
+    assert.equal(removedTag.response.status, 200, removedTag.body.error);
+    tagIds.length = 0;
+
+    const used = await importTemporaryMedia(server, `${marker}-activity`);
+    assets.push(used.assetId);
+    files.push(used.file);
+    const activity = await request(server.baseUrl, "/api/proto05/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: `[TEST M150] activité ${marker}`,
+        description: "",
+        instruction: "",
+        pedagogicalQuestion: "",
+        videoRef: { assetId: used.assetId, playableId: used.playableId }
+      })
+    });
+    assert.equal(activity.response.status, 201, activity.body.error);
+    activityIds.push(activity.body.activity.id);
+    detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(used.assetId)}`
+    );
+    assert.equal(detail.body.asset.usage.preflight.catalog.decision, "blocked");
+    assert.equal(detail.body.asset.usage.activities[0].id, activity.body.activity.id);
+    const refusedActivity = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(used.assetId)}/physical`,
+      { method: "DELETE" }
+    );
+    assert.equal(refusedActivity.response.status, 409);
+    assert.ok(refusedActivity.body.conflicts.some(item => item.type === "activities"));
+    assert.equal(fs.existsSync(used.file), true);
+    const persistedActivityAsset = await database.query(
+      "SELECT COUNT(*) count FROM media_assets WHERE id = ?",
+      [used.assetId]
+    );
+    assert.equal(Number(persistedActivityAsset[0][0].count), 1);
+    const deletedActivity = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activity.body.activity.id)}`,
+      { method: "DELETE" }
+    );
+    assert.equal(deletedActivity.response.status, 200, deletedActivity.body.error);
+    activityIds.length = 0;
+    const deletedUsed = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(used.assetId)}/physical`,
+      { method: "DELETE" }
+    );
+    assert.equal(deletedUsed.response.status, 200, deletedUsed.body.error);
+    assert.equal(fs.existsSync(used.file), false);
+    assets.splice(assets.indexOf(used.assetId), 1);
+
+    const input = await importTemporaryMedia(server, `${marker}-input`);
+    const output = await importTemporaryMedia(server, `${marker}-output`);
+    assets.push(input.assetId, output.assetId);
+    files.push(input.file, output.file);
+    const treatmentId = `treatment-${marker}`;
+    treatmentIds.push(treatmentId);
+    await database.beginTransaction();
+    try {
+      await database.query(
+        `UPDATE media_assets
+         SET parent_asset_id = ?,
+             family_root_asset_id = ?,
+             provenance_json = JSON_REMOVE(
+               COALESCE(provenance_json, JSON_OBJECT()),
+               '$._migration.originalParentAssetId',
+               '$._migration.originalFamilyRootAssetId'
+             )
+         WHERE id = ?`,
+        [input.assetId, input.assetId, output.assetId]
+      );
+      await database.query(
+        `INSERT INTO media_treatments (
+          id, source_asset_id, source_playable_id, output_asset_id, output_playable_id,
+          published_playable_id, type, label, status, progress, retained,
+          source_preparation_id, runtime_job_id, engine, engine_version, ffmpeg_version,
+          parameters_json, diagnostics_json, error_json,
+          created_at, started_at, updated_at, finished_at
+        ) VALUES (?, ?, ?, ?, ?, NULL, 'mission150-fixture', ?, 'running', 50, 0,
+          NULL, NULL, 'mission150', '1', NULL, '{}', '{}', NULL,
+          CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3), CURRENT_TIMESTAMP(3), NULL)`,
+        [
+          treatmentId,
+          input.assetId,
+          input.playableId,
+          output.assetId,
+          output.playableId,
+          `[TEST M150] traitement ${marker}`
+        ]
+      );
+      await database.commit();
+    } catch (error) {
+      await database.rollback();
+      throw error;
+    }
+
+    const inputDetail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(input.assetId)}`
+    );
+    assert.equal(inputDetail.response.status, 200, inputDetail.body.error);
+    assert.deepEqual(
+      inputDetail.body.asset.usage.otherDependencies.treatments[0].relations,
+      ["source-asset", "source-playable"]
+    );
+    assert.ok(inputDetail.body.asset.usage.otherDependencies.derivations.some(
+      item => item.id === output.assetId
+    ));
+    const outputDetail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(output.assetId)}`
+    );
+    assert.equal(outputDetail.response.status, 200, outputDetail.body.error);
+    assert.deepEqual(
+      outputDetail.body.asset.usage.otherDependencies.treatments[0].relations,
+      ["output-asset", "output-playable"]
+    );
+    for (const target of [input, output]) {
+      const refused = await request(
+        server.baseUrl,
+        `/api/proto05/library/assets/${encodeURIComponent(target.assetId)}/physical`,
+        { method: "DELETE" }
+      );
+      assert.equal(refused.response.status, 409);
+      assert.ok(refused.body.conflicts.some(item => item.type === "treatments"));
+      assert.equal(fs.existsSync(target.file), true);
+    }
+    await database.beginTransaction();
+    try {
+      await database.query("DELETE FROM media_treatments WHERE id = ?", [treatmentId]);
+      await database.query(
+        "UPDATE media_assets SET parent_asset_id = NULL, family_root_asset_id = NULL WHERE id = ?",
+        [output.assetId]
+      );
+      await database.commit();
+    } catch (error) {
+      await database.rollback();
+      throw error;
+    }
+    treatmentIds.length = 0;
+    for (const target of [output, input]) {
+      const deletion = await request(
+        server.baseUrl,
+        `/api/proto05/library/assets/${encodeURIComponent(target.assetId)}/physical`,
+        { method: "DELETE" }
+      );
+      assert.equal(deletion.response.status, 200, deletion.body.error);
+      assert.equal(fs.existsSync(target.file), false);
+      assets.splice(assets.indexOf(target.assetId), 1);
+    }
+
+    const missing = await importTemporaryMedia(server, `${marker}-missing`);
+    assets.push(missing.assetId);
+    files.push(missing.file);
+    fs.rmSync(missing.file);
+    detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(missing.assetId)}`
+    );
+    assert.equal(detail.body.asset.usage.preflight.physical.decision, "file-missing");
+    assert.equal(detail.body.asset.usage.preflight.physical.allowed, false);
+    assert.equal(detail.body.asset.usage.preflight.catalog.allowed, true);
+    const refusedMissing = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(missing.assetId)}/physical`,
+      { method: "DELETE" }
+    );
+    assert.equal(refusedMissing.response.status, 409);
+    const stillPresent = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(missing.assetId)}`
+    );
+    assert.equal(stillPresent.response.status, 200);
+    const removedMissing = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(missing.assetId)}`,
+      { method: "DELETE" }
+    );
+    assert.equal(removedMissing.response.status, 200, removedMissing.body.error);
+    assets.splice(assets.indexOf(missing.assetId), 1);
+  } finally {
+    if (database) {
+      if (treatmentIds.length) {
+        await database.query(
+          `DELETE FROM media_treatments WHERE id IN (${treatmentIds.map(() => "?").join(",")})`,
+          treatmentIds
+        );
+      }
+      if (activityIds.length) {
+        await database.query(
+          `DELETE FROM activities WHERE id IN (${activityIds.map(() => "?").join(",")})`,
+          activityIds
+        );
+      }
+      if (assets.length) {
+        await database.query(
+          `UPDATE media_assets SET parent_asset_id = NULL, family_root_asset_id = NULL
+           WHERE id IN (${assets.map(() => "?").join(",")})`,
+          assets
+        );
+        await database.query(
+          `UPDATE media_assets SET default_playable_id = NULL
+           WHERE id IN (${assets.map(() => "?").join(",")})`,
+          assets
+        );
+        await database.query(
+          `DELETE FROM media_asset_tags WHERE asset_id IN (${assets.map(() => "?").join(",")})`,
+          assets
+        );
+        await database.query(
+          `DELETE FROM media_playable_metadata
+           WHERE playable_id IN (
+             SELECT id FROM media_playables
+             WHERE asset_id IN (${assets.map(() => "?").join(",")})
+           )`,
+          assets
+        );
+        await database.query(
+          `DELETE FROM media_playables WHERE asset_id IN (${assets.map(() => "?").join(",")})`,
+          assets
+        );
+        await database.query(
+          `DELETE FROM media_sources WHERE asset_id IN (${assets.map(() => "?").join(",")})`,
+          assets
+        );
+        await database.query(
+          `DELETE FROM media_assets WHERE id IN (${assets.map(() => "?").join(",")})`,
+          assets
+        );
+      }
+      if (folderIds.length) {
+        await database.query(
+          `DELETE FROM media_folders WHERE id IN (${folderIds.map(() => "?").join(",")})`,
+          folderIds
+        );
+      }
+      if (tagIds.length) {
+        await database.query(
+          `DELETE FROM media_tags WHERE id IN (${tagIds.map(() => "?").join(",")})`,
+          tagIds
+        );
+      }
+      for (const file of files) {
+        const mediaRoot = path.resolve(prototypeDirectory, "data", "video-library-media");
+        const resolved = path.resolve(file);
+        assert.ok(resolved.startsWith(`${mediaRoot}${path.sep}`));
+        fs.rmSync(resolved, { force: true });
+      }
+      if (baseline) {
+        assert.deepEqual(await mediaCardinalities(database), baseline);
+      }
+      await database.end();
     }
     await server.stop();
   }

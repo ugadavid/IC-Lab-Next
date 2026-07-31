@@ -5,6 +5,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 const { validateMediaLibrary, assertMediaLibrary } = require("../media-library-schema");
+const {
+  canonicalTreatmentDependencies
+} = require("../media-deletion-preflight");
 
 const fixturePath = path.join(__dirname, "fixtures", "media-library-canonical.valid.json");
 const readFixture = () => JSON.parse(fs.readFileSync(fixturePath, "utf8"));
@@ -393,4 +396,48 @@ test("dossier inexistant explicitement", () => {
   const library = readFixture();
   library.assets[0].folderId = "folder-absent";
   assert.ok(problem(validateMediaLibrary(library), "FOLDER_NOT_FOUND"));
+});
+
+test("le préflight de suppression détecte toutes les relations canoniques des traitements", () => {
+  const library = readFixture();
+  const dependencies = canonicalTreatmentDependencies(library.treatments, {
+    assetId: "asset-derived",
+    playableIds: new Set(["playable-derived"])
+  });
+  assert.deepEqual(dependencies, [
+    {
+      id: "treatment-complete",
+      title: "treatment-complete",
+      status: "completed",
+      relations: ["output-asset", "output-playable"],
+      relationLabels: ["asset de sortie", "playable de sortie"]
+    },
+    {
+      id: "treatment-failed",
+      title: "treatment-failed",
+      status: "failed",
+      relations: ["source-asset", "source-playable"],
+      relationLabels: ["asset d’entrée", "playable d’entrée"]
+    }
+  ]);
+});
+
+test("le préflight ignore les anciens champs artificiels d’un traitement", () => {
+  const dependencies = canonicalTreatmentDependencies([{
+    id: "treatment-legacy-decoy",
+    label: "Ancien leurre",
+    status: "running",
+    sourceAssetId: "asset-other",
+    sourcePlayableId: "playable-other",
+    outputAssetId: null,
+    outputPlayableId: null,
+    publishedPlayableId: null,
+    assetId: "asset-target",
+    playableId: "playable-target",
+    sourceId: "source-target"
+  }], {
+    assetId: "asset-target",
+    playableIds: new Set(["playable-target"])
+  });
+  assert.deepEqual(dependencies, []);
 });

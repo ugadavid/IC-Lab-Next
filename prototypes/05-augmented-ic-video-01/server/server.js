@@ -46,6 +46,9 @@ const {
   safeMariaDbLogDetails,
   unavailablePayload
 } = require("./mariadb-diagnostics");
+const {
+  canonicalTreatmentDependencies
+} = require("./media-deletion-preflight");
 const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
 const {
   validateProfile: validateVideoMetadataProfile
@@ -1257,10 +1260,25 @@ function activityDependencyRelations(activity, assetId, sourceIds, playableIds, 
 function libraryAssetDeletionPlan(assetId, activities) {
   const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
   if (!asset) throw new Error("Asset vidéo introuvable.");
-  const sources = (VIDEO_LIBRARY.sources || []).filter(source => source.assetId === assetId || (asset.sourceIds || []).includes(source.id));
-  const playables = (VIDEO_LIBRARY.playables || []).filter(playable => playable.assetId === assetId || (asset.playableIds || []).includes(playable.id));
+  const sources = (VIDEO_LIBRARY.sources || []).filter(source => source.assetId === assetId);
+  const playables = (VIDEO_LIBRARY.playables || []).filter(playable => playable.assetId === assetId);
   const sourceIds = new Set(sources.map(source => source.id));
   const playableIds = new Set(playables.map(playable => playable.id));
+  const projectedSourceIds = new Set(asset.sourceIds || []);
+  const projectedPlayableIds = new Set(asset.playableIds || []);
+  const internalIssues = [];
+  if (
+    [...sourceIds].some(id => !projectedSourceIds.has(id))
+    || [...projectedSourceIds].some(id => !sourceIds.has(id))
+  ) {
+    internalIssues.push({ id: assetId, title: "Projection des sources incohérente" });
+  }
+  if (
+    [...playableIds].some(id => !projectedPlayableIds.has(id))
+    || [...projectedPlayableIds].some(id => !playableIds.has(id))
+  ) {
+    internalIssues.push({ id: assetId, title: "Projection des playables incohérente" });
+  }
   const activityDependenciesById = new Map();
   (activities || []).forEach((activity, index) => {
     const relations = activityDependencyRelations(activity, assetId, sourceIds, playableIds, playables, sources);
@@ -1276,23 +1294,57 @@ function libraryAssetDeletionPlan(assetId, activities) {
     }
   });
   const activityDependencies = [...activityDependenciesById.values()];
-  const derivationDependencies = (VIDEO_LIBRARY.assets || []).filter(other => other.id !== assetId && (other.parentAssetId === assetId || other.provenance?.parentAssetId === assetId || other.provenance?.historical?.sourceAssetId === assetId)).map(other => ({ id: other.id, title: other.title || other.id }));
-  const treatmentDependencies = (VIDEO_LIBRARY.treatments || []).filter(treatment => treatment.assetId === assetId || playableIds.has(treatment.playableId) || sourceIds.has(treatment.sourceId)).map(treatment => ({ id: treatment.id, status: treatment.status || null }));
+  const derivationDependencies = (VIDEO_LIBRARY.assets || [])
+    .filter(other => other.id !== assetId && other.parentAssetId === assetId)
+    .sort((left, right) => String(left.id).localeCompare(String(right.id)))
+    .map(other => ({ id: other.id, title: other.title || other.id }));
+  const treatmentDependencies = canonicalTreatmentDependencies(
+    VIDEO_LIBRARY.treatments,
+    { assetId, playableIds }
+  );
   const localFiles = playables.map(playable => {
     const source = sources.find(item => item.id === playable.sourceId);
     const storageKey = localStorageKeyForPlayable(playable, source);
     if (!storageKey) return null;
     let file;
-    try { file = safeLibraryMediaPath(storageKey); } catch { return { storageKey, invalid: true }; }
+    try { file = safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(playable)); }
+    catch {
+      internalIssues.push({ id: playable.id, title: "Chemin du fichier local invalide" });
+      return { storageKey, invalid: true, playableId: playable.id };
+    }
     return { storageKey, file, playableId: playable.id };
   }).filter(Boolean);
   const localStorageKeys = new Set(localFiles.map(item => item.storageKey));
   const sharedObjects = (VIDEO_LIBRARY.assets || []).filter(other => other.id !== assetId && ((other.sourceIds || []).some(id => sourceIds.has(id)) || (other.playableIds || []).some(id => playableIds.has(id)) || (VIDEO_LIBRARY.playables || []).filter(playable => playable.assetId === other.id).some(playable => localStorageKeys.has(localStorageKeyForPlayable(playable, (VIDEO_LIBRARY.sources || []).find(source => source.id === playable.sourceId)))))).map(other => ({ id: other.id, title: other.title || other.id }));
-  return { asset, sources, playables, activityDependencies, derivationDependencies, treatmentDependencies, sharedObjects, localFiles };
+  const physicalFileState = (() => {
+    if (localFiles.some(item => item.invalid)) return "inconsistent";
+    if (localFiles.length === 0) return "not-managed";
+    if (localFiles.length !== 1) return "ambiguous";
+    try { return fsSync.statSync(localFiles[0].file).isFile() ? "present" : "missing"; }
+    catch { return "missing"; }
+  })();
+  const cleanupDependencies = {
+    folder: asset.folderId ? [{ id: asset.folderId }] : [],
+    tags: (asset.tagIds || []).map(id => ({ id }))
+  };
+  return {
+    asset,
+    sources,
+    playables,
+    activityDependencies,
+    derivationDependencies,
+    treatmentDependencies,
+    sharedObjects,
+    localFiles,
+    internalIssues,
+    cleanupDependencies,
+    physicalFileState
+  };
 }
 
 function deletionConflict(plan, physical) {
   const conflicts = [];
+  if (plan.internalIssues.length) conflicts.push({ type: "internal-inconsistencies", items: plan.internalIssues });
   if (plan.activityDependencies.length) conflicts.push({ type: "activities", items: plan.activityDependencies });
   if (plan.derivationDependencies.length) conflicts.push({ type: "derivations", items: plan.derivationDependencies });
   if (plan.treatmentDependencies.length) conflicts.push({ type: "treatments", items: plan.treatmentDependencies });
@@ -1303,6 +1355,37 @@ function deletionConflict(plan, physical) {
 function libraryUsageSummary(plan) {
   const catalogConflicts = deletionConflict(plan, false);
   const physicalConflicts = deletionConflict(plan, true);
+  const cleanupCount = plan.cleanupDependencies.folder.length + plan.cleanupDependencies.tags.length;
+  const catalogDecision = plan.internalIssues.length
+    ? "inconsistent"
+    : catalogConflicts.length
+      ? "blocked"
+      : cleanupCount
+        ? "allowed-with-cleanup"
+        : "allowed";
+  const physicalDecision = plan.internalIssues.length
+    ? "inconsistent"
+    : physicalConflicts.length
+      ? "blocked"
+      : plan.physicalFileState === "present"
+        ? "allowed"
+        : plan.physicalFileState === "missing"
+          ? "file-missing"
+          : "not-available";
+  const catalogMessage = catalogDecision === "blocked"
+    ? "Suppression refusée : cette vidéo possède encore des dépendances."
+    : catalogDecision === "inconsistent"
+      ? "Suppression refusée : le préflight a détecté une incohérence interne."
+      : catalogDecision === "allowed-with-cleanup"
+        ? "Suppression autorisée : le classement par dossier ou étiquette sera nettoyé avec l’entrée."
+        : "Suppression autorisée : aucune dépendance bloquante n’a été détectée.";
+  const physicalMessage = physicalDecision === "file-missing"
+    ? "Le fichier local est déjà absent ; seule la suppression de l’entrée de la vidéothèque reste disponible."
+    : physicalDecision === "not-available"
+      ? "La suppression physique n’est pas disponible pour cette entrée."
+      : physicalDecision === "allowed"
+        ? "Suppression physique autorisée : un unique fichier local géré sera supprimé."
+        : catalogMessage;
   return {
     whetherUsed: physicalConflicts.length > 0,
     activityCount: plan.activityDependencies.length,
@@ -1311,6 +1394,20 @@ function libraryUsageSummary(plan) {
       derivations: plan.derivationDependencies,
       treatments: plan.treatmentDependencies,
       sharedReferences: plan.sharedObjects
+    },
+    cleanupDependencies: plan.cleanupDependencies,
+    preflight: {
+      catalog: {
+        decision: catalogDecision,
+        allowed: ["allowed", "allowed-with-cleanup"].includes(catalogDecision),
+        message: catalogMessage
+      },
+      physical: {
+        decision: physicalDecision,
+        allowed: physicalDecision === "allowed",
+        fileState: plan.physicalFileState,
+        message: physicalMessage
+      }
     },
     blocking: {
       catalogRemoval: catalogConflicts.length > 0,
@@ -1324,7 +1421,9 @@ async function removeLibraryAsset(assetId, { physical = false } = {}) {
   const plan = libraryAssetDeletionPlan(assetId, activities);
   const conflicts = deletionConflict(plan, physical);
   if (conflicts.length) {
-    const error = new Error("La vidéo est encore utilisée par des activités ou des ressources dépendantes.");
+    const error = new Error(plan.internalIssues.length
+      ? "Le préflight a détecté une incohérence interne ; aucune suppression n’a été effectuée."
+      : "La vidéo est encore utilisée par des activités ou des ressources dépendantes.");
     error.statusCode = 409;
     error.conflicts = conflicts;
     throw error;
