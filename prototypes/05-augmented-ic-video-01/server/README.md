@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.48
+# Serveur autonome du Prototype 05 — 0.1.49
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -20,20 +20,63 @@ Les paramètres MariaDB sont conservés localement dans `../.env.local`, ignoré
 par Git. `../.env.example` documente uniquement les noms attendus et ne doit
 jamais recevoir de mot de passe réel.
 
-Le serveur vérifie au démarrage l’identité, la base, les grants et une lecture
-réelle. Le compte applicatif exige uniquement `SELECT`, `INSERT`, `UPDATE`, `DELETE` et,
-facultativement, `SHOW VIEW` sur la base Proto05. Tout privilège global,
-structurel, délégué ou visant une autre base maintient le mode diagnostic. Une
+Le serveur vérifie au démarrage l’identité, la base, les grants, le registre de
+migrations, le fingerprint structurel canonique et une lecture réelle. Une
+migration absente, altérée ou inconnue, ou un écart de table, colonne, index,
+contrainte, vue, routine, trigger ou événement maintient le mode diagnostic ;
+le démarrage n’applique jamais de migration automatiquement. Le compte
+applicatif exige `SELECT`, `EXECUTE` et `SHOW CREATE ROUTINE`, accepte
+`SHOW VIEW`, et ne possède aucun `INSERT`, `DELETE` ni `UPDATE` métier direct.
+Le seul `UPDATE` direct autorisé vise la table technique
+`data_projection_metadata`. Tout privilège global, structurel, délégué ou
+visant une autre base maintient le mode diagnostic. Une
 configuration ou une connexion indisponible produit le même état fermé.
 `GET /api/health` expose une raison non sensible et
 `POST /api/diagnostics/mariadb/retry` permet de vérifier le rétablissement sans
 redémarrer le processus.
 `Ctrl+C` réalise l’arrêt propre.
 
+## Registre de schéma MariaDB
+
+Le contrat versionné se trouve dans `../database/schema-migrations/`. La
+baseline `001`, conservée intacte, décrit les 32 tables. La migration additive
+`002` porte le canon transactionnel des 43 procédures stockées. Une installation
+neuve applique donc `001`, puis `002`. Sur une base déjà équipée, `002` n’est
+adoptée sans DDL que si l’inventaire, les signatures et les corps correspondent
+exactement ; une définition divergente exige une mise à niveau explicite avec
+sauvegarde vérifiée, et un inventaire incomplet est refusé.
+
+Les commandes d’administration sont toujours explicites et doivent charger la
+configuration locale ignorée :
+
+```powershell
+node --env-file=../.env.local scripts/schema-migrations.js plan
+node --env-file=../.env.local scripts/schema-migrations.js verify
+node --env-file=../.env.local scripts/schema-migrations.js backup-registry --output=<chemin-ignoré-nouveau>
+```
+
+`plan` est sans écriture et fournit le hash à approuver. `baseline` est réservé
+à une base existante dont la structure correspond bit pour bit au manifeste et
+exige le hash du plan, la confirmation littérale `BASELINE PROTO05 SCHEMA` et
+une sauvegarde vérifiée du registre. `apply` est réservé à une installation
+vide ou à des migrations ultérieures et exige le hash du plan ainsi que
+`APPLY PROTO05 SCHEMA MIGRATIONS`. Les deux opérations utilisent un verrou
+MariaDB nommé et recalculent le plan après son acquisition.
+
+Les instructions DDL sont exécutées séquentiellement : MariaDB peut les
+committer implicitement. En cas d’échec, le runner s’arrête, n’inscrit pas la
+migration concernée, signale le nombre d’instructions déjà exécutées et exige
+une inspection/restauration humaine avant reprise. Pour annuler une baseline
+qui n’a modifié que le registre, vérifier d’abord le témoin sauvegardé puis
+restaurer exactement les lignes du registre qu’il contient ; aucune donnée
+métier ni structure ne doit être touchée.
+
 ## Snapshots de lecture MariaDB
 
-Les projections applicatives composées sont construites depuis les 29 tables
-canoniques sur une seule connexion empruntée à un pool borné. Chaque projection
+Les projections applicatives composées sont lues par
+`CALL sp_author_activity_bundle('__PROTO05_CANONICAL_SNAPSHOT__')`, qui renvoie
+les 29 jeux de résultats canoniques sur une seule connexion empruntée à un pool
+borné. Chaque projection
 ouvre une transaction courte `REPEATABLE READ` avec
 `START TRANSACTION READ ONLY, WITH CONSISTENT SNAPSHOT`, exécute toutes ses
 lectures, puis committe ou rollback avant de rendre la connexion au pool.
@@ -43,7 +86,10 @@ jamais au milieu d'une projection, mais devient normalement visible à la
 requête HTTP suivante. Les lectures sont des lectures cohérentes InnoDB sans
 verrou métier explicite. La transaction est terminée avant le traitement de la
 route en mémoire ; elle n'englobe ni rendu de page, ni streaming, ni accès au
-système de fichiers ou au réseau.
+système de fichiers ou au réseau. Les mutations applicatives passent par les
+procédures `sp_*` raccordées à chaque parcours ; le serveur conserve la
+validation HTTP, les préconditions, le verrou applicatif et la relecture avant
+commit.
 
 ## Contrôle de concurrence optimiste
 

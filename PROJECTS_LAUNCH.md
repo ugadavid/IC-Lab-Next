@@ -74,9 +74,10 @@ dans la stack Compose Dico-IC. Un port ouvert confirme seulement qu’un process
 - **Dossier serveur** : `prototypes/05-augmented-ic-video-01/server`.
 - **Port** : `8791`.
 - **Démarrage direct** : lancer `node --env-file=../.env.local server.js` depuis
-  le dossier serveur. MariaDB est obligatoire et constitue l’unique autorité.
+  le dossier serveur. MariaDB est obligatoire, constitue l’unique autorité et
+  doit exposer le registre `001`/`002` ainsi que les procédures canoniques.
 - **Entrée racine** : <http://127.0.0.1:8791/> ; le serveur sert actuellement
-  `index-0.0.8.html`.
+  `index-0.0.9.html`.
 - **Vue étudiante** : <http://127.0.0.1:8791/student/:activityId>.
 - **Bibliothèque enseignante** : <http://127.0.0.1:8791/teacher>.
 - **Prévisualisation** :

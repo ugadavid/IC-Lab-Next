@@ -1,5 +1,7 @@
 "use strict";
 
+const { verifyDatabaseSchema } = require("./schema-migrations");
+
 const path = require("node:path");
 const { projectCanonicalLibrary } = require("./media-library-runtime");
 
@@ -46,6 +48,7 @@ const READ_TABLES = Object.freeze([
   ["media_asset_tags", "asset_id, tag_id"],
   ["media_treatments", "id"]
 ]);
+const CANONICAL_SNAPSHOT_SELECTOR = "__PROTO05_CANONICAL_SNAPSHOT__";
 
 const FORBIDDEN_PRIVILEGES = new Set([
   "ALL PRIVILEGES",
@@ -80,7 +83,10 @@ const FORBIDDEN_PRIVILEGES = new Set([
 function jsonValue(value, fallback = null) {
   if (value === null || value === undefined) return fallback;
   if (typeof value === "object") return structuredClone(value);
-  try { return JSON.parse(value); } catch { return fallback; }
+  try {
+    const parsed = JSON.parse(value);
+    return parsed === null ? fallback : parsed;
+  } catch { return fallback; }
 }
 
 function withoutMigration(value) {
@@ -653,12 +659,37 @@ async function runConsistentReadSnapshot({ acquireConnection, project }) {
   }
 }
 
+async function readCanonicalTablesWithProcedures(database, { afterTableRead = null } = {}) {
+  const tables = {};
+  const [procedureResult] = await database.query(
+    "CALL sp_author_activity_bundle(?)",
+    [CANONICAL_SNAPSHOT_SELECTOR]
+  );
+  const resultSets = procedureResult.filter(Array.isArray);
+  if (resultSets.length !== READ_TABLES.length) {
+    const error = new Error("Le bundle MariaDB canonique est incomplet.");
+    error.code = "PROTO05_MARIADB_BUNDLE_INCOMPLETE";
+    error.expectedResultSets = READ_TABLES.length;
+    error.actualResultSets = resultSets.length;
+    throw error;
+  }
+  for (const [index, [table]] of READ_TABLES.entries()) {
+    const rows = resultSets[index];
+    tables[table] = rows;
+    if (typeof afterTableRead === "function") {
+      await afterTableRead({ database, table, index, rows });
+    }
+  }
+  return tables;
+}
+
 function createMariaDbReadonlyAdapter({
   config,
   prototypeDirectory,
   mysqlModulePath = null,
   mysql = null,
   grantValidator = assertReadonlyGrants,
+  schemaVerifier = verifyDatabaseSchema,
   mode = "mariadb-readonly",
   readonlySession = true
 }) {
@@ -707,12 +738,20 @@ function createMariaDbReadonlyAdapter({
         }
         const [grantRows] = await database.query("SHOW GRANTS");
         const grants = grantValidator(grantRows, config);
-        const [[probe]] = await database.query("SELECT COUNT(*) AS activity_count FROM activities WHERE deleted_at IS NULL");
+        const schema = schemaVerifier
+          ? await schemaVerifier({
+              database,
+              databaseName: config.database,
+              prototypeDirectory
+            })
+          : null;
+        const tables = await readCanonicalTablesWithProcedures(database);
         return {
           mode,
           account: String(identity.account),
           database: identity.database_name,
-          activityCount: Number(probe.activity_count),
+          activityCount: tables.activities.length,
+          ...(schema ? { schema } : {}),
           ...grants
         };
       } finally {
@@ -724,15 +763,7 @@ function createMariaDbReadonlyAdapter({
         return await runConsistentReadSnapshot({
           acquireConnection: connection,
           project: async database => {
-            const tables = {};
-            for (const [index, [table, orderBy, where]] of READ_TABLES.entries()) {
-              const sql = `SELECT * FROM \`${table}\`${where ? ` WHERE ${where}` : ""} ORDER BY ${orderBy}`;
-              const [rows] = await database.query(sql);
-              tables[table] = rows;
-              if (typeof afterTableRead === "function") {
-                await afterTableRead({ database, table, index, rows });
-              }
-            }
+            const tables = await readCanonicalTablesWithProcedures(database, { afterTableRead });
             return projectMariaDbSnapshotForApplication(mapMariaDbTablesToSnapshot(tables));
           }
         });
@@ -749,10 +780,12 @@ function createMariaDbReadonlyAdapter({
 }
 
 module.exports = {
+  CANONICAL_SNAPSHOT_SELECTOR,
   READ_TABLES,
   assertReadonlyGrants,
   createMariaDbReadonlyAdapter,
   mapMariaDbTablesToSnapshot,
   projectMariaDbSnapshotForApplication,
+  readCanonicalTablesWithProcedures,
   runConsistentReadSnapshot
 };

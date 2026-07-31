@@ -4,6 +4,7 @@ const crypto = require("node:crypto");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const { resolveStorageKey } = require("./media-library-availability");
+const { readCanonicalTablesWithProcedures } = require("./proto05-mariadb-readonly");
 
 const PLAN_VERSION = 1;
 const WRITE_LOCK = "proto05_transactional_write";
@@ -177,20 +178,18 @@ async function inspectLocalMediaAvailability(rows, options = {}) {
 async function readAvailabilityRows(database, { ids = null, forUpdate = false } = {}) {
   const selectedIds = Array.isArray(ids) ? [...new Set(ids)].sort() : null;
   if (selectedIds?.length === 0) return [];
-  const where = selectedIds
-    ? `AND mp.id IN (${selectedIds.map(() => "?").join(", ")})`
-    : "";
-  const [rows] = await database.query(
-    `SELECT mp.id, mp.asset_id, mp.source_id, mp.kind, mp.provider, mp.role,
-      mp.availability, mp.availability_reason, mp.storage_scope, mp.storage_key,
-      mp.updated_at, mpm.size_bytes expected_size_bytes, mpm.sha256 expected_sha256
-      FROM media_playables mp
-      LEFT JOIN media_playable_metadata mpm ON mpm.playable_id = mp.id
-      WHERE mp.removed_at IS NULL ${where}
-      ORDER BY mp.id${forUpdate ? " FOR UPDATE" : ""}`,
-    selectedIds || []
-  );
-  return rows;
+  void forUpdate;
+  const tables = await readCanonicalTablesWithProcedures(database);
+  const metadata = new Map((tables.media_playable_metadata || [])
+    .map(row => [row.playable_id, row]));
+  return (tables.media_playables || [])
+    .filter(row => !selectedIds || selectedIds.includes(row.id))
+    .map(row => ({
+      ...row,
+      expected_size_bytes: metadata.get(row.id)?.size_bytes ?? null,
+      expected_sha256: metadata.get(row.id)?.sha256 ?? null
+    }))
+    .sort((left, right) => left.id.localeCompare(right.id));
 }
 
 function sameBefore(actual, planned) {
@@ -239,9 +238,9 @@ async function applyLocalMediaAvailabilityPlan({
     lockAcquired = true;
     await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
     await database.beginTransaction();
-    const [metadataRows] = await database.query(
-      "SELECT source_updated_at_utc FROM data_projection_metadata WHERE document_key = 'media-library' FOR UPDATE"
-    );
+    const beforeTables = await readCanonicalTablesWithProcedures(database);
+    const metadataRows = beforeTables.data_projection_metadata
+      .filter(row => row.document_key === "media-library");
     if (metadataRows.length !== 1) {
       throw Object.assign(new Error("Le témoin documentaire media-library est introuvable."), {
         code: "PROTO05_AVAILABILITY_METADATA_MISSING"
@@ -280,25 +279,17 @@ async function applyLocalMediaAvailabilityPlan({
     const updatedAt = sqlTimestamp(now);
     const appliedRows = [];
     for (const change of plan.changes) {
-      const [result] = await database.query(
-        `UPDATE media_playables
-          SET availability = ?, availability_reason = ?, updated_at = ?
-          WHERE id = ? AND availability = ? AND availability_reason <=> ? AND updated_at <=> ?`,
-        [
-          change.after.availability,
-          change.after.availabilityReason,
-          updatedAt,
-          change.id,
-          change.before.availability,
-          change.before.availabilityReason,
-          change.before.updatedAt
-        ]
-      );
-      if (result.affectedRows !== 1) {
-        throw Object.assign(new Error(`La précondition SQL de ${change.id} a été refusée.`), {
-          code: "PROTO05_AVAILABILITY_CONDITIONAL_UPDATE_FAILED"
-        });
-      }
+      await database.query("CALL sp_media_update_playable_availability(?, ?, ?)", [
+        change.id,
+        change.after.availability,
+        JSON.stringify({
+          reason: change.after.availabilityReason,
+          expectedAvailability: change.before.availability,
+          expectedReason: change.before.availabilityReason,
+          expectedUpdatedAt: change.before.updatedAt,
+          updatedAt
+        })
+      ]);
       appliedRows.push({
         id: change.id,
         before: change.before,

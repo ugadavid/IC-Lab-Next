@@ -7,10 +7,80 @@ const http = require("node:http");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const { buildAuthoringPayload } = require("../../../shared/guided-authoring-contract");
+const { mariadbConfigurationFromEnvironment } = require("../../proto05-data-mode");
 
 const serverDirectory = path.resolve(__dirname, "..", "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
 const envFile = path.join(prototypeDirectory, ".env.local");
+const mysql = require(path.resolve(
+  prototypeDirectory,
+  "..",
+  "00-ic-hub",
+  "server",
+  "node_modules",
+  "mysql2",
+  "promise"
+));
+
+let testEnvironmentLoaded = false;
+
+function loadTestEnvironment() {
+  if (testEnvironmentLoaded) return;
+  process.loadEnvFile(envFile);
+  testEnvironmentLoaded = true;
+}
+
+async function testDatabaseConnection() {
+  loadTestEnvironment();
+  return mysql.createConnection({
+    ...mariadbConfigurationFromEnvironment(process.env),
+    charset: "utf8mb4",
+    dateStrings: true,
+    multipleStatements: false
+  });
+}
+
+async function readProjectionMetadataSnapshot() {
+  const database = await testDatabaseConnection();
+  try {
+    const [rows] = await database.query(
+      "SELECT document_key, schema_version, source_updated_at_utc "
+        + "FROM data_projection_metadata ORDER BY document_key"
+    );
+    return rows;
+  } finally {
+    await database.end();
+  }
+}
+
+async function restoreProjectionMetadataSnapshot(snapshot) {
+  const database = await testDatabaseConnection();
+  try {
+    await database.beginTransaction();
+    for (const row of snapshot) {
+      const [result] = await database.query(
+        "UPDATE data_projection_metadata "
+          + "SET schema_version = ?, source_updated_at_utc = ? WHERE document_key = ?",
+        [row.schema_version, row.source_updated_at_utc, row.document_key]
+      );
+      assert.equal(result.affectedRows, 1, `Témoin technique absent : ${row.document_key}.`);
+    }
+    await database.commit();
+  } catch (error) {
+    await database.rollback();
+    throw error;
+  } finally {
+    await database.end();
+  }
+}
+
+function combineCleanupErrors(primaryError, cleanupError) {
+  if (!primaryError) return cleanupError;
+  return new AggregateError(
+    [primaryError, cleanupError],
+    "Le scénario Proto05 et son nettoyage ont échoué."
+  );
+}
 
 async function freePort() {
   const server = http.createServer();
@@ -129,6 +199,7 @@ async function seedActivity(baseUrl, source, marker) {
 
 async function startTemporaryProto05Server(store = { activities: [] }, prefix = "proto05-server-test-") {
   assert.ok(fs.existsSync(envFile), "La configuration locale MariaDB de Proto05 est requise.");
+  const projectionMetadataSnapshot = await readProjectionMetadataSnapshot();
   const runtimeDirectory = isolatedRuntimeDirectory(prefix);
   fs.mkdirSync(runtimeDirectory, { recursive: false });
   const port = await freePort();
@@ -163,6 +234,7 @@ async function startTemporaryProto05Server(store = { activities: [] }, prefix = 
       seeded.push(await seedActivity(baseUrl, activity, marker));
     }
   } catch (error) {
+    let startupError = error;
     for (const activity of seeded.reverse()) {
       try {
         await request(baseUrl, `/api/proto05/activities/${encodeURIComponent(activity.id)}`, {
@@ -170,9 +242,22 @@ async function startTemporaryProto05Server(store = { activities: [] }, prefix = 
         });
       } catch {}
     }
-    await stopChild(child);
-    removeRuntimeDirectory(runtimeDirectory);
-    throw error;
+    try {
+      await stopChild(child);
+    } catch (cleanupError) {
+      startupError = combineCleanupErrors(startupError, cleanupError);
+    }
+    try {
+      await restoreProjectionMetadataSnapshot(projectionMetadataSnapshot);
+    } catch (cleanupError) {
+      startupError = combineCleanupErrors(startupError, cleanupError);
+    }
+    try {
+      removeRuntimeDirectory(runtimeDirectory);
+    } catch (cleanupError) {
+      startupError = combineCleanupErrors(startupError, cleanupError);
+    }
+    throw startupError;
   }
 
   let cleaned = false;
@@ -231,8 +316,21 @@ async function startTemporaryProto05Server(store = { activities: [] }, prefix = 
       } catch (error) {
         cleanupError = error;
       } finally {
-        await stopChild(child);
-        removeRuntimeDirectory(runtimeDirectory);
+        try {
+          await stopChild(child);
+        } catch (error) {
+          cleanupError = combineCleanupErrors(cleanupError, error);
+        }
+        try {
+          await restoreProjectionMetadataSnapshot(projectionMetadataSnapshot);
+        } catch (error) {
+          cleanupError = combineCleanupErrors(cleanupError, error);
+        }
+        try {
+          removeRuntimeDirectory(runtimeDirectory);
+        } catch (error) {
+          cleanupError = combineCleanupErrors(cleanupError, error);
+        }
       }
       if (cleanupError) throw cleanupError;
     }

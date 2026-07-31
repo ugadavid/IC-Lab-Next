@@ -1,0 +1,50 @@
+{
+  "contractVersion": 1,
+  "migrations": [
+    {
+      "version": "001",
+      "description": "Baseline du schéma canonique Proto05 sans routines historiques",
+      "kind": "baseline",
+      "sources": [
+        {
+          "path": "../drafts/003_proto05_schema_hardening.sql",
+          "beforeDelimiter": true
+        },
+        {
+          "path": "../migrations/002_proto05_mariadb_schema_alignment.sql",
+          "beforeDelimiter": true
+        },
+        {
+          "path": "../migrations/004_proto05_document_metadata_schema.sql"
+        },
+        {
+          "path": "../migrations/006_proto05_video_plus_metadata_schema.sql"
+        }
+      ],
+      "schemaManifest": "001_proto05_canonical_schema.manifest.json"
+    },
+    {
+      "version": "002",
+      "description": "Canon transactionnel des 43 procédures Proto05",
+      "kind": "migration",
+      "adoptExisting": true,
+      "sources": [
+        {
+          "path": "002_proto05_routine_session.sql"
+        },
+        {
+          "path": "../drafts/003_proto05_schema_hardening.sql",
+          "afterDelimiter": true
+        },
+        {
+          "path": "../migrations/002_proto05_mariadb_schema_alignment.sql",
+          "afterDelimiter": true
+        },
+        {
+          "path": "002_proto05_canonical_routines.sql"
+        }
+      ],
+      "schemaManifest": "002_proto05_canonical_routines.manifest.json"
+    }
+  ]
+}

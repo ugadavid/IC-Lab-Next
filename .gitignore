@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+.env.local
+mariadb_backup_*.sql
 
 node_modules/
 **/node_modules/

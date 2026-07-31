@@ -5,7 +5,8 @@ const { pathToFileURL } = require("node:url");
 const {
   READ_TABLES,
   mapMariaDbTablesToSnapshot,
-  projectMariaDbSnapshotForApplication
+  projectMariaDbSnapshotForApplication,
+  readCanonicalTablesWithProcedures
 } = require("./proto05-mariadb-readonly");
 const {
   concurrencyConflict,
@@ -13,8 +14,9 @@ const {
   mediaEditorialRevision
 } = require("./optimistic-concurrency");
 
-const REQUIRED_PRIVILEGES = Object.freeze(["DELETE", "INSERT", "SELECT", "UPDATE"]);
+const REQUIRED_PRIVILEGES = Object.freeze(["EXECUTE", "SELECT", "SHOW CREATE ROUTINE"]);
 const OPTIONAL_PRIVILEGES = new Set(["SHOW VIEW"]);
+const TECHNICAL_METADATA_TARGET = "data_projection_metadata";
 const MANAGED_METADATA = Object.freeze({
   name: "data_projection_metadata",
   pk: ["document_key"],
@@ -30,7 +32,9 @@ function assertApplicationGrants(grantRows, config) {
   const statements = grantRows.map(row => String(Object.values(row)[0] || "")
     .replace(/\s+IDENTIFIED BY PASSWORD\s+'[^']+'/i, ""));
   const databaseTarget = `\`${config.database.replaceAll("`", "``")}\`.*`.toLowerCase();
+  const metadataTarget = `\`${config.database.replaceAll("`", "``")}\`.\`${TECHNICAL_METADATA_TARGET}\``.toLowerCase();
   const databasePrivileges = new Set();
+  let metadataUpdate = false;
   for (const statement of statements) {
     if (/\sWITH GRANT OPTION(?:\s|$)/i.test(statement)) {
       throw new Error("Le compte MariaDB applicatif peut déléguer des privilèges.");
@@ -41,6 +45,13 @@ function assertApplicationGrants(grantRows, config) {
       if (privileges.some(privilege => privilege !== "USAGE")) {
         throw new Error("Le compte MariaDB applicatif possède un privilège global non autorisé.");
       }
+      continue;
+    }
+    if (target === metadataTarget) {
+      if (privileges.length !== 1 || privileges[0] !== "UPDATE") {
+        throw new Error("Le compte MariaDB applicatif possède un privilège technique non autorisé.");
+      }
+      metadataUpdate = true;
       continue;
     }
     if (target !== databaseTarget) {
@@ -58,9 +69,12 @@ function assertApplicationGrants(grantRows, config) {
       throw new Error(`Le compte MariaDB applicatif ne possède pas ${privilege}.`);
     }
   }
+  if (!metadataUpdate) {
+    throw new Error("Le compte MariaDB applicatif ne peut pas actualiser le témoin technique de projection.");
+  }
   return {
     readonly: false,
-    privileges: [...databasePrivileges].sort()
+    privileges: [...databasePrivileges, `UPDATE:${TECHNICAL_METADATA_TARGET}`].sort()
   };
 }
 
@@ -135,39 +149,6 @@ function tablePlan(definition, currentRows, desiredRows) {
   };
 }
 
-function relationshipDepth(row, rowsById, parentColumn) {
-  let depth = 0;
-  let cursor = row;
-  const seen = new Set();
-  while (cursor?.[parentColumn] && !seen.has(cursor[parentColumn])) {
-    seen.add(cursor[parentColumn]);
-    const parent = rowsById.get(cursor[parentColumn]);
-    if (!parent || parent === cursor) break;
-    depth += 1;
-    cursor = parent;
-  }
-  return depth;
-}
-
-function sortSelfReferences(tableName, rows, descending = false) {
-  const parentColumn = tableName === "media_folders"
-    ? "parent_folder_id"
-    : tableName === "media_assets"
-      ? "parent_asset_id"
-      : tableName === "activity_pedagogical_identities"
-        ? "parent_activity_id"
-        : null;
-  if (!parentColumn) return rows;
-  const idColumn = tableName === "activity_pedagogical_identities" ? "activity_id" : "id";
-  const rowsById = new Map(rows.map(row => [row[idColumn], row]));
-  return [...rows].sort((left, right) => {
-    const difference = relationshipDepth(left, rowsById, parentColumn)
-      - relationshipDepth(right, rowsById, parentColumn);
-    return (descending ? -difference : difference)
-      || rowKey(left, [idColumn]).localeCompare(rowKey(right, [idColumn]));
-  });
-}
-
 function metadataRows(snapshot, canonicalLibrary) {
   function sqlTimestamp(value) {
     return value ? new Date(value).toISOString().replace("T", " ").replace("Z", "") : null;
@@ -208,32 +189,70 @@ function mapperActivities(activities) {
   };
 }
 
-function buildInsert(table, row, excluded = new Set()) {
-  const columns = Object.keys(row).filter(column => !excluded.has(column));
+function activityAuthoringPayload(activity, desiredRows) {
+  const activityId = activity.id;
+  const layerConfiguration = activity.layerConfiguration || {};
+  const learnerVisible = new Set(layerConfiguration.learnerVisibleLayerIds || []);
+  const teacherVisible = new Set(layerConfiguration.teacherVisibleLayerIds || []);
+  const defaultVisible = new Set(layerConfiguration.defaultVisibleLayerIds || []);
   return {
-    sql: `INSERT INTO \`${table}\` (${columns.map(column => `\`${column}\``).join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
-    values: columns.map(column => databaseValue(row[column]))
+    activity: {
+      version: activity.version,
+      status: activity.status,
+      title: activity.title,
+      description: activity.description ?? null,
+      instruction: activity.instruction ?? null,
+      pedagogicalQuestion: activity.pedagogicalQuestion ?? null
+    },
+    languages: (activity.languages || []).map((item, sortOrder) => ({
+      id: item.id,
+      label: item.label ?? null,
+      sortOrder
+    })),
+    transcription: activity.transcription || null,
+    speakers: (activity.speakers || []).map((item, sortOrder) => ({ ...item, sortOrder })),
+    segments: (activity.segments || []).map((item, sortOrder) => ({ ...item, sortOrder })),
+    segmentSpeakers: (activity.segments || []).flatMap(segment =>
+      (segment.speakerIds || []).map(speakerId => ({ segmentId: segment.id, speakerId }))),
+    segmentLanguages: (activity.segments || []).flatMap(segment =>
+      (segment.languageIds || []).map(languageId => ({ segmentId: segment.id, languageId }))),
+    languageIntervals: (activity.languageIntervals || []).map((item, sortOrder) => ({ ...item, sortOrder })),
+    layers: (activity.layers || []).map((item, sortOrder) => ({ ...item, sortOrder })),
+    layerVisibility: (activity.layers || []).flatMap(layer => [
+      { layerId: layer.id, audience: "learner", isVisible: learnerVisible.has(layer.id), isDefault: defaultVisible.has(layer.id) },
+      { layerId: layer.id, audience: "teacher", isVisible: teacherVisible.has(layer.id), isDefault: false }
+    ]),
+    phenomena: (activity.phenomena || []).map((item, sortOrder) => ({ ...item, sortOrder })),
+    annotations: (activity.teacherAnnotations || []).map((item, sortOrder) => ({ ...item, sortOrder })),
+    overlays: (activity.overlays || []).map((item, sortOrder) => ({ ...item, sortOrder })),
+    overlayLayers: (activity.overlays || []).flatMap(overlay =>
+      (overlay.layerIds || []).map(layerId => ({ overlayId: overlay.id, layerId }))),
+    layerConfiguration: {
+      id: layerConfiguration.id,
+      allowLearnerToggle: layerConfiguration.allowLearnerToggle !== false
+    },
+    allowLearnerToggle: layerConfiguration.allowLearnerToggle !== false,
+    pedagogicalIdentity: (desiredRows.activity_pedagogical_identities || [])
+      .find(row => row.activity_id === activityId) || null,
+    pedagogicalTextFields: (desiredRows.activity_pedagogical_text_fields || [])
+      .filter(row => row.activity_id === activityId),
+    pedagogicalQualifications: (desiredRows.activity_pedagogical_qualifications || [])
+      .filter(row => row.activity_id === activityId)
   };
 }
 
-function buildUpdate(definition, row, excluded = new Set()) {
-  const columns = Object.keys(row).filter(column => (
-    !definition.pk.includes(column) && !excluded.has(column)
-  ));
-  return {
-    sql: `UPDATE \`${definition.name}\` SET ${columns.map(column => `\`${column}\` = ?`).join(", ")} WHERE ${definition.pk.map(column => `\`${column}\` <=> ?`).join(" AND ")}`,
-    values: [
-      ...columns.map(column => databaseValue(row[column])),
-      ...definition.pk.map(column => databaseValue(row[column]))
-    ]
-  };
+function procedureName(value) {
+  if (!/^sp_[a-z0-9_]+$/.test(value)) throw new Error("Nom de procédure Proto05 invalide.");
+  return value;
 }
 
-function buildDelete(definition, row) {
-  return {
-    sql: `DELETE FROM \`${definition.name}\` WHERE ${definition.pk.map(column => `\`${column}\` <=> ?`).join(" AND ")}`,
-    values: definition.pk.map(column => databaseValue(row[column]))
-  };
+async function callProcedure(database, name, parameters = []) {
+  const placeholders = parameters.map(() => "?").join(", ");
+  const [result] = await database.query(
+    `CALL ${procedureName(name)}(${placeholders})`,
+    parameters.map(databaseValue)
+  );
+  return result.filter(Array.isArray);
 }
 
 function sqlTimestamp(value) {
@@ -369,6 +388,273 @@ function plansForScope(plans, scope, desiredRows, currentTables) {
   return { plans: scoped, changes };
 }
 
+function alignProcedureOwnedIdentifiers(desiredRows, currentTables) {
+  const currentLinks = currentTables.activity_media_links || [];
+  desiredRows.activity_media_links = (desiredRows.activity_media_links || []).map(row => {
+    const existing = currentLinks.find(current => (
+      current.activity_id === row.activity_id
+      && current.role === row.role
+      && (row.role === "primary" || current.media_asset_id === row.media_asset_id)
+    ));
+    return existing ? { ...row, id: existing.id } : row;
+  });
+}
+
+function planFor(plans, table) {
+  return plans.find(plan => plan.definition.name === table) || {
+    inserts: [], updates: [], deletes: []
+  };
+}
+
+async function executeSnapshotProcedures({
+  database,
+  operation,
+  plans,
+  snapshot,
+  desiredRows,
+  currentTables,
+  preconditions,
+  beforeCall
+}) {
+  let calls = 0;
+  const invoke = async (name, parameters) => {
+    await beforeCall?.(calls);
+    const resultSets = await callProcedure(database, name, parameters);
+    calls += 1;
+    return resultSets;
+  };
+  const activityPlan = planFor(plans, "activities");
+  const activityFolderPlan = planFor(plans, "activity_folders");
+  const mediaFolderPlan = planFor(plans, "media_folders");
+  const mediaTagPlan = planFor(plans, "media_tags");
+  const mediaAssetPlan = planFor(plans, "media_assets");
+  const currentActivityRows = new Map((currentTables.activities || []).map(row => [row.id, row]));
+  const revisions = new Map((currentTables.activities || []).map(row => [row.id, Number(row.revision)]));
+
+  for (const row of activityFolderPlan.inserts) {
+    await invoke("sp_activity_folder_create", [row.id, row.name]);
+  }
+  for (const { desired } of activityFolderPlan.updates) {
+    await invoke("sp_activity_folder_rename", [desired.id, desired.name]);
+  }
+  for (const row of activityFolderPlan.deletes) {
+    await invoke("sp_activity_folder_delete", [row.id]);
+  }
+
+  for (const row of mediaFolderPlan.inserts) {
+    await invoke("sp_media_folder_create", [row.id, row.parent_folder_id, row.name]);
+  }
+  for (const { desired } of mediaFolderPlan.updates) {
+    await invoke("sp_media_folder_rename", [desired.id, desired.name]);
+  }
+  for (const row of mediaFolderPlan.deletes) {
+    await invoke("sp_media_folder_delete", [row.id]);
+  }
+  for (const row of mediaTagPlan.inserts) {
+    await invoke("sp_media_tag_create", [row.id, row.name, {
+      color: row.color,
+      normalizedName: row.normalized_name
+    }]);
+  }
+  for (const { desired } of mediaTagPlan.updates) {
+    await invoke("sp_media_tag_rename", [desired.id, desired.name, {
+      color: desired.color,
+      normalizedName: desired.normalized_name
+    }]);
+  }
+  for (const row of mediaTagPlan.deletes) {
+    await invoke("sp_media_tag_delete", [row.id]);
+  }
+
+  for (const row of activityPlan.inserts) {
+    const activity = snapshot.activities.activities.find(item => item.id === row.id);
+    await database.query("SET @proto05_new_activity_id = ?", [row.id]);
+    if (operation === "activity-duplicate") {
+      const sourceId = activity?.pedagogicalIdentity?.lineage?.parentActivityId;
+      const source = currentActivityRows?.get?.(sourceId);
+      await invoke("sp_activity_duplicate", [
+        sourceId,
+        Number(source?.revision),
+        row.id,
+        row.title,
+        0
+      ]);
+    } else {
+      await invoke("sp_activity_create", [
+        row.id,
+        row.version,
+        row.title,
+        row.description,
+        row.instruction,
+        row.pedagogical_question
+      ]);
+    }
+    const result = await invoke("sp_activity_replace_authoring", [
+      row.id,
+      1,
+      activityAuthoringPayload(activity, desiredRows)
+    ]);
+    revisions.set(row.id, Number(result[0]?.[0]?.revision ?? 2));
+  }
+
+  const changedActivityIds = new Set([
+    ...activityPlan.updates.map(change => change.desired.id),
+    ...Object.keys(snapshot.activityLibrary?.assignments || {}).filter(id => {
+      const desired = (desiredRows.activities || []).find(row => row.id === id)?.folder_id ?? null;
+      return (currentActivityRows.get(id)?.folder_id ?? null) !== desired;
+    })
+  ]);
+  for (const activityId of changedActivityIds) {
+    const current = currentActivityRows.get(activityId);
+    const desired = (desiredRows.activities || []).find(row => row.id === activityId);
+    if (!current || !desired) continue;
+    let revision = Number(current.revision);
+    if (operation === "activity-library" && current.folder_id !== desired.folder_id) {
+      const result = await invoke("sp_activity_assign_folder", [activityId, desired.folder_id]);
+      revision = Number(result[0]?.[0]?.revision ?? revision);
+      continue;
+    }
+    if (operation === "activity-video-ref") continue;
+    const activity = snapshot.activities.activities.find(item => item.id === activityId);
+    const result = await invoke("sp_activity_replace_authoring", [
+      activityId,
+      revision,
+      activityAuthoringPayload(activity, desiredRows)
+    ]);
+    revision = Number(result[0]?.[0]?.revision ?? (revision + 1));
+    revisions.set(activityId, revision);
+  }
+
+  const linkPlan = planFor(plans, "activity_media_links");
+  for (const row of operation === "activity-delete" ? [] : linkPlan.deletes) {
+    if (row.role !== "supplementary") {
+      const error = new Error("La suppression de la vidéo primaire n’est pas couverte par le contrat canonique.");
+      error.code = "PROTO05_PROCEDURE_OPERATION_UNSUPPORTED";
+      throw error;
+    }
+    const result = await invoke("sp_activity_remove_supplementary_media", [
+      row.activity_id,
+      revisions.get(row.activity_id),
+      row.media_asset_id
+    ]);
+    revisions.set(row.activity_id, Number(result[0]?.[0]?.revision ?? (revisions.get(row.activity_id) + 1)));
+  }
+  for (const row of operation === "activity-delete" ? [] : [
+    ...linkPlan.inserts,
+    ...linkPlan.updates.map(change => change.desired)
+  ]) {
+    const name = row.role === "primary"
+      ? "sp_activity_set_primary_media"
+      : "sp_activity_set_supplementary_media";
+    const parameters = [
+      row.activity_id,
+      revisions.get(row.activity_id),
+      row.media_asset_id,
+      row.media_playable_id
+    ];
+    if (row.role !== "primary") parameters.push(row.sort_order);
+    const result = await invoke(name, parameters);
+    revisions.set(row.activity_id, Number(result[0]?.[0]?.revision ?? (revisions.get(row.activity_id) + 1)));
+  }
+  await database.query("SET @proto05_new_activity_id = NULL");
+
+  for (const row of activityPlan.deletes) {
+    const expected = preconditions.activities?.find(item => item.id === row.id)?.expected
+      ?? Number(row.revision);
+    await invoke("sp_activity_delete", [row.id, expected]);
+  }
+
+  const sourcePlan = planFor(plans, "media_sources");
+  const playablePlan = planFor(plans, "media_playables");
+  const metadataPlan = planFor(plans, "media_playable_metadata");
+  for (const asset of mediaAssetPlan.inserts.filter(row => row.lifecycle !== "reserved")) {
+    const source = sourcePlan.inserts.find(row => row.asset_id === asset.id);
+    const playable = playablePlan.inserts.find(row => row.asset_id === asset.id && row.source_id === source?.id);
+    if (!source || !playable) {
+      const error = new Error("Un nouvel asset doit fournir une source et un playable canoniques.");
+      error.code = "PROTO05_PROCEDURE_OPERATION_UNSUPPORTED";
+      throw error;
+    }
+    const metadata = metadataPlan.inserts.find(row => row.playable_id === playable.id);
+    const tagIds = (desiredRows.media_asset_tags || [])
+      .filter(row => row.asset_id === asset.id)
+      .map(row => row.tag_id);
+    await invoke("sp_media_register_import", [
+      asset.id, source.id, playable.id, asset.title, source.kind,
+      source.provider, source.transport, source.role, source.mime_type,
+      source.origin_url, playable.storage_scope, playable.storage_key,
+      playable.location_url, playable.embed_video_id, playable.availability,
+      {
+        asset: {
+          description: asset.description,
+          folderId: asset.folder_id,
+          editorialMetadata: asset.editorial_metadata_json,
+          provenance: asset.provenance_json,
+          rights: asset.rights_json,
+          tagIds
+        },
+        source: {
+          origin: source.origin_json,
+          provenance: source.provenance_json
+        },
+        playable: { provenance: playable.provenance_json },
+        metadata: metadata ? {
+          analysisStatus: metadata.analysis_status,
+          mimeType: metadata.mime_type,
+          durationMs: metadata.duration_ms,
+          sizeBytes: metadata.size_bytes,
+          sha256: metadata.sha256,
+          width: metadata.width,
+          height: metadata.height,
+          frameRate: metadata.frame_rate,
+          videoCodec: metadata.video_codec,
+          audioCodec: metadata.audio_codec,
+          hasAudio: metadata.has_audio,
+          analyzer: metadata.analyzer,
+          analyzerVersion: metadata.analyzer_version,
+          error: metadata.error_text
+        } : null
+      }
+    ]);
+  }
+
+  for (const { current, desired } of mediaAssetPlan.updates) {
+    const currentTags = (currentTables.media_asset_tags || []).filter(row => row.asset_id === desired.id).map(row => row.tag_id).sort();
+    const desiredTags = (desiredRows.media_asset_tags || []).filter(row => row.asset_id === desired.id).map(row => row.tag_id).sort();
+    const supported = new Set([
+      "title", "description", "folder_id", "default_playable_id",
+      "editorial_metadata_json", "provenance_json", "rights_json", "updated_at"
+    ]);
+    const unsupported = Object.keys(desired).filter(key => !supported.has(key)
+      && comparableValue(current[key], desired[key]) !== normalizeValue(desired[key]));
+    if (unsupported.length) {
+      const error = new Error(`La procédure média ne couvre pas encore : ${unsupported.join(", ")}.`);
+      error.code = "PROTO05_PROCEDURE_OPERATION_UNSUPPORTED";
+      throw error;
+    }
+    if (stableJson(currentTags) !== stableJson(desiredTags)
+        || Object.keys(desired).some(key => supported.has(key)
+          && comparableValue(current[key], desired[key]) !== normalizeValue(desired[key]))) {
+      await invoke("sp_media_asset_set_tags", [desired.id, {
+        tagIds: desiredTags,
+        title: desired.title,
+        description: desired.description,
+        folderId: desired.folder_id,
+        defaultPlayableId: desired.default_playable_id,
+        editorialMetadata: desired.editorial_metadata_json,
+        provenance: desired.provenance_json,
+        rights: desired.rights_json
+      }]);
+    }
+  }
+
+  for (const row of mediaAssetPlan.deletes) {
+    await invoke(row.parent_asset_id ? "sp_media_derivation_delete" : "sp_media_asset_delete", [row.id]);
+  }
+
+  return calls;
+}
+
 function createMariaDbWriteAdapter({
   config,
   prototypeDirectory,
@@ -421,17 +707,6 @@ function createMariaDbWriteAdapter({
     return { identity, grants: assertApplicationGrants(grantRows, config) };
   }
 
-  async function readTables(database, lock = false) {
-    const tables = {};
-    for (const [table, orderBy] of READ_TABLES) {
-      const [rows] = await database.query(
-        `SELECT * FROM \`${table}\` ORDER BY ${orderBy}${lock ? " FOR UPDATE" : ""}`
-      );
-      tables[table] = rows;
-    }
-    return tables;
-  }
-
   async function mappedWorkingCopyRows(snapshot, mutation) {
     const canonicalLibrary = structuredClone(snapshot.canonicalVideoLibrary);
     const asset = canonicalLibrary.assets.find(item => item.id === mutation.assetId);
@@ -477,12 +752,12 @@ function createMariaDbWriteAdapter({
       const database = await connection();
       try {
         const { identity, grants } = await verifyConnection(database);
-        const [[probe]] = await database.query("SELECT COUNT(*) AS activity_count FROM activities WHERE deleted_at IS NULL");
+        const tables = await readCanonicalTablesWithProcedures(database);
         return {
           mode: "mariadb",
           account: String(identity.account),
           database: identity.database_name,
-          activityCount: Number(probe.activity_count),
+          activityCount: tables.activities.length,
           ...grants
         };
       } finally {
@@ -530,6 +805,7 @@ function createMariaDbWriteAdapter({
       const database = await connection();
       let statementCount = 0;
       let lockAcquired = false;
+      let transactionStarted = false;
       const executeMutation = async ({ sql, values }) => {
         await database.query(sql, values);
         statementCount += 1;
@@ -546,7 +822,10 @@ function createMariaDbWriteAdapter({
         lockAcquired = true;
         await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
         await database.beginTransaction();
-        const currentTables = await readTables(database, true);
+        transactionStarted = true;
+        await database.query("SET @proto05_runtime_transaction = 1");
+        const currentTables = await readCanonicalTablesWithProcedures(database);
+        alignProcedureOwnedIdentifiers(desiredRows, currentTables);
         const currentActivityRows = new Map((currentTables.activities || []).map(row => [row.id, row]));
         const desiredActivityRows = new Map((desiredRows.activities || []).map(row => [row.id, row]));
         for (const desired of desiredActivityRows.values()) {
@@ -618,90 +897,35 @@ function createMariaDbWriteAdapter({
         );
         const plans = scoped.plans;
         const scopedChangeCount = scoped.changes;
-
-        const mediaPlan = plans.find(plan => plan.definition.name === "media_assets");
-        for (const change of [...(mediaPlan?.updates || []), ...(mediaPlan?.deletes || []).map(current => ({ current, desired: {} }))]) {
-          if (change.current.default_playable_id !== (change.desired.default_playable_id ?? null)) {
-            await executeMutation({
-              sql: "UPDATE `media_assets` SET `default_playable_id` = NULL WHERE `id` = ?",
-              values: [change.current.id]
-            });
-          }
-        }
-
-        const earlyUpdates = new Map();
-        const deletedActivityFolders = new Set(
-          (plans.find(plan => plan.definition.name === "activity_folders")?.deletes || [])
-            .map(row => row.id)
-        );
-        const deletedMediaFolders = new Set(
-          (plans.find(plan => plan.definition.name === "media_folders")?.deletes || [])
-            .map(row => row.id)
-        );
-        for (const plan of plans) {
-          const isActivityDetachment = plan.definition.name === "activities";
-          const isMediaDetachment = plan.definition.name === "media_assets";
-          if (!isActivityDetachment && !isMediaDetachment) continue;
-          const excluded = isMediaDetachment ? new Set(["default_playable_id"]) : new Set();
-          for (const change of plan.updates) {
-            const mustDetach = isActivityDetachment
-              ? deletedActivityFolders.has(change.current.folder_id) && change.desired.folder_id === null
-              : deletedMediaFolders.has(change.current.folder_id) && change.desired.folder_id === null;
-            if (!mustDetach) continue;
-            await executeMutation(buildUpdate(plan.definition, change.desired, excluded));
-            earlyUpdates.set(
-              plan.definition.name,
-              (earlyUpdates.get(plan.definition.name) || new Set()).add(
-                rowKey(change.desired, plan.definition.pk)
-              )
-            );
-          }
-        }
-
-        for (const plan of [...plans].reverse()) {
-          for (const row of sortSelfReferences(plan.definition.name, plan.deletes, true)) {
-            await executeMutation(buildDelete(plan.definition, row));
-          }
-        }
-        for (const plan of plans) {
-          const excluded = plan.definition.name === "media_assets"
-            ? new Set(["default_playable_id"])
-            : new Set();
-          for (const row of sortSelfReferences(plan.definition.name, plan.inserts)) {
-            await executeMutation(buildInsert(plan.definition.name, row, excluded));
-          }
-        }
-        for (const plan of plans) {
-          const excluded = plan.definition.name === "media_assets"
-            ? new Set(["default_playable_id"])
-            : new Set();
-          for (const { desired } of plan.updates) {
-            if (earlyUpdates.get(plan.definition.name)?.has(rowKey(desired, plan.definition.pk))) {
-              continue;
+        statementCount += await executeSnapshotProcedures({
+          database,
+          operation,
+          plans,
+          snapshot,
+          desiredRows,
+          currentTables,
+          preconditions,
+          beforeCall: async calls => {
+            if (Number.isInteger(failAfterStatements) && calls + 1 >= failAfterStatements) {
+              const forced = new Error("Échec forcé avant l’appel de procédure.");
+              forced.code = "PROTO05_FORCED_ROLLBACK";
+              throw forced;
             }
-            await executeMutation(buildUpdate(plan.definition, desired, excluded));
           }
+        });
+        const metadataPlan = planFor(plans, "data_projection_metadata");
+        for (const { desired } of metadataPlan.updates) {
+          await executeMutation({
+            sql: "UPDATE `data_projection_metadata` SET `schema_version` = ?, `source_updated_at_utc` = ? WHERE `document_key` = ?",
+            values: [desired.schema_version, desired.source_updated_at_utc, desired.document_key]
+          });
         }
-        const finalDefaultRows = [
-          ...(mediaPlan?.inserts || []),
-          ...(mediaPlan?.updates || [])
-            .filter(change => change.current.default_playable_id !== change.desired.default_playable_id)
-            .map(change => change.desired)
-        ];
-        for (const row of finalDefaultRows) {
-          if (row.default_playable_id !== null) {
-            await executeMutation({
-              sql: "UPDATE `media_assets` SET `default_playable_id` = ?, `updated_at` = ? WHERE `id` = ? AND NOT (`default_playable_id` <=> ?)",
-              values: [row.default_playable_id, row.updated_at, row.id, row.default_playable_id]
-            });
-          }
-        }
-
-        const resultingTables = await readTables(database);
+        const resultingTables = await readCanonicalTablesWithProcedures(database);
         const resultingSnapshot = projectMariaDbSnapshotForApplication(
           mapMariaDbTablesToSnapshot(resultingTables)
         );
         await database.commit();
+        transactionStarted = false;
         return {
           operation,
           statements: statementCount,
@@ -709,7 +933,10 @@ function createMariaDbWriteAdapter({
           snapshot: resultingSnapshot
         };
       } catch (error) {
-        try { await database.rollback(); } catch {}
+        if (transactionStarted) {
+          try { await database.rollback(); } catch {}
+          transactionStarted = false;
+        }
         if (error?.code === "PROTO05_CONCURRENCY_CONFLICT") throw error;
         if (error?.code === "PROTO05_FORCED_ROLLBACK") throw error;
         const wrapped = new Error("Écriture MariaDB transactionnelle impossible.");
@@ -720,9 +947,11 @@ function createMariaDbWriteAdapter({
           : "PROTO05_MARIADB_WRITE_FAILED";
         wrapped.reasonCode = error?.code || "MARIA_TRANSACTION_ERROR";
         wrapped.differencePaths = error?.differencePaths
-          || (error?.code?.startsWith("PROTO05_TARGETED_") ? [error.message] : []);
+          || (error?.code?.startsWith("PROTO05_TARGETED_")
+            || error?.code === "PROTO05_PROCEDURE_OPERATION_UNSUPPORTED" ? [error.message] : []);
         throw wrapped;
       } finally {
+        try { await database.query("SET @proto05_runtime_transaction = NULL"); } catch {}
         if (lockAcquired) {
           try { await database.query("SELECT RELEASE_LOCK('proto05_transactional_write')"); } catch {}
         }
@@ -751,6 +980,7 @@ function createMariaDbWriteAdapter({
       const database = await connection();
       let statementCount = 0;
       let lockAcquired = false;
+      let transactionStarted = false;
       const executeMutation = async command => {
         await database.query(command.sql, command.values);
         statementCount += 1;
@@ -767,45 +997,75 @@ function createMariaDbWriteAdapter({
         lockAcquired = true;
         await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
         await database.beginTransaction();
-        const beforeTables = await readTables(database);
-        const [assetRows] = await database.query(
-          "SELECT `id`, `deleted_at` FROM `media_assets` WHERE `id` = ? FOR UPDATE",
-          [mutation.assetId]
-        );
-        const [sourcePlayableRows] = await database.query(
-          "SELECT `id` FROM `media_playables` WHERE `id` = ? AND `asset_id` = ? AND `removed_at` IS NULL FOR UPDATE",
-          [mutation.expectedPlayableId, mutation.assetId]
-        );
-        if (assetRows.length !== 1 || assetRows[0].deleted_at !== null || sourcePlayableRows.length !== 1) {
+        transactionStarted = true;
+        await database.query("SET @proto05_runtime_transaction = 1");
+        const beforeTables = await readCanonicalTablesWithProcedures(database);
+        const assetRow = beforeTables.media_assets.find(row => row.id === mutation.assetId);
+        const sourcePlayable = beforeTables.media_playables.find(row => (
+          row.id === mutation.expectedPlayableId && row.asset_id === mutation.assetId
+        ));
+        if (!assetRow || !sourcePlayable) {
           throw new Error("La vidéo source de la copie de travail n’existe plus.");
         }
-        const [existingSourceRows] = await database.query(
-          "SELECT `id` FROM `media_sources` WHERE `id` = ? FOR UPDATE",
-          [mutation.source.id]
-        );
-        const [existingPlayableRows] = await database.query(
-          "SELECT `id` FROM `media_playables` WHERE `id` = ? FOR UPDATE",
-          [mutation.playable.id]
-        );
-        if (existingSourceRows.length || existingPlayableRows.length) {
+        if (beforeTables.media_sources.some(row => row.id === mutation.source.id)
+            || beforeTables.media_playables.some(row => row.id === mutation.playable.id)) {
           throw new Error("La destination canonique de la copie existe déjà.");
         }
-
-        await executeMutation(buildInsert("media_sources", desired.source));
-        await executeMutation(buildInsert("media_playables", desired.playable));
-        if (desired.metadata) {
-          await executeMutation(buildInsert("media_playable_metadata", desired.metadata));
+        if (Number.isInteger(failAfterStatements) && failAfterStatements <= 1) {
+          const forced = new Error("Échec forcé avant l’appel de procédure de copie de travail.");
+          forced.code = "PROTO05_FORCED_ROLLBACK";
+          throw forced;
         }
-        await executeMutation({
-          sql: "UPDATE `media_assets` SET `updated_at` = ? WHERE `id` = ? AND `deleted_at` IS NULL",
-          values: [desired.asset.updated_at, mutation.assetId]
-        });
+        await callProcedure(database, "sp_media_register_playable", [
+          desired.playable.id,
+          mutation.assetId,
+          desired.source.id,
+          desired.playable.kind,
+          desired.playable.provider,
+          desired.playable.role,
+          desired.playable.availability,
+          desired.playable.storage_scope,
+          desired.playable.storage_key,
+          desired.playable.location_url,
+          desired.playable.embed_video_id,
+          desired.asset.default_playable_id === desired.playable.id ? 1 : 0,
+          {
+            playable: desired.playable.provenance_json,
+            source: {
+              kind: desired.source.kind,
+              provider: desired.source.provider,
+              transport: desired.source.transport,
+              role: desired.source.role,
+              mimeType: desired.source.mime_type,
+              originUrl: desired.source.origin_url,
+              origin: desired.source.origin_json,
+              provenance: desired.source.provenance_json
+            },
+            metadata: desired.metadata ? {
+              analysisStatus: desired.metadata.analysis_status,
+              mimeType: desired.metadata.mime_type,
+              durationMs: desired.metadata.duration_ms,
+              sizeBytes: desired.metadata.size_bytes,
+              sha256: desired.metadata.sha256,
+              width: desired.metadata.width,
+              height: desired.metadata.height,
+              frameRate: desired.metadata.frame_rate,
+              videoCodec: desired.metadata.video_codec,
+              audioCodec: desired.metadata.audio_codec,
+              hasAudio: desired.metadata.has_audio,
+              analyzer: desired.metadata.analyzer,
+              analyzerVersion: desired.metadata.analyzer_version,
+              error: desired.metadata.error_text
+            } : null
+          }
+        ]);
+        statementCount += 1;
         await executeMutation({
           sql: "UPDATE `data_projection_metadata` SET `source_updated_at_utc` = ? WHERE `document_key` = 'media-library'",
           values: [sqlTimestamp(mutation.updatedAt)]
         });
 
-        const resultingTables = await readTables(database);
+        const resultingTables = await readCanonicalTablesWithProcedures(database);
         const expectedDeltas = new Map([
           ["media_sources", 1],
           ["media_playables", 1],
@@ -837,6 +1097,7 @@ function createMariaDbWriteAdapter({
           mapMariaDbTablesToSnapshot(resultingTables)
         );
         await database.commit();
+        transactionStarted = false;
         return {
           operation: "media-working-copy",
           statements: statementCount,
@@ -844,7 +1105,10 @@ function createMariaDbWriteAdapter({
           snapshot: resultingSnapshot
         };
       } catch (error) {
-        try { await database.rollback(); } catch {}
+        if (transactionStarted) {
+          try { await database.rollback(); } catch {}
+          transactionStarted = false;
+        }
         if (error?.code === "PROTO05_FORCED_ROLLBACK") throw error;
         const wrapped = new Error("Création transactionnelle de la copie de travail impossible.");
         wrapped.code = error?.code?.startsWith("PROTO05_TARGETED_")
@@ -853,6 +1117,7 @@ function createMariaDbWriteAdapter({
         wrapped.reasonCode = error?.code || "MARIA_TARGETED_TRANSACTION_ERROR";
         throw wrapped;
       } finally {
+        try { await database.query("SET @proto05_runtime_transaction = NULL"); } catch {}
         if (lockAcquired) {
           try { await database.query("SELECT RELEASE_LOCK('proto05_transactional_write')"); } catch {}
         }

@@ -183,7 +183,7 @@ CALL sp_m133_assert(
    WHERE constraint_schema = DATABASE()) = 48
   AND
   (SELECT COUNT(*) FROM information_schema.check_constraints
-   WHERE constraint_schema = DATABASE()) = 68,
+   WHERE constraint_schema = DATABASE()) = 70,
   'historical schema plus document metadata table remain stable'
 );
 

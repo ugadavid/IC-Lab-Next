@@ -72,7 +72,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.48";
+const VERSION = "0.1.49";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -3784,7 +3784,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       }
       next.status = "draft"; store.activities[index] = next; store.updatedAt = new Date().toISOString();
       try { await persistActivities(store, { operation: "activity-authoring", preconditions }); }
-      catch (error) { return sendMutationFailure(response, error, "Sauvegarde de l’atelier impossible."); }
+      catch (error) { console.error(`[data] atelier Proto05 impossible : ${error.code || "ERROR"}/${error.reasonCode || "UNKNOWN"} ${(error.differencePaths || []).join(",")}`); return sendMutationFailure(response, error, "Sauvegarde de l’atelier impossible."); }
       return sendJson(response, 200, activityResponse(store, store.activities.find(activity => activity.id === id)));
     }
     if (request.method === "PUT" && isDetail) {
@@ -3818,7 +3818,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       store.activities[index] = next;
       store.updatedAt = new Date().toISOString();
       try { await persistActivities(store, { operation: "activity-metadata", preconditions }); }
-      catch (error) { console.error(`[data] sauvegarde Proto05 impossible : ${error.message}`); return sendMutationFailure(response, error, "Sauvegarde impossible."); }
+      catch (error) { console.error(`[data] sauvegarde Proto05 impossible : ${error.code || "ERROR"}/${error.reasonCode || "UNKNOWN"}`); return sendMutationFailure(response, error, "Sauvegarde impossible."); }
       return sendJson(response, 200, activityResponse(store, store.activities.find(activity => activity.id === id)));
     }
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: isDetail ? "GET, PUT, DELETE" : "GET" });

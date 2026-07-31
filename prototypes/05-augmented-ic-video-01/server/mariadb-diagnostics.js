@@ -43,7 +43,9 @@ function classifyMariaDbError(error) {
     || /acc[eè]s refus[eé]|access denied|privil[eè]ges?|grant/i.test(message)) {
     return "authentication_or_grants";
   }
-  if ([...codes].some(code => SCHEMA_CODES.has(code))
+  if ([...codes].some(code => SCHEMA_CODES.has(code)
+      || code.startsWith("PROTO05_SCHEMA_")
+      || code.startsWith("PROTO05_MIGRATION_"))
     || /table .*doesn.?t exist|schema|migration|base .*inconnue/i.test(message)) {
     return "schema_or_migrations";
   }

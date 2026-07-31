@@ -36,6 +36,7 @@ const {
 const {
   READ_TABLES,
   createMariaDbReadonlyAdapter,
+  readCanonicalTablesWithProcedures,
   runConsistentReadSnapshot
 } = require("../proto05-mariadb-readonly");
 const { createMariaDbWriteAdapter } = require("../proto05-mariadb-write");
@@ -191,13 +192,63 @@ function loadTestEnvironment() {
 async function testDatabaseConnection() {
   loadTestEnvironment();
   const config = mariadbConfigurationFromEnvironment(process.env);
+  const user = process.env.PROTO05_TEST_MARIADB_USER || config.user;
+  const password = process.env.PROTO05_TEST_MARIADB_PASSWORD || config.password;
   return mysql.createConnection({
     ...config,
+    user,
+    password,
     charset: "utf8mb4",
     dateStrings: true,
     multipleStatements: false
   });
 }
+
+async function readProjectionMetadataSnapshot() {
+  const database = await testDatabaseConnection();
+  try {
+    const [rows] = await database.query(
+      "SELECT document_key, schema_version, source_updated_at_utc "
+        + "FROM data_projection_metadata ORDER BY document_key"
+    );
+    return rows;
+  } finally {
+    await database.end();
+  }
+}
+
+async function restoreProjectionMetadataSnapshot(snapshot) {
+  const database = await testDatabaseConnection();
+  try {
+    await database.beginTransaction();
+    for (const row of snapshot) {
+      const [result] = await database.query(
+        "UPDATE data_projection_metadata "
+          + "SET schema_version = ?, source_updated_at_utc = ? WHERE document_key = ?",
+        [row.schema_version, row.source_updated_at_utc, row.document_key]
+      );
+      assert.equal(result.affectedRows, 1, `Témoin technique absent : ${row.document_key}.`);
+    }
+    await database.commit();
+  } catch (error) {
+    await database.rollback();
+    throw error;
+  } finally {
+    await database.end();
+  }
+}
+
+let suiteProjectionMetadataSnapshot;
+
+test.before(async () => {
+  suiteProjectionMetadataSnapshot = await readProjectionMetadataSnapshot();
+});
+
+test.after(async () => {
+  if (suiteProjectionMetadataSnapshot) {
+    await restoreProjectionMetadataSnapshot(suiteProjectionMetadataSnapshot);
+  }
+});
 
 async function mediaCardinalities(database) {
   const [[row]] = await database.query(`SELECT
@@ -322,13 +373,32 @@ test("le runtime ne contient plus de backend métier JSON sélectionnable", () =
   assert.doesNotMatch(hub, /PROTO05_DATA_FILE|readProto05Activities/);
 });
 
+test("la frontière de lecture exécute réellement le bundle canonique par CALL", async () => {
+  const queries = [];
+  const resultSets = READ_TABLES.map(() => []);
+  const database = {
+    async query(sql, parameters) {
+      queries.push({ sql, parameters });
+      return [[...resultSets, { affectedRows: 0 }], []];
+    }
+  };
+  const tables = await readCanonicalTablesWithProcedures(database);
+  assert.deepEqual(queries, [{
+    sql: "CALL sp_author_activity_bundle(?)",
+    parameters: ["__PROTO05_CANONICAL_SNAPSHOT__"]
+  }]);
+  assert.deepEqual(Object.keys(tables), READ_TABLES.map(([table]) => table));
+});
+
 test("le diagnostic MariaDB classe les erreurs sans exposer de secret", () => {
   const refused = Object.assign(new Error("connect refused"), { code: "ECONNREFUSED" });
   const denied = Object.assign(new Error("access denied"), { code: "ER_ACCESS_DENIED_ERROR" });
   const missing = Object.assign(new Error("table missing"), { code: "ER_NO_SUCH_TABLE" });
+  const divergent = Object.assign(new Error("fingerprint mismatch"), { code: "PROTO05_SCHEMA_DIVERGENCE" });
   assert.equal(classifyMariaDbError(new Error("wrapper", { cause: refused })), "connection_refused");
   assert.equal(classifyMariaDbError(denied), "authentication_or_grants");
   assert.equal(classifyMariaDbError(missing), "schema_or_migrations");
+  assert.equal(classifyMariaDbError(divergent), "schema_or_migrations");
   assert.deepEqual(unavailablePayload("connection_refused"), {
     status: "unavailable",
     service: "mariadb",
@@ -504,7 +574,7 @@ test("CRUD activité, classement média et redémarrage restent transactionnels"
         body: JSON.stringify(buildAuthoringPayload(authored))
       }
     );
-    assert.equal(authoring.response.status, 200, authoring.body.error);
+    assert.equal(authoring.response.status, 200, `${authoring.body.error}\n${server.output()}`);
     assert.equal(authoring.body.activity.segments[0].text, "Segment MariaDB exclusif");
     assert.equal(authoring.body.activity.teacherAnnotations[0].note, "ANNOTATION-M147-DEBUT");
     assert.equal(

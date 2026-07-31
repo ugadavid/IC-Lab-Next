@@ -58,10 +58,19 @@ DROP PROCEDURE IF EXISTS sp_media_tag_create$$
 CREATE PROCEDURE sp_media_tag_create(
   IN p_tag_id VARCHAR(191),
   IN p_name VARCHAR(191),
-  IN p_color VARCHAR(32)
+  IN p_color TEXT
 )
 SQL SECURITY DEFINER
 BEGIN
+  DECLARE v_color VARCHAR(32) DEFAULT NULL;
+  DECLARE v_normalized_name VARCHAR(191);
+  IF JSON_VALID(p_color) = 1 AND JSON_TYPE(p_color) = 'OBJECT' THEN
+    SET v_color = JSON_VALUE(p_color, '$.color');
+    SET v_normalized_name = JSON_VALUE(p_color, '$.normalizedName');
+  ELSE
+    SET v_color = p_color;
+    SET v_normalized_name = LOWER(TRIM(p_name));
+  END IF;
   IF COALESCE(TRIM(p_tag_id), '') = ''
      OR COALESCE(TRIM(p_name), '') = '' THEN
     SIGNAL SQLSTATE '45000'
@@ -69,14 +78,20 @@ BEGIN
           MESSAGE_TEXT = 'sp_media_tag_create: id and name are required';
   END IF;
 
-  IF p_color IS NOT NULL AND CHAR_LENGTH(p_color) > 32 THEN
+  IF COALESCE(TRIM(v_normalized_name), '') = '' THEN
+    SIGNAL SQLSTATE '45000'
+      SET MYSQL_ERRNO = 30118,
+          MESSAGE_TEXT = 'sp_media_tag_create: normalized name is required';
+  END IF;
+
+  IF v_color IS NOT NULL AND CHAR_LENGTH(v_color) > 32 THEN
     SIGNAL SQLSTATE '45000'
       SET MYSQL_ERRNO = 30116,
           MESSAGE_TEXT = 'sp_media_tag_create: color exceeds 32 characters';
   END IF;
 
   INSERT INTO media_tags (id, name, normalized_name, color)
-  VALUES (p_tag_id, TRIM(p_name), LOWER(TRIM(p_name)), p_color);
+  VALUES (p_tag_id, TRIM(p_name), v_normalized_name, v_color);
 
   SELECT id, name, normalized_name, color, created_at, updated_at
   FROM media_tags
@@ -87,11 +102,20 @@ DROP PROCEDURE IF EXISTS sp_media_tag_rename$$
 CREATE PROCEDURE sp_media_tag_rename(
   IN p_tag_id VARCHAR(191),
   IN p_name VARCHAR(191),
-  IN p_color VARCHAR(32)
+  IN p_color TEXT
 )
 SQL SECURITY DEFINER
 BEGIN
   DECLARE v_changed TINYINT(1) DEFAULT 0;
+  DECLARE v_color VARCHAR(32) DEFAULT NULL;
+  DECLARE v_normalized_name VARCHAR(191);
+  IF JSON_VALID(p_color) = 1 AND JSON_TYPE(p_color) = 'OBJECT' THEN
+    SET v_color = JSON_VALUE(p_color, '$.color');
+    SET v_normalized_name = JSON_VALUE(p_color, '$.normalizedName');
+  ELSE
+    SET v_color = p_color;
+    SET v_normalized_name = LOWER(TRIM(p_name));
+  END IF;
 
   IF COALESCE(TRIM(p_name), '') = '' THEN
     SIGNAL SQLSTATE '45000'
@@ -99,7 +123,13 @@ BEGIN
           MESSAGE_TEXT = 'sp_media_tag_rename: name is required';
   END IF;
 
-  IF p_color IS NOT NULL AND CHAR_LENGTH(p_color) > 32 THEN
+  IF COALESCE(TRIM(v_normalized_name), '') = '' THEN
+    SIGNAL SQLSTATE '45000'
+      SET MYSQL_ERRNO = 30119,
+          MESSAGE_TEXT = 'sp_media_tag_rename: normalized name is required';
+  END IF;
+
+  IF v_color IS NOT NULL AND CHAR_LENGTH(v_color) > 32 THEN
     SIGNAL SQLSTATE '45000'
       SET MYSQL_ERRNO = 30117,
           MESSAGE_TEXT = 'sp_media_tag_rename: color exceeds 32 characters';
@@ -107,13 +137,13 @@ BEGIN
 
   UPDATE media_tags
   SET name = TRIM(p_name),
-      normalized_name = LOWER(TRIM(p_name)),
-      color = p_color
+      normalized_name = v_normalized_name,
+      color = v_color
   WHERE id = p_tag_id
     AND NOT (
       name <=> TRIM(p_name)
-      AND normalized_name <=> LOWER(TRIM(p_name))
-      AND color <=> p_color
+      AND normalized_name <=> v_normalized_name
+      AND color <=> v_color
     );
 
   SET v_changed = IF(ROW_COUNT() > 0, 1, 0);
@@ -160,7 +190,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_activity_replace_authoring: invalid authoring JSON';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision, authoring_digest
     INTO v_current_revision, v_current_digest
@@ -387,8 +419,114 @@ BEGIN
       )
     ) AS j;
 
+    IF JSON_TYPE(JSON_EXTRACT(p_authoring_json, '$.pedagogicalIdentity')) = 'OBJECT' THEN
+      INSERT INTO activity_pedagogical_identities (
+        activity_id, schema_version, design_status,
+        resource_nature_state, resource_nature_value, resource_nature_note,
+        duration_state, duration_minutes, duration_note,
+        intention_state, intention_value, intention_note,
+        audience_state, audience_value, audience_note,
+        use_context_state, use_context_value, use_context_note,
+        lineage_state, lineage_relation, parent_activity_id, root_activity_id,
+        lineage_note, extended_fields_json
+      )
+      SELECT p_activity_id, j.schema_version, j.design_status,
+        j.resource_nature_state, j.resource_nature_value, j.resource_nature_note,
+        j.duration_state, j.duration_minutes, j.duration_note,
+        j.intention_state, j.intention_value, j.intention_note,
+        j.audience_state, j.audience_value, j.audience_note,
+        j.use_context_state, j.use_context_value, j.use_context_note,
+        j.lineage_state, j.lineage_relation, j.parent_activity_id, j.root_activity_id,
+        j.lineage_note, JSON_EXTRACT(p_authoring_json, '$.pedagogicalIdentity.extended_fields_json')
+      FROM JSON_TABLE(p_authoring_json, '$.pedagogicalIdentity' COLUMNS (
+        schema_version VARCHAR(32) PATH '$.schema_version',
+        design_status VARCHAR(64) PATH '$.design_status',
+        resource_nature_state VARCHAR(32) PATH '$.resource_nature_state',
+        resource_nature_value TEXT PATH '$.resource_nature_value' NULL ON EMPTY,
+        resource_nature_note TEXT PATH '$.resource_nature_note' NULL ON EMPTY,
+        duration_state VARCHAR(32) PATH '$.duration_state',
+        duration_minutes INT UNSIGNED PATH '$.duration_minutes' NULL ON EMPTY,
+        duration_note TEXT PATH '$.duration_note' NULL ON EMPTY,
+        intention_state VARCHAR(32) PATH '$.intention_state',
+        intention_value TEXT PATH '$.intention_value' NULL ON EMPTY,
+        intention_note TEXT PATH '$.intention_note' NULL ON EMPTY,
+        audience_state VARCHAR(32) PATH '$.audience_state',
+        audience_value TEXT PATH '$.audience_value' NULL ON EMPTY,
+        audience_note TEXT PATH '$.audience_note' NULL ON EMPTY,
+        use_context_state VARCHAR(32) PATH '$.use_context_state',
+        use_context_value TEXT PATH '$.use_context_value' NULL ON EMPTY,
+        use_context_note TEXT PATH '$.use_context_note' NULL ON EMPTY,
+        lineage_state VARCHAR(32) PATH '$.lineage_state',
+        lineage_relation VARCHAR(32) PATH '$.lineage_relation' NULL ON EMPTY,
+        parent_activity_id VARCHAR(191) PATH '$.parent_activity_id' NULL ON EMPTY,
+        root_activity_id VARCHAR(191) PATH '$.root_activity_id' NULL ON EMPTY,
+        lineage_note TEXT PATH '$.lineage_note' NULL ON EMPTY
+      )) AS j
+      ON DUPLICATE KEY UPDATE
+        schema_version = VALUES(schema_version), design_status = VALUES(design_status),
+        resource_nature_state = VALUES(resource_nature_state), resource_nature_value = VALUES(resource_nature_value), resource_nature_note = VALUES(resource_nature_note),
+        duration_state = VALUES(duration_state), duration_minutes = VALUES(duration_minutes), duration_note = VALUES(duration_note),
+        intention_state = VALUES(intention_state), intention_value = VALUES(intention_value), intention_note = VALUES(intention_note),
+        audience_state = VALUES(audience_state), audience_value = VALUES(audience_value), audience_note = VALUES(audience_note),
+        use_context_state = VALUES(use_context_state), use_context_value = VALUES(use_context_value), use_context_note = VALUES(use_context_note),
+        lineage_state = VALUES(lineage_state), lineage_relation = VALUES(lineage_relation),
+        parent_activity_id = VALUES(parent_activity_id), root_activity_id = VALUES(root_activity_id),
+        lineage_note = VALUES(lineage_note), extended_fields_json = VALUES(extended_fields_json);
+    END IF;
+
+    IF JSON_TYPE(JSON_EXTRACT(p_authoring_json, '$.pedagogicalTextFields')) = 'ARRAY' THEN
+      DELETE FROM activity_pedagogical_text_fields WHERE activity_id = p_activity_id;
+      INSERT INTO activity_pedagogical_text_fields (activity_id, field_key, knowledge_state, value_text, note)
+      SELECT p_activity_id, j.field_key, j.knowledge_state, j.value_text, j.note
+      FROM JSON_TABLE(p_authoring_json, '$.pedagogicalTextFields[*]' COLUMNS (
+        field_key VARCHAR(64) PATH '$.field_key', knowledge_state VARCHAR(32) PATH '$.knowledge_state',
+        value_text TEXT PATH '$.value_text' NULL ON EMPTY, note TEXT PATH '$.note' NULL ON EMPTY
+      )) AS j;
+    END IF;
+
+    IF JSON_TYPE(JSON_EXTRACT(p_authoring_json, '$.pedagogicalQualifications')) = 'ARRAY' THEN
+      DELETE FROM activity_pedagogical_qualifications WHERE activity_id = p_activity_id;
+      INSERT INTO activity_pedagogical_qualifications (
+        activity_id, id, level, validated_by, validated_at, context_text, evidence_type, evidence_text, note
+      )
+      SELECT p_activity_id, j.id, j.level, j.validated_by, j.validated_at, j.context_text, j.evidence_type, j.evidence_text, j.note
+      FROM JSON_TABLE(p_authoring_json, '$.pedagogicalQualifications[*]' COLUMNS (
+        id VARCHAR(191) PATH '$.id', level VARCHAR(64) PATH '$.level',
+        validated_by VARCHAR(255) PATH '$.validated_by' NULL ON EMPTY,
+        validated_at DATETIME(3) PATH '$.validated_at' NULL ON EMPTY,
+        context_text TEXT PATH '$.context_text' NULL ON EMPTY,
+        evidence_type VARCHAR(64) PATH '$.evidence_type' NULL ON EMPTY,
+        evidence_text TEXT PATH '$.evidence_text' NULL ON EMPTY,
+        note TEXT PATH '$.note' NULL ON EMPTY
+      )) AS j;
+    END IF;
+
     UPDATE activities
-    SET layer_configuration_id =
+    SET version = COALESCE(
+          JSON_VALUE(p_authoring_json, '$.activity.version'), version
+        ),
+        status = COALESCE(
+          JSON_VALUE(p_authoring_json, '$.activity.status'), status
+        ),
+        title = COALESCE(
+          JSON_VALUE(p_authoring_json, '$.activity.title'), title
+        ),
+        description = CASE
+          WHEN JSON_CONTAINS_PATH(p_authoring_json, 'one', '$.activity.description') = 1
+          THEN JSON_VALUE(p_authoring_json, '$.activity.description')
+          ELSE description
+        END,
+        instruction = CASE
+          WHEN JSON_CONTAINS_PATH(p_authoring_json, 'one', '$.activity.instruction') = 1
+          THEN JSON_VALUE(p_authoring_json, '$.activity.instruction')
+          ELSE instruction
+        END,
+        pedagogical_question = CASE
+          WHEN JSON_CONTAINS_PATH(p_authoring_json, 'one', '$.activity.pedagogicalQuestion') = 1
+          THEN JSON_VALUE(p_authoring_json, '$.activity.pedagogicalQuestion')
+          ELSE pedagogical_question
+        END,
+        layer_configuration_id =
           COALESCE(
             JSON_VALUE(p_authoring_json, '$.layerConfiguration.id'),
             layer_configuration_id
@@ -399,11 +537,14 @@ BEGIN
             allow_learner_toggle
           ),
         authoring_digest = v_requested_digest,
-        revision = revision + 1
+        revision = revision + CASE
+          WHEN @proto05_new_activity_id <=> p_activity_id THEN 0 ELSE 1 END
     WHERE id = p_activity_id;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, layer_configuration_id, revision, updated_at,
          v_changed AS changed
@@ -421,12 +562,20 @@ BEGIN
   DECLARE v_unknown_count INT DEFAULT 0;
   DECLARE v_difference_count INT DEFAULT 0;
   DECLARE v_changed TINYINT(1) DEFAULT 0;
+  DECLARE v_asset_payload JSON DEFAULT NULL;
 
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
   BEGIN
     ROLLBACK;
     RESIGNAL;
   END;
+
+  IF p_tag_ids_json IS NOT NULL
+     AND JSON_VALID(p_tag_ids_json) = 1
+     AND JSON_TYPE(p_tag_ids_json) = 'OBJECT' THEN
+    SET v_asset_payload = p_tag_ids_json;
+    SET p_tag_ids_json = COALESCE(JSON_EXTRACT(v_asset_payload, '$.tagIds'), JSON_ARRAY());
+  END IF;
 
   IF p_tag_ids_json IS NULL OR JSON_VALID(p_tag_ids_json) = 0
      OR JSON_TYPE(p_tag_ids_json) <> 'ARRAY' THEN
@@ -435,7 +584,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_media_asset_set_tags: tag_ids must be a JSON array';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1
@@ -446,6 +597,32 @@ BEGIN
     SIGNAL SQLSTATE '45000'
       SET MYSQL_ERRNO = 30111,
           MESSAGE_TEXT = 'sp_media_asset_set_tags: asset not found';
+  END IF;
+
+  IF v_asset_payload IS NOT NULL THEN
+    UPDATE media_assets
+    SET title = COALESCE(JSON_VALUE(v_asset_payload, '$.title'), title),
+        description = CASE WHEN JSON_CONTAINS_PATH(v_asset_payload, 'one', '$.description') = 1
+          THEN JSON_VALUE(v_asset_payload, '$.description') ELSE description END,
+        folder_id = CASE WHEN JSON_CONTAINS_PATH(v_asset_payload, 'one', '$.folderId') = 1
+          THEN JSON_VALUE(v_asset_payload, '$.folderId') ELSE folder_id END,
+        default_playable_id = CASE WHEN JSON_CONTAINS_PATH(v_asset_payload, 'one', '$.defaultPlayableId') = 1
+          THEN JSON_VALUE(v_asset_payload, '$.defaultPlayableId') ELSE default_playable_id END,
+        editorial_metadata_json = CASE WHEN JSON_CONTAINS_PATH(v_asset_payload, 'one', '$.editorialMetadata') = 1
+          THEN CASE WHEN JSON_TYPE(JSON_EXTRACT(v_asset_payload, '$.editorialMetadata')) = 'NULL'
+            THEN NULL ELSE JSON_EXTRACT(v_asset_payload, '$.editorialMetadata') END
+          ELSE editorial_metadata_json END,
+        provenance_json = CASE WHEN JSON_CONTAINS_PATH(v_asset_payload, 'one', '$.provenance') = 1
+          THEN CASE WHEN JSON_TYPE(JSON_EXTRACT(v_asset_payload, '$.provenance')) = 'NULL'
+            THEN NULL ELSE JSON_EXTRACT(v_asset_payload, '$.provenance') END
+          ELSE provenance_json END,
+        rights_json = CASE WHEN JSON_CONTAINS_PATH(v_asset_payload, 'one', '$.rights') = 1
+          THEN CASE WHEN JSON_TYPE(JSON_EXTRACT(v_asset_payload, '$.rights')) = 'NULL'
+            THEN NULL ELSE JSON_EXTRACT(v_asset_payload, '$.rights') END
+          ELSE rights_json END,
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = p_asset_id;
+    IF ROW_COUNT() > 0 THEN SET v_changed = 1; END IF;
   END IF;
 
   SELECT COUNT(*) INTO v_unknown_count
@@ -520,7 +697,9 @@ BEGIN
     SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT p_asset_id AS asset_id, v_changed AS changed;
 
@@ -562,7 +741,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT status, source_asset_id, source_playable_id,
          output_asset_id, output_playable_id
@@ -702,7 +883,9 @@ BEGIN
     SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, status, progress, output_asset_id,
          output_playable_id, published_playable_id, finished_at,
@@ -728,7 +911,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT 1 INTO v_exists
   FROM activities
@@ -922,7 +1107,9 @@ BEGIN
   FROM activity_media_links
   WHERE activity_id = p_source_activity_id;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, folder_id, version, status, title,
          layer_configuration_id, revision, created_at, updated_at

@@ -145,7 +145,7 @@ bus de données entre tous les prototypes.
 | Propriétaire | Source ou stockage | Frontière actuelle |
 |---|---|---|
 | IC-Hub | `prototypes/00-ic-hub/server/data/*.json` | Comptes, cours, inscriptions, assignations, catalogues, propriété, configurations et manifestes publiés Hub. Les sessions, runs, corruptions et sauvegardes runtime sont ignorés par Git. |
-| Proto05 | MariaDB `ic_augmented_video` | Autorité exclusive des activités, référentiels et métadonnées vidéo. Le serveur `8791` est l’unique frontière applicative; IC-Hub relaie seulement ses lectures par HTTP. |
+| Proto05 | MariaDB `ic_augmented_video` | Autorité exclusive des activités, référentiels et métadonnées vidéo. Le serveur `8791` est l’unique frontière applicative et orchestre le canon transactionnel de 43 procédures stockées; IC-Hub relaie seulement ses lectures par HTTP. |
 | Proto06 | `server/data/activities.json` | Activités du backend vocal. Le Hub les consulte par HTTP pour son connecteur; les manifestes publiés du Hub restent une donnée transversale distincte. |
 | Informaticaire | `data.js` | Corpus statique chargé par la page. Les contributions et exports sont préparés côté navigateur; le corpus n’est ni une base officielle ni une donnée Hub. |
 | Dico-IC | MariaDB `ic_dico` dans `ic_lab_next_mariadb_data` | Lexique, relations, formes et objets pédagogiques. Seven Sieves consomme l’API et ne lit jamais MariaDB directement. |
@@ -175,7 +175,7 @@ actuelle.
 
 ## Architecture interne actuelle de Proto05
 
-Proto05 est désormais autonome pour ses pages, son API et son JSON. Son moteur de
+Proto05 est désormais autonome pour ses pages, son API et ses données MariaDB. Son moteur de
 lecture et sa prévisualisation enseignant utilisent le même fichier
 `index-0.0.9.html`.
 
@@ -195,7 +195,7 @@ lecture et sa prévisualisation enseignant utilisent le même fichier
 │   -> catalogue vidéo contrôlé                                │
 │   -> référentiel de langues partagé en lecture seule          │
 │   -> lecture, création, mise à jour et suppression           │
-│   -> validation + transactions MariaDB ciblées               │
+│   -> validation + CALL des procédures MariaDB canoniques     │
 └───────────────────────────┬──────────────────────────────────┘
                             │
                             v

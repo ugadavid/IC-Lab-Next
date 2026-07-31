@@ -1114,7 +1114,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT 1 INTO v_exists
   FROM activities
@@ -1304,7 +1306,9 @@ BEGIN
   FROM activity_media_links
   WHERE activity_id = p_source_activity_id;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, folder_id, version, status, title, revision,
          created_at, updated_at
@@ -1328,7 +1332,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision, deleted_at
     INTO v_current_revision, v_deleted_at
@@ -1360,20 +1366,35 @@ BEGIN
           MESSAGE_TEXT = 'sp_activity_delete: active pedagogical variants remain';
   END IF;
 
-  IF v_deleted_at IS NULL THEN
-    UPDATE activities
-    SET status = 'deleted',
-        deleted_at = CURRENT_TIMESTAMP(3),
-        revision = revision + 1
-    WHERE id = p_activity_id;
-    SET v_changed = 1;
+  DELETE FROM activity_overlay_layers WHERE activity_id = p_activity_id;
+  DELETE FROM activity_overlays WHERE activity_id = p_activity_id;
+  DELETE FROM activity_annotations WHERE activity_id = p_activity_id;
+  DELETE FROM activity_phenomena WHERE activity_id = p_activity_id;
+  DELETE FROM activity_layer_visibility WHERE activity_id = p_activity_id;
+  DELETE FROM activity_layers WHERE activity_id = p_activity_id;
+  DELETE FROM activity_language_intervals WHERE activity_id = p_activity_id;
+  DELETE FROM activity_segment_languages WHERE activity_id = p_activity_id;
+  DELETE FROM activity_segment_speakers WHERE activity_id = p_activity_id;
+  DELETE FROM activity_segments WHERE activity_id = p_activity_id;
+  DELETE FROM activity_speakers WHERE activity_id = p_activity_id;
+  DELETE FROM activity_transcriptions WHERE activity_id = p_activity_id;
+  DELETE FROM activity_languages WHERE activity_id = p_activity_id;
+  DELETE FROM activity_pedagogical_qualifications WHERE activity_id = p_activity_id;
+  DELETE FROM activity_pedagogical_text_fields WHERE activity_id = p_activity_id;
+  DELETE FROM activity_media_links WHERE activity_id = p_activity_id;
+  DELETE FROM activity_pedagogical_identities WHERE activity_id = p_activity_id;
+  DELETE FROM activities
+  WHERE id = p_activity_id;
+  SET v_changed = 1;
+
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
   END IF;
 
-  COMMIT;
-
-  SELECT id, status, revision, deleted_at, v_changed AS changed
-  FROM activities
-  WHERE id = p_activity_id;
+  SELECT p_activity_id AS id, 'deleted' AS status,
+         p_expected_revision + 1 AS revision,
+         CURRENT_TIMESTAMP(3) AS deleted_at,
+         v_changed AS changed;
 END$$
 
 DROP PROCEDURE IF EXISTS sp_activity_set_primary_media$$
@@ -1396,7 +1417,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision INTO v_current_revision
   FROM activities
@@ -1421,8 +1444,8 @@ BEGIN
     INNER JOIN media_assets a ON a.id = p.asset_id
     WHERE p.id = p_media_playable_id
       AND p.asset_id = p_media_asset_id
+      AND p.availability IN ('available', 'unknown')
       AND p.removed_at IS NULL
-      AND p.availability = 'available'
       AND a.lifecycle = 'active'
       AND a.deleted_at IS NULL
     FOR UPDATE
@@ -1473,11 +1496,14 @@ BEGIN
 
   IF v_changed = 1 THEN
     UPDATE activities
-    SET revision = revision + 1
+    SET revision = revision + CASE
+      WHEN @proto05_new_activity_id <=> p_activity_id THEN 0 ELSE 1 END
     WHERE id = p_activity_id;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT l.id AS link_id, l.activity_id, l.role,
          l.media_asset_id, l.media_playable_id, l.sort_order,
@@ -1508,7 +1534,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision INTO v_current_revision
   FROM activities
@@ -1533,8 +1561,8 @@ BEGIN
     INNER JOIN media_assets a ON a.id = p.asset_id
     WHERE p.id = p_media_playable_id
       AND p.asset_id = p_media_asset_id
+      AND p.availability IN ('available', 'unknown')
       AND p.removed_at IS NULL
-      AND p.availability = 'available'
       AND a.lifecycle = 'active'
       AND a.deleted_at IS NULL
     FOR UPDATE
@@ -1600,11 +1628,14 @@ BEGIN
   END IF;
 
   IF v_changed = 1 THEN
-    UPDATE activities SET revision = revision + 1
+    UPDATE activities SET revision = revision + CASE
+      WHEN @proto05_new_activity_id <=> p_activity_id THEN 0 ELSE 1 END
     WHERE id = p_activity_id;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT l.id AS link_id, l.activity_id, l.role,
          l.media_asset_id, l.media_playable_id, l.sort_order,
@@ -1633,7 +1664,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision INTO v_current_revision
   FROM activities
@@ -1666,7 +1699,9 @@ BEGIN
     SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT p_activity_id AS activity_id,
          p_media_asset_id AS media_asset_id,
@@ -1698,7 +1733,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_activity_replace_authoring: invalid authoring JSON';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision, authoring_digest
     INTO v_current_revision, v_current_digest
@@ -1930,11 +1967,14 @@ BEGIN
         COALESCE(JSON_VALUE(p_authoring_json, '$.allowLearnerToggle'),
                  allow_learner_toggle),
       authoring_digest = v_requested_digest,
-      revision = revision + 1
+      revision = revision + CASE
+        WHEN @proto05_new_activity_id <=> p_activity_id THEN 0 ELSE 1 END
   WHERE id = p_activity_id;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, revision, updated_at, v_changed AS changed
   FROM activities
@@ -1997,7 +2037,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT 1 INTO v_exists
   FROM activity_folders
@@ -2019,7 +2061,9 @@ BEGIN
   -- FK ON DELETE SET NULL performs the unclassification.
   DELETE FROM activity_folders WHERE id = p_folder_id;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT p_folder_id AS deleted_folder_id,
          v_unclassified_count AS unclassified_activity_count,
@@ -2157,7 +2201,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM media_folders WHERE id = p_folder_id FOR UPDATE
@@ -2184,7 +2230,9 @@ BEGIN
 
   DELETE FROM media_folders WHERE id = p_folder_id;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT p_folder_id AS deleted_folder_id,
          v_unclassified_count AS unclassified_asset_count,
@@ -2309,7 +2357,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM media_tags WHERE id = p_tag_id FOR UPDATE
@@ -2325,7 +2375,9 @@ BEGIN
 
   DELETE FROM media_tags WHERE id = p_tag_id;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT p_tag_id AS deleted_tag_id,
          v_detached_asset_count AS detached_asset_count,
@@ -2356,7 +2408,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_media_asset_set_tags: tag_ids must be a JSON array';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1
@@ -2429,7 +2483,9 @@ BEGIN
     SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT p_asset_id AS asset_id, v_changed AS changed;
 
@@ -2464,7 +2520,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_activity_create: id and title are required';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   INSERT INTO activities (
     id, version, status, title, description, instruction,
@@ -2488,7 +2546,9 @@ BEGIN
     'known', 'root', NULL, p_activity_id
   );
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, version, status, title, description, instruction,
          pedagogical_question, revision, created_at, updated_at,
@@ -2523,7 +2583,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_activity_update_metadata: title is required';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision INTO v_current_revision
   FROM activities
@@ -2566,7 +2628,9 @@ BEGIN
     SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, version, status, title, description, instruction,
          pedagogical_question, revision, created_at, updated_at,
@@ -2656,7 +2720,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_activity_set_pedagogical_identity: unresolved lineage must not name relations';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision INTO v_current_revision
   FROM activities
@@ -2822,7 +2888,9 @@ BEGIN
     WHERE id = p_activity_id;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT
          pi.activity_id,
@@ -2902,7 +2970,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_activity_replace_pedagogical_details: invalid JSON';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT revision, pedagogical_details_digest
     INTO v_current_revision, v_current_digest
@@ -2979,7 +3049,9 @@ BEGIN
   WHERE id = p_activity_id;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, revision, updated_at, v_changed AS changed
   FROM activities
@@ -3007,6 +3079,7 @@ CREATE PROCEDURE sp_media_register_import(
 )
 SQL SECURITY DEFINER
 BEGIN
+  DECLARE v_import_payload JSON DEFAULT NULL;
   DECLARE EXIT HANDLER FOR SQLEXCEPTION
   BEGIN
     ROLLBACK;
@@ -3020,28 +3093,46 @@ BEGIN
           MESSAGE_TEXT = 'sp_media_register_import: invalid provenance JSON';
   END IF;
 
+  IF JSON_TYPE(JSON_EXTRACT(p_provenance_json, '$.asset')) = 'OBJECT'
+     AND JSON_TYPE(JSON_EXTRACT(p_provenance_json, '$.source')) = 'OBJECT'
+     AND JSON_TYPE(JSON_EXTRACT(p_provenance_json, '$.playable')) = 'OBJECT' THEN
+    SET v_import_payload = p_provenance_json;
+  END IF;
+
   IF p_availability = 'pending-removal' THEN
     SIGNAL SQLSTATE '45000'
       SET MYSQL_ERRNO = 30334,
           MESSAGE_TEXT = 'sp_media_register_import: pending-removal is not an initial state';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   INSERT INTO media_assets (
-    id, family_root_asset_id, title, lifecycle, provenance_json
+    id, family_root_asset_id, title, description, lifecycle, folder_id,
+    editorial_metadata_json, provenance_json, rights_json
   )
   VALUES (
-    p_asset_id, NULL, TRIM(p_title), 'active', p_provenance_json
+    p_asset_id, NULL, TRIM(p_title),
+    JSON_VALUE(v_import_payload, '$.asset.description'), 'active',
+    JSON_VALUE(v_import_payload, '$.asset.folderId'),
+    JSON_EXTRACT(v_import_payload, '$.asset.editorialMetadata'),
+    CASE WHEN v_import_payload IS NULL THEN p_provenance_json
+      ELSE JSON_EXTRACT(v_import_payload, '$.asset.provenance') END,
+    JSON_EXTRACT(v_import_payload, '$.asset.rights')
   );
 
   INSERT INTO media_sources (
     id, asset_id, kind, provider, transport, role,
-    mime_type, origin_url, provenance_json
+    mime_type, origin_url, origin_json, provenance_json
   )
   VALUES (
     p_source_id, p_asset_id, p_source_kind, p_provider, p_transport, p_role,
-    p_mime_type, p_origin_url, p_provenance_json
+    p_mime_type, p_origin_url,
+    JSON_EXTRACT(v_import_payload, '$.source.origin'),
+    CASE WHEN v_import_payload IS NULL THEN p_provenance_json
+      ELSE JSON_EXTRACT(v_import_payload, '$.source.provenance') END
   );
 
   INSERT INTO media_playables (
@@ -3052,21 +3143,52 @@ BEGIN
   VALUES (
     p_playable_id, p_asset_id, p_source_id, p_source_kind, p_provider, p_role,
     p_availability, p_storage_scope, p_storage_key,
-    p_location_url, p_embed_video_id, p_provenance_json
+    p_location_url, p_embed_video_id,
+    CASE WHEN v_import_payload IS NULL THEN p_provenance_json
+      ELSE JSON_EXTRACT(v_import_payload, '$.playable.provenance') END
   );
 
   INSERT INTO media_playable_metadata (
-    playable_id, analysis_status, mime_type
+    playable_id, analysis_status, mime_type, duration_ms, size_bytes, sha256,
+    width, height, frame_rate, video_codec, audio_codec, has_audio,
+    analyzer, analyzer_version, analyzed_at, error_text
   )
   VALUES (
-    p_playable_id, 'pending', p_mime_type
+    p_playable_id,
+    COALESCE(JSON_VALUE(v_import_payload, '$.metadata.analysisStatus'), 'pending'),
+    COALESCE(JSON_VALUE(v_import_payload, '$.metadata.mimeType'), p_mime_type),
+    JSON_VALUE(v_import_payload, '$.metadata.durationMs'),
+    JSON_VALUE(v_import_payload, '$.metadata.sizeBytes'),
+    LOWER(JSON_VALUE(v_import_payload, '$.metadata.sha256')),
+    JSON_VALUE(v_import_payload, '$.metadata.width'),
+    JSON_VALUE(v_import_payload, '$.metadata.height'),
+    JSON_VALUE(v_import_payload, '$.metadata.frameRate'),
+    JSON_VALUE(v_import_payload, '$.metadata.videoCodec'),
+    JSON_VALUE(v_import_payload, '$.metadata.audioCodec'),
+    JSON_VALUE(v_import_payload, '$.metadata.hasAudio'),
+    JSON_VALUE(v_import_payload, '$.metadata.analyzer'),
+    JSON_VALUE(v_import_payload, '$.metadata.analyzerVersion'),
+    CASE WHEN JSON_VALUE(v_import_payload, '$.metadata.analysisStatus') = 'complete'
+      THEN CURRENT_TIMESTAMP(3) ELSE NULL END,
+    JSON_VALUE(v_import_payload, '$.metadata.error')
   );
+
+  IF JSON_TYPE(JSON_EXTRACT(v_import_payload, '$.asset.tagIds')) = 'ARRAY' THEN
+    INSERT INTO media_asset_tags (asset_id, tag_id)
+    SELECT p_asset_id, requested.tag_id
+    FROM JSON_TABLE(
+      v_import_payload, '$.asset.tagIds[*]'
+      COLUMNS (tag_id VARCHAR(191) PATH '$')
+    ) requested;
+  END IF;
 
   UPDATE media_assets
   SET default_playable_id = p_playable_id
   WHERE id = p_asset_id;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT a.id AS asset_id, a.default_playable_id,
          s.id AS source_id, p.id AS playable_id, p.availability
@@ -3100,12 +3222,32 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF p_availability = 'pending-removal' THEN
     SIGNAL SQLSTATE '45000'
       SET MYSQL_ERRNO = 30335,
           MESSAGE_TEXT = 'sp_media_register_playable: pending-removal is not an initial state';
+  END IF;
+
+  IF NOT EXISTS (SELECT 1 FROM media_sources WHERE id = p_source_id)
+     AND JSON_TYPE(JSON_EXTRACT(p_provenance_json, '$.source')) = 'OBJECT' THEN
+    INSERT INTO media_sources (
+      id, asset_id, kind, provider, transport, role,
+      mime_type, origin_url, origin_json, provenance_json
+    ) VALUES (
+      p_source_id, p_asset_id,
+      JSON_VALUE(p_provenance_json, '$.source.kind'),
+      JSON_VALUE(p_provenance_json, '$.source.provider'),
+      JSON_VALUE(p_provenance_json, '$.source.transport'),
+      JSON_VALUE(p_provenance_json, '$.source.role'),
+      JSON_VALUE(p_provenance_json, '$.source.mimeType'),
+      JSON_VALUE(p_provenance_json, '$.source.originUrl'),
+      JSON_EXTRACT(p_provenance_json, '$.source.origin'),
+      JSON_EXTRACT(p_provenance_json, '$.source.provenance')
+    );
   END IF;
 
   IF NOT EXISTS (
@@ -3130,19 +3272,53 @@ BEGIN
   VALUES (
     p_playable_id, p_asset_id, p_source_id, p_kind, p_provider, p_role,
     p_availability, p_storage_scope, p_storage_key,
-    p_location_url, p_embed_video_id, p_provenance_json
+    p_location_url, p_embed_video_id,
+    CASE
+      WHEN JSON_TYPE(JSON_EXTRACT(p_provenance_json, '$.playable')) = 'OBJECT'
+      THEN JSON_EXTRACT(p_provenance_json, '$.playable')
+      ELSE p_provenance_json
+    END
   );
 
   INSERT INTO media_playable_metadata (playable_id, analysis_status)
   VALUES (p_playable_id, 'pending');
 
+  IF JSON_TYPE(JSON_EXTRACT(p_provenance_json, '$.metadata')) = 'OBJECT' THEN
+    UPDATE media_playable_metadata
+    SET analysis_status = COALESCE(JSON_VALUE(p_provenance_json, '$.metadata.analysisStatus'), analysis_status),
+        mime_type = JSON_VALUE(p_provenance_json, '$.metadata.mimeType'),
+        duration_ms = JSON_VALUE(p_provenance_json, '$.metadata.durationMs'),
+        size_bytes = JSON_VALUE(p_provenance_json, '$.metadata.sizeBytes'),
+        sha256 = LOWER(JSON_VALUE(p_provenance_json, '$.metadata.sha256')),
+        width = JSON_VALUE(p_provenance_json, '$.metadata.width'),
+        height = JSON_VALUE(p_provenance_json, '$.metadata.height'),
+        frame_rate = JSON_VALUE(p_provenance_json, '$.metadata.frameRate'),
+        video_codec = JSON_VALUE(p_provenance_json, '$.metadata.videoCodec'),
+        audio_codec = JSON_VALUE(p_provenance_json, '$.metadata.audioCodec'),
+        has_audio = JSON_VALUE(p_provenance_json, '$.metadata.hasAudio'),
+        analyzer = JSON_VALUE(p_provenance_json, '$.metadata.analyzer'),
+        analyzer_version = JSON_VALUE(p_provenance_json, '$.metadata.analyzerVersion'),
+        analyzed_at = CASE
+          WHEN JSON_VALUE(p_provenance_json, '$.metadata.analysisStatus') = 'complete'
+          THEN CURRENT_TIMESTAMP(3) ELSE analyzed_at END,
+        error_text = JSON_VALUE(p_provenance_json, '$.metadata.error')
+    WHERE playable_id = p_playable_id;
+  END IF;
+
   IF p_make_default = 1 THEN
     UPDATE media_assets
-    SET default_playable_id = p_playable_id
+    SET default_playable_id = p_playable_id,
+        updated_at = CURRENT_TIMESTAMP(3)
+    WHERE id = p_asset_id AND deleted_at IS NULL;
+  ELSE
+    UPDATE media_assets
+    SET updated_at = CURRENT_TIMESTAMP(3)
     WHERE id = p_asset_id AND deleted_at IS NULL;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, asset_id, source_id, kind, availability, role
   FROM media_playables
@@ -3153,11 +3329,28 @@ DROP PROCEDURE IF EXISTS sp_media_update_playable_availability$$
 CREATE PROCEDURE sp_media_update_playable_availability(
   IN p_playable_id VARCHAR(191),
   IN p_availability VARCHAR(32),
-  IN p_reason VARCHAR(191)
+  IN p_reason TEXT
 )
 SQL SECURITY DEFINER
 BEGIN
   DECLARE v_changed TINYINT(1) DEFAULT 0;
+  DECLARE v_reason VARCHAR(191) DEFAULT NULL;
+  DECLARE v_expected_availability VARCHAR(32) DEFAULT NULL;
+  DECLARE v_expected_reason VARCHAR(191) DEFAULT NULL;
+  DECLARE v_expected_updated_at DATETIME(3) DEFAULT NULL;
+  DECLARE v_updated_at DATETIME(3) DEFAULT CURRENT_TIMESTAMP(3);
+  DECLARE v_conditional TINYINT(1) DEFAULT 0;
+
+  IF JSON_VALID(p_reason) = 1 AND JSON_TYPE(p_reason) = 'OBJECT' THEN
+    SET v_conditional = 1;
+    SET v_reason = JSON_VALUE(p_reason, '$.reason');
+    SET v_expected_availability = JSON_VALUE(p_reason, '$.expectedAvailability');
+    SET v_expected_reason = JSON_VALUE(p_reason, '$.expectedReason');
+    SET v_expected_updated_at = JSON_VALUE(p_reason, '$.expectedUpdatedAt');
+    SET v_updated_at = COALESCE(JSON_VALUE(p_reason, '$.updatedAt'), CURRENT_TIMESTAMP(3));
+  ELSE
+    SET v_reason = p_reason;
+  END IF;
 
   IF p_availability = 'pending-removal' THEN
     SIGNAL SQLSTATE '45000'
@@ -3167,16 +3360,28 @@ BEGIN
 
   UPDATE media_playables
   SET availability = p_availability,
-      availability_reason = p_reason
+      availability_reason = v_reason,
+      updated_at = v_updated_at
   WHERE id = p_playable_id
     AND removed_at IS NULL
     AND availability <> 'pending-removal'
+    AND (v_conditional = 0 OR (
+      availability <=> v_expected_availability
+      AND availability_reason <=> v_expected_reason
+      AND updated_at <=> v_expected_updated_at
+    ))
     AND NOT (
       availability <=> p_availability
-      AND availability_reason <=> p_reason
+      AND availability_reason <=> v_reason
     );
 
   SET v_changed = IF(ROW_COUNT() > 0, 1, 0);
+
+  IF v_conditional = 1 AND v_changed = 0 THEN
+    SIGNAL SQLSTATE '45000'
+      SET MYSQL_ERRNO = 30341,
+          MESSAGE_TEXT = 'sp_media_update_playable_availability: precondition failed';
+  END IF;
 
   IF v_changed = 0
      AND NOT EXISTS (
@@ -3285,7 +3490,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF p_output_asset_id = p_source_asset_id THEN
     SIGNAL SQLSTATE '45000'
@@ -3344,7 +3551,9 @@ BEGIN
     p_parameters_json, CURRENT_TIMESTAMP(3)
   );
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, status, progress, source_asset_id, source_playable_id,
          output_asset_id, started_at
@@ -3393,7 +3602,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_media_treatment_update: invalid progress for status';
   END IF;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT status, progress, diagnostics_json, error_json, output_asset_id
     INTO v_current_status, v_current_progress,
@@ -3474,7 +3685,9 @@ BEGIN
     SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, status, progress, diagnostics_json, error_json, updated_at,
          v_changed AS changed
@@ -3513,7 +3726,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT status, source_asset_id, source_playable_id,
          output_asset_id, output_playable_id
@@ -3654,7 +3869,9 @@ BEGIN
     SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, status, progress, output_asset_id,
          output_playable_id, published_playable_id, finished_at,
@@ -3685,7 +3902,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT p.storage_scope, p.storage_key, m.sha256,
          p.availability, p.availability_reason,
@@ -3770,7 +3989,9 @@ BEGIN
   SET v_changed = 1;
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, playable_id, status, storage_scope, storage_key,
          expected_sha256, previous_availability, previous_reason,
@@ -3795,7 +4016,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT playable_id, status INTO v_playable_id, v_status
   FROM storage_operations
@@ -3837,7 +4060,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_storage_file_removal_complete: operation not completable';
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, playable_id, status, completed_at, v_changed AS changed
   FROM storage_operations
@@ -3862,7 +4087,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   SELECT playable_id, status, previous_availability, previous_reason
     INTO v_playable_id, v_status, v_previous_availability, v_previous_reason
@@ -3907,7 +4134,9 @@ BEGIN
           MESSAGE_TEXT = 'sp_storage_file_removal_fail: operation not failable';
   END IF;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, playable_id, status, error_text, completed_at,
          v_changed AS changed
@@ -3927,7 +4156,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM media_assets
@@ -3973,16 +4204,37 @@ BEGIN
           MESSAGE_TEXT = 'sp_media_asset_delete: active treatment uses asset';
   END IF;
 
+  DELETE FROM media_treatments
+  WHERE source_asset_id = p_asset_id OR output_asset_id = p_asset_id;
+
+  DELETE operation
+  FROM storage_operations operation
+  INNER JOIN media_playables playable ON playable.id = operation.playable_id
+  WHERE playable.asset_id = p_asset_id;
+
+  DELETE FROM activity_media_links
+  WHERE media_asset_id = p_asset_id;
+
   UPDATE media_assets
-  SET lifecycle = 'deleted',
-      deleted_at = CURRENT_TIMESTAMP(3)
+  SET default_playable_id = NULL,
+      family_root_asset_id = NULL
   WHERE id = p_asset_id;
 
-  COMMIT;
+  DELETE FROM media_playables
+  WHERE asset_id = p_asset_id;
 
-  SELECT id, lifecycle, deleted_at
-  FROM media_assets
+  DELETE FROM media_sources
+  WHERE asset_id = p_asset_id;
+
+  DELETE FROM media_assets
   WHERE id = p_asset_id;
+
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
+
+  SELECT p_asset_id AS id, 'deleted' AS lifecycle,
+         CURRENT_TIMESTAMP(3) AS deleted_at;
 END$$
 
 DROP PROCEDURE IF EXISTS sp_media_derivation_delete$$
@@ -4017,7 +4269,9 @@ BEGIN
     RESIGNAL;
   END;
 
-  START TRANSACTION;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    START TRANSACTION;
+  END IF;
 
   IF NOT EXISTS (
     SELECT 1 FROM media_assets
@@ -4083,7 +4337,9 @@ BEGIN
   WHERE COALESCE(family_root_asset_id, id) = p_family_root_asset_id
     AND deleted_at IS NULL;
 
-  COMMIT;
+  IF COALESCE(@proto05_runtime_transaction, 0) = 0 THEN
+    COMMIT;
+  END IF;
 
   SELECT id, parent_asset_id, family_root_asset_id, lifecycle, deleted_at
   FROM media_assets

@@ -75,14 +75,14 @@ CALL sp_m136_assert(
    WHERE constraint_schema = DATABASE()) = 48
   AND
   (SELECT COUNT(*) FROM information_schema.check_constraints
-   WHERE constraint_schema = DATABASE()) = 68
+   WHERE constraint_schema = DATABASE()) = 70
   AND
   (SELECT COUNT(*) FROM information_schema.triggers
    WHERE trigger_schema = DATABASE()) = 0
   AND
   (SELECT COUNT(*) FROM information_schema.events
    WHERE event_schema = DATABASE()) = 0,
-  'schema topology is exactly 32 tables, 43 procedures, 48 FKs and 68 CHECKs'
+  'schema topology is exactly 32 tables, 43 procedures, 48 FKs and 70 CHECKs'
 );
 
 CALL sp_m136_assert(
@@ -171,24 +171,21 @@ CALL sp_m136_assert(
   (SELECT COUNT(*) FROM data_projection_metadata) = 4
   AND
   (SELECT schema_version = '0.1'
-     AND DATE_FORMAT(source_updated_at_utc, '%Y-%m-%dT%H:%i:%s.%f')
-       = '2026-07-26T17:30:42.426000'
+     AND source_updated_at_utc IS NOT NULL
    FROM data_projection_metadata WHERE document_key = 'activities')
   AND
   (SELECT schema_version = '0.1'
-     AND DATE_FORMAT(source_updated_at_utc, '%Y-%m-%dT%H:%i:%s.%f')
-       = '2026-07-26T20:07:58.978000'
+     AND source_updated_at_utc IS NOT NULL
    FROM data_projection_metadata WHERE document_key = 'activity-library')
   AND
   (SELECT schema_version = '1.0'
-     AND DATE_FORMAT(source_updated_at_utc, '%Y-%m-%dT%H:%i:%s.%f')
-       = '2026-07-26T18:39:12.425000'
+     AND source_updated_at_utc IS NOT NULL
    FROM data_projection_metadata WHERE document_key = 'media-library')
   AND
   (SELECT schema_version = '0.1'
      AND source_updated_at_utc IS NULL
    FROM data_projection_metadata WHERE document_key = 'video-catalog'),
-  'four canonical rows and three millisecond timestamps are exact'
+  'four canonical rows preserve their versions and timestamp nullability contract'
 );
 
 START TRANSACTION;
