@@ -45,6 +45,26 @@ verrou métier explicite. La transaction est terminée avant le traitement de la
 route en mémoire ; elle n'englobe ni rendu de page, ni streaming, ni accès au
 système de fichiers ou au réseau.
 
+## Contrôle de concurrence optimiste
+
+Les formulaires qui remplacent un état préalablement chargé transmettent un
+témoin `If-Match`. L'activité et tout son authoring partagent la colonne
+`activities.revision` déjà présente dans le schéma. Les champs éditoriaux d'un
+asset et son préflight de suppression utilisent deux empreintes canoniques
+distinctes, calculées depuis la projection MariaDB courante.
+
+La précondition est relue et comparée après verrouillage des lignes, dans la
+même transaction courte `SERIALIZABLE` que la mutation. Une révision absente
+est refusée avec `428`, un jeton mal formé avec `400` et un état obsolète avec
+`409`. Un conflit ne renvoie pas de nouvelle révision et n'écrit aucune table ;
+le client conserve ses valeurs et doit recharger avant de recommencer.
+
+Les ajouts indépendants et les opérations techniques ne sont pas rattachés
+artificiellement à une révision globale. La réconciliation de disponibilité,
+les traitements et les copies locales conservent leurs préconditions
+spécialisées. Aucun verrou utilisateur ne survit à la transaction et aucune
+migration de schéma n'est requise.
+
 ## Réconciliation explicite de la disponibilité locale
 
 Le serveur ne transforme pas une lecture ordinaire en écriture de

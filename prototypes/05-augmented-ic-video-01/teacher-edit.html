@@ -178,6 +178,7 @@
     <section class="panel">
       <div class="actions">
         <button id="save" type="submit">Enregistrer</button>
+        <button id="reloadConflict" type="button" class="secondary" hidden>Recharger la version actuelle</button>
         <a class="button secondary" href="/teacher">Retour bibliothèque</a>
         <a id="preview" class="button secondary" href="#">Ouvrir la prévisualisation</a>
         <a id="guided" class="button secondary" href="#">Ouvrir l’atelier guidé</a>
@@ -191,7 +192,7 @@
 "use strict";
 const id=decodeURIComponent(location.pathname.split("/").pop());
 const $=selector=>document.querySelector(selector);
-const form=$("#form"),status=$("#status"),save=$("#save"),video=$("#video");
+const form=$("#form"),status=$("#status"),save=$("#save"),video=$("#video"),reloadConflict=$("#reloadConflict");
 const fields={title:$("#title"),description:$("#description"),instruction:$("#instruction"),question:$("#question")};
 const knowledgeLabels={known:"Établi",unknown:"Inconnu","to-verify":"À vérifier","not-applicable":"Non applicable"};
 const natureLabels={"functional-test":"Test fonctionnel","pedagogical-activity":"Activité pédagogique",demonstration:"Démonstration",other:"Autre"};
@@ -345,22 +346,23 @@ async function load(){
 }
 
 form.addEventListener("submit",async event=>{
-  event.preventDefault();save.disabled=true;form.setAttribute("aria-busy","true");status.dataset.state="saving";status.textContent="Enregistrement en cours…";
+  event.preventDefault();save.disabled=true;reloadConflict.hidden=true;form.setAttribute("aria-busy","true");status.dataset.state="saving";status.textContent="Enregistrement en cours…";
   try{
     const body={title:fields.title.value,description:fields.description.value,instruction:fields.instruction.value,pedagogicalQuestion:fields.question.value};
     if(state.identityEnabled)body.pedagogicalIdentity=collectIdentity();
     if(video.value!==state.activity.video?.id)body.videoId=video.value;
-    const response=await fetch(`/api/proto05/activities/${encodeURIComponent(id)}`,{method:"PUT",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+    const response=await fetch(`/api/proto05/activities/${encodeURIComponent(id)}`,{method:"PUT",headers:{"content-type":"application/json","if-match":state.activity.revisionToken},body:JSON.stringify(body)});
     const payload=await response.json().catch(()=>null);
-    if(!response.ok)throw new Error(payload?.error||"Sauvegarde refusée par l’API.");
+    if(!response.ok)throw Object.assign(new Error(payload?.error||"Sauvegarde refusée par l’API."),{status:response.status,payload});
     if(payload?.activity?.id!==id)throw new Error("Réponse de sauvegarde invalide.");
     state.activity=payload.activity;
     if(payload.activity.pedagogicalIdentity){state.identity=JSON.parse(JSON.stringify(payload.activity.pedagogicalIdentity));state.identityEnabled=true;}
     renderSummary(payload.activity.pedagogicalIdentitySummary);renderLineage();renderQualifications();
     status.dataset.state="success";status.textContent="Activité et fiche pédagogique enregistrées.";
-  }catch(error){status.dataset.state="error";status.textContent=`Échec de la sauvegarde : ${error.message||"API indisponible."} Les valeurs restent dans le formulaire.`;}
+  }catch(error){status.dataset.state="error";status.textContent=`Échec de la sauvegarde : ${error.message||"API indisponible."} Les valeurs restent dans le formulaire.`;if(error.status===409&&error.payload?.reloadRequired)reloadConflict.hidden=false;}
   finally{save.disabled=false;form.removeAttribute("aria-busy");}
 });
+reloadConflict.addEventListener("click",async()=>{const confirmed=await window.Proto05TeacherDialogs?.confirm?.({title:"Recharger la version actuelle ?",message:"Les modifications locales non enregistrées seront remplacées.",confirmLabel:"Recharger",destructive:true,trigger:reloadConflict});if(confirmed)location.reload();});
 load().catch(error=>{status.dataset.state="error";status.textContent=`Erreur : ${error.message}`;});
 </script>
 </body>

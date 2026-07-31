@@ -557,6 +557,7 @@
       try {
         const result = await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/metadata`, {
           method: "PUT",
+          headers: { "if-match": asset.editorialRevisionToken },
           body: JSON.stringify(payload)
         });
         asset = result.asset;
@@ -568,6 +569,16 @@
         showFieldErrors(error.payload?.fieldErrors || {});
         setStatus(error.message, "error");
         saveButton.disabled = false;
+        if (error.status === 409 && error.payload?.reloadRequired) {
+          const confirmed = await Proto05TeacherDialogs.confirm({
+            title: "Recharger la fiche actuelle ?",
+            message: "Les informations saisies depuis le dernier chargement seront perdues.",
+            confirmLabel: "Recharger",
+            destructive: true,
+            trigger: saveButton
+          });
+          if (confirmed) location.reload();
+        }
       }
     }
 
@@ -792,7 +803,7 @@
       });
       if (!confirmed) return;
       try {
-        await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}${physical ? "/physical" : ""}`, { method: "DELETE" });
+        await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}${physical ? "/physical" : ""}`, { method: "DELETE", headers: { "if-match": asset.deletionRevisionToken } });
         location.href = backLink.href;
       } catch (error) {
         const conflicts = (error.payload?.conflicts || [])

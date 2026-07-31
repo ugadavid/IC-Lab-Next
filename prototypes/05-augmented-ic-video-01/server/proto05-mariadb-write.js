@@ -7,6 +7,11 @@ const {
   mapMariaDbTablesToSnapshot,
   projectMariaDbSnapshotForApplication
 } = require("./proto05-mariadb-readonly");
+const {
+  concurrencyConflict,
+  mediaDeletionRevision,
+  mediaEditorialRevision
+} = require("./optimistic-concurrency");
 
 const REQUIRED_PRIVILEGES = Object.freeze(["DELETE", "INSERT", "SELECT", "UPDATE"]);
 const OPTIONAL_PRIVILEGES = new Set(["SHOW VIEW"]);
@@ -189,6 +194,18 @@ function metadataRows(snapshot, canonicalLibrary) {
       source_updated_at_utc: null
     }
   ];
+}
+
+function mapperActivities(activities) {
+  return {
+    ...activities,
+    activities: (activities?.activities || []).map(activity => {
+      const result = structuredClone(activity);
+      delete result.revision;
+      delete result.revisionToken;
+      return result;
+    })
+  };
 }
 
 function buildInsert(table, row, excluded = new Set()) {
@@ -475,12 +492,13 @@ function createMariaDbWriteAdapter({
 
     async writeScopedSnapshot(baseSnapshot, snapshot, {
       operation = "mutation",
-      failAfterStatements = null
+      failAfterStatements = null,
+      preconditions = {}
     } = {}) {
       const canonicalLibrary = snapshot.canonicalVideoLibrary;
       if (!canonicalLibrary) throw new Error("Snapshot média canonique absent de la transaction MariaDB.");
       const mapperInput = {
-        activities: snapshot.activities,
+        activities: mapperActivities(snapshot.activities),
         activityLibrary: snapshot.activityLibrary,
         mediaLibrary: canonicalLibrary,
         videoCatalog: snapshot.videoCatalog,
@@ -529,6 +547,63 @@ function createMariaDbWriteAdapter({
         await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
         await database.beginTransaction();
         const currentTables = await readTables(database, true);
+        const currentActivityRows = new Map((currentTables.activities || []).map(row => [row.id, row]));
+        const desiredActivityRows = new Map((desiredRows.activities || []).map(row => [row.id, row]));
+        for (const desired of desiredActivityRows.values()) {
+          const current = currentActivityRows.get(desired.id);
+          if (current) desired.revision = Number(current.revision);
+        }
+        const currentSnapshot = projectMariaDbSnapshotForApplication(
+          mapMariaDbTablesToSnapshot(currentTables)
+        );
+        for (const condition of preconditions.activities || []) {
+          const current = currentActivityRows.get(condition.id);
+          if (!current || current.deleted_at !== null) {
+            throw concurrencyConflict({
+              entityType: "activity",
+              entityId: condition.id,
+              reason: "deleted"
+            });
+          }
+          const currentRevision = Number(current.revision);
+          if (currentRevision !== condition.expected) {
+            throw concurrencyConflict({
+              entityType: "activity",
+              entityId: condition.id,
+              currentRevision,
+              reason: condition.expected > currentRevision ? "future" : "stale"
+            });
+          }
+          const desired = desiredActivityRows.get(condition.id);
+          if (desired && condition.increment !== false) desired.revision = currentRevision + 1;
+        }
+        for (const condition of preconditions.mediaEditorial || []) {
+          const current = currentSnapshot.canonicalVideoLibrary?.assets?.find(item => item.id === condition.id);
+          const currentRevision = mediaEditorialRevision(current);
+          if (!current || currentRevision !== condition.expected) {
+            throw concurrencyConflict({
+              entityType: "media-asset",
+              entityId: condition.id,
+              currentRevision,
+              reason: current ? "stale" : "deleted"
+            });
+          }
+        }
+        for (const condition of preconditions.mediaDeletion || []) {
+          const currentRevision = mediaDeletionRevision({
+            assetId: condition.id,
+            library: currentSnapshot.canonicalVideoLibrary,
+            activities: currentSnapshot.activities?.activities || []
+          });
+          if (currentRevision !== condition.expected) {
+            throw concurrencyConflict({
+              entityType: "media-asset",
+              entityId: condition.id,
+              currentRevision,
+              reason: currentRevision ? "stale" : "deleted"
+            });
+          }
+        }
         const allPlans = definitions.map(definition => tablePlan(
           definition,
           currentTables[definition.name] || [],
@@ -635,6 +710,7 @@ function createMariaDbWriteAdapter({
         };
       } catch (error) {
         try { await database.rollback(); } catch {}
+        if (error?.code === "PROTO05_CONCURRENCY_CONFLICT") throw error;
         if (error?.code === "PROTO05_FORCED_ROLLBACK") throw error;
         const wrapped = new Error("Écriture MariaDB transactionnelle impossible.");
         wrapped.code = error?.code === "SNAPSHOT_RELATIONAL_MAPPING_BLOCKED"

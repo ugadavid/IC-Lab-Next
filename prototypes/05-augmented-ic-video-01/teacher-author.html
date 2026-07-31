@@ -102,6 +102,7 @@ details.card[open] > summary{border-bottom:1px solid #e3e8ef;padding-bottom:8px}
 </div>
 <div class="actions">
 <button id="save">Sauvegarder le brouillon</button>
+<button id="reloadConflict" type="button" class="secondary" hidden>Recharger la version actuelle</button>
 <a href="/teacher">Bibliothèque</a>
 <span id="status">
 </span>
@@ -250,9 +251,10 @@ const saveCanonicalAuthoring=Proto05AuthoringMutationState.singleFlight(async()=
   captureOverlays();
   const payload={title:fields.title.value,description:fields.description.value,instruction:fields.instruction.value,pedagogicalQuestion:fields.question.value,videoId:fields.video.value,segments:state.activity.segments,speakers:state.activity.speakers,languages:state.activity.languages,languageIntervals:state.activity.languageIntervals,phenomena:state.activity.phenomena,layers:state.activity.layers,teacherAnnotations:state.activity.teacherAnnotations,overlays:state.activity.overlays,layerConfiguration:state.activity.layerConfiguration};
   try{
-    const response=await fetch('/api/proto05/activities/'+encodeURIComponent(id)+'/authoring',{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});
+    $('#reloadConflict').hidden=true;
+    const response=await fetch('/api/proto05/activities/'+encodeURIComponent(id)+'/authoring',{method:'PUT',headers:{'content-type':'application/json','if-match':state.activity.revisionToken},body:JSON.stringify(payload)});
     const body=await response.json().catch(()=>({}));
-    if(!response.ok){$('#status').textContent=body.error||'Sauvegarde refusée.';return}
+    if(!response.ok){$('#status').textContent=body.error||'Sauvegarde refusée.';if(response.status===409&&body.reloadRequired)$('#reloadConflict').hidden=false;return}
     Proto05AuthoringMutationState.applyCanonicalActivity(state,body,renderAll);
     $('#status').textContent='Brouillon sauvegardé.';
   }catch(error){
@@ -263,6 +265,7 @@ const saveCanonicalAuthoring=Proto05AuthoringMutationState.singleFlight(async()=
   }
 });
 $('#save').onclick=saveCanonicalAuthoring;
+$('#reloadConflict').onclick=async()=>{const confirmed=await window.Proto05TeacherDialogs?.confirm?.({title:'Recharger la version actuelle ?',message:'Les modifications locales non enregistrées seront remplacées.',confirmLabel:'Recharger',destructive:true,trigger:$('#reloadConflict')});if(confirmed)location.reload()};
 </script>
 </body>
 </html>

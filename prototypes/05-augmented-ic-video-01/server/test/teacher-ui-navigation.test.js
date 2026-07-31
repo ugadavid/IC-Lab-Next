@@ -116,6 +116,13 @@ test("les actions métier existantes restent présentes dans leurs pages", () =>
   assert.match(source("teacher-edit.html"), /id="save"/);
   assert.match(source("teacher-guided.html"), /id="save"/);
   assert.match(source("teacher-author.html"), /id="save"/);
+  for (const page of ["teacher-edit.html", "teacher-guided.html", "teacher-author.html"]) {
+    assert.match(source(page), /if-match/);
+    assert.match(source(page), /Recharger la version actuelle/);
+  }
+  assert.match(activityLibrarySource, /revisionToken/);
+  assert.match(videoDetailSource, /editorialRevisionToken/);
+  assert.match(videoDetailSource, /deletionRevisionToken/);
   assert.match(videoDetailSource, /data-action="workshop"/);
   assert.match(videoDetailSource, /preflight && preflight\.allowed === false/);
   assert.match(videoLibrarySource, /window\.proto05OpenUsagePanel=openUsagePanel/);

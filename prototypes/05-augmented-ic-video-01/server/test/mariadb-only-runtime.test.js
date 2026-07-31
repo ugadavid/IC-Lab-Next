@@ -38,6 +38,8 @@ const {
   createMariaDbReadonlyAdapter,
   runConsistentReadSnapshot
 } = require("../proto05-mariadb-readonly");
+const { createMariaDbWriteAdapter } = require("../proto05-mariadb-write");
+const { activityRevisionToken } = require("../optimistic-concurrency");
 
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
@@ -153,7 +155,27 @@ async function startMariaDbProxy(port) {
 }
 
 async function request(baseUrl, pathname, options = {}) {
-  const response = await fetch(`${baseUrl}${pathname}`, options);
+  const requestOptions = { ...options, headers: { ...(options.headers || {}) } };
+  if (!requestOptions.headers["if-match"] && options.autoRevision !== false) {
+    const method = String(requestOptions.method || "GET").toUpperCase();
+    const activityMatch = /^\/api\/proto05\/activities\/([^/]+)(?:\/(?:authoring|video-ref|duplicate))?$/.exec(pathname);
+    const mediaMatch = /^\/api\/proto05\/library\/assets\/([^/]+)(?:\/(?:metadata|classification|physical))?$/.exec(pathname);
+    if (["PUT", "DELETE", "POST"].includes(method) && activityMatch) {
+      const loaded = await fetch(`${baseUrl}/api/proto05/activities/${activityMatch[1]}`);
+      const payload = await loaded.json().catch(() => ({}));
+      if (payload.activity?.revisionToken) requestOptions.headers["if-match"] = payload.activity.revisionToken;
+    }
+    if (["PUT", "DELETE"].includes(method) && mediaMatch) {
+      const loaded = await fetch(`${baseUrl}/api/proto05/library/assets/${mediaMatch[1]}`);
+      const payload = await loaded.json().catch(() => ({}));
+      const token = method === "DELETE"
+        ? payload.asset?.deletionRevisionToken
+        : payload.asset?.editorialRevisionToken;
+      if (token) requestOptions.headers["if-match"] = token;
+    }
+  }
+  delete requestOptions.autoRevision;
+  const response = await fetch(`${baseUrl}${pathname}`, requestOptions);
   const body = await response.json();
   return { response, body };
 }
@@ -209,6 +231,17 @@ function deferred() {
     reject = rejectPromise;
   });
   return { promise, resolve, reject };
+}
+
+function cloneApplicationSnapshot(snapshot) {
+  const clone = structuredClone(snapshot);
+  Object.defineProperty(clone, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: structuredClone(snapshot.canonicalVideoLibrary)
+  });
+  return clone;
 }
 
 function instrumentedMysqlPool(metrics) {
@@ -1621,5 +1654,398 @@ test("les projections MariaDB restent sur un snapshot unique pendant des commits
     }
     assert.equal(metrics.active, 0);
     if (adapter) assert.equal(metrics.poolEnds, 1);
+  }
+});
+
+test("les révisions optimistes refusent les écrasements activité et média sans mutation partielle", {
+  timeout: 120_000
+}, async () => {
+  const marker = `mission153-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const server = await startServer();
+  const activityIds = [];
+  const assets = [];
+  let folderId = null;
+  let tagId = null;
+  let database = null;
+  let baseline = null;
+  let metadataBefore = null;
+
+  function authoredVariant(activity, label, language) {
+    const next = structuredClone(activity);
+    const segmentId = `segment-${marker}`;
+    const layerId = `layer-${marker}`;
+    const phenomenonId = `phenomenon-${marker}`;
+    ensureActivityLanguage(next, language);
+    next.title = `[TEST M153] activité ${label}`;
+    next.transcription = { ...next.transcription, languageId: language.id, segmentIds: [segmentId] };
+    next.speakers = [];
+    next.segments = [{
+      id: segmentId,
+      startMs: 0,
+      endMs: 5000,
+      text: `SEGMENT-M153-${label}`,
+      speakerIds: [],
+      languageIds: [language.id],
+      phenomenonIds: [phenomenonId]
+    }];
+    next.languageIntervals = [{
+      id: `interval-${marker}`,
+      languageId: language.id,
+      startMs: 0,
+      endMs: 5000,
+      segmentId
+    }];
+    next.layers = [{ id: layerId, label: `Couche ${label}`, description: "", color: "#4d7dbc" }];
+    next.phenomena = [{
+      id: phenomenonId,
+      segmentId,
+      layerId,
+      startMs: 1000,
+      endMs: 2000
+    }];
+    next.teacherAnnotations = [{
+      id: `annotation-${marker}`,
+      segmentId,
+      note: `ANNOTATION-M153-${label}`,
+      pedagogicalQuestion: ""
+    }];
+    next.layerConfiguration = {
+      ...next.layerConfiguration,
+      learnerVisibleLayerIds: [layerId],
+      teacherVisibleLayerIds: [layerId]
+    };
+    return next;
+  }
+
+  try {
+    await server.ready();
+    database = await testDatabaseConnection();
+    baseline = await readTableCardinalities(database);
+    [metadataBefore] = await database.query(
+      "SELECT document_key, source_updated_at_utc FROM data_projection_metadata ORDER BY document_key"
+    );
+
+    const firstAsset = await importTemporaryMedia(server, `${marker}-one`, "M153");
+    const secondAsset = await importTemporaryMedia(server, `${marker}-two`, "M153");
+    assets.push(firstAsset, secondAsset);
+
+    const folder = await request(server.baseUrl, "/api/proto05/library/folders", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: `[TEST M153] dossier ${marker}` })
+    });
+    assert.equal(folder.response.status, 201, folder.body.error);
+    folderId = folder.body.folder.id;
+    const tag = await request(server.baseUrl, "/api/proto05/library/tags", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ name: `[TEST M153] tag ${marker}` })
+    });
+    assert.equal(tag.response.status, 201, tag.body.error);
+    tagId = tag.body.tag.id;
+
+    const created = await request(server.baseUrl, "/api/proto05/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: `[TEST M153] activité ${marker}`,
+        description: "",
+        instruction: "",
+        pedagogicalQuestion: "",
+        videoRef: { assetId: firstAsset.assetId, playableId: firstAsset.playableId }
+      })
+    });
+    assert.equal(created.response.status, 201, created.body.error);
+    const activityId = created.body.activity.id;
+    activityIds.push(activityId);
+    assert.equal(created.body.activity.revision, 1);
+    assert.match(created.body.activity.revisionToken, /^"proto05:activity:/);
+
+    const languageCatalog = await request(server.baseUrl, "/api/proto05/language-catalog");
+    const language = languageCatalog.body.languages[0];
+    const clientA = authoredVariant(created.body.activity, "A", language);
+    const clientB = authoredVariant(created.body.activity, "B", language);
+    const loadedToken = created.body.activity.revisionToken;
+
+    const savedA = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}/authoring`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": loadedToken },
+        body: JSON.stringify(buildAuthoringPayload(clientA))
+      }
+    );
+    assert.equal(savedA.response.status, 200, savedA.body.error);
+    assert.equal(savedA.body.activity.revision, 2);
+
+    const refusedB = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}/authoring`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": loadedToken },
+        body: JSON.stringify(buildAuthoringPayload(clientB))
+      }
+    );
+    assert.equal(refusedB.response.status, 409);
+    assert.equal(refusedB.body.code, "PROTO05_CONCURRENCY_CONFLICT");
+    assert.equal(refusedB.body.reloadRequired, true);
+
+    const afterConflict = await request(server.baseUrl, `/api/proto05/activities/${encodeURIComponent(activityId)}`);
+    assert.equal(afterConflict.body.activity.title, clientA.title);
+    assert.equal(afterConflict.body.activity.segments[0].text, "SEGMENT-M153-A");
+    assert.equal(afterConflict.body.activity.teacherAnnotations[0].note, "ANNOTATION-M153-A");
+    const [forbiddenRows] = await database.query(
+      `SELECT
+         (SELECT COUNT(*) FROM activity_segments WHERE activity_id = ? AND text = 'SEGMENT-M153-B') segment_b,
+         (SELECT COUNT(*) FROM activity_annotations WHERE activity_id = ? AND note = 'ANNOTATION-M153-B') annotation_b`,
+      [activityId, activityId]
+    );
+    assert.deepEqual(forbiddenRows[0], { segment_b: 0, annotation_b: 0 });
+
+    const reloadedB = authoredVariant(afterConflict.body.activity, "B-RECHARGE", language);
+    const savedB = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}/authoring`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: {
+          "content-type": "application/json",
+          "if-match": afterConflict.body.activity.revisionToken
+        },
+        body: JSON.stringify(buildAuthoringPayload(reloadedB))
+      }
+    );
+    assert.equal(savedB.response.status, 200, savedB.body.error);
+    assert.equal(savedB.body.activity.revision, 3);
+    assert.equal(savedB.body.activity.segments[0].text, "SEGMENT-M153-B-RECHARGE");
+
+    const mutationBody = JSON.stringify({ title: "M153 tentative invalide" });
+    const missingRevision = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}`,
+      { method: "PUT", autoRevision: false, headers: { "content-type": "application/json" }, body: mutationBody }
+    );
+    assert.equal(missingRevision.response.status, 428);
+    assert.equal(missingRevision.body.code, "PROTO05_REVISION_REQUIRED");
+    const invalidRevision = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}`,
+      { method: "PUT", autoRevision: false, headers: { "content-type": "application/json", "if-match": "revision-invalide" }, body: mutationBody }
+    );
+    assert.equal(invalidRevision.response.status, 400);
+    assert.equal(invalidRevision.body.code, "PROTO05_REVISION_INVALID");
+    const futureRevision = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": activityRevisionToken(activityId, 99_999) },
+        body: mutationBody
+      }
+    );
+    assert.equal(futureRevision.response.status, 409);
+    const oldRevision = await request(
+      server.baseUrl,
+      `/api/proto05/activities/${encodeURIComponent(activityId)}`,
+      { method: "PUT", autoRevision: false, headers: { "content-type": "application/json", "if-match": loadedToken }, body: mutationBody }
+    );
+    assert.equal(oldRevision.response.status, 409);
+
+    const deletedFixture = await request(server.baseUrl, "/api/proto05/activities", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        title: `[TEST M153] supprimée ${marker}`,
+        description: "",
+        instruction: "",
+        pedagogicalQuestion: "",
+        videoRef: { assetId: firstAsset.assetId, playableId: firstAsset.playableId }
+      })
+    });
+    assert.equal(deletedFixture.response.status, 201, deletedFixture.body.error);
+    const deletedId = deletedFixture.body.activity.id;
+    activityIds.push(deletedId);
+    const deletedToken = deletedFixture.body.activity.revisionToken;
+    const deletion = await request(server.baseUrl, `/api/proto05/activities/${encodeURIComponent(deletedId)}`, {
+      method: "DELETE",
+      autoRevision: false,
+      headers: { "if-match": deletedToken }
+    });
+    assert.equal(deletion.response.status, 200, deletion.body.error);
+    const staleResurrection = await request(server.baseUrl, `/api/proto05/activities/${encodeURIComponent(deletedId)}`, {
+      method: "PUT",
+      autoRevision: false,
+      headers: { "content-type": "application/json", "if-match": deletedToken },
+      body: mutationBody
+    });
+    assert.equal(staleResurrection.response.status, 404);
+
+    const firstDetail = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(firstAsset.assetId)}`);
+    const secondDetail = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(secondAsset.assetId)}`);
+    const firstInitialToken = firstDetail.body.asset.editorialRevisionToken;
+    const secondInitialToken = secondDetail.body.asset.editorialRevisionToken;
+    const firstClassification = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(firstAsset.assetId)}/classification`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": firstInitialToken },
+        body: JSON.stringify({ folderId, tagIds: [] })
+      }
+    );
+    assert.equal(firstClassification.response.status, 200, firstClassification.body.error);
+    const independentSecond = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(secondAsset.assetId)}/classification`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": secondInitialToken },
+        body: JSON.stringify({ folderId: null, tagIds: [tagId] })
+      }
+    );
+    assert.equal(independentSecond.response.status, 200, independentSecond.body.error);
+    const staleMedia = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(firstAsset.assetId)}/classification`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": firstInitialToken },
+        body: JSON.stringify({ folderId: null, tagIds: [tagId] })
+      }
+    );
+    assert.equal(staleMedia.response.status, 409);
+    assert.equal(staleMedia.body.code, "PROTO05_CONCURRENCY_CONFLICT");
+
+    const reloadedFirst = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(firstAsset.assetId)}`);
+    const savedMedia = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(firstAsset.assetId)}/classification`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": reloadedFirst.body.asset.editorialRevisionToken },
+        body: JSON.stringify({ folderId, tagIds: [tagId] })
+      }
+    );
+    assert.equal(savedMedia.response.status, 200, savedMedia.body.error);
+
+    const beforeDelete = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(secondAsset.assetId)}`);
+    const staleDeletionToken = beforeDelete.body.asset.deletionRevisionToken;
+    const concurrentMediaChange = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(secondAsset.assetId)}/classification`,
+      {
+        method: "PUT",
+        autoRevision: false,
+        headers: { "content-type": "application/json", "if-match": beforeDelete.body.asset.editorialRevisionToken },
+        body: JSON.stringify({ folderId, tagIds: [tagId] })
+      }
+    );
+    assert.equal(concurrentMediaChange.response.status, 200, concurrentMediaChange.body.error);
+    const refusedDeletion = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(secondAsset.assetId)}`,
+      { method: "DELETE", autoRevision: false, headers: { "if-match": staleDeletionToken } }
+    );
+    assert.equal(refusedDeletion.response.status, 409);
+    assert.equal(refusedDeletion.body.code, "PROTO05_CONCURRENCY_CONFLICT");
+    const stillPresent = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(secondAsset.assetId)}`);
+    assert.equal(stillPresent.response.status, 200);
+    assert.equal(stillPresent.body.asset.folderId, folderId);
+
+    loadTestEnvironment();
+    const config = mariadbConfigurationFromEnvironment(process.env);
+    const reader = createMariaDbReadonlyAdapter({
+      config,
+      prototypeDirectory,
+      grantValidator: () => ({ readonly: true, privileges: ["SELECT"] }),
+      mode: "mariadb-test"
+    });
+    const writer = createMariaDbWriteAdapter({ config, prototypeDirectory });
+    try {
+      const rollbackBase = await reader.readSnapshot();
+      const rollbackBefore = rollbackBase.activities.activities.find(item => item.id === activityId);
+      const rollbackDesired = cloneApplicationSnapshot(rollbackBase);
+      const rollbackTarget = rollbackDesired.activities.activities.find(item => item.id === activityId);
+      rollbackTarget.title = `[TEST M153] rollback ${marker}`;
+      rollbackTarget.segments[0].text = "SEGMENT-M153-ROLLBACK";
+      rollbackDesired.activities.updatedAt = new Date().toISOString();
+      await assert.rejects(
+        writer.writeScopedSnapshot(rollbackBase, rollbackDesired, {
+          operation: "mission153-forced-rollback",
+          failAfterStatements: 2,
+          preconditions: { activities: [{ id: activityId, expected: rollbackBefore.revision }] }
+        }),
+        error => error.code === "PROTO05_FORCED_ROLLBACK"
+      );
+      const afterRollback = await reader.readSnapshot();
+      const unchanged = afterRollback.activities.activities.find(item => item.id === activityId);
+      assert.equal(unchanged.revision, rollbackBefore.revision);
+      assert.equal(unchanged.title, rollbackBefore.title);
+      assert.equal(unchanged.segments[0].text, rollbackBefore.segments[0].text);
+      const recovered = await writer.writeScopedSnapshot(afterRollback, rollbackDesired, {
+        operation: "mission153-after-rollback",
+        preconditions: { activities: [{ id: activityId, expected: unchanged.revision }] }
+      });
+      const recoveredActivity = recovered.snapshot.activities.activities.find(item => item.id === activityId);
+      assert.equal(recoveredActivity.revision, unchanged.revision + 1);
+      assert.equal(recoveredActivity.segments[0].text, "SEGMENT-M153-ROLLBACK");
+    } finally {
+      await reader.close();
+      await writer.close();
+    }
+  } finally {
+    try {
+      for (const activityId of [...activityIds].reverse()) {
+        const loaded = await request(server.baseUrl, `/api/proto05/activities/${encodeURIComponent(activityId)}`);
+        if (loaded.response.status !== 200) continue;
+        const removed = await request(server.baseUrl, `/api/proto05/activities/${encodeURIComponent(activityId)}`, {
+          method: "DELETE",
+          autoRevision: false,
+          headers: { "if-match": loaded.body.activity.revisionToken }
+        });
+        assert.equal(removed.response.status, 200, removed.body.error);
+      }
+      for (const asset of [...assets].reverse()) {
+        const loaded = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}`);
+        if (loaded.response.status === 200) {
+          const removed = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}/physical`, {
+            method: "DELETE",
+            autoRevision: false,
+            headers: { "if-match": loaded.body.asset.deletionRevisionToken }
+          });
+          assert.equal(removed.response.status, 200, removed.body.error);
+        }
+      }
+      if (folderId) await request(server.baseUrl, `/api/proto05/library/folders/${encodeURIComponent(folderId)}`, { method: "DELETE" });
+      if (tagId) await request(server.baseUrl, `/api/proto05/library/tags/${encodeURIComponent(tagId)}`, { method: "DELETE" });
+      if (database && metadataBefore) {
+        for (const row of metadataBefore) {
+          await database.query(
+            "UPDATE data_projection_metadata SET source_updated_at_utc = ? WHERE document_key = ?",
+            [row.source_updated_at_utc, row.document_key]
+          );
+        }
+      }
+      if (database && baseline) assert.deepEqual(await readTableCardinalities(database), baseline);
+    } finally {
+      for (const asset of assets) {
+        const mediaRoot = path.resolve(prototypeDirectory, "data", "video-library-media");
+        const resolved = path.resolve(asset.file);
+        assert.ok(resolved.startsWith(`${mediaRoot}${path.sep}`));
+        fs.rmSync(resolved, { force: true });
+      }
+      if (database) await database.end();
+      await server.stop();
+    }
   }
 });

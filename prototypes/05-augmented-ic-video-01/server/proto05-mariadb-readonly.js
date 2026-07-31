@@ -222,6 +222,7 @@ function mapActivities(tables) {
       id: activityId,
       version: row.version,
       status: row.status,
+      revision: Number(row.revision),
       title: row.title,
       description: row.description ?? "",
       instruction: row.instruction ?? "",

@@ -110,13 +110,17 @@ async function seedActivity(baseUrl, source, marker) {
     `/api/proto05/activities/${encodeURIComponent(activity.id)}/authoring`,
     {
       method: "PUT",
-      headers: { "content-type": "application/json" },
+      headers: {
+        "content-type": "application/json",
+        "if-match": created.body.activity.revisionToken
+      },
       body: JSON.stringify(buildAuthoringPayload(activity))
     }
   );
   if (authored.response.status !== 200) {
     await request(baseUrl, `/api/proto05/activities/${encodeURIComponent(activity.id)}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: { "if-match": created.body.activity.revisionToken }
     });
   }
   assert.equal(authored.response.status, 200, authored.body?.error);
@@ -194,10 +198,19 @@ async function startTemporaryProto05Server(store = { activities: [] }, prefix = 
       let cleanupError = null;
       try {
         for (const activity of [...seeded].reverse()) {
+          const current = await request(
+            baseUrl,
+            `/api/proto05/activities/${encodeURIComponent(activity.id)}`
+          );
           const deletion = await request(
             baseUrl,
             `/api/proto05/activities/${encodeURIComponent(activity.id)}`,
-            { method: "DELETE" }
+            {
+              method: "DELETE",
+              headers: current.response.status === 200
+                ? { "if-match": current.body.activity.revisionToken }
+                : {}
+            }
           );
           if (![200, 404].includes(deletion.response.status)) {
             throw new Error(`Nettoyage refusé pour ${activity.id} (${deletion.response.status}).`);

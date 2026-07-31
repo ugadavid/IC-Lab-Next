@@ -38,6 +38,15 @@ const {
   assertApplicationGrants,
   createMariaDbWriteAdapter
 } = require("./proto05-mariadb-write");
+const {
+  activityRevisionToken,
+  expectedActivityRevision,
+  expectedMediaRevision,
+  mediaDeletionRevision,
+  mediaDeletionRevisionToken,
+  mediaEditorialRevision,
+  mediaEditorialRevisionToken
+} = require("./optimistic-concurrency");
 const { createProto05ReadBoundary } = require("./proto05-read-boundary");
 const { createProto05WriteBoundary } = require("./proto05-write-boundary");
 const {
@@ -334,10 +343,34 @@ function sendJson(response, status, payload, headers = {}) {
   response.end(body);
 }
 
+function sendMutationFailure(response, error, fallback, additions = {}) {
+  const status = error?.statusCode || 400;
+  return sendJson(response, status, {
+    error: error?.message || fallback,
+    ...(error?.code ? { code: error.code } : {}),
+    ...(error?.entityType ? { entityType: error.entityType } : {}),
+    ...(error?.entityId ? { entityId: error.entityId } : {}),
+    ...(error?.code === "PROTO05_CONCURRENCY_CONFLICT" ? { reloadRequired: true } : {}),
+    ...additions
+  });
+}
+
+function activityWritePrecondition(request, activityId, { increment = true } = {}) {
+  return {
+    activities: [{ id: activityId, expected: expectedActivityRevision(request, activityId), increment }]
+  };
+}
+
+function mediaWritePrecondition(request, assetId, kind) {
+  const key = kind === "media-deletion" ? "mediaDeletion" : "mediaEditorial";
+  return { [key]: [{ id: assetId, expected: expectedMediaRevision(request, assetId, kind) }] };
+}
+
 function activityForStorage(activity) {
   const stored = { ...activity };
   delete stored.video;
   delete stored.videoSource;
+  delete stored.revisionToken;
   return stored;
 }
 
@@ -535,6 +568,7 @@ function activityForResponse(activity) {
   const resolved = resolveActivityVideo(activity);
   return {
     ...activityForStorage(activity),
+    revisionToken: activityRevisionToken(activity.id, activity.revision),
     videoRef: resolved.videoRef,
     video: resolved.video,
     videoSource: resolved.source,
@@ -903,14 +937,14 @@ function duplicateActivity(source, activities) {
   return copy;
 }
 
-async function persistActivities(store) {
+async function persistActivities(store, { preconditions = {}, operation = "activities", failAfterStatements = null } = {}) {
   const currentClassification = READ_CONTEXT.getStore()?.activityLibrary;
   const activityIds = new Set((store.activities || []).map(activity => activity.id));
   const assignments = Object.fromEntries(Object.entries(currentClassification?.assignments || {})
     .filter(([activityId]) => activityIds.has(activityId)));
   const classificationChanged = Object.keys(assignments).length
     !== Object.keys(currentClassification?.assignments || {}).length;
-  await persistMariaDbSnapshot(
+  const result = await persistMariaDbSnapshot(
     {
       activities: storeForPersistence(store),
       ...(classificationChanged
@@ -923,8 +957,10 @@ async function persistActivities(store) {
           }
         : {})
     },
-    { operation: "activities" }
+    { operation, preconditions, failAfterStatements }
   );
+  Object.assign(store, structuredClone(result.snapshot.activities));
+  return result;
 }
 
 async function persistVideoCatalog(videos) {
@@ -960,7 +996,7 @@ async function renameWithWindowsRetries(source, target, options = {}) {
   throw lastError;
 }
 
-async function persistVideoLibrary(library) {
+async function persistVideoLibrary(library, { preconditions = {}, operation = "media-library" } = {}) {
   const canonical = assertWritableCanonical(canonicalFromRuntime(
     library,
     activeCanonicalVideoLibrary()
@@ -976,16 +1012,16 @@ async function persistVideoLibrary(library) {
   };
   await persistMariaDbSnapshot(
     { videoLibrary: projectCanonicalLibrary(canonical), videoCatalog },
-    { operation: "media-library", canonicalVideoLibrary: canonical }
+    { operation, canonicalVideoLibrary: canonical, preconditions }
   );
 }
 
-async function persistCanonicalLibrary(canonical) {
+async function persistCanonicalLibrary(canonical, { preconditions = {}, operation = "media-library" } = {}) {
   const next = assertWritableCanonical(JSON.parse(JSON.stringify(canonical)));
   next.updatedAt = new Date().toISOString();
   await persistMariaDbSnapshot(
     { videoLibrary: projectCanonicalLibrary(next) },
-    { operation: "media-library", canonicalVideoLibrary: next }
+    { operation, canonicalVideoLibrary: next, preconditions }
   );
   return VIDEO_LIBRARY;
 }
@@ -1107,6 +1143,18 @@ function libraryAssetDetails(asset, usage = null) {
   const publishedCount = projectedAccesses.publishedRemote.length;
   return {
     ...asset,
+    editorialRevision: mediaEditorialRevision(asset),
+    editorialRevisionToken: mediaEditorialRevisionToken(asset),
+    deletionRevision: mediaDeletionRevision({
+      assetId: asset.id,
+      library: activeCanonicalVideoLibrary(),
+      activities: READ_CONTEXT.getStore()?.activities?.activities || []
+    }),
+    deletionRevisionToken: mediaDeletionRevisionToken({
+      assetId: asset.id,
+      library: activeCanonicalVideoLibrary(),
+      activities: READ_CONTEXT.getStore()?.activities?.activities || []
+    }),
     sources,
     playables: playables.map(playableForClient),
     deletion: { canDeleteFile: localCandidates.length === 1 && !hasRemoteSource, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
@@ -1416,7 +1464,7 @@ function libraryUsageSummary(plan) {
   };
 }
 
-async function removeLibraryAsset(assetId, { physical = false } = {}) {
+async function removeLibraryAsset(assetId, { physical = false, preconditions = {} } = {}) {
   const activities = (await readActivities()).activities || [];
   const plan = libraryAssetDeletionPlan(assetId, activities);
   const conflicts = deletionConflict(plan, physical);
@@ -1455,7 +1503,10 @@ async function removeLibraryAsset(assetId, { physical = false } = {}) {
       await fs.copyFile(physicalFile.file, transactionBackup);
       await fs.unlink(physicalFile.file);
     }
-    await persistCanonicalLibrary(nextCanonical);
+    await persistCanonicalLibrary(nextCanonical, {
+      operation: "media-asset-delete",
+      preconditions
+    });
     return { assetId, removedFromLibrary: true, deletedFile: Boolean(physicalFile), storageKey: physicalFile?.storageKey || null };
   } catch (error) {
     if (physicalFile && transactionBackup) {
@@ -1571,10 +1622,10 @@ async function assignLibraryAccessRole(assetId, playableId, role) {
   return { assetId, playableId, sourceId: source.id, role };
 }
 
-async function persistLibraryMutation(nextLibrary) {
+async function persistLibraryMutation(nextLibrary, { preconditions = {}, operation = "media-library" } = {}) {
   nextLibrary.updatedAt = new Date().toISOString();
   validateLibraryShape(nextLibrary);
-  await persistVideoLibrary(nextLibrary);
+  await persistVideoLibrary(nextLibrary, { preconditions, operation });
 }
 
 function libraryFolderFromInput(payload) {
@@ -3125,7 +3176,8 @@ function proto05WriteBoundary() {
 async function persistMariaDbSnapshot(patch, {
   operation,
   canonicalVideoLibrary = null,
-  failAfterStatements = null
+  failAfterStatements = null,
+  preconditions = {}
 }) {
   const context = READ_CONTEXT.getStore();
   if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
@@ -3146,7 +3198,8 @@ async function persistMariaDbSnapshot(patch, {
   });
   const queued = writeQueue.then(() => proto05WriteBoundary().writeScopedSnapshot(baseSnapshot, snapshot, {
     operation,
-    failAfterStatements
+    failAfterStatements,
+    preconditions
   }));
   writeQueue = queued.catch(() => {});
   const result = await queued;
@@ -3305,8 +3358,8 @@ async function handleApiInReadContext(request, response, url) {
   const classificationRoute = /^\/api\/proto05\/library\/assets\/([^/]+)\/classification$/.exec(url.pathname);
   if (classificationRoute) {
     if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
-    try { const assetId = decodeURIComponent(classificationRoute[1]); const payload = JSON.parse(await readRequestBody(request)); const classification = classificationFromInput(assetId, payload); const nextLibrary = libraryMutationCopy(); const asset = nextLibrary.assets.find(item => item.id === assetId); asset.folderId = classification.folderId; asset.tagIds = classification.tagIds; await persistLibraryMutation(nextLibrary); return sendJson(response, 200, { asset: libraryAssetDetails(asset) }); }
-      catch (error) { return sendJson(response, 400, { error: error.message || "Classement impossible." }); }
+    try { const assetId = decodeURIComponent(classificationRoute[1]); const preconditions = mediaWritePrecondition(request, assetId, "media-editorial"); const payload = JSON.parse(await readRequestBody(request)); const classification = classificationFromInput(assetId, payload); const nextLibrary = libraryMutationCopy(); const asset = nextLibrary.assets.find(item => item.id === assetId); asset.folderId = classification.folderId; asset.tagIds = classification.tagIds; await persistLibraryMutation(nextLibrary, { operation: "media-asset-classification", preconditions }); const saved = VIDEO_LIBRARY.assets.find(item => item.id === assetId); return sendJson(response, 200, { asset: libraryAssetDetails(saved) }); }
+      catch (error) { return sendMutationFailure(response, error, "Classement impossible."); }
   }
   const videoMetadataRoute = /^\/api\/proto05\/library\/assets\/([^/]+)\/metadata$/.exec(url.pathname);
   if (videoMetadataRoute) {
@@ -3315,6 +3368,7 @@ async function handleApiInReadContext(request, response, url) {
     }
     try {
       const assetId = decodeURIComponent(videoMetadataRoute[1]);
+      const preconditions = mediaWritePrecondition(request, assetId, "media-editorial");
       const payload = JSON.parse(await readRequestBody(request));
       const { value } = videoMetadataFromInput(assetId, payload);
       const nextLibrary = libraryMutationCopy();
@@ -3336,7 +3390,10 @@ async function handleApiInReadContext(request, response, url) {
         if (value.declaredRights[key] === null) delete target.rights[key];
       }
       target.updatedAt = new Date().toISOString();
-      await persistLibraryMutation(nextLibrary);
+      await persistLibraryMutation(nextLibrary, {
+        operation: "media-asset-metadata",
+        preconditions
+      });
       const activities = (await readActivities()).activities || [];
       const saved = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
       const plan = libraryAssetDeletionPlan(assetId, activities);
@@ -3344,10 +3401,8 @@ async function handleApiInReadContext(request, response, url) {
         asset: libraryAssetDetails(saved, libraryUsageSummary(plan))
       });
     } catch (error) {
-      return sendJson(response, error.statusCode || 400, {
-        error: error.message || "Enregistrement de la fiche impossible.",
+      return sendMutationFailure(response, error, "Enregistrement de la fiche impossible.", {
         fieldErrors: error.fieldErrors || {},
-        ...(error.code ? { code: error.code } : {}),
         ...(error.reasonCode ? { reasonCode: error.reasonCode } : {}),
         ...(error.differencePaths?.length ? { differencePaths: error.differencePaths } : {})
       });
@@ -3395,10 +3450,15 @@ async function handleApiInReadContext(request, response, url) {
     }
     if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
     try {
-      const result = await removeLibraryAsset(decodeURIComponent(libraryAssetDeleteMatch[1]), { physical: Boolean(libraryAssetDeleteMatch[2]) });
+      const assetId = decodeURIComponent(libraryAssetDeleteMatch[1]);
+      const preconditions = mediaWritePrecondition(request, assetId, "media-deletion");
+      const result = await removeLibraryAsset(assetId, {
+        physical: Boolean(libraryAssetDeleteMatch[2]),
+        preconditions
+      });
       return sendJson(response, 200, result);
     } catch (error) {
-      return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression impossible.", conflicts: error.conflicts || [] });
+      return sendMutationFailure(response, error, "Suppression impossible.", { conflicts: error.conflicts || [] });
     }
   }
   if (url.pathname === "/api/proto05/library/assets") {
@@ -3594,6 +3654,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     try { payload = JSON.parse(await readRequestBody(request)); }
     catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
     try {
+      const preconditions = activityWritePrecondition(request, id);
       const next = {
         ...activityForStorage(store.activities[index]),
         videoRef: normalizedActivityVideoRef(payload)
@@ -3601,9 +3662,9 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       validateActivityIntegrity(next);
       store.activities[index] = next;
       store.updatedAt = new Date().toISOString();
-      await persistActivities(store);
-      return sendJson(response, 200, activityResponse(store, next));
-    } catch (error) { return sendJson(response, 400, { error: error.message || "Association vidéo invalide." }); }
+      await persistActivities(store, { operation: "activity-video-ref", preconditions });
+      return sendJson(response, 200, activityResponse(store, store.activities.find(activity => activity.id === id)));
+    } catch (error) { return sendMutationFailure(response, error, "Association vidéo invalide."); }
   }
   if (url.pathname === "/api/proto05/language-catalog") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
@@ -3627,22 +3688,29 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
   if (duplicateMatch) {
     if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
     const id = decodeURIComponent(duplicateMatch[1]);
-    const store = await readActivities();
-    const source = store.activities.find(activity => activity && activity.id === id);
-    if (!source) return sendJson(response, 404, { error: "Activité introuvable." });
-    let activity;
-    try { activity = duplicateActivity(source, store.activities); }
-    catch (error) { return sendJson(response, 400, { error: error.message || "Duplication invalide." }); }
-    store.activities.push(activity); store.updatedAt = new Date().toISOString();
-    try { await persistActivities(store); }
-    catch (error) { console.error(`[data] duplication Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Duplication impossible." }); }
-    return sendJson(response, 201, activityResponse(store, activity));
+    try {
+      const preconditions = activityWritePrecondition(request, id, { increment: false });
+      const store = await readActivities();
+      const source = store.activities.find(activity => activity && activity.id === id);
+      if (!source) return sendJson(response, 404, { error: "Activité introuvable." });
+      const activity = duplicateActivity(source, store.activities);
+      store.activities.push(activity); store.updatedAt = new Date().toISOString();
+      await persistActivities(store, { operation: "activity-duplicate", preconditions });
+      const saved = store.activities.find(item => item.id === activity.id);
+      return sendJson(response, 201, activityResponse(store, saved));
+    } catch (error) {
+      if (error?.statusCode) return sendMutationFailure(response, error, "Duplication impossible.");
+      return sendJson(response, 400, { error: error.message || "Duplication invalide." });
+    }
   }
   const deleteMatch = url.pathname.match(/^\/api\/proto05\/activities\/([^/]+)$/);
   if (request.method === "DELETE" && deleteMatch) {
     let id;
     try { id = decodeDeletionIdentifier(deleteMatch[1]); }
     catch (error) { return sendJson(response, 400, { error: error.message }); }
+    let preconditions;
+    try { preconditions = activityWritePrecondition(request, id); }
+    catch (error) { return sendMutationFailure(response, error, "Suppression impossible."); }
     const store = await readActivities();
     const matches = store.activities
       .map((activity, index) => activity && activity.id === id ? index : -1)
@@ -3662,10 +3730,10 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
     const [index] = matches;
     const [deleted] = store.activities.splice(index, 1);
     store.updatedAt = new Date().toISOString();
-    try { await persistActivities(store); }
+    try { await persistActivities(store, { operation: "activity-delete", preconditions }); }
     catch (error) {
       console.error(`[data] suppression Proto05 impossible : ${error.message}`);
-      return sendJson(response, 500, { error: "Suppression impossible." });
+      return sendMutationFailure(response, error, "Suppression impossible.");
     }
     try { await removeActivityLibraryAssignment(id); }
     catch (error) { console.error(`[data] nettoyage du classement de ${id} impossible : ${error.message}`); }
@@ -3694,7 +3762,7 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       console.error(`[data] création Proto05 impossible : ${error.code || "ERROR"}/${error.reasonCode || "UNKNOWN"} ${(error.differencePaths || []).join(",")}`);
       return sendJson(response, 500, { error: "Création impossible." });
     }
-    return sendJson(response, 201, activityResponse(store, activity));
+    return sendJson(response, 201, activityResponse(store, store.activities.find(item => item.id === activity.id)));
   }
   if (url.pathname === "/api/proto05/activities" || /^\/api\/proto05\/activities\/[^/]+(?:\/authoring)?$/.test(url.pathname)) {
     const isDetail = url.pathname !== "/api/proto05/activities";
@@ -3704,14 +3772,20 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       if (index < 0) return sendJson(response, 404, { error: "Activité introuvable." });
       let payload; let next;
       try {
+        var preconditions = activityWritePrecondition(request, id);
         payload = JSON.parse(await readRequestBody(request));
         next = validateAuthoringPatch(payload, store.activities[index]);
         assertPedagogicalLineage(next, store.activities.map((activity, activityIndex) => activityIndex === index ? next : activity));
       }
-      catch (error) { return sendJson(response, 400, { error: error.message || "Données d’atelier invalides." }); }
+      catch (error) {
+        return error?.statusCode
+          ? sendMutationFailure(response, error, "Données d’atelier invalides.")
+          : sendJson(response, 400, { error: error.message || "Données d’atelier invalides." });
+      }
       next.status = "draft"; store.activities[index] = next; store.updatedAt = new Date().toISOString();
-      try { await persistActivities(store); } catch { return sendJson(response, 500, { error: "Sauvegarde de l’atelier impossible." }); }
-      return sendJson(response, 200, activityResponse(store, next));
+      try { await persistActivities(store, { operation: "activity-authoring", preconditions }); }
+      catch (error) { return sendMutationFailure(response, error, "Sauvegarde de l’atelier impossible."); }
+      return sendJson(response, 200, activityResponse(store, store.activities.find(activity => activity.id === id)));
     }
     if (request.method === "PUT" && isDetail) {
       const id = decodeURIComponent(url.pathname.slice("/api/proto05/activities/".length));
@@ -3719,8 +3793,16 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       const index = store.activities.findIndex(activity => activity && activity.id === id);
       if (index < 0) return sendJson(response, 404, { error: "Activité introuvable." });
       let payload;
-      try { payload = validateMetadataPatch(JSON.parse(await readRequestBody(request))); }
-      catch (error) { return sendJson(response, 400, { error: error.message || "Requête JSON invalide." }); }
+      let preconditions;
+      try {
+        preconditions = activityWritePrecondition(request, id);
+        payload = validateMetadataPatch(JSON.parse(await readRequestBody(request)));
+      }
+      catch (error) {
+        return error?.statusCode
+          ? sendMutationFailure(response, error, "Requête JSON invalide.")
+          : sendJson(response, 400, { error: error.message || "Requête JSON invalide." });
+      }
       const current = store.activities[index];
       const next = activityForStorage(current);
       for (const key of ["title", "description", "instruction", "pedagogicalQuestion"]) if (payload[key] !== undefined) next[key] = payload[key];
@@ -3735,9 +3817,9 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
       catch (error) { return sendJson(response, 400, { error: error.message || "Activité invalide." }); }
       store.activities[index] = next;
       store.updatedAt = new Date().toISOString();
-      try { await persistActivities(store); }
-      catch (error) { console.error(`[data] sauvegarde Proto05 impossible : ${error.message}`); return sendJson(response, 500, { error: "Sauvegarde impossible." }); }
-      return sendJson(response, 200, activityResponse(store, next));
+      try { await persistActivities(store, { operation: "activity-metadata", preconditions }); }
+      catch (error) { console.error(`[data] sauvegarde Proto05 impossible : ${error.message}`); return sendMutationFailure(response, error, "Sauvegarde impossible."); }
+      return sendJson(response, 200, activityResponse(store, store.activities.find(activity => activity.id === id)));
     }
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: isDetail ? "GET, PUT, DELETE" : "GET" });
     const store = await readActivities();

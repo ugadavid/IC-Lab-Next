@@ -251,7 +251,7 @@
       headers: { "content-type": "application/json", ...(options.headers || {}) }
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || "Opération impossible.");
+    if (!response.ok) throw Object.assign(new Error(payload.error || "Opération impossible."), { status: response.status, payload });
     return payload;
   }
 
@@ -335,6 +335,7 @@
 
   async function duplicateActivity(button) {
     const activityId = button.dataset.duplicateId;
+    const activity = state.activities.find(item => item.id === activityId);
     const card = button.closest("[data-activity-card]");
     const status = card.querySelector(".activity-card__status");
     button.disabled = true;
@@ -342,7 +343,7 @@
     button.textContent = "Duplication en cours…";
     status.textContent = "Duplication en cours…";
     try {
-      const payload = await api(`/api/proto05/activities/${encodeURIComponent(activityId)}/duplicate`, { method: "POST" });
+      const payload = await api(`/api/proto05/activities/${encodeURIComponent(activityId)}/duplicate`, { method: "POST", headers: { "if-match": activity?.revisionToken } });
       if (!payload.activity?.id || payload.activity.id === activityId) throw new Error("Réponse de duplication invalide.");
       location.assign(`/teacher/author/${encodeURIComponent(payload.activity.id)}`);
     } catch (error) {
@@ -355,6 +356,7 @@
 
   async function deleteActivity(button) {
     const activityId = button.dataset.deleteId;
+    const activity = state.activities.find(item => item.id === activityId);
     const title = button.dataset.deleteTitle;
     const card = button.closest("[data-activity-card]");
     const status = card.querySelector(".activity-card__status");
@@ -378,7 +380,7 @@
     button.textContent = "Suppression en cours…";
     status.textContent = "Suppression atomique en cours…";
     try {
-      const payload = await api(`/api/proto05/activities/${encodeURIComponent(activityId)}`, { method: "DELETE" });
+      const payload = await api(`/api/proto05/activities/${encodeURIComponent(activityId)}`, { method: "DELETE", headers: { "if-match": activity?.revisionToken } });
       if (payload.deleted?.id !== activityId) throw new Error("Réponse de suppression invalide.");
       await load();
       setPageStatus(`Activité supprimée : « ${title} ».`, "success");
