@@ -374,6 +374,20 @@ function playableTechnicalMetadata(row, migration, provenance) {
   };
 }
 
+function playableLocation(row, migration) {
+  if (Object.prototype.hasOwnProperty.call(migration, "originalLocation")) {
+    return migration.originalLocation || {};
+  }
+  if (row.kind === "local-file") {
+    return { storageScope: row.storage_scope, storageKey: row.storage_key };
+  }
+  if (row.kind === "hls") return { manifestUrl: row.location_url };
+  if (row.kind === "youtube-embed") {
+    return { videoId: row.embed_video_id, embedUrl: row.location_url };
+  }
+  return { url: row.location_url };
+}
+
 function mapVideoLibrary(tables) {
   const metadata = metadataByDocument(tables).get("media-library");
   const playableMetadata = by(rowsFor(tables, "media_playable_metadata"), "playable_id");
@@ -448,7 +462,7 @@ function mapVideoLibrary(tables) {
       ...(row.role !== null ? { role: row.role } : {}),
       availability: row.availability,
       availabilityReason: row.availability_reason,
-      location: jsonValue(provenanceParts.migration.originalLocation, {}),
+      location: playableLocation(row, provenanceParts.migration),
       technicalMetadata: playableTechnicalMetadata(metadataRow, provenanceParts.migration, provenanceParts.value),
       provenance: provenanceParts.value,
       createdAt: isoDate(row.created_at),
@@ -564,6 +578,40 @@ function projectMariaDbSnapshotForApplication(snapshot) {
     value: snapshot.videoLibrary
   });
   return projected;
+}
+
+function mapAudioAnonymizationPlan(resultSets) {
+  const plan = resultSets[0]?.[0];
+  if (!plan) return null;
+  const passages = (resultSets[1] || []).map(row => ({
+    id: row.id,
+    startMs: Number(row.start_ms),
+    endMs: Number(row.end_ms),
+    replacementType: row.replacement_type,
+    label: row.label,
+    reason: row.reason
+  }));
+  return {
+    id: plan.id,
+    sourceAssetId: plan.source_asset_id,
+    sourcePlayableId: plan.source_playable_id,
+    durationMs: Number(plan.duration_ms),
+    revision: Number(plan.revision),
+    lastTreatmentId: plan.last_treatment_id,
+    createdAt: isoDate(plan.created_at),
+    updatedAt: isoDate(plan.updated_at),
+    passageCount: passages.length,
+    maskedDurationMs: passages.reduce((sum, passage) => sum + passage.endMs - passage.startMs, 0),
+    passages
+  };
+}
+
+async function readAudioAnonymizationPlanWithProcedure(database, selector = {}) {
+  const [result] = await database.query(
+    "CALL sp_audio_anonymization_plan_get(?, ?, ?)",
+    [selector.planId || null, selector.sourceAssetId || null, selector.sourcePlayableId || null]
+  );
+  return mapAudioAnonymizationPlan(result.filter(Array.isArray));
 }
 
 function privilegeList(statement) {
@@ -772,6 +820,17 @@ function createMariaDbReadonlyAdapter({
         throw new Error("Lecture MariaDB readonly impossible.", { cause: error });
       }
     },
+    async readAudioAnonymizationPlan(selector = {}) {
+      try {
+        return await runConsistentReadSnapshot({
+          acquireConnection: connection,
+          project: database => readAudioAnonymizationPlanWithProcedure(database, selector)
+        });
+      } catch (error) {
+        if (error?.message?.startsWith("Connexion MariaDB")) throw error;
+        throw new Error("Lecture du plan d’anonymisation audio impossible.", { cause: error });
+      }
+    },
     async close() {
       if (!closePromise) closePromise = pool.end();
       return closePromise;
@@ -785,7 +844,9 @@ module.exports = {
   assertReadonlyGrants,
   createMariaDbReadonlyAdapter,
   mapMariaDbTablesToSnapshot,
+  mapAudioAnonymizationPlan,
   projectMariaDbSnapshotForApplication,
+  readAudioAnonymizationPlanWithProcedure,
   readCanonicalTablesWithProcedures,
   runConsistentReadSnapshot
 };

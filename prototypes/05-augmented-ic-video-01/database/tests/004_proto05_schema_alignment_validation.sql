@@ -172,19 +172,19 @@ CALL sp_m133_assert(
 
 CALL sp_m133_assert(
   (SELECT COUNT(*) FROM information_schema.tables
-   WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE') = 32
+   WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE') = 34
   AND
   (SELECT COUNT(*) FROM information_schema.routines
    WHERE routine_schema = DATABASE()
      AND routine_type = 'PROCEDURE'
-     AND routine_name NOT LIKE 'sp_m133\_%') = 43
+     AND routine_name NOT LIKE 'sp_m133\_%') = 47
   AND
   (SELECT COUNT(*) FROM information_schema.referential_constraints
-   WHERE constraint_schema = DATABASE()) = 48
+   WHERE constraint_schema = DATABASE()) = 51
   AND
   (SELECT COUNT(*) FROM information_schema.check_constraints
-   WHERE constraint_schema = DATABASE()) = 70,
-  'historical schema plus document metadata table remain stable'
+   WHERE constraint_schema = DATABASE()) = 74,
+  'canonical schema including audio anonymization remains stable'
 );
 
 CALL sp_m133_assert(

@@ -124,7 +124,8 @@ test("la fiche dédiée conserve les actions par rôle et normalise les dérivat
     html,
     /entry\.role\s*===\s*["']derivation-local["']\s*\?\s*\{\s*\.\.\.entry,\s*provider:\s*["']local["']\s*\}\s*:\s*entry/
   );
-  assert.match(html, /Ouvrir dans l’atelier d’anonymisation/);
+  assert.match(html, /Anonymiser l’image/);
+  assert.match(html, /Anonymiser le son/);
   assert.match(html, /Récupérer sur mon disque/);
   assert.match(html, /Supprimer la tentative/);
   assert.match(html, /Associer à l’activité/);

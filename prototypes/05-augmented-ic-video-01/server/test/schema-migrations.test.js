@@ -94,6 +94,18 @@ async function installCanonical(database, databaseName) {
   });
 }
 
+async function removeAudioMigrationFixture(database) {
+  for (const routine of [
+    "sp_audio_anonymization_plan_get",
+    "sp_audio_anonymization_plan_save",
+    "sp_media_inline_treatment_start",
+    "sp_media_inline_treatment_complete"
+  ]) await database.query(`DROP PROCEDURE \`${routine}\``);
+  await database.query("DROP TABLE media_audio_anonymization_passages");
+  await database.query("DROP TABLE media_audio_anonymization_plans");
+  await database.query("DELETE FROM schema_migrations WHERE version = '003'");
+}
+
 function copyCanonicalContract(label) {
   const root = fs.mkdtempSync(path.join(temporaryRoot, `${label}-`));
   const mappings = [
@@ -102,6 +114,8 @@ function copyCanonicalContract(label) {
     ["database/schema-migrations/002_proto05_canonical_routines.manifest.json", "database/schema-migrations/002_proto05_canonical_routines.manifest.json"],
     ["database/schema-migrations/002_proto05_routine_session.sql", "database/schema-migrations/002_proto05_routine_session.sql"],
     ["database/schema-migrations/002_proto05_canonical_routines.sql", "database/schema-migrations/002_proto05_canonical_routines.sql"],
+    ["database/schema-migrations/003_proto05_audio_anonymization.sql", "database/schema-migrations/003_proto05_audio_anonymization.sql"],
+    ["database/schema-migrations/003_proto05_audio_anonymization.manifest.json", "database/schema-migrations/003_proto05_audio_anonymization.manifest.json"],
     ["database/drafts/003_proto05_schema_hardening.sql", "database/drafts/003_proto05_schema_hardening.sql"],
     ["database/migrations/002_proto05_mariadb_schema_alignment.sql", "database/migrations/002_proto05_mariadb_schema_alignment.sql"],
     ["database/migrations/004_proto05_document_metadata_schema.sql", "database/migrations/004_proto05_document_metadata_schema.sql"],
@@ -112,6 +126,15 @@ function copyCanonicalContract(label) {
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(prototypeDirectory, source), destination);
   }
+  return root;
+}
+
+function legacyRoutineContract(label) {
+  const root = copyCanonicalContract(label);
+  const manifestPath = path.join(root, "database", "schema-migrations", "manifest.json");
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  manifest.migrations = manifest.migrations.slice(0, 2);
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   return root;
 }
 
@@ -172,30 +195,32 @@ test("empty install, populated baseline and a second run are deterministic", asy
     assert.equal(installed.changed, true);
     assert.equal(installed.state.action.type, "none");
     assert.deepEqual(installed.state.plan.currentSummary, {
-      tables: 32, columns: 275, indexes: 89, foreignKeys: 48, checks: 70,
-      views: 0, routines: 43, triggers: 0, events: 0
+      tables: 34, columns: 293, indexes: 95, foreignKeys: 51, checks: 74,
+      views: 0, routines: 47, triggers: 0, events: 0
     });
-    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 43);
+    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 47);
     assert.ok(installed.state.actualSchema.routines.every(row => row.createStatement.startsWith("CREATE PROCEDURE")));
     const verified = await verifyDatabaseSchema({ database, ...runnerOptions(databaseName) });
-    assert.equal(verified.schemaVersion, "002");
-    assert.equal(verified.migrationCount, 2);
+    assert.equal(verified.schemaVersion, "003");
+    assert.equal(verified.migrationCount, 3);
     const second = await runMigrationCommand(database, runnerOptions(databaseName));
     assert.equal(second.changed, false);
 
+    await removeAudioMigrationFixture(database);
     await database.query("DELETE FROM schema_migrations WHERE version = '002'");
     await database.query(
       "INSERT INTO languages (id, code, label, is_active) VALUES ('m154-language', 'm154', 'Mission 154', 1)"
     );
-    const baselinePlan = await inspectMigrationState(database, runnerOptions(databaseName));
+    const legacyOptions = runnerOptions(databaseName, legacyRoutineContract("lifecycle-legacy"));
+    const baselinePlan = await inspectMigrationState(database, legacyOptions);
     assert.equal(baselinePlan.action.type, "adopt");
     const before = await protectedDataWitness(database, baselinePlan.actualSchema);
     const backupPath = path.join(temporaryRoot, `${databaseName}-registry-backup.json`);
-    const backup = await createRegistryBackup(database, runnerOptions(databaseName));
+    const backup = await createRegistryBackup(database, legacyOptions);
     const backupFile = writeRegistryBackupExclusive(backup, backupPath);
     assert.ok(backupFile.size > 0);
     const baselined = await runMigrationCommand(database, {
-      ...runnerOptions(databaseName),
+      ...legacyOptions,
       mode: "apply",
       expectedPlanHash: baselinePlan.planHash,
       confirm: "APPLY PROTO05 SCHEMA MIGRATIONS",
@@ -373,10 +398,12 @@ test("baseline refuses a missing foreign key", async () => {
 test("routine adoption refuses an incomplete inventory", async () => {
   await withDatabase("routinemissing", async (database, databaseName) => {
     await installCanonical(database, databaseName);
+    await removeAudioMigrationFixture(database);
     await database.query("DELETE FROM schema_migrations WHERE version = '002'");
     await database.query("DROP PROCEDURE sp_media_get");
+    const legacyOptions = runnerOptions(databaseName, legacyRoutineContract("missing-routine-legacy"));
     await assert.rejects(
-      inspectMigrationState(database, runnerOptions(databaseName)),
+      inspectMigrationState(database, legacyOptions),
       error => error.code === "PROTO05_ROUTINE_ADOPTION_REFUSED"
         && error.comparison.differences.some(item => item.path === "routines/PROCEDURE/sp_media_get")
     );
@@ -386,15 +413,17 @@ test("routine adoption refuses an incomplete inventory", async () => {
 test("a divergent routine is never silently adopted", async () => {
   await withDatabase("routinedivergent", async (database, databaseName) => {
     await installCanonical(database, databaseName);
+    await removeAudioMigrationFixture(database);
     await database.query("DELETE FROM schema_migrations WHERE version = '002'");
     await database.query("DROP PROCEDURE sp_media_get");
     await database.query("CREATE PROCEDURE sp_media_get(IN p_asset_id VARCHAR(64)) SELECT p_asset_id AS asset_id");
-    const state = await inspectMigrationState(database, runnerOptions(databaseName));
+    const legacyOptions = runnerOptions(databaseName, legacyRoutineContract("divergent-routine-legacy"));
+    const state = await inspectMigrationState(database, legacyOptions);
     assert.equal(state.action.type, "upgrade");
     assert.ok(state.comparison.differences.some(item => item.path === "routines/PROCEDURE/sp_media_get"));
     await assert.rejects(
       runMigrationCommand(database, {
-        ...runnerOptions(databaseName),
+        ...legacyOptions,
         mode: "apply",
         expectedPlanHash: state.planHash,
         confirm: "APPLY PROTO05 SCHEMA MIGRATIONS"
@@ -454,7 +483,7 @@ test("concurrent runners serialize and never double-register a migration", async
       const refused = results.find(item => item.status === "rejected");
       assert.equal(refused.reason.code, "PROTO05_MIGRATION_PLAN_DRIFT");
       const [[registry]] = await first.query("SELECT COUNT(*) count FROM schema_migrations");
-      assert.equal(Number(registry.count), 2);
+      assert.equal(Number(registry.count), 3);
     } finally {
       await second.end();
     }
@@ -530,4 +559,75 @@ test("the readonly startup probe fails before business reads when schema verific
   assert.equal(released, true);
   await adapter.close();
   assert.equal(ended, true);
+});
+
+test("audio plans and inline treatments are transactional, ordered and restart-readable", async () => {
+  await withDatabase("audioplan", async (database, databaseName) => {
+    await installCanonical(database, databaseName);
+    await database.query("CALL sp_media_register_import(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      "asset-audio-test", "source-audio-test", "playable-audio-test", "Audio fixture",
+      "local-file", "local", "filesystem", "working-copy", "video/mp4", null,
+      "workspace", "asset-audio-test/source/fixture.mp4", null, null, "available",
+      JSON.stringify({ asset: { provenance: {}, rights: {}, tagIds: [] }, source: { origin: {}, provenance: {} }, playable: { provenance: {} }, metadata: { analysisStatus: "complete", mimeType: "video/mp4", durationMs: 6000, audioCodec: "aac", hasAudio: true } })
+    ]);
+    const passages = [
+      { id: "zone-a", startMs: 1000, endMs: 2000, replacementType: "soft-tone", label: "A" },
+      { id: "zone-b", startMs: 2000, endMs: 3000, replacementType: "beep", label: "B" },
+      { id: "zone-c", startMs: 4000, endMs: 5000, replacementType: "silence", label: "C" }
+    ];
+    const [saved] = await database.query("CALL sp_audio_anonymization_plan_save(?, ?, ?, ?, ?, ?)", [
+      "plan-audio-test", "asset-audio-test", "playable-audio-test", 6000, 0, JSON.stringify(passages)
+    ]);
+    assert.equal(Number(saved[0][0].revision), 1);
+    assert.deepEqual(saved[1].map(row => row.id), ["zone-a", "zone-b", "zone-c"]);
+    await assert.rejects(
+      database.query("CALL sp_audio_anonymization_plan_save(?, ?, ?, ?, ?, ?)", [
+        "plan-audio-test", "asset-audio-test", "playable-audio-test", 6000, 0, JSON.stringify(passages)
+      ]),
+      error => error.errno === 30503
+    );
+    await assert.rejects(
+      database.query("CALL sp_audio_anonymization_plan_save(?, ?, ?, ?, ?, ?)", [
+        "plan-audio-test", "asset-audio-test", "playable-audio-test", 6000, 1,
+        JSON.stringify([
+          { id: "overlap-a", startMs: 1000, endMs: 2500, replacementType: "soft-tone" },
+          { id: "overlap-b", startMs: 2000, endMs: 3000, replacementType: "beep" }
+        ])
+      ]),
+      error => error.errno === 30506
+    );
+    const [readBack] = await database.query("CALL sp_audio_anonymization_plan_get(NULL, ?, ?)", [
+      "asset-audio-test", "playable-audio-test"
+    ]);
+    assert.equal(readBack[0][0].id, "plan-audio-test");
+    assert.deepEqual(readBack[1].map(row => row.id), ["zone-a", "zone-b", "zone-c"]);
+
+    await database.query("CALL sp_media_inline_treatment_start(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      "treatment-audio-test", "plan-audio-test", "asset-audio-test", "playable-audio-test",
+      "audio-anonymization", "Audio test", "runtime-audio-test", "ffmpeg", "proto05-test",
+      JSON.stringify({ planId: "plan-audio-test", passages })
+    ]);
+    await database.query("CALL sp_media_inline_treatment_complete(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      "treatment-audio-test", "source-audio-output", "playable-audio-output", "workspace",
+      "asset-audio-test/derived/treatment-audio-test/output.mp4", "video/mp4", 1024, 6000,
+      "a".repeat(64), "aac", 1, "ffmpeg test", JSON.stringify({ checked: true })
+    ]);
+    const [[treatment]] = await database.query(
+      "SELECT type, status, progress, source_asset_id, output_asset_id, output_playable_id FROM media_treatments WHERE id = 'treatment-audio-test'"
+    );
+    assert.deepEqual(treatment, {
+      type: "audio-anonymization",
+      status: "completed",
+      progress: "100.00",
+      source_asset_id: "asset-audio-test",
+      output_asset_id: "asset-audio-test",
+      output_playable_id: "playable-audio-output"
+    });
+    const [[output]] = await database.query(
+      "SELECT role, storage_scope, storage_key FROM media_playables WHERE id = 'playable-audio-output'"
+    );
+    assert.equal(output.role, "derivation-local");
+    assert.equal(output.storage_scope, "workspace");
+    assert.match(output.storage_key, /treatment-audio-test/);
+  });
 });

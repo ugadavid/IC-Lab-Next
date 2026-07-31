@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.49
+# Serveur autonome du Prototype 05 — 0.1.50
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -39,12 +39,23 @@ redémarrer le processus.
 ## Registre de schéma MariaDB
 
 Le contrat versionné se trouve dans `../database/schema-migrations/`. La
-baseline `001`, conservée intacte, décrit les 32 tables. La migration additive
-`002` porte le canon transactionnel des 43 procédures stockées. Une installation
-neuve applique donc `001`, puis `002`. Sur une base déjà équipée, `002` n’est
+baseline `001`, conservée intacte, décrit le schéma initial. La migration
+additive `002` porte le premier canon transactionnel des procédures stockées ;
+`003` ajoute les plans d’anonymisation audio multi-zones et les procédures de
+traitement dérivé, sans réécrire les deux migrations antérieures. Une installation
+neuve applique donc `001`, `002`, puis `003`. Sur une base déjà équipée, `002` n’est
 adoptée sans DDL que si l’inventaire, les signatures et les corps correspondent
 exactement ; une définition divergente exige une mise à niveau explicite avec
 sauvegarde vérifiée, et un inventaire incomplet est refusé.
+
+## Anonymisation
+
+La fiche Vidéo++ propose deux ateliers distincts : **Anonymiser l’image** et
+**Anonymiser le son**. L’atelier audio enregistre un plan multi-zones avant tout
+export, accepte `soft-tone`, `beep` et `silence`, refuse les chevauchements et
+autorise les intervalles adjacents. L’aperçu Web Audio est une aide d’écoute ;
+le graphe FFmpeg exporté reste l’autorité exacte du résultat. Les dérivations
+audio et visuelles restent dans la même famille média et peuvent s’enchaîner.
 
 Les commandes d’administration sont toujours explicites et doivent charger la
 configuration locale ignorée :
@@ -70,6 +81,10 @@ une inspection/restauration humaine avant reprise. Pour annuler une baseline
 qui n’a modifié que le registre, vérifier d’abord le témoin sauvegardé puis
 restaurer exactement les lignes du registre qu’il contient ; aucune donnée
 métier ni structure ne doit être touchée.
+
+Le CLI et le reconstructeur de manifeste fixent le `sql_mode` de leur session
+afin que les corps de procédures aient la même empreinte, quel que soit le mode
+par défaut du compte administrateur local.
 
 ## Snapshots de lecture MariaDB
 

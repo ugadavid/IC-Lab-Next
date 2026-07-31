@@ -45,6 +45,17 @@
         }
       ],
       "schemaManifest": "002_proto05_canonical_routines.manifest.json"
+    },
+    {
+      "version": "003",
+      "description": "Plans et traitements d’anonymisation audio multi-zones",
+      "kind": "migration",
+      "sources": [
+        {
+          "path": "003_proto05_audio_anonymization.sql"
+        }
+      ],
+      "schemaManifest": "003_proto05_audio_anonymization.manifest.json"
     }
   ]
 }

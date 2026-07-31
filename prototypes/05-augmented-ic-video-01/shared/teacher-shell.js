@@ -20,6 +20,7 @@
     if (path === "/teacher/videos") return { route: "videos", general: "videos" };
     if (/^\/teacher\/videos\/[^/]+$/.test(path)) return { route: "video-detail", general: "videos" };
     if (/^\/teacher\/anonymization\/[^/]+$/.test(path)) return { route: "anonymization", general: "videos" };
+    if (/^\/teacher\/audio-anonymization\/[^/]+$/.test(path)) return { route: "audio-anonymization", general: "videos" };
     const activityMatch = path.match(/^\/teacher\/(edit|guided|author|preview)\/([^/]+)$/);
     if (!activityMatch) return null;
     return {

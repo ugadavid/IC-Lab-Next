@@ -108,12 +108,35 @@ async function startServer(extraEnvironment = {}) {
       return waitForHealth(baseUrl, child, this.output, expectedStatus);
     },
     async stop() {
-      if (child.exitCode !== null) return;
-      child.kill();
-      await new Promise(resolve => {
-        child.once("exit", resolve);
-        setTimeout(() => resolve(), 3_000).unref();
-      });
+      if (child.exitCode !== null || child.signalCode !== null) return;
+      if (process.platform === "win32") {
+        await new Promise(resolve => {
+          const killer = spawn("taskkill.exe", ["/pid", String(child.pid), "/T", "/F"], {
+            windowsHide: true,
+            stdio: "ignore"
+          });
+          killer.once("error", resolve);
+          killer.once("close", resolve);
+        });
+        if (child.exitCode === null && child.signalCode === null) {
+          await new Promise(resolve => {
+            const timer = setTimeout(resolve, 1_000);
+            child.once("exit", () => {
+              clearTimeout(timer);
+              resolve();
+            });
+          });
+        }
+        child.stdout?.destroy();
+        child.stderr?.destroy();
+        child.unref();
+      } else {
+        child.kill();
+        await new Promise(resolve => {
+          child.once("exit", resolve);
+          setTimeout(() => resolve(), 3_000);
+        });
+      }
     }
   };
 }

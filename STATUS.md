@@ -1,6 +1,6 @@
 # État actuel d’IC-Lab-Next
 
-**Date de l’état documenté : 30 juillet 2026**
+**Date de l’état documenté : 31 juillet 2026**
 
 ## En bref
 
@@ -24,7 +24,7 @@ partir d’un brouillon vide.
 | Composant | État retenu | Version importante | Exécution |
 |---|---|---|---|
 | **IC-Hub** | Vérifié dans le dépôt; portail et services transversaux actifs dans l’architecture | serveur/portail `0.10.3`; Hub historique `0.9.6` | Node `8790` |
-| **Proto05 — Vidéo augmentée** | Fonctionnel; MariaDB exclusive; serveur autonome | serveur `0.1.49`; moteur `index-0.0.9.html` | Node `8791` |
+| **Proto05 — Vidéo augmentée** | Fonctionnel; MariaDB exclusive; serveur autonome | serveur `0.1.50`; moteur `index-0.0.9.html` | Node `8791` |
 | **Proto06 — Agent vocal** | Actif et autonome; fonctions vocales dépendantes du navigateur | backend déclaré `1.1` (`package` `1.1.0`); runtime `1.2.3` | Node `8788` |
 | **Informaticaire** | Démonstrateur statique gelé | gel `0.6.5` | servi par IC-Hub, sans port propre |
 | **Dico-IC / Seven Sieves** | Actif en développement; API, administration et client réunis | contrat API `0.1`; package Node générique `1.0.0` | Node `3000` + MariaDB `3306` |
@@ -53,8 +53,10 @@ réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
   guidé ;
 - timeline IC partagée entre la vue étudiante et l’atelier guidé ;
 - gestion des couches et de leur visibilité étudiante ;
-- données métier dans MariaDB `ic_augmented_video`, via le canon des 43
+- données métier dans MariaDB `ic_augmented_video`, via le canon des 47
   procédures stockées, des transactions ciblées et une relecture avant commit ;
+- ateliers séparés d’anonymisation visuelle et audio ; le second persiste des
+  plans multi-zones et produit des dérivations `soft-tone`, `beep` ou `silence` ;
 - suppression explicite depuis la bibliothèque, avec confirmation titre/ID,
   refus des identifiants invalides ou ambigus et conservation des autres
   activités ;
@@ -128,7 +130,7 @@ réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
 ## Travaux différés
 
 **À faire plus tard, par missions séparées :** authentification Proto05,
-identités et droits réels, IA d’assistance, migration MariaDB de Proto05,
+identités et droits réels, IA d’assistance,
 persistance des observations étudiantes, migration HLS complète hors IC-Hub,
 retrait des routes héritées, canonicalisation SQL Dico-IC et initialisation
 fiable d’une base Dico-IC fraîche.

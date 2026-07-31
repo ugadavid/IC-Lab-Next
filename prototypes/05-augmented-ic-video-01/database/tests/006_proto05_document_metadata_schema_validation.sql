@@ -64,25 +64,25 @@ DELIMITER ;
 
 CALL sp_m136_assert(
   (SELECT COUNT(*) FROM information_schema.tables
-   WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE') = 32
+   WHERE table_schema = DATABASE() AND table_type = 'BASE TABLE') = 34
   AND
   (SELECT COUNT(*) FROM information_schema.routines
    WHERE routine_schema = DATABASE()
      AND routine_type = 'PROCEDURE'
-     AND routine_name NOT LIKE 'sp_m136\_%') = 43
+     AND routine_name NOT LIKE 'sp_m136\_%') = 47
   AND
   (SELECT COUNT(*) FROM information_schema.referential_constraints
-   WHERE constraint_schema = DATABASE()) = 48
+   WHERE constraint_schema = DATABASE()) = 51
   AND
   (SELECT COUNT(*) FROM information_schema.check_constraints
-   WHERE constraint_schema = DATABASE()) = 70
+   WHERE constraint_schema = DATABASE()) = 74
   AND
   (SELECT COUNT(*) FROM information_schema.triggers
    WHERE trigger_schema = DATABASE()) = 0
   AND
   (SELECT COUNT(*) FROM information_schema.events
    WHERE event_schema = DATABASE()) = 0,
-  'schema topology is exactly 32 tables, 43 procedures, 48 FKs and 70 CHECKs'
+  'schema topology is exactly 34 tables, 47 procedures, 51 FKs and 74 CHECKs'
 );
 
 CALL sp_m136_assert(

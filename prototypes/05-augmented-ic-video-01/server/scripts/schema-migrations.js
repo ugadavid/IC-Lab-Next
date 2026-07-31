@@ -84,6 +84,9 @@ async function main() {
     multipleStatements: false,
     connectTimeout: 10_000
   });
+  await database.query(
+    "SET SESSION sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION'"
+  );
   const runnerOptions = {
     databaseName: config.database,
     prototypeDirectory: PROTOTYPE_DIRECTORY

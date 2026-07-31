@@ -40,6 +40,20 @@ disponible pour le diagnostic. La publication passe par un fichier temporaire,
 puis une validation de la Library ; ce fichier temporaire est supprimé en cas
 d’échec.
 
+## Atelier d’anonymisation audio
+
+L’atelier audio est distinct de l’éditeur spatial. Son plan ordonne des passages
+temporels stables selon des intervalles semi-ouverts `[startMs, endMs)`. Les
+chevauchements sont refusés et les passages adjacents restent autorisés. Chaque
+passage remplace entièrement l’audio original par une tonalité douce, un bip ou
+du silence ; aucun mélange avec la parole source n’est effectué.
+
+Le graphe FFmpeg concatène les portions originales et remplacées, applique de
+brefs fondus aux signaux synthétiques, réencode l’audio en AAC 48 kHz et copie
+le flux vidéo sans réencodage. Une source sans piste audio est refusée avant le
+lancement. L’aperçu navigateur utilise Web Audio pour une écoute immédiate et
+indicative ; l’export FFmpeg validé demeure l’autorité technique.
+
 ## Autonomie
 
 Le serveur Proto05 démarre depuis `prototypes/05-augmented-ic-video-01/server`
@@ -58,4 +72,4 @@ Le moteur ne prend pas encore en charge le VFR comme contrat distinct, la
 reprise/cache des segments, le parallélisme, le GPU, ni la détection automatique.
 # Version de référence
 
-Le serveur autonome Proto05 et son package sont servis en version **0.1.31**.
+Le serveur autonome Proto05 et son package sont servis en version **0.1.50**.

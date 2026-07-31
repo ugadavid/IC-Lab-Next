@@ -100,7 +100,7 @@
 <body>
   <header class="topbar">
     <a id="backLink" class="back" href="/teacher/videos">← Retour à la vidéothèque</a>
-    <span class="version">Proto05 · 0.1.49</span>
+    <span class="version">Proto05 · 0.1.50</span>
   </header>
   <main>
     <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -210,8 +210,8 @@
       const previewButton = entry.url
         ? `<button type="button" class="secondary" data-action="preview" data-playable="${esc(entry.id)}">Prévisualiser</button>`
         : "";
-      const workshop = role === "working-copy"
-        ? `<button type="button" data-action="workshop" data-playable="${esc(entry.id)}">Ouvrir dans l’atelier d’anonymisation</button>`
+      const workshop = ["original-remote", "working-copy", "derivation-local"].includes(role) && ["hls", "local-file"].includes(entry.kind)
+        ? `<button type="button" data-action="workshop-image" data-playable="${esc(entry.id)}">Anonymiser l’image</button><button type="button" class="secondary" data-action="workshop-audio" data-playable="${esc(entry.id)}">Anonymiser le son</button>`
         : "";
       const download = ["working-copy", "derivation-local"].includes(role) && entry.url
         ? `<a class="button secondary" href="${esc(entry.url)}" download>Récupérer sur mon disque</a>`
@@ -643,7 +643,7 @@
       }
     }
 
-    async function workshop(id) {
+    async function workshop(id, mode) {
       setStatus("Préparation de la copie de travail…");
       try {
         const entry = playable(id);
@@ -654,7 +654,9 @@
         const poll = async () => {
           const payload = await api(`/api/proto05/library/hls-preparations/${encodeURIComponent(result.job.id)}`);
           if (payload.job.status === "completed") {
-            location.href = `/teacher/anonymization/${encodeURIComponent(result.job.id)}`;
+            location.href = mode === "audio"
+              ? `/teacher/audio-anonymization/${encodeURIComponent(result.job.id)}`
+              : `/teacher/anonymization/${encodeURIComponent(result.job.id)}`;
             return;
           }
           if (["failed", "cancelled"].includes(payload.job.status)) {
@@ -866,7 +868,8 @@
       app.querySelectorAll("[data-action]").forEach(control => control.addEventListener("click", () => {
         const action = control.dataset.action;
         if (action === "preview") preview(control.dataset.playable, control);
-        else if (action === "workshop") workshop(control.dataset.playable);
+        else if (action === "workshop-image") workshop(control.dataset.playable, "image");
+        else if (action === "workshop-audio") workshop(control.dataset.playable, "audio");
         else if (action === "associate") openAssociation(control.dataset.playable);
         else if (action === "add-published") addPublished();
         else if (action === "delete-copy") removeCopy(control.dataset.playable);

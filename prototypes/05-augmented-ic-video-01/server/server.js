@@ -63,6 +63,10 @@ const {
   validateProfile: validateVideoMetadataProfile
 } = require("../shared/video-metadata-contract");
 const {
+  buildAudioReplacementFilter,
+  normalizeAudioPlan
+} = require("./audio-anonymization");
+const {
   assertPedagogicalLineage,
   createEmptyPedagogicalIdentity,
   normalizePedagogicalIdentityStates,
@@ -72,7 +76,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.49";
+const VERSION = "0.1.50";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -113,6 +117,8 @@ const HLS_DERIVATION_ROOT = path.join(os.tmpdir(), "proto05-hls-derivations");
 const HLS_DERIVATION_TIMEOUT_MS = Number(process.env.PROTO05_HLS_DERIVATION_TIMEOUT_MS || 30 * 60 * 1000);
 const HLS_DERIVATION_TTL_MS = Number(process.env.PROTO05_HLS_DERIVATION_TTL_MS || 30 * 60 * 1000);
 const ACTIVE_HLS_DERIVATIONS = new Map();
+const AUDIO_DERIVATION_ROOT = path.join(os.tmpdir(), "proto05-audio-derivations");
+const ACTIVE_AUDIO_DERIVATIONS = new Map();
 const INDEX_FILE = "index-0.0.9.html";
 const UGA_HLS_MEDIA_ORIGIN = "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/";
 const HLS_JS_ASSET_PATH = path.resolve(ROOT_DIR, "..", "00-ic-hub", "server", "node_modules", "hls.js", "dist", "hls.min.js");
@@ -2607,6 +2613,30 @@ function publicHlsDerivationJob(job) {
   return { id: job.id, preparationJobId: job.preparationJobId, assetId: job.assetId, playableId: job.playableId || null, mode: job.mode || "fixed", status: job.status, statusCode: derivationStatusCode(job.status), progress: job.progress, timeoutMs: HLS_DERIVATION_TIMEOUT_MS, blurProfile: job.blurProfile || job.metadata?.blur?.id || "standard", metadata: job.metadata || null, ffmpeg: publicFfmpegRuntime(job), createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, log: job.log.slice(-20) };
 }
 
+function publicAudioDerivationJob(job) {
+  return {
+    id: job.id,
+    treatmentId: job.treatmentId,
+    planId: job.planId,
+    preparationJobId: job.preparationJobId,
+    assetId: job.assetId,
+    sourcePlayableId: job.sourcePlayableId,
+    playableId: job.playableId || null,
+    type: "audio-anonymization",
+    status: job.status,
+    statusCode: derivationStatusCode(job.status),
+    progress: job.progress,
+    timeoutMs: HLS_DERIVATION_TIMEOUT_MS,
+    metadata: job.metadata || null,
+    ffmpeg: publicFfmpegRuntime(job),
+    createdAt: job.createdAt,
+    updatedAt: job.updatedAt,
+    expiresAt: job.expiresAt || null,
+    error: job.error || null,
+    log: job.log.slice(-20)
+  };
+}
+
 function defaultAnonymizationMasks(value) {
   const masks = value === undefined ? [{ x: 0, y: 0, width: 0.2, height: 0.2 }] : value;
   const identifiers = new Set();
@@ -2911,7 +2941,8 @@ async function persistDerivedPlayable(job, prepJob) {
   const hash = crypto.createHash("sha256").update(await fs.readFile(job.outputPath)).digest("hex");
   const derivationId = job.id;
   const assetId = prepJob.assetId;
-  const storageKey = `${assetId}/derived/${derivationId}/${hash.slice(0, 16)}-anonymized.mp4`;
+  const suffix = job.mode === "audio" ? "audio-anonymized" : "anonymized";
+  const storageKey = `${assetId}/derived/${derivationId}/${hash.slice(0, 16)}-${suffix}.mp4`;
   const targetPath = safeLibraryMediaPath(storageKey, "workspace");
   const temporaryTarget = `${targetPath}.incomplete`;
   await fs.mkdir(path.dirname(targetPath), { recursive: true });
@@ -2924,30 +2955,261 @@ async function persistDerivedPlayable(job, prepJob) {
   }
   const sourceId = `source-${derivationId}`;
   const playableId = `video-${derivationId}`;
-  const now = new Date().toISOString();
-  const sourceOrigin = prepJob.metadata?.sourceUrl || prepJob.sourceUrl;
-  const provenance = { kind: "derived-anonymized", derivationId, sourceOriginUrl: sourceOrigin, sourceAssetId: assetId, sourcePreparationJobId: prepJob.id, mode: job.mode || "fixed", method: job.method, masks: job.masks, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, interpolation: job.temporalMasks ? "linear-between-keyframes-clamped-at-bounds" : null, blur: job.metadata.blur, filter: job.metadata.filter, ffmpeg: job.metadata.ffmpeg, ffmpegArgs: job.metadata.ffmpegArgs, createdAt: now, status: "completed", sha256: hash, sizeBytes: stat.size };
-  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
-  const asset = canonical.assets.find(item => item.id === assetId);
-  if (!asset || canonical.treatments.some(item => item.id === derivationId)) throw new Error("La destination canonique de la dérivation existe déjà.");
-  canonical.sources.push({ id: sourceId, assetId, kind: "derived-output", provider: "proto05-derived", role: "derivation-local", origin: { sourceOriginUrl: sourceOrigin, derivationId }, transport: "file", mimeType: "video/mp4", provenance, createdAt: now });
-  canonical.playables.push({ id: playableId, assetId, sourceId, kind: "local-file", provider: "proto05-derived", role: "derivation-local", availability: "available", availabilityReason: null, location: { storageScope: "workspace", storageKey }, technicalMetadata: { durationMs: null, width: null, height: null, mimeType: "video/mp4", sizeBytes: stat.size, sha256: hash, fileName: path.basename(storageKey), status: "available", error: null }, provenance, createdAt: now, updatedAt: now });
-  canonical.treatments.push({
-    id: derivationId, derivationId, label: `Tentative ${new Date(now).toLocaleString("fr-FR")}`,
-    type: "anonymization", sourceAssetId: assetId, sourcePlayableId: prepJob.playableId,
-    sourcePreparationId: prepJob.id, outputAssetId: assetId, outputPlayableId: playableId,
-    status: "completed", progress: 100, createdAt: job.createdAt || now, updatedAt: now,
-    startedAt: job.createdAt || now, finishedAt: now, error: null,
-    parameters: { mode: job.mode || "fixed", method: job.method, masks: job.masks, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, blur: job.metadata.blur },
-    engine: "ffmpeg", engineVersion: "proto05-0.1.36", ffmpegVersion: job.metadata.ffmpeg || null,
-    runtimeJobId: job.id, diagnostics: { filter: job.metadata.filter, ffmpegArgs: job.metadata.ffmpegArgs },
-    retained: false, publishedPlayableId: null
-  });
-  asset.updatedAt = now;
-  try { await persistCanonicalLibrary(canonical); }
+  const audioCodec = ffprobeAudioCodec(findFfmpeg(), job.outputPath);
+  try {
+    await proto05WriteBoundary().completeInlineMediaTreatment({
+      treatmentId: job.treatmentId || derivationId,
+      outputSourceId: sourceId,
+      outputPlayableId: playableId,
+      storageScope: "workspace",
+      storageKey,
+      mimeType: "video/mp4",
+      sizeBytes: stat.size,
+      durationMs: Number(prepJob.metadata?.durationMs) || null,
+      sha256: hash,
+      audioCodec,
+      hasAudio: Boolean(audioCodec),
+      ffmpegVersion: job.metadata.ffmpeg || null,
+      diagnostics: {
+        mode: job.mode || "fixed",
+        method: job.method,
+        filter: job.metadata.filter,
+        ffmpegArgs: job.metadata.ffmpegArgs,
+        passages: job.plan?.passages || null
+      }
+    });
+  }
   catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
-  const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
-  return { duplicate: false, derivationId, assetId, playableId, asset: libraryAssetDetails(projectedAsset), sha256: hash, storageKey, mediaUrl: `/api/proto05/library/media/workspace/${encodeURIComponent(storageKey)}` };
+  return { duplicate: false, derivationId, assetId, playableId, sha256: hash, storageKey, mediaUrl: `/api/proto05/library/media/workspace/${encodeURIComponent(storageKey)}` };
+}
+
+async function startDerivationTreatment(job, prepJob, { type, label, planId = null, parameters }) {
+  await proto05WriteBoundary().startInlineMediaTreatment({
+    id: job.treatmentId || job.id,
+    planId,
+    sourceAssetId: prepJob.assetId,
+    sourcePlayableId: prepJob.playableId,
+    type,
+    label,
+    runtimeJobId: job.id,
+    engine: "ffmpeg",
+    engineVersion: `proto05-${VERSION}`,
+    parameters
+  });
+  job.treatmentStarted = true;
+  job.treatmentStatus = "running";
+  job.treatmentProgress = 0;
+}
+
+async function updateDerivationTreatment(job, status, progress, error = null) {
+  if (!job.treatmentStarted) return;
+  try {
+    await proto05WriteBoundary().updateMediaTreatment({
+      id: job.treatmentId || job.id,
+      status,
+      progress,
+      diagnostics: { mode: job.mode, method: job.method, ffmpeg: publicFfmpegRuntime(job) },
+      error: error ? { message: String(error.message || error) } : null
+    });
+    job.treatmentStatus = status;
+    job.treatmentProgress = progress;
+  } catch (persistenceError) {
+    job.log.push(`Persistance du traitement impossible : ${persistenceError.message}`);
+    if (!job.error) job.error = persistenceError.message;
+  }
+}
+
+async function runAudioDerivation(job, prepJob) {
+  job.status = "anonymisation";
+  job.progress = 1;
+  job.updatedAt = new Date().toISOString();
+  let child = null;
+  let sizeMonitor = null;
+  let logStream = null;
+  const timeout = setTimeout(() => {
+    job.timeout = true;
+    try { job.process?.kill(); } catch {}
+  }, HLS_DERIVATION_TIMEOUT_MS);
+  try {
+    const ffmpeg = findFfmpeg();
+    if (!ffprobeAudioCodec(ffmpeg, prepJob.outputPath)) {
+      throw new Error("La source ne possède aucune piste audio à anonymiser.");
+    }
+    const recipe = buildAudioReplacementFilter(job.plan.passages, job.plan.durationMs);
+    await fs.mkdir(AUDIO_DERIVATION_ROOT, { recursive: true });
+    if (job.cancelRequested) throw new Error("Anonymisation audio annulée.");
+    job.workspace = await fs.mkdtemp(path.join(AUDIO_DERIVATION_ROOT, `${job.id}-`));
+    job.outputPath = path.join(job.workspace, "derived.mp4");
+    const version = ffmpegVersion(ffmpeg);
+    const args = [
+      "-hide_banner", "-y", "-i", prepJob.outputPath,
+      "-filter_complex", recipe.filter,
+      "-map", "0:v:0", "-map", recipe.outputLabel,
+      "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+      "-movflags", "+faststart", "-progress", "pipe:1", "-nostats",
+      job.outputPath
+    ];
+    const logPath = path.join(job.workspace, "ffmpeg.log");
+    const runtime = {
+      executable: ffmpeg,
+      cwd: process.cwd(),
+      args,
+      commands: [],
+      commandPowerShell: ffmpegPowerShellCommand(ffmpeg, args, process.cwd(), logPath),
+      logPath,
+      startedAt: new Date().toISOString(),
+      endedAt: null,
+      pid: null,
+      exitCode: null,
+      lastMediaTimeMs: null,
+      outputSizeBytes: 0,
+      inputPath: prepJob.outputPath,
+      outputPath: job.outputPath,
+      stdout: "",
+      stderr: "",
+      error: null,
+      env: {}
+    };
+    job.ffmpegRuntime = runtime;
+    job.durationMs = job.plan.durationMs;
+    job.metadata = {
+      ffmpeg: version,
+      method: job.method,
+      mode: "audio",
+      planId: job.planId,
+      passages: job.plan.passages,
+      overlapRule: recipe.overlapRule,
+      filter: recipe.filter,
+      ffmpegArgs: args,
+      videoCodec: "copy",
+      audioCodec: "aac",
+      previewContract: "web-audio-equivalent-effects-export-is-authoritative"
+    };
+    logStream = fsSync.createWriteStream(logPath, { flags: "w", encoding: "utf8" });
+    child = spawn(ffmpeg, args, { cwd: runtime.cwd, windowsHide: true });
+    job.process = child;
+    runtime.pid = child.pid || null;
+    child.stdout.setEncoding("utf8");
+    child.stderr.setEncoding("utf8");
+    child.stdout.on("data", chunk => {
+      const text = String(chunk);
+      runtime.stdout += text;
+      logStream.write(`[stdout] ${text}`);
+      parseFfmpegProgress(job, text);
+      runtime.lastMediaTimeMs = job.mediaTimeMs || null;
+    });
+    child.stderr.on("data", chunk => {
+      const text = String(chunk);
+      runtime.stderr += text;
+      logStream.write(`[stderr] ${text}`);
+      job.log.push(text.trim().slice(-500));
+    });
+    child.on("error", error => {
+      job.spawnError = error;
+      runtime.error = error.message;
+    });
+    sizeMonitor = setInterval(async () => {
+      if (!job.outputPath || !child || child.exitCode !== null) return;
+      try {
+        const stat = await fs.stat(job.outputPath);
+        runtime.outputSizeBytes = stat.size;
+        if (stat.size > HLS_PREPARATION_MAX_BYTES) {
+          job.sizeLimit = true;
+          child.kill();
+        }
+      } catch {}
+    }, 250);
+    await new Promise((resolve, reject) => child.once("close", code => {
+      runtime.exitCode = code;
+      runtime.endedAt = new Date().toISOString();
+      if (code === 0) return resolve();
+      reject(job.timeout
+        ? new Error("L’anonymisation audio a dépassé le délai maximal.")
+        : job.sizeLimit
+          ? new Error("La dérivation audio dépasse la taille maximale autorisée.")
+          : job.cancelRequested
+            ? new Error("Anonymisation audio annulée.")
+            : job.spawnError || new Error(`FFmpeg a échoué (code ${code}).`));
+    }));
+    if (job.cancelRequested) throw new Error("Anonymisation audio annulée.");
+    job.process = null;
+    job.status = "validation";
+    job.progress = 99;
+    await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath);
+    if (job.cancelRequested) throw new Error("Anonymisation audio annulée.");
+    const result = await persistDerivedPlayable(job, prepJob);
+    await removeDerivationWorkspace(job);
+    job.result = result;
+    job.playableId = result.playableId;
+    job.status = "terminé";
+    job.progress = 100;
+    job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString();
+    job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
+    job.treatmentStatus = "completed";
+  } catch (error) {
+    job.error = job.cancelRequested ? "Anonymisation audio annulée." : error.message;
+    await removeDerivationWorkspace(job);
+    if (job.cancelRequested && job.treatmentStatus !== "cancelling") {
+      await updateDerivationTreatment(job, "cancelling", Math.min(99, job.progress));
+    }
+    await updateDerivationTreatment(
+      job,
+      job.cancelRequested ? "cancelled" : "failed",
+      Math.min(99, job.progress),
+      error
+    );
+    job.status = job.cancelRequested ? "annulé" : "échoué";
+    job.progress = 0;
+  } finally {
+    clearTimeout(timeout);
+    if (sizeMonitor) clearInterval(sizeMonitor);
+    if (logStream) logStream.end();
+    delete job.process;
+    delete job.spawnError;
+    delete job.timeout;
+    delete job.sizeLimit;
+    job.updatedAt = new Date().toISOString();
+  }
+}
+
+async function cancelAudioDerivation(job) {
+  if (!job || !["anonymisation", "validation"].includes(job.status)) return job;
+  job.cancelRequested = true;
+  job.status = "annulation";
+  job.updatedAt = new Date().toISOString();
+  await updateDerivationTreatment(job, "cancelling", Math.min(99, job.progress));
+  if (job.process?.kill) job.process.kill();
+  return job;
+}
+
+function cleanupExpiredAudioDerivations() {
+  const now = Date.now();
+  for (const [id, job] of ACTIVE_AUDIO_DERIVATIONS) {
+    if (job.expiresAt && Date.parse(job.expiresAt) <= now
+        && !["anonymisation", "validation", "annulation"].includes(job.status)) {
+      void removeDerivationWorkspace(job);
+      ACTIVE_AUDIO_DERIVATIONS.delete(id);
+    }
+  }
+}
+
+setInterval(cleanupExpiredAudioDerivations, 60 * 1000).unref();
+
+async function shutdownAnonymizationJobs() {
+  for (const job of ACTIVE_AUDIO_DERIVATIONS.values()) await cancelAudioDerivation(job);
+  for (const job of ACTIVE_HLS_DERIVATIONS.values()) await cancelHlsDerivation(job);
+  for (const job of ACTIVE_HLS_PREPARATIONS.values()) await cancelHlsPreparation(job);
+  const processes = [
+    ...ACTIVE_AUDIO_DERIVATIONS.values(),
+    ...ACTIVE_HLS_DERIVATIONS.values(),
+    ...ACTIVE_HLS_PREPARATIONS.values()
+  ].map(job => job.process).filter(Boolean);
+  await Promise.all(processes.map(process => waitForChildClose(process, 3000).catch(() => {})));
+  await Promise.all([
+    ...[...ACTIVE_AUDIO_DERIVATIONS.values()].map(removeDerivationWorkspace),
+    ...[...ACTIVE_HLS_DERIVATIONS.values()].map(removeDerivationWorkspace),
+    ...[...ACTIVE_HLS_PREPARATIONS.values()].map(removePreparationWorkspace)
+  ]);
 }
 
 async function runHlsDerivation(job, prepJob) {
@@ -2965,7 +3227,7 @@ async function runHlsDerivation(job, prepJob) {
       await runTemporalLocalPipeline(job, prepJob, { ffmpeg, blur, runtime, logStream: ffmpegLogStream });
       ffmpegLogStream.end();
       ffmpegLogStream = null;
-      job.status = "validation"; job.progress = 80; await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath); const result = await persistDerivedPlayable(job, prepJob); await removeDerivationWorkspace(job); job.result = result; job.assetId = result.assetId; job.playableId = result.playableId; job.status = "terminé"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString(); job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
+      job.status = "validation"; job.progress = 80; await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath); const result = await persistDerivedPlayable(job, prepJob); await removeDerivationWorkspace(job); job.result = result; job.assetId = result.assetId; job.playableId = result.playableId; job.status = "terminé"; job.progress = 100; job.treatmentStatus = "completed"; job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString(); job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
       return;
     }
     const detectedDuration = String(prepJob.metadata?.detectedTime || "").match(/^(\d+):(\d{2}):(\d{2})(?:[.,](\d+))?$/);
@@ -2975,15 +3237,19 @@ async function runHlsDerivation(job, prepJob) {
     child = spawn(ffmpeg, args, { cwd: runtime.cwd, windowsHide: true }); job.process = child; runtime.pid = child.pid || null; child.stdout.setEncoding("utf8"); child.stderr.setEncoding("utf8"); child.stdout.on("data", chunk => { const text = String(chunk); runtime.stdout += text; ffmpegLogStream.write(`[stdout] ${text}`); }); child.stderr.on("data", chunk => { const text = String(chunk); runtime.stderr += text; ffmpegLogStream.write(`[stderr] ${text}`); const currentMs = ffmpegTimeMs(text); if (currentMs !== null) runtime.lastMediaTimeMs = currentMs; job.log.push(text.trim().slice(-500)); job.progress = expectedDurationMs && currentMs !== null ? Math.max(job.progress, Math.min(78, 35 + Math.round((currentMs / expectedDurationMs) * 43))) : Math.max(job.progress, 60); job.updatedAt = new Date().toISOString(); }); child.on("error", error => { job.spawnError = error; runtime.error = error.message; }); child.on("close", () => ffmpegLogStream.end());
     sizeMonitor = setInterval(async () => { if (!job.outputPath || !child || child.exitCode !== null) return; try { const current = await fs.stat(job.outputPath); runtime.outputSizeBytes = current.size; if (current.size > HLS_PREPARATION_MAX_BYTES) { job.sizeLimit = true; child.kill(); } } catch {} }, 250);
     await new Promise((resolve, reject) => child.once("close", code => { runtime.exitCode = code; runtime.endedAt = new Date().toISOString(); if (code === 0) return resolve(); reject(job.timeout ? new Error("La dérivation a dépassé le délai maximal.") : job.sizeLimit ? new Error("La dérivation dépasse la taille maximale autorisée.") : job.cancelRequested ? new Error("Dérivation annulée.") : job.spawnError || new Error(`FFmpeg a échoué (code ${code}).`)); }));
-    job.status = "validation"; job.progress = 80; await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath); const result = await persistDerivedPlayable(job, prepJob); await removeDerivationWorkspace(job); job.result = result; job.assetId = result.assetId; job.playableId = result.playableId; job.status = "terminé"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString(); job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
+    job.status = "validation"; job.progress = 80; await validateMediaFileWithFfmpeg(ffmpeg, job.outputPath); const result = await persistDerivedPlayable(job, prepJob); await removeDerivationWorkspace(job); job.result = result; job.assetId = result.assetId; job.playableId = result.playableId; job.status = "terminé"; job.progress = 100; job.treatmentStatus = "completed"; job.expiresAt = new Date(Date.now() + HLS_DERIVATION_TTL_MS).toISOString(); job.metadata = { ...job.metadata, ...result, mimeType: "video/mp4" };
   } catch (error) {
-    job.error = job.cancelRequested ? "Dérivation annulée." : error.message; await removeDerivationWorkspace(job); job.status = job.cancelRequested ? "annulé" : "échoué"; job.progress = 0; job.updatedAt = new Date().toISOString();
+    const terminalProgress = Math.max(0, Math.min(99, job.treatmentProgress ?? job.progress));
+    job.error = job.cancelRequested ? "Dérivation annulée." : error.message; await removeDerivationWorkspace(job);
+    if (job.cancelRequested && job.treatmentStatus !== "cancelling") await updateDerivationTreatment(job, "cancelling", terminalProgress);
+    await updateDerivationTreatment(job, job.cancelRequested ? "cancelled" : "failed", terminalProgress, error);
+    job.status = job.cancelRequested ? "annulé" : "échoué"; job.progress = 0; job.updatedAt = new Date().toISOString();
     // Une préparation valide reste réutilisable pour tester un autre profil.
     // Son nettoyage est assuré par l’expiration normale du job de préparation.
   } finally { clearTimeout(timeout); if (sizeMonitor) clearInterval(sizeMonitor); if (ffmpegLogStream) ffmpegLogStream.end(); delete job.process; delete job.pid; delete job.timeout; delete job.sizeLimit; if (job.status === "terminé") job.updatedAt = new Date().toISOString(); }
 }
 
-async function cancelHlsDerivation(job) { if (!job || !["anonymisation", "validation"].includes(job.status)) return job; job.cancelRequested = true; job.status = "annulation"; job.updatedAt = new Date().toISOString(); if (job.process?.kill) job.process.kill(); return job; }
+async function cancelHlsDerivation(job) { if (!job || !["anonymisation", "validation"].includes(job.status)) return job; job.cancelRequested = true; job.status = "annulation"; job.updatedAt = new Date().toISOString(); await updateDerivationTreatment(job, "cancelling", Math.min(99, job.progress)); if (job.process?.kill) job.process.kill(); return job; }
 
 function cleanupExpiredHlsDerivations() { const now = Date.now(); for (const [id, job] of ACTIVE_HLS_DERIVATIONS) if (job.expiresAt && Date.parse(job.expiresAt) <= now && !["anonymisation", "validation", "annulation"].includes(job.status)) { job.status = "expiré"; void removeDerivationWorkspace(job); ACTIVE_HLS_DERIVATIONS.delete(id); } }
 setInterval(cleanupExpiredHlsDerivations, 60 * 1000).unref();
@@ -2993,7 +3259,7 @@ async function hlsPreparationSource(assetId, playableId, sourceId) {
   const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId);
   const source = VIDEO_LIBRARY.sources.find(item => item.id === sourceId && item.assetId === assetId);
   if (!asset || !playable || !source) throw new Error("La source de travail est introuvable.");
-  if (playable.kind === "local-file" && explicitRole(playable) === "working-copy") {
+  if (playable.kind === "local-file" && ["working-copy", "derivation-local"].includes(explicitRole(playable))) {
     const storageKey = localStorageKeyForPlayable(playable, source);
     const inputPath = safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(playable));
     const stat = await fs.stat(inputPath).catch(() => null);
@@ -3558,6 +3824,110 @@ async function handleApiInReadContext(request, response, url) {
       return sendJson(response, status, { error: status >= 500 ? "Enregistrement de la référence distante impossible." : (error.message || "Ajout de la référence distante impossible.") });
     }
   }
+  if (url.pathname === "/api/proto05/library/audio-anonymization/plans") {
+    if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
+    const sourceAssetId = url.searchParams.get("assetId");
+    const sourcePlayableId = url.searchParams.get("playableId");
+    if (!sourceAssetId || !sourcePlayableId) return sendJson(response, 400, { error: "La source du plan est obligatoire." });
+    const playable = VIDEO_LIBRARY.playables.find(item => item.id === sourcePlayableId && item.assetId === sourceAssetId);
+    if (!playable) return sendJson(response, 404, { error: "Le playable source est introuvable." });
+    try {
+      const plan = await proto05ReadBoundary().readAudioAnonymizationPlan({ sourceAssetId, sourcePlayableId });
+      const suggestedPlanId = `audio-plan-${crypto.createHash("sha256").update(`${sourceAssetId}\u0000${sourcePlayableId}`).digest("hex").slice(0, 24)}`;
+      return sendJson(response, 200, { plan, suggestedPlanId });
+    } catch (error) {
+      return sendJson(response, 500, { error: error.message || "Lecture du plan impossible." });
+    }
+  }
+  const audioPlanMatch = url.pathname.match(/^\/api\/proto05\/library\/audio-anonymization\/plans\/([^/]+)$/);
+  if (audioPlanMatch) {
+    if (request.method !== "PUT") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "PUT" });
+    try {
+      const payload = JSON.parse(await readRequestBody(request));
+      const prepJob = ACTIVE_HLS_PREPARATIONS.get(String(payload.preparationJobId || ""));
+      if (!prepJob || prepJob.status !== "completed" || !prepJob.outputPath) throw new Error("La préparation vidéo est introuvable, expirée ou incomplète.");
+      const plan = normalizeAudioPlan({
+        id: decodeURIComponent(audioPlanMatch[1]),
+        sourceAssetId: prepJob.assetId,
+        sourcePlayableId: prepJob.playableId,
+        durationMs: prepJob.metadata?.durationMs,
+        revision: payload.revision,
+        passages: payload.passages
+      });
+      const saved = await proto05WriteBoundary().saveAudioAnonymizationPlan(plan);
+      return sendJson(response, 200, { plan: saved });
+    } catch (error) {
+      return sendJson(response, error.code === "PROTO05_AUDIO_PLAN_CONFLICT" ? 409 : 400, {
+        error: error.code === "PROTO05_AUDIO_PLAN_CONFLICT"
+          ? "Le plan a été modifié ailleurs. Rechargez sa version actuelle."
+          : error.message || "Enregistrement du plan impossible."
+      });
+    }
+  }
+  if (url.pathname === "/api/proto05/library/audio-anonymization/derivations") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    try {
+      const payload = JSON.parse(await readRequestBody(request));
+      const prepJob = ACTIVE_HLS_PREPARATIONS.get(String(payload.preparationJobId || ""));
+      if (!prepJob || prepJob.status !== "completed" || !prepJob.outputPath) throw new Error("La préparation vidéo est introuvable, expirée ou incomplète.");
+      if (!ffprobeAudioCodec(findFfmpeg(), prepJob.outputPath)) throw new Error("La source ne possède aucune piste audio à anonymiser.");
+      const persisted = await proto05ReadBoundary().readAudioAnonymizationPlan({ planId: String(payload.planId || "") });
+      if (!persisted || persisted.sourceAssetId !== prepJob.assetId || persisted.sourcePlayableId !== prepJob.playableId) {
+        throw new Error("Le plan audio sauvegardé ne correspond pas à la source préparée.");
+      }
+      const plan = normalizeAudioPlan(persisted, { durationMs: prepJob.metadata?.durationMs, requirePassages: true });
+      const now = new Date().toISOString();
+      const id = `audio-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+      const job = {
+        id,
+        treatmentId: id,
+        planId: plan.id,
+        preparationJobId: prepJob.id,
+        assetId: prepJob.assetId,
+        sourcePlayableId: prepJob.playableId,
+        status: "prêt",
+        progress: 0,
+        createdAt: now,
+        updatedAt: now,
+        expiresAt: null,
+        metadata: null,
+        error: null,
+        log: [],
+        cancelRequested: false,
+        mode: "audio",
+        method: "ffmpeg-audio-zone-replacement",
+        plan
+      };
+      await startDerivationTreatment(job, prepJob, {
+        type: "audio-anonymization",
+        label: "Anonymisation audio multi-zones",
+        planId: plan.id,
+        parameters: {
+          mode: "audio",
+          method: job.method,
+          planId: plan.id,
+          overlapRule: "half-open-no-overlap-adjacency-allowed",
+          passages: plan.passages
+        }
+      });
+      ACTIVE_AUDIO_DERIVATIONS.set(job.id, job);
+      void runAudioDerivation(job, prepJob);
+      return sendJson(response, 202, { job: publicAudioDerivationJob(job) });
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message || "Dérivation audio impossible." });
+    }
+  }
+  const audioDerivationMatch = url.pathname.match(/^\/api\/proto05\/library\/audio-anonymization\/derivations\/([^/]+)$/);
+  if (audioDerivationMatch) {
+    const job = ACTIVE_AUDIO_DERIVATIONS.get(decodeURIComponent(audioDerivationMatch[1]));
+    if (!job) return sendJson(response, 404, { error: "Dérivation audio introuvable ou expirée." });
+    if (request.method === "GET") return sendJson(response, 200, { job: publicAudioDerivationJob(job) });
+    if (request.method === "DELETE") {
+      await cancelAudioDerivation(job);
+      return sendJson(response, 202, { job: publicAudioDerivationJob(job) });
+    }
+    return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, DELETE" });
+  }
   if (url.pathname === "/api/proto05/library/hls-preparations") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
     try {
@@ -3579,7 +3949,13 @@ async function handleApiInReadContext(request, response, url) {
       const normalizedSteps = temporalSteps ? temporalStepConfiguration(temporalSteps, prepJob.metadata?.durationMs) : null;
       const temporalMasks = normalizedSteps ? temporalStepsToMasks(normalizedSteps) : temporalMaskConfiguration(payload.masks);
       const blur = anonymizationBlurProfile(payload.blurProfile);
-      const job = { id: `hls-temporal-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, preparationJobId: prepJob.id, assetId: prepJob.assetId, status: "prêt", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: null, error: null, log: [], cancelRequested: false, mode: "temporal", method: "ffmpeg-boxblur-temporal-steps", masks: temporalMasks.map(mask => mask.keyframes[0]), temporalMasks, temporalSteps: normalizedSteps, blurProfile: blur.id };
+      const job = { id: `hls-temporal-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, treatmentId: null, preparationJobId: prepJob.id, assetId: prepJob.assetId, status: "prêt", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: null, error: null, log: [], cancelRequested: false, mode: "temporal", method: "ffmpeg-boxblur-temporal-steps", masks: temporalMasks.map(mask => mask.keyframes[0]), temporalMasks, temporalSteps: normalizedSteps, blurProfile: blur.id };
+      job.treatmentId = job.id;
+      await startDerivationTreatment(job, prepJob, {
+        type: "anonymization",
+        label: "Anonymisation visuelle temporelle",
+        parameters: { mode: job.mode, method: job.method, masks: job.masks, temporalMasks, temporalSteps: normalizedSteps, blur }
+      });
       ACTIVE_HLS_DERIVATIONS.set(job.id, job); void runHlsDerivation(job, prepJob);
       return sendJson(response, 202, { job: publicHlsDerivationJob(job) });
     } catch (error) { return sendJson(response, 400, { error: error.message || "Dérivation temporelle impossible." }); }
@@ -3593,7 +3969,13 @@ async function handleApiInReadContext(request, response, url) {
       const masks = defaultAnonymizationMasks(payload.masks === undefined ? prepJob.masks : payload.masks);
       prepJob.masks = masks;
 const blur = anonymizationBlurProfile(payload.blurProfile);
-const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, preparationJobId: prepJob.id, assetId: prepJob.assetId, status: "prêt", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: null, error: null, log: [], cancelRequested: false, method: "ffmpeg-boxblur-rectangles", masks, blurProfile: blur.id };
+const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, treatmentId: null, preparationJobId: prepJob.id, assetId: prepJob.assetId, status: "prêt", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: null, error: null, log: [], cancelRequested: false, method: "ffmpeg-boxblur-rectangles", masks, blurProfile: blur.id };
+      job.treatmentId = job.id;
+      await startDerivationTreatment(job, prepJob, {
+        type: "anonymization",
+        label: "Anonymisation visuelle",
+        parameters: { mode: "fixed", method: job.method, masks, blur }
+      });
       ACTIVE_HLS_DERIVATIONS.set(job.id, job); void runHlsDerivation(job, prepJob);
       return sendJson(response, 202, { job: publicHlsDerivationJob(job) });
     } catch (error) { return sendJson(response, 400, { error: error.message || "Dérivation anonymisée impossible." }); }
@@ -4107,6 +4489,11 @@ async function serveStatic(request, response, url) {
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
   }
+  if (/^\/teacher\/audio-anonymization\/[^/]+$/.test(url.pathname)) {
+    const target = path.join(ROOT_DIR, "teacher-audio-anonymization.html"); const file = await fs.readFile(target);
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
+    return request.method === "HEAD" ? response.end() : response.end(file);
+  }
   if (/^\/teacher\/author\/[^/]+$/.test(url.pathname)) {
     const target = path.join(ROOT_DIR, "teacher-author.html"); const file = await fs.readFile(target);
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
@@ -4207,6 +4594,7 @@ async function shutdownServer(signal) {
   shutdownPromise = (async () => {
     console.log(`[shutdown] ${signal}: arrêt des téléchargements de la Library.`);
     await shutdownLibraryDownloads();
+    await shutdownAnonymizationJobs();
     await READ_BOUNDARY?.close?.();
     await new Promise(resolve => {
       const force = setTimeout(() => server.closeAllConnections?.(), 500);

@@ -95,18 +95,34 @@ async function freePort() {
 
 async function stopChild(child) {
   if (!child || child.exitCode !== null || child.signalCode !== null) return;
-  await new Promise(resolve => {
-    const timer = setTimeout(() => {
-      try { child.kill("SIGKILL"); } catch {}
-      resolve();
-    }, 3000);
-    timer.unref();
-    child.once("exit", () => {
-      clearTimeout(timer);
-      resolve();
+  if (process.platform === "win32") {
+    await new Promise(resolve => {
+      const killer = spawn("taskkill.exe", ["/pid", String(child.pid), "/T", "/F"], {
+        windowsHide: true,
+        stdio: "ignore"
+      });
+      killer.once("error", resolve);
+      killer.once("close", resolve);
     });
-    child.kill();
-  });
+    if (child.exitCode === null && child.signalCode === null) {
+      await new Promise(resolve => {
+        const timer = setTimeout(resolve, 1_000);
+        child.once("exit", () => {
+          clearTimeout(timer);
+          resolve();
+        });
+      });
+    }
+    child.stdout?.destroy();
+    child.stderr?.destroy();
+    child.unref();
+  } else {
+    try { child.kill("SIGKILL"); } catch {}
+    await new Promise(resolve => {
+      child.once("exit", resolve);
+      setTimeout(resolve, 3000);
+    });
+  }
 }
 
 async function request(baseUrl, pathname, options = {}) {

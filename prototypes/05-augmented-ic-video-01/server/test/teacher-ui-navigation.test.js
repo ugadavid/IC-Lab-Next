@@ -22,7 +22,8 @@ const teacherPages = [
   "teacher-author.html",
   "teacher-videos.html",
   "teacher-video-detail.html",
-  "teacher-anonymization.html"
+  "teacher-anonymization.html",
+  "teacher-audio-anonymization.html"
 ];
 
 test("le routeur du socle distingue toutes les vues enseignantes des vues étudiantes", () => {
@@ -32,6 +33,7 @@ test("le routeur du socle distingue toutes les vues enseignantes des vues étudi
   assert.deepEqual(teacherShell.routeContext("/teacher/videos"), { route: "videos", general: "videos" });
   assert.deepEqual(teacherShell.routeContext("/teacher/videos/video-1"), { route: "video-detail", general: "videos" });
   assert.deepEqual(teacherShell.routeContext("/teacher/anonymization/job-1"), { route: "anonymization", general: "videos" });
+  assert.deepEqual(teacherShell.routeContext("/teacher/audio-anonymization/job-1"), { route: "audio-anonymization", general: "videos" });
   for (const route of ["edit", "guided", "author", "preview"]) {
     assert.deepEqual(teacherShell.routeContext(`/teacher/${route}/${encodeURIComponent(activityId)}`), {
       route,
@@ -123,11 +125,13 @@ test("les actions métier existantes restent présentes dans leurs pages", () =>
   assert.match(activityLibrarySource, /revisionToken/);
   assert.match(videoDetailSource, /editorialRevisionToken/);
   assert.match(videoDetailSource, /deletionRevisionToken/);
-  assert.match(videoDetailSource, /data-action="workshop"/);
+  assert.match(videoDetailSource, /data-action="workshop-image"/);
+  assert.match(videoDetailSource, /data-action="workshop-audio"/);
   assert.match(videoDetailSource, /preflight && preflight\.allowed === false/);
   assert.match(videoLibrarySource, /window\.proto05OpenUsagePanel=openUsagePanel/);
   assert.match(videoLibrarySource, /queueMicrotask\(\(\)=>window\.proto05OpenUsagePanel/);
   assert.match(source("teacher-anonymization.html"), /id="derive"/);
+  assert.match(source("teacher-audio-anonymization.html"), /id="derive"/);
   assert.doesNotMatch(videoLibrarySource, /← Bibliothèque enseignant/);
   assert.doesNotMatch(source("teacher-create.html"), /← Bibliothèque enseignant|Ouvrir la Library/);
   assert.ok(teacherPages.every(page => !source(page).includes("anonymization-advanced")));
@@ -291,7 +295,8 @@ test("les routes enseignantes et les actifs partagés sont servis par le runtime
       "/teacher/preview/teacher-ui-fixture",
       "/teacher/videos",
       "/teacher/videos/video-fixture",
-      "/teacher/anonymization/job-fixture"
+      "/teacher/anonymization/job-fixture",
+      "/teacher/audio-anonymization/job-fixture"
     ];
     for (const route of routes) {
       const response = await fetch(`${temporary.baseUrl}${route}`);

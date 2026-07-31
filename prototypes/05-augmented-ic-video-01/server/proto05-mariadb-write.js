@@ -4,6 +4,7 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const {
   READ_TABLES,
+  mapAudioAnonymizationPlan,
   mapMariaDbTablesToSnapshot,
   projectMariaDbSnapshotForApplication,
   readCanonicalTablesWithProcedures
@@ -707,6 +708,47 @@ function createMariaDbWriteAdapter({
     return { identity, grants: assertApplicationGrants(grantRows, config) };
   }
 
+  async function targetedProcedureTransaction(operation, action, { touchMediaLibrary = false } = {}) {
+    const database = await connection();
+    let transactionStarted = false;
+    let lockAcquired = false;
+    try {
+      await verifyConnection(database);
+      const [[lock]] = await database.query("SELECT GET_LOCK('proto05_transactional_write', 10) AS acquired");
+      if (Number(lock.acquired) !== 1) throw new Error("Verrou applicatif MariaDB indisponible.");
+      lockAcquired = true;
+      await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
+      await database.beginTransaction();
+      transactionStarted = true;
+      await database.query("SET @proto05_runtime_transaction = 1");
+      const value = await action(database);
+      if (touchMediaLibrary) {
+        await database.query(
+          "UPDATE `data_projection_metadata` SET `source_updated_at_utc` = CURRENT_TIMESTAMP(3) WHERE `document_key` = 'media-library'"
+        );
+      }
+      await database.commit();
+      transactionStarted = false;
+      return value;
+    } catch (error) {
+      if (transactionStarted) {
+        try { await database.rollback(); } catch {}
+      }
+      const safeDetail = String(error?.sqlMessage || error?.message || "erreur MariaDB").replace(/\s+/g, " ").slice(0, 500);
+      const wrapped = new Error(`${operation} impossible : ${safeDetail}`);
+      wrapped.code = error?.errno === 30503 ? "PROTO05_AUDIO_PLAN_CONFLICT" : "PROTO05_MARIADB_WRITE_FAILED";
+      wrapped.reasonCode = error?.code || error?.errno || "MARIA_TARGETED_TRANSACTION_ERROR";
+      wrapped.cause = error;
+      throw wrapped;
+    } finally {
+      try { await database.query("SET @proto05_runtime_transaction = NULL"); } catch {}
+      if (lockAcquired) {
+        try { await database.query("SELECT RELEASE_LOCK('proto05_transactional_write')"); } catch {}
+      }
+      await database.end();
+    }
+  }
+
   async function mappedWorkingCopyRows(snapshot, mutation) {
     const canonicalLibrary = structuredClone(snapshot.canonicalVideoLibrary);
     const asset = canonicalLibrary.assets.find(item => item.id === mutation.assetId);
@@ -957,6 +999,79 @@ function createMariaDbWriteAdapter({
         }
         await database.end();
       }
+    },
+
+    async saveAudioAnonymizationPlan(plan) {
+      return targetedProcedureTransaction(
+        "Enregistrement transactionnel du plan d’anonymisation audio",
+        async database => mapAudioAnonymizationPlan(await callProcedure(
+          database,
+          "sp_audio_anonymization_plan_save",
+          [
+            plan.id,
+            plan.sourceAssetId,
+            plan.sourcePlayableId,
+            plan.durationMs,
+            plan.revision,
+            plan.passages
+          ]
+        ))
+      );
+    },
+
+    async startInlineMediaTreatment(treatment) {
+      return targetedProcedureTransaction(
+        "Démarrage transactionnel du traitement média",
+        async database => (await callProcedure(database, "sp_media_inline_treatment_start", [
+          treatment.id,
+          treatment.planId || null,
+          treatment.sourceAssetId,
+          treatment.sourcePlayableId,
+          treatment.type,
+          treatment.label || null,
+          treatment.runtimeJobId || treatment.id,
+          treatment.engine || "ffmpeg",
+          treatment.engineVersion,
+          treatment.parameters || {}
+        ]))[0]?.[0] || null,
+        { touchMediaLibrary: true }
+      );
+    },
+
+    async updateMediaTreatment(treatment) {
+      return targetedProcedureTransaction(
+        "Mise à jour transactionnelle du traitement média",
+        async database => (await callProcedure(database, "sp_media_treatment_update", [
+          treatment.id,
+          treatment.status,
+          treatment.progress,
+          treatment.diagnostics || {},
+          treatment.error || null
+        ]))[0]?.[0] || null,
+        { touchMediaLibrary: true }
+      );
+    },
+
+    async completeInlineMediaTreatment(result) {
+      return targetedProcedureTransaction(
+        "Finalisation transactionnelle du traitement média",
+        async database => (await callProcedure(database, "sp_media_inline_treatment_complete", [
+          result.treatmentId,
+          result.outputSourceId,
+          result.outputPlayableId,
+          result.storageScope,
+          result.storageKey,
+          result.mimeType,
+          result.sizeBytes,
+          result.durationMs,
+          result.sha256,
+          result.audioCodec || null,
+          result.hasAudio ? 1 : 0,
+          result.ffmpegVersion,
+          result.diagnostics || {}
+        ]))[0]?.[0] || null,
+        { touchMediaLibrary: true }
+      );
     },
 
     async appendWorkingCopy(snapshot, mutation, {
