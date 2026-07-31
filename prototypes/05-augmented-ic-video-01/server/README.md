@@ -30,6 +30,28 @@ configuration ou une connexion indisponible produit le même état fermé.
 redémarrer le processus.
 `Ctrl+C` réalise l’arrêt propre.
 
+## Réconciliation explicite de la disponibilité locale
+
+Le serveur ne transforme pas une lecture ordinaire en écriture de
+disponibilité. Lorsqu'un fichier géré localement a été restauré ou a disparu en
+dehors d'un parcours applicatif, un outil explicite compare les playables
+MariaDB aux deux racines média autorisées :
+
+```powershell
+node --env-file=../.env.local scripts/reconcile-local-media-availability.js --inspect
+```
+
+Le mode inspection ne modifie rien. Il produit un plan déterministe et son
+hash. Le mode `--apply` exige ce hash, le nombre et la liste exacte des
+playables attendus, une confirmation littérale et un chemin de témoin hors du
+dépôt. L'écriture utilise le même verrou que le writer applicatif, une
+transaction sérialisée, des préconditions sur les anciennes valeurs et une
+relecture avant commit. Un chemin invalide, une portée inconnue, un fichier
+vide, une taille ou une empreinte contradictoire ferme le plan sans écriture.
+
+L'outil ne parcourt pas librement le disque, ne traite pas les médias distants,
+ne déplace aucun fichier et ne lance ni FFmpeg ni FFprobe.
+
 Les mutations sont transactionnelles et limitées aux identifiants réellement
 modifiés. Une relecture relationnelle est effectuée avant commit. Les anciens
 outils de migration conservés sous `database/migrations/` sont historiques et

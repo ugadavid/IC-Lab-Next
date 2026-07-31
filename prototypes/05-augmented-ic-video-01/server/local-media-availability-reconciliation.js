@@ -239,6 +239,14 @@ async function applyLocalMediaAvailabilityPlan({
     lockAcquired = true;
     await database.query("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE");
     await database.beginTransaction();
+    const [metadataRows] = await database.query(
+      "SELECT source_updated_at_utc FROM data_projection_metadata WHERE document_key = 'media-library' FOR UPDATE"
+    );
+    if (metadataRows.length !== 1) {
+      throw Object.assign(new Error("Le témoin documentaire media-library est introuvable."), {
+        code: "PROTO05_AVAILABILITY_METADATA_MISSING"
+      });
+    }
     const ids = plan.changes.map(entry => entry.id);
     const lockedRows = await readAvailabilityRows(database, { ids, forUpdate: true });
     if (lockedRows.length !== ids.length) {
@@ -298,8 +306,9 @@ async function applyLocalMediaAvailabilityPlan({
       });
     }
     const [metadata] = await database.query(
-      "UPDATE data_projection_metadata SET source_updated_at_utc = ? WHERE document_key = 'media-library'",
-      [updatedAt]
+      "UPDATE data_projection_metadata SET source_updated_at_utc = ? "
+        + "WHERE document_key = 'media-library' AND source_updated_at_utc <=> ?",
+      [updatedAt, metadataRows[0].source_updated_at_utc]
     );
     if (metadata.affectedRows !== 1) {
       throw Object.assign(new Error("Le témoin documentaire media-library n'a pas été mis à jour."), {

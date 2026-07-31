@@ -118,9 +118,16 @@ async function main() {
     if (JSON.stringify(actualIds) !== JSON.stringify(options.expectedIds)) {
       throw new Error("Les playables à modifier ne correspondent pas à la liste validée.");
     }
+    const [[documentMetadataBefore]] = await database.query(
+      "SELECT document_key, source_updated_at_utc FROM data_projection_metadata WHERE document_key = 'media-library'"
+    );
     await fs.writeFile(
       options.witnessFile,
-      `${JSON.stringify({ createdAt: new Date().toISOString(), plan: exposedPlan }, null, 2)}\n`,
+      `${JSON.stringify({
+        createdAt: new Date().toISOString(),
+        dataProjectionMetadataBefore: documentMetadataBefore,
+        plan: exposedPlan
+      }, null, 2)}\n`,
       { encoding: "utf8", flag: "wx" }
     );
     const result = await applyLocalMediaAvailabilityPlan({
