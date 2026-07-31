@@ -28,6 +28,11 @@ const {
 const {
   mariadbConfigurationFromEnvironment
 } = require("../proto05-data-mode");
+const {
+  applyLocalMediaAvailabilityPlan,
+  inspectLocalMediaAvailability,
+  readAvailabilityRows
+} = require("../local-media-availability-reconciliation");
 
 const serverDirectory = path.resolve(__dirname, "..");
 const prototypeDirectory = path.resolve(serverDirectory, "..");
@@ -182,18 +187,18 @@ async function mediaCardinalities(database) {
   return Object.fromEntries(Object.entries(row).map(([key, value]) => [key, Number(value)]));
 }
 
-async function importTemporaryMedia(server, marker) {
+async function importTemporaryMedia(server, marker, mission = "M150") {
   const fileName = `${marker}.mp4`;
   const imported = await request(
     server.baseUrl,
-    `/api/proto05/library/import-local?title=${encodeURIComponent(`[TEST M150] ${marker}`)}`,
+    `/api/proto05/library/import-local?title=${encodeURIComponent(`[TEST ${mission}] ${marker}`)}`,
     {
       method: "POST",
       headers: {
         "content-type": "video/mp4",
         "x-proto05-file-name": encodeURIComponent(fileName)
       },
-      body: Buffer.from(`PROTO05-M150-${marker}-${crypto.randomBytes(12).toString("hex")}`)
+      body: Buffer.from(`PROTO05-${mission}-${marker}-${crypto.randomBytes(12).toString("hex")}`)
     }
   );
   assert.equal(imported.response.status, 201, imported.body.error);
@@ -872,6 +877,182 @@ test("le préflight média MariaDB bloque les relations canoniques et nettoie un
       if (baseline) {
         assert.deepEqual(await mediaCardinalities(database), baseline);
       }
+      await database.end();
+    }
+    await server.stop();
+  }
+});
+
+test("la réconciliation locale MariaDB suit le disque, refuse un état concurrent et nettoie sa fixture", {
+  timeout: 60_000
+}, async () => {
+  const marker = `mission151-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+  const roots = {
+    "legacy-media": path.join(prototypeDirectory, "data", "video-library-media"),
+    workspace: path.join(prototypeDirectory, "data", "video-library-workspaces")
+  };
+  let server = await startServer();
+  let database = null;
+  let imported = null;
+  let absentFile = null;
+  let baseline = null;
+  let documentUpdatedAt = null;
+  try {
+    await server.ready();
+    database = await testDatabaseConnection();
+    baseline = await mediaCardinalities(database);
+    [[{ source_updated_at_utc: documentUpdatedAt }]] = await database.query(
+      "SELECT source_updated_at_utc FROM data_projection_metadata WHERE document_key = 'media-library'"
+    );
+    imported = await importTemporaryMedia(server, marker, "M151");
+
+    let rows = await readAvailabilityRows(database, { ids: [imported.playableId] });
+    let plan = await inspectLocalMediaAvailability(rows, { roots });
+    assert.equal(plan.safeToApply, true);
+    assert.equal(plan.changes.length, 0);
+
+    await database.query(
+      "UPDATE media_playables SET availability = 'missing-local', availability_reason = 'missing-file' WHERE id = ?",
+      [imported.playableId]
+    );
+    rows = await readAvailabilityRows(database, { ids: [imported.playableId] });
+    plan = await inspectLocalMediaAvailability(rows, { roots });
+    assert.equal(plan.changes[0].decision, "restore-available");
+    let applied = await applyLocalMediaAvailabilityPlan({
+      database,
+      plan,
+      roots,
+      expectedPlanHash: plan.planHash,
+      expectedUpdateCount: 1
+    });
+    assert.equal(applied.applied, 1);
+    let detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(imported.assetId)}`
+    );
+    assert.equal(detail.response.status, 200);
+    assert.equal(
+      detail.body.asset.playables.find(item => item.id === imported.playableId).availability,
+      "available"
+    );
+
+    absentFile = `${imported.file}.m151-away`;
+    fs.renameSync(imported.file, absentFile);
+    rows = await readAvailabilityRows(database, { ids: [imported.playableId] });
+    plan = await inspectLocalMediaAvailability(rows, { roots });
+    assert.equal(plan.changes[0].decision, "degrade-to-missing");
+    applied = await applyLocalMediaAvailabilityPlan({
+      database,
+      plan,
+      roots,
+      expectedPlanHash: plan.planHash,
+      expectedUpdateCount: 1
+    });
+    assert.equal(applied.applied, 1);
+    detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(imported.assetId)}`
+    );
+    assert.equal(
+      detail.body.asset.playables.find(item => item.id === imported.playableId).availability,
+      "missing-local"
+    );
+    const [[assetStillPresent]] = await database.query(
+      "SELECT COUNT(*) count FROM media_assets WHERE id = ?",
+      [imported.assetId]
+    );
+    assert.equal(Number(assetStillPresent.count), 1);
+
+    fs.renameSync(absentFile, imported.file);
+    absentFile = null;
+    rows = await readAvailabilityRows(database, { ids: [imported.playableId] });
+    const stalePlan = await inspectLocalMediaAvailability(rows, { roots });
+    assert.equal(stalePlan.changes[0].decision, "restore-available");
+    await database.query(
+      "UPDATE media_playables SET availability = 'unknown', availability_reason = NULL WHERE id = ?",
+      [imported.playableId]
+    );
+    await assert.rejects(
+      applyLocalMediaAvailabilityPlan({
+        database,
+        plan: stalePlan,
+        roots,
+        expectedPlanHash: stalePlan.planHash,
+        expectedUpdateCount: 1
+      }),
+      error => error.code === "PROTO05_AVAILABILITY_PRECONDITION_FAILED"
+    );
+    const [[concurrentState]] = await database.query(
+      "SELECT availability, availability_reason FROM media_playables WHERE id = ?",
+      [imported.playableId]
+    );
+    assert.deepEqual(
+      { availability: concurrentState.availability, reason: concurrentState.availability_reason },
+      { availability: "unknown", reason: null }
+    );
+
+    await database.query(
+      "UPDATE media_playables SET availability = 'missing-local', availability_reason = 'missing-file' WHERE id = ?",
+      [imported.playableId]
+    );
+    rows = await readAvailabilityRows(database, { ids: [imported.playableId] });
+    plan = await inspectLocalMediaAvailability(rows, { roots });
+    await applyLocalMediaAvailabilityPlan({
+      database,
+      plan,
+      roots,
+      expectedPlanHash: plan.planHash,
+      expectedUpdateCount: 1
+    });
+    rows = await readAvailabilityRows(database, { ids: [imported.playableId] });
+    plan = await inspectLocalMediaAvailability(rows, { roots });
+    assert.equal(plan.changes.length, 0);
+
+    await server.stop();
+    server = await startServer();
+    await server.ready();
+    detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(imported.assetId)}`
+    );
+    assert.equal(detail.response.status, 200);
+    assert.equal(
+      detail.body.asset.playables.find(item => item.id === imported.playableId).availability,
+      "available"
+    );
+    const removed = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(imported.assetId)}/physical`,
+      { method: "DELETE" }
+    );
+    assert.equal(removed.response.status, 200, removed.body.error);
+    assert.equal(fs.existsSync(imported.file), false);
+    imported = null;
+  } finally {
+    if (absentFile && fs.existsSync(absentFile) && imported?.file) fs.renameSync(absentFile, imported.file);
+    if (server?.child.exitCode === null && imported?.assetId) {
+      await request(
+        server.baseUrl,
+        `/api/proto05/library/assets/${encodeURIComponent(imported.assetId)}/physical`,
+        { method: "DELETE" }
+      ).catch(() => null);
+    }
+    if (database) {
+      if (imported?.assetId) {
+        await database.query("UPDATE media_assets SET default_playable_id = NULL WHERE id = ?", [imported.assetId]);
+        await database.query("DELETE FROM media_playable_metadata WHERE playable_id = ?", [imported.playableId]);
+        await database.query("DELETE FROM media_playables WHERE id = ?", [imported.playableId]);
+        await database.query("DELETE FROM media_sources WHERE asset_id = ?", [imported.assetId]);
+        await database.query("DELETE FROM media_assets WHERE id = ?", [imported.assetId]);
+        fs.rmSync(imported.file, { force: true });
+      }
+      if (documentUpdatedAt !== null) {
+        await database.query(
+          "UPDATE data_projection_metadata SET source_updated_at_utc = ? WHERE document_key = 'media-library'",
+          [documentUpdatedAt]
+        );
+      }
+      if (baseline) assert.deepEqual(await mediaCardinalities(database), baseline);
       await database.end();
     }
     await server.stop();
