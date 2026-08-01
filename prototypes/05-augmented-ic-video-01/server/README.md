@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.60
+# Serveur autonome du Prototype 05 — 0.1.61
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.

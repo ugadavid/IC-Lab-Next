@@ -1,0 +1,5 @@
+.precise-time-navigation{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.65rem}
+.precise-time-navigation output{min-width:9.5rem;font-variant-numeric:tabular-nums;font-weight:700}
+.precise-time-navigation button{min-width:3.8rem;padding:.45rem .6rem;white-space:nowrap}
+.precise-time-navigation button:focus-visible{outline:3px solid #0e749066;outline-offset:2px}
+@media(max-width:480px){.precise-time-navigation output{flex-basis:100%}.precise-time-navigation button{flex:1 1 calc(25% - .4rem);min-width:4.25rem}}

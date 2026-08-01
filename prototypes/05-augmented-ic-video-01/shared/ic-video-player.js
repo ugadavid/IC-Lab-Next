@@ -36,6 +36,7 @@
       get currentTime() { return currentProvider === "youtube" ? (youtubePlayer?.getCurrentTime?.() || 0) : (nativeVideo?.currentTime || 0); },
       set currentTime(value) { facade.seek(value); },
       get duration() { return currentProvider === "youtube" ? (youtubePlayer?.getDuration?.() || 0) : (nativeVideo?.duration || 0); },
+      get readyState() { return ready ? 1 : (nativeVideo?.readyState || 0); },
       get paused() { return currentProvider === "youtube" ? ![1, 3].includes(youtubePlayer?.getPlayerState?.()) : (nativeVideo?.paused ?? true); },
       addEventListener(type, handler) { if (!listeners.has(type)) listeners.set(type, new Set()); listeners.get(type).add(handler); },
       removeEventListener(type, handler) { listeners.get(type)?.delete(handler); },
@@ -166,6 +167,7 @@
     Object.defineProperties(element, {
       currentTime: { configurable: true, get: () => player.currentTime, set: value => player.seek(value) },
       duration: { configurable: true, get: () => player.duration },
+      readyState: { configurable: true, get: () => player.readyState },
       paused: { configurable: true, get: () => player.paused }
     });
     element.play = () => player.play(); element.pause = () => player.pause(); element.load = () => {};
