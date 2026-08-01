@@ -76,7 +76,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.52";
+const VERSION = "0.1.53";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -97,7 +97,8 @@ const REMOTE_REFERENCE_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_REFERENCE_
 const REMOTE_REFERENCE_MAX_BYTES = Number(process.env.PROTO05_REMOTE_REFERENCE_MAX_BYTES || 256 * 1024);
 const REMOTE_REFERENCE_TOKEN_TTL_MS = Number(process.env.PROTO05_REMOTE_REFERENCE_TOKEN_TTL_MS || 10 * 60 * 1000);
 const REMOTE_REFERENCE_ANALYSES = new Map();
-const REMOTE_AVAILABILITY_CHECKS = new Map();
+const PLAYABLE_AVAILABILITY_CHECKS = new Map();
+const YOUTUBE_OEMBED_ENDPOINT = process.env.PROTO05_TEST_YOUTUBE_OEMBED_URL || "https://www.youtube.com/oembed";
 const REMOTE_HLS_GATEWAY_PREFIX = "/api/proto05/library/remote-hls/";
 const REMOTE_HLS_GATEWAY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_HLS_GATEWAY_TIMEOUT_MS || 30000);
 const REMOTE_MEDIA_GATEWAY_PREFIX = "/api/proto05/library/remote-media/";
@@ -1064,11 +1065,11 @@ async function persistWorkingCopyMutation(mutation) {
   return result;
 }
 
-async function persistRemoteAvailabilityObservation(observation) {
+async function persistPlayableAvailabilityObservation(observation) {
   const context = READ_CONTEXT.getStore();
   if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
   const queued = writeQueue.then(() => (
-    proto05WriteBoundary().updateRemotePlayableAvailability(observation)
+    proto05WriteBoundary().updatePlayableAvailability(observation)
   ));
   writeQueue = queued.catch(() => {});
   const result = await queued;
@@ -1765,16 +1766,42 @@ async function importLocalLibraryMedia(request, url) {
   const targetPath = safeLibraryMediaPath(storageKey);
   const importedAt = new Date().toISOString();
   await fs.rename(temporaryPath, targetPath);
+  const initialAvailability = await checkLocalPlayableAvailability({ file: targetPath });
+  if (initialAvailability.availability !== "available") {
+    try { await fs.unlink(targetPath); } catch {}
+    throw new Error("Le fichier vidéo importé n’est pas lisible.");
+  }
   const provenance = { kind: "managed-local-copy", source: "browser-file-selection", originalFileName: fileName, importedAt, sha256, sizeBytes };
-  const source = { id: sourceId, assetId, title, kind: "local-file", provider: "local", storageKey, url: `/api/proto05/library/media/${encodeURIComponent(storageKey)}`, mimeType: contentType || "application/octet-stream", durationMs: null, sizeBytes, sha256, checksum: sha256, authorized: true, availability: "available", provenance };
-  const playable = { id: playableId, assetId, sourceId, kind: "local-file", provider: "local", status: "available", availability: "available", durationMs: null, mimeType: source.mimeType, storageKey, url: source.url, manifestUrl: null, fileName, sizeBytes, sha256 };
-  const asset = { id: assetId, title, status: "active", sourceIds: [sourceId], playableIds: [playableId], defaultPlayableId: playableId, provenance, metadata: { fileName, sizeBytes, sha256, mimeType: source.mimeType, durationMs: null }, rights: {} };
-  const nextLibrary = JSON.parse(JSON.stringify(VIDEO_LIBRARY));
-  nextLibrary.updatedAt = importedAt;
-  nextLibrary.assets.push(asset); nextLibrary.sources.push(source); nextLibrary.playables.push(playable);
-  try { validateLibraryShape(nextLibrary); await persistVideoLibrary(nextLibrary); }
+  const mimeType = contentType || "application/octet-stream";
+  const asset = {
+    id: assetId, title, lifecycle: "active", folderId: null,
+    defaultPlayableId: playableId, parentAssetId: null, familyRootAssetId: assetId,
+    derivationTypes: [], tagIds: [], provenance, technicalMetadata: {}, rights: {},
+    createdAt: importedAt, updatedAt: importedAt
+  };
+  const source = {
+    id: sourceId, assetId, kind: "local-file", provider: "local",
+    origin: { storageKey, originalFileName: fileName }, transport: "file", mimeType,
+    provenance, createdAt: importedAt
+  };
+  const playable = {
+    id: playableId, assetId, sourceId, kind: "local-file", provider: "local",
+    availability: "available", availabilityReason: null,
+    location: { storageScope: "legacy-media", storageKey },
+    technicalMetadata: {
+      durationMs: null, width: null, height: null, frameRate: null,
+      videoCodec: null, audioCodec: null, hasAudio: null, mimeType,
+      sizeBytes, sha256, analyzedAt: importedAt, status: "complete",
+      analyzer: "local-file-import", analyzerVersion: "1", error: null
+    },
+    provenance, createdAt: importedAt, updatedAt: importedAt
+  };
+  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
+  canonical.assets.push(asset); canonical.sources.push(source); canonical.playables.push(playable);
+  try { await persistCanonicalLibrary(canonical, { operation: "local-media-import" }); }
   catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
-  return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
+  const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  return { duplicate: false, asset: libraryAssetDetails(projectedAsset), assetId, playableId };
 }
 
 function isPrivateAddress(address) {
@@ -1972,34 +1999,45 @@ async function analyzeRemoteLibraryReference(payload) {
   }
 }
 
-function remotePlayableForAvailabilityCheck(assetId, playableId) {
+function playableForAvailabilityCheck(assetId, playableId) {
   const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
   const playable = VIDEO_LIBRARY.playables.find(item => (
     item.id === playableId && item.assetId === assetId
   ));
   const source = VIDEO_LIBRARY.sources.find(item => item.id === playable?.sourceId);
-  if (
-    !asset
-    || !playable
-    || !source
-    || !["hls", "direct-url"].includes(playable.kind)
-    || !["hls", "direct-url"].includes(source.kind)
-  ) {
-    const error = new Error("La référence distante à contrôler est introuvable.");
+  if (!asset || !playable || !source) {
+    const error = new Error("Le playable à contrôler est introuvable.");
     error.statusCode = 404;
     throw error;
   }
-  const remoteUrl = remoteUrlForDownload(playable, source);
-  if (!remoteUrl) {
-    const error = new Error("L’URL distante à contrôler est absente.");
+  if (["hls", "direct-url"].includes(playable.kind) && ["hls", "direct-url"].includes(source.kind)) {
+    const remoteUrl = remoteUrlForDownload(playable, source);
+    if (remoteUrl) return { type: "remote", asset, playable, source, remoteUrl: remoteUrl.toString() };
+  } else if (playable.kind === "local-file") {
+    const storageKey = localStorageKeyForPlayable(playable, source);
+    if (storageKey) {
+      return {
+        type: "local",
+        asset,
+        playable,
+        source,
+        file: safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(playable))
+      };
+    }
+  } else if (playable.kind === "youtube-embed" && source.kind === "youtube-embed") {
+    const videoId = playable.videoId || source.videoId;
+    if (/^[A-Za-z0-9_-]{11}$/.test(String(videoId || ""))) {
+      return { type: "youtube", asset, playable, source, videoId };
+    }
+  }
+  {
+    const error = new Error("Ce playable ne possède pas de cible de disponibilité contrôlable.");
     error.statusCode = 409;
     throw error;
   }
-  return { asset, playable, source, remoteUrl: remoteUrl.toString() };
 }
 
-async function performRemotePlayableAvailabilityCheck(assetId, playableId) {
-  const target = remotePlayableForAvailabilityCheck(assetId, playableId);
+async function checkRemotePlayableAvailability(target) {
   let availability = "unknown";
   let availabilityReason = "remote-check-inconclusive";
   try {
@@ -2016,28 +2054,112 @@ async function performRemotePlayableAvailabilityCheck(assetId, playableId) {
       availabilityReason = "remote-check-unavailable";
     }
   }
-  const saved = await persistRemoteAvailabilityObservation({
+  return { availability, availabilityReason };
+}
+
+async function checkLocalPlayableAvailability(target) {
+  try {
+    const stat = await fs.stat(target.file);
+    if (!stat.isFile()) {
+      return { availability: "unknown", availabilityReason: "local-check-inconclusive" };
+    }
+    const handle = await fs.open(target.file, "r");
+    await handle.close();
+    return { availability: "available", availabilityReason: null };
+  } catch (error) {
+    if (["ENOENT", "ENOTDIR"].includes(error?.code)) {
+      return { availability: "missing-local", availabilityReason: "missing-file" };
+    }
+    return { availability: "unknown", availabilityReason: "local-check-inconclusive" };
+  }
+}
+
+function inconclusiveYouTubeAvailability(diagnosticReason, detail = null) {
+  console.warn(`[youtube-availability] Contrôle non concluant (${diagnosticReason}${detail ? `, ${detail}` : ""}).`);
+  return {
+    availability: "unknown",
+    availabilityReason: "youtube-check-inconclusive",
+    diagnosticReason
+  };
+}
+
+async function checkYouTubePlayableAvailability(target) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REMOTE_REFERENCE_TIMEOUT_MS);
+  try {
+    const endpoint = new URL(YOUTUBE_OEMBED_ENDPOINT);
+    endpoint.searchParams.set("url", `https://www.youtube.com/watch?v=${target.videoId}`);
+    endpoint.searchParams.set("format", "json");
+    const response = await fetch(endpoint, {
+      signal: controller.signal,
+      headers: { accept: "application/json" }
+    });
+    if ([400, 401, 403, 404, 410].includes(response.status)) {
+      try { await response.body?.cancel(); } catch {}
+      return { availability: "unreachable-remote", availabilityReason: "youtube-check-unavailable" };
+    }
+    if (!response.ok) {
+      try { await response.body?.cancel(); } catch {}
+      const diagnosticReason = response.status === 429
+        ? "youtube-rate-limited"
+        : response.status >= 500 ? "youtube-service-unavailable" : "youtube-http-inconclusive";
+      return inconclusiveYouTubeAvailability(diagnosticReason, `HTTP ${response.status}`);
+    }
+    let body;
+    try { body = JSON.parse(await boundedRemoteText(response)); }
+    catch { return inconclusiveYouTubeAvailability("youtube-oembed-invalid-response"); }
+    const available = body?.type === "video"
+      && body?.provider_name === "YouTube"
+      && typeof body?.html === "string"
+      && /<iframe\b/i.test(body.html);
+    return available
+      ? { availability: "available", availabilityReason: null }
+      : inconclusiveYouTubeAvailability("youtube-oembed-invalid-response");
+  } catch (error) {
+    const code = error?.code || error?.cause?.code;
+    const diagnosticReason = error?.name === "AbortError"
+      ? "youtube-oembed-timeout"
+      : ["EACCES", "EPERM"].includes(code)
+        ? "youtube-server-network-denied"
+        : ["ENETUNREACH", "EHOSTUNREACH", "ECONNREFUSED", "ENOTFOUND"].includes(code)
+          ? "youtube-server-network-unavailable"
+          : "youtube-oembed-network-error";
+    return inconclusiveYouTubeAvailability(diagnosticReason, code || null);
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+async function performPlayableAvailabilityCheck(assetId, playableId) {
+  const target = playableForAvailabilityCheck(assetId, playableId);
+  const observation = target.type === "local"
+    ? await checkLocalPlayableAvailability(target)
+    : target.type === "youtube"
+      ? await checkYouTubePlayableAvailability(target)
+      : await checkRemotePlayableAvailability(target);
+  const saved = await persistPlayableAvailabilityObservation({
     assetId,
     playableId,
-    availability,
-    availabilityReason
+    availability: observation.availability,
+    availabilityReason: observation.availabilityReason
   });
   const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
   return {
     availability: saved.playable.availability,
     checkedAt: saved.playable.technicalMetadata?.analyzedAt || null,
-    asset: libraryAssetDetails(projectedAsset)
+    asset: libraryAssetDetails(projectedAsset),
+    ...(observation.diagnosticReason ? { diagnosticReason: observation.diagnosticReason } : {})
   };
 }
 
-function recheckRemotePlayableAvailability(assetId, playableId) {
-  remotePlayableForAvailabilityCheck(assetId, playableId);
+function recheckPlayableAvailability(assetId, playableId) {
+  playableForAvailabilityCheck(assetId, playableId);
   const key = `${assetId}\u0000${playableId}`;
-  const active = REMOTE_AVAILABILITY_CHECKS.get(key);
+  const active = PLAYABLE_AVAILABILITY_CHECKS.get(key);
   if (active) return active;
-  const check = performRemotePlayableAvailabilityCheck(assetId, playableId)
-    .finally(() => REMOTE_AVAILABILITY_CHECKS.delete(key));
-  REMOTE_AVAILABILITY_CHECKS.set(key, check);
+  const check = performPlayableAvailabilityCheck(assetId, playableId)
+    .finally(() => PLAYABLE_AVAILABILITY_CHECKS.delete(key));
+  PLAYABLE_AVAILABILITY_CHECKS.set(key, check);
   return check;
 }
 
@@ -3947,7 +4069,7 @@ async function handleApiInReadContext(request, response, url) {
       return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
     }
     try {
-      const result = await recheckRemotePlayableAvailability(
+      const result = await recheckPlayableAvailability(
         decodeURIComponent(remoteAvailabilityMatch[1]),
         decodeURIComponent(remoteAvailabilityMatch[2])
       );

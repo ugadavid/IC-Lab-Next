@@ -1074,32 +1074,39 @@ function createMariaDbWriteAdapter({
       );
     },
 
-    async updateRemotePlayableAvailability(observation) {
+    async updatePlayableAvailability(observation) {
       if (
         !observation?.assetId
         || !observation?.playableId
-        || !["available", "unreachable-remote", "unknown"].includes(observation.availability)
+        || !["available", "missing-local", "unreachable-remote", "unknown"].includes(observation.availability)
       ) {
-        throw new Error("Observation de disponibilité distante invalide.");
+        throw new Error("Observation de disponibilité invalide.");
       }
       return targetedProcedureTransaction(
-        "Mise à jour de la disponibilité distante",
+        "Mise à jour de la disponibilité d’un playable",
         async database => {
           const beforeTables = await readCanonicalTablesWithProcedures(database);
           const playable = beforeTables.media_playables.find(row => (
             row.id === observation.playableId && row.asset_id === observation.assetId
           ));
           const source = beforeTables.media_sources.find(row => row.id === playable?.source_id);
-          if (
-            !playable
-            || !source
-            || !["hls", "direct-url"].includes(playable.kind)
-            || !["hls", "direct-url"].includes(source.kind)
-          ) {
-            const error = new Error("La référence distante à contrôler est introuvable.");
-            error.code = "PROTO05_REMOTE_PLAYABLE_NOT_FOUND";
+          const supported = playable && source && (
+            (["hls", "direct-url"].includes(playable.kind) && ["hls", "direct-url"].includes(source.kind))
+            || playable.kind === "local-file"
+            || (playable.kind === "youtube-embed" && source.kind === "youtube-embed")
+          );
+          const allowedAvailability = playable?.kind === "local-file"
+            ? ["available", "missing-local", "unknown"]
+            : ["available", "unreachable-remote", "unknown"];
+          if (!supported || !allowedAvailability.includes(observation.availability)) {
+            const error = new Error("Le playable à contrôler est introuvable ou incompatible avec cette observation.");
+            error.code = "PROTO05_PLAYABLE_AVAILABILITY_TARGET_INVALID";
             throw error;
           }
+          const analyzer = playable.kind === "local-file"
+            ? "local-file-check"
+            : playable.kind === "youtube-embed" ? "youtube-oembed" : "remote-availability";
+          const failedAvailability = playable.kind === "local-file" ? "missing-local" : "unreachable-remote";
           const metadata = beforeTables.media_playable_metadata.find(row => (
             row.playable_id === observation.playableId
           )) || {};
@@ -1112,7 +1119,7 @@ function createMariaDbWriteAdapter({
             observation.playableId,
             observation.availability === "available"
               ? "complete"
-              : observation.availability === "unreachable-remote" ? "failed" : "unknown",
+              : observation.availability === failedAvailability ? "failed" : "unknown",
             metadata.mime_type ?? source.mime_type ?? null,
             metadata.duration_ms ?? null,
             metadata.size_bytes ?? null,
@@ -1123,7 +1130,7 @@ function createMariaDbWriteAdapter({
             metadata.video_codec ?? null,
             metadata.audio_codec ?? null,
             metadata.has_audio ?? null,
-            "remote-availability",
+            analyzer,
             "1",
             observation.availability === "available" ? null : observation.availabilityReason || null
           ]);
@@ -1139,7 +1146,7 @@ function createMariaDbWriteAdapter({
             || saved.availability !== observation.availability
             || !saved.technicalMetadata?.analyzedAt
           ) {
-            const error = new Error("La relecture de la disponibilité distante diverge.");
+            const error = new Error("La relecture de la disponibilité du playable diverge.");
             error.code = "PROTO05_TARGETED_WRITE_RECONCILIATION_FAILED";
             throw error;
           }

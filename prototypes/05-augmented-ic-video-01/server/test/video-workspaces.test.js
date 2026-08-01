@@ -117,19 +117,25 @@ test("l’échec d’une référence distante reste dans le panneau analysé", (
   assert.doesNotMatch(remoteFlow, /catch\(error\)\{button\.disabled=false;setStatus\(error\.message,'error'\)\}/);
 });
 
-test("les cartes distinguent les trois disponibilités et revérifient seulement les références distantes", () => {
+test("les cartes distinguent les trois disponibilités et revérifient HLS, fichiers locaux et YouTube", () => {
   const html = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
   assert.match(html, /new Intl\.DateTimeFormat\('fr-FR'\)/);
-  assert.match(html, /Disponible\$\{remote&&checkedDate\?` — vérifiée le \$\{checkedDate\}`:''\}/);
-  assert.match(html, /Non disponible\$\{remote&&checkedDate\?` — vérifiée le \$\{checkedDate\}`:''\}/);
+  assert.match(html, /\['hls','direct-url'\]\.includes\(playable\.kind\)/);
+  assert.match(html, /playable\.kind==='local-file'&&playable\.storageKey/);
+  assert.match(html, /playable\.kind==='youtube-embed'&&playable\.videoId/);
+  assert.match(html, /Disponible\$\{checkable&&checkedDate\?` — vérifiée le \$\{checkedDate\}`:''\}/);
+  assert.match(html, /Non disponible\$\{checkable&&checkedDate\?` — vérifiée le \$\{checkedDate\}`:''\}/);
   assert.match(html, /Disponibilité non vérifiée/);
-  assert.match(html, /status\.remote\?`<button type="button" class="availability-recheck"/);
+  assert.match(html, /status\.checkable\?`<button type="button" class="availability-recheck"/);
   assert.match(html, /if\(button\.disabled\)return;button\.disabled=true/);
   assert.match(html, /status\.textContent='Vérification…'/);
   assert.match(html, /availability-check`,\{method:'POST'\}/);
   assert.match(html, /libraryState\.view==='unavailable'&&status\.className!=='unavailable'/);
   assert.match(html, /statusOf\(asset\)\.className==='unavailable'/);
   assert.doesNotMatch(html, /statusOf\(asset\)\.className!=='available'/);
+  assert.match(html, /youtubeSourceUrl=playable=>playable\?\.kind==='youtube-embed'/);
+  assert.match(html, /class="youtube-source-link" href="\$\{esc\(youtubeUrl\)\}" target="_blank" rel="noopener noreferrer"/);
+  assert.match(html, /querySelectorAll\('\.youtube-source-link'\).*event=>event\.stopPropagation\(\)/);
 });
 
 test("la route détaillée projette un asset et traite proprement un identifiant inconnu", async t => {

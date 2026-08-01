@@ -612,6 +612,195 @@ test("une référence HLS conserve son contrôle initial puis remplace honnêtem
   }
 });
 
+test("les fichiers locaux et YouTube partagent la revérification ciblée sans perdre le dernier état", {
+  timeout: 30_000
+}, async () => {
+  let youtubeMode = "available";
+  let youtubeDelayMs = 0;
+  let youtubeRequestCount = 0;
+  const youtube = http.createServer((request, response) => {
+    youtubeRequestCount += 1;
+    const answer = () => {
+      if (youtubeMode === "unavailable") {
+        response.statusCode = 404;
+        return response.end("not found");
+      }
+      if (youtubeMode === "inconclusive") {
+        response.statusCode = 429;
+        return response.end("rate limited");
+      }
+      response.setHeader("content-type", "application/json");
+      response.end(JSON.stringify({
+        type: "video",
+        provider_name: "YouTube",
+        html: "<iframe src=\"https://www.youtube.com/embed/test\"></iframe>"
+      }));
+    };
+    if (youtubeDelayMs) setTimeout(answer, youtubeDelayMs);
+    else answer();
+  });
+  await new Promise((resolve, reject) => {
+    youtube.once("error", reject);
+    youtube.listen(0, "127.0.0.1", resolve);
+  });
+  const youtubeEndpoint = `http://127.0.0.1:${youtube.address().port}/oembed`;
+  const serverEnvironment = { PROTO05_TEST_YOUTUBE_OEMBED_URL: youtubeEndpoint };
+  let server = await startServer(serverEnvironment);
+  let database;
+  let baseline;
+  let local = null;
+  let localBackup = null;
+  let youtubeAssetId = null;
+  let youtubePlayableId = null;
+  try {
+    await server.ready();
+    database = await testDatabaseConnection();
+    baseline = await readTableCardinalities(database);
+
+    const marker = `m159-local-${Date.now()}-${crypto.randomBytes(3).toString("hex")}`;
+    local = await importTemporaryMedia(server, marker, "M159");
+    const [initialLocalRows] = await database.query(
+      "SELECT p.availability, p.availability_reason, m.analysis_status, m.analyzed_at, m.analyzer "
+        + "FROM media_playables p INNER JOIN media_playable_metadata m ON m.playable_id = p.id WHERE p.id = ?",
+      [local.playableId]
+    );
+    assert.equal(initialLocalRows[0].availability, "available");
+    assert.equal(initialLocalRows[0].availability_reason, null);
+    assert.equal(initialLocalRows[0].analysis_status, "complete");
+    assert.equal(initialLocalRows[0].analyzer, "local-file-import");
+    assert.ok(Number.isFinite(new Date(initialLocalRows[0].analyzed_at).getTime()));
+
+    const localAvailabilityPath = `/api/proto05/library/assets/${encodeURIComponent(local.assetId)}/playables/${encodeURIComponent(local.playableId)}/availability-check`;
+    const localPresent = await request(server.baseUrl, localAvailabilityPath, { method: "POST" });
+    assert.equal(localPresent.response.status, 200, localPresent.body.error);
+    assert.equal(localPresent.body.availability, "available");
+    assert.ok(localPresent.body.checkedAt);
+
+    localBackup = `${local.file}.m159-backup`;
+    await fs.promises.rename(local.file, localBackup);
+    const localMissing = await request(server.baseUrl, localAvailabilityPath, { method: "POST" });
+    assert.equal(localMissing.response.status, 200, localMissing.body.error);
+    assert.equal(localMissing.body.availability, "missing-local");
+    assert.ok(localMissing.body.checkedAt);
+    await fs.promises.rename(localBackup, local.file);
+    localBackup = null;
+    const localRestored = await request(server.baseUrl, localAvailabilityPath, { method: "POST" });
+    assert.equal(localRestored.response.status, 200, localRestored.body.error);
+    assert.equal(localRestored.body.availability, "available");
+    assert.ok(localRestored.body.checkedAt);
+
+    const youtubeVideoId = `M159${crypto.randomBytes(6).toString("hex").slice(0, 7)}`;
+    const youtubeCreated = await request(server.baseUrl, "/api/proto05/video-catalog", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        provider: "youtube",
+        title: `[TEST M159] YouTube ${youtubeVideoId}`,
+        link: youtubeVideoId
+      })
+    });
+    assert.equal(youtubeCreated.response.status, 201, youtubeCreated.body.error);
+    youtubePlayableId = youtubeCreated.body.video.id;
+    youtubeAssetId = `media-proto05-${youtubePlayableId}`;
+    const youtubeAvailabilityPath = `/api/proto05/library/assets/${encodeURIComponent(youtubeAssetId)}/playables/${encodeURIComponent(youtubePlayableId)}/availability-check`;
+
+    youtubeDelayMs = 120;
+    const requestsBeforeDoubleCheck = youtubeRequestCount;
+    const youtubeAvailable = await Promise.all([0, 1].map(() => request(
+      server.baseUrl,
+      youtubeAvailabilityPath,
+      { method: "POST" }
+    )));
+    youtubeDelayMs = 0;
+    assert.deepEqual(youtubeAvailable.map(result => result.response.status), [200, 200]);
+    assert.equal(youtubeRequestCount - requestsBeforeDoubleCheck, 1, "Deux clics concurrents doivent partager un seul contrôle YouTube.");
+    assert.ok(youtubeAvailable.every(result => result.body.availability === "available"));
+    assert.ok(youtubeAvailable.every(result => result.body.checkedAt));
+
+    youtubeMode = "unavailable";
+    const youtubeUnavailable = await request(server.baseUrl, youtubeAvailabilityPath, { method: "POST" });
+    assert.equal(youtubeUnavailable.response.status, 200, youtubeUnavailable.body.error);
+    assert.equal(youtubeUnavailable.body.availability, "unreachable-remote");
+    assert.ok(youtubeUnavailable.body.checkedAt);
+
+    youtubeMode = "inconclusive";
+    const youtubeUnknown = await request(server.baseUrl, youtubeAvailabilityPath, { method: "POST" });
+    assert.equal(youtubeUnknown.response.status, 200, youtubeUnknown.body.error);
+    assert.equal(youtubeUnknown.body.availability, "unknown");
+    assert.equal(youtubeUnknown.body.diagnosticReason, "youtube-rate-limited");
+    assert.ok(youtubeUnknown.body.checkedAt);
+    const [unknownRows] = await database.query(
+      "SELECT p.availability, p.availability_reason, m.analysis_status, m.analyzed_at, m.analyzer "
+        + "FROM media_playables p INNER JOIN media_playable_metadata m ON m.playable_id = p.id WHERE p.id = ?",
+      [youtubePlayableId]
+    );
+    assert.equal(unknownRows[0].availability, "unknown");
+    assert.equal(unknownRows[0].availability_reason, "youtube-check-inconclusive");
+    assert.equal(unknownRows[0].analysis_status, "unknown");
+    assert.equal(unknownRows[0].analyzer, "youtube-oembed");
+    assert.ok(Number.isFinite(new Date(unknownRows[0].analyzed_at).getTime()));
+
+    youtubeMode = "available";
+    const youtubeRestored = await request(server.baseUrl, youtubeAvailabilityPath, { method: "POST" });
+    assert.equal(youtubeRestored.response.status, 200, youtubeRestored.body.error);
+    assert.equal(youtubeRestored.body.availability, "available");
+
+    await server.stop();
+    server = await startServer(serverEnvironment);
+    await server.ready();
+    for (const [assetId, playableId] of [
+      [local.assetId, local.playableId],
+      [youtubeAssetId, youtubePlayableId]
+    ]) {
+      const detail = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(assetId)}`);
+      assert.equal(detail.response.status, 200, detail.body.error);
+      const playable = detail.body.asset.playables.find(item => item.id === playableId);
+      assert.equal(playable.availability, "available");
+      assert.ok(playable.technicalMetadata?.analyzedAt);
+    }
+  } finally {
+    try {
+      if (localBackup && local && fs.existsSync(localBackup) && !fs.existsSync(local.file)) {
+        await fs.promises.rename(localBackup, local.file);
+        localBackup = null;
+      }
+      if (server.child.exitCode === null) {
+        if (youtubeAssetId) {
+          await database.beginTransaction();
+          try {
+            await database.query("SET @proto05_runtime_transaction = 1");
+            await database.query("CALL sp_media_asset_delete(?)", [youtubeAssetId]);
+            await database.commit();
+          } catch (error) {
+            await database.rollback();
+            throw error;
+          } finally {
+            await database.query("SET @proto05_runtime_transaction = NULL");
+          }
+        }
+        if (local) {
+          const removedLocal = await request(
+            server.baseUrl,
+            `/api/proto05/library/assets/${encodeURIComponent(local.assetId)}/physical`,
+            { method: "DELETE" }
+          );
+          assert.equal(removedLocal.response.status, 200, removedLocal.body.error);
+        }
+        for (const assetId of [youtubeAssetId, local?.assetId].filter(Boolean)) {
+          const absent = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(assetId)}`);
+          assert.equal(absent.response.status, 404);
+        }
+      }
+      if (local) assert.equal(fs.existsSync(local.file), false);
+      if (database && baseline) assert.deepEqual(await readTableCardinalities(database), baseline);
+    } finally {
+      if (database) await database.end();
+      await server.stop();
+      await new Promise(resolve => youtube.close(resolve));
+    }
+  }
+});
+
 test("le diagnostic MariaDB classe les erreurs sans exposer de secret", () => {
   const refused = Object.assign(new Error("connect refused"), { code: "ECONNREFUSED" });
   const denied = Object.assign(new Error("access denied"), { code: "ER_ACCESS_DENIED_ERROR" });
