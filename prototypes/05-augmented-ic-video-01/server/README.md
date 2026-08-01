@@ -153,9 +153,9 @@ L'outil ne parcourt pas librement le disque, ne traite pas les médias distants,
 ne déplace aucun fichier et ne lance ni FFmpeg ni FFprobe.
 
 Les mutations sont transactionnelles et limitées aux identifiants réellement
-modifiés. Une relecture relationnelle est effectuée avant commit. Les anciens
-outils de migration conservés sous `database/migrations/` sont historiques et
-ne font pas partie du chemin de démarrage.
+modifiés. Une relecture relationnelle est effectuée avant commit. L'ancienne
+chaîne exécutable d'import JSON vers MariaDB a été retirée ; les contrats de
+migrations techniques restent gérés séparément par leur chargeur dédié.
 
 Routes principales : `GET /`, `GET /student/:activityId`, `GET /teacher`,
 `GET /teacher/preview/:activityId`, `GET /teacher/edit/:activityId`,

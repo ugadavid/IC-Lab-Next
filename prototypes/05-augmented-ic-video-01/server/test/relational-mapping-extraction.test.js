@@ -1,20 +1,20 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const crypto = require("node:crypto");
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
 const test = require("node:test");
 const { pathToFileURL } = require("node:url");
 
 const prototypeDirectory = path.resolve(__dirname, "../..");
 const pureMappingFile = path.join(prototypeDirectory, "server", "proto05-relational-mapping.mjs");
-const historicalCliFile = path.join(
-  prototypeDirectory,
-  "database",
-  "migrations",
-  "001_proto05_json_to_mariadb_dry_run.mjs"
-);
+const historicalToolNames = [
+  "001_proto05_json_to_mariadb_dry_run.mjs",
+  "003_proto05_json_to_mariadb_apply.mjs",
+  "005_proto05_document_metadata_migration.mjs",
+  "007_proto05_targeted_json_mariadb_reconciliation.mjs"
+];
 
 function canonicalSnapshot() {
   const updatedAt = "2026-01-01T00:00:00.000Z";
@@ -79,30 +79,28 @@ test("le repository MariaDB charge le mapping de production sans dépendre de 00
   assert.doesNotMatch(writer, /001_proto05_json_to_mariadb_dry_run|database["'],\s*[\r\n\s]*["']migrations/);
 });
 
-test("le modèle extrait reste exactement équivalent au contrat exporté par le CLI 001", async () => {
+test("le modèle extrait conserve ses empreintes relationnelles déterministes", async () => {
   const pure = await import(pathToFileURL(pureMappingFile).href);
-  const historical = await import(pathToFileURL(historicalCliFile).href);
-  const snapshot = canonicalSnapshot();
-  const beforeContract = historical.relationalModelFromCanonicalSnapshot(snapshot, { prototypeDirectory });
-  const extracted = pure.relationalModelFromCanonicalSnapshot(snapshot, {
+  const extracted = pure.relationalModelFromCanonicalSnapshot(canonicalSnapshot(), {
     observeLocalPlayable: () => ({ exists: false, actualSize: null })
   });
+  const sha256 = value => crypto.createHash("sha256").update(pure.stableStringify(value)).digest("hex");
   assert.equal(
-    pure.stableStringify(plainMapping(extracted)),
-    historical.stableStringify(plainMapping(beforeContract))
+    sha256(plainMapping(extracted)),
+    "591a9d5cafedc7bcf8f5651cf08b13e25f6deeb242feb62fd3adc4e437d9bfd2"
   );
   assert.equal(
-    pure.stableStringify(pure.TABLE_DEFINITIONS),
-    historical.stableStringify(historical.TABLE_DEFINITIONS)
+    sha256(pure.TABLE_DEFINITIONS),
+    "332e695a686ac7eb51738b080405abf7cebd7c3a6be0f1dc70a40453ebe21b9b"
   );
 });
 
-test("le CLI 001 reste autonome et hors du chargement runtime", () => {
-  const result = spawnSync(process.execPath, [historicalCliFile, "--help"], {
-    cwd: prototypeDirectory,
-    encoding: "utf8",
-    windowsHide: true
-  });
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stdout, /read-only/);
+test("la chaîne exécutable historique n'existe plus", () => {
+  for (const name of historicalToolNames) {
+    assert.equal(
+      fs.existsSync(path.join(prototypeDirectory, "database", "migrations", name)),
+      false,
+      name
+    );
+  }
 });

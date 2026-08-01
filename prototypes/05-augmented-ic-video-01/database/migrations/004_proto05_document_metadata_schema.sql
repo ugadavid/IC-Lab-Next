@@ -3,13 +3,11 @@
 --
 -- This strict DDL targets only ic_augmented_video. It creates one table and
 -- changes no existing table, routine or data. CREATE TABLE causes an implicit
--- MariaDB commit; data insertion is performed later by migration 005 in a
--- separate transaction.
+-- MariaDB commit. The historical data importer that originally followed this
+-- DDL has since been retired.
 --
--- The installer in 005_proto05_document_metadata_migration.mjs checks whether
--- this exact table is already installed before executing this statement. The
--- SQL remains strict (no IF NOT EXISTS) so an incompatible table is never
--- silently accepted.
+-- This retained historical DDL remains strict (no IF NOT EXISTS), documenting
+-- that an incompatible table was never to be silently accepted.
 
 USE ic_augmented_video;
 
