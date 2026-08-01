@@ -138,6 +138,21 @@ test("les cartes distinguent les trois disponibilités et revérifient HLS, fich
   assert.match(html, /querySelectorAll\('\.youtube-source-link'\).*event=>event\.stopPropagation\(\)/);
 });
 
+test("l’aperçu remplace le visuel de la carte sans ajouter une ligne", () => {
+  const html = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
+  const modernRenderer = html.slice(html.indexOf("function renderLibrary104"), html.indexOf("async function recheckAvailability"));
+  assert.match(modernRenderer, /class="asset-thumb"><div class="asset-visual">/);
+  assert.match(modernRenderer, /<div id="preview-\$\{esc\(playable\.id\)\}" class="preview" hidden>/);
+  assert.doesNotMatch(modernRenderer, /<\/div><div id="preview-\$\{esc\(playable\?\.id\|\|asset\.id\)\}" class="preview"/);
+  assert.match(html, /\.asset-thumb \.asset-visual,\.asset-thumb \.preview,\.asset-thumb \.preview-mount\{width:100%;height:100%\}/);
+  assert.match(html, /const closing=state\.previewPlayableId===playableId&&!shell\.hidden/);
+  assert.match(html, /querySelectorAll\('\.preview-button,\.local-preview-button'\).*button\.textContent='Aperçu'/);
+  assert.match(html, /shell\.parentElement\?\.querySelector\('\.asset-visual'\)\?\.setAttribute\('hidden',''\)/);
+  assert.match(html, /button\.textContent='Fermer l’aperçu'/);
+  assert.match(html, /state\.previewPlayer\?\.destroy\?\.\(\)/);
+  assert.doesNotMatch(html, /button\.onclick=async\(\)=>\{\s*shell\.hidden=false/);
+});
+
 test("la route détaillée projette un asset et traite proprement un identifiant inconnu", async t => {
   const server = await startTemporaryProto05Server({ schemaVersion: "0.1", activities: [] }, "proto05-video-detail-");
   t.after(() => server.cleanup());
