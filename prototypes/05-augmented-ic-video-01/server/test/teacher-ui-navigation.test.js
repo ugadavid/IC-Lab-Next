@@ -129,12 +129,26 @@ test("les actions métier existantes restent présentes dans leurs pages", () =>
   assert.match(videoDetailSource, /data-action="workshop-audio"/);
   assert.match(videoDetailSource, /preflight && preflight\.allowed === false/);
   assert.match(videoLibrarySource, /window\.proto05OpenUsagePanel=openUsagePanel/);
-  assert.match(videoLibrarySource, /queueMicrotask\(\(\)=>window\.proto05OpenUsagePanel/);
+  assert.match(videoLibrarySource, /setAssetActionStatus\(assetId,\[preflight\.message\|\|'Suppression refusée par le préflight\.',blockingItems&&`Éléments concernés : \$\{blockingItems\}`\]/);
   assert.match(source("teacher-anonymization.html"), /id="derive"/);
   assert.match(source("teacher-audio-anonymization.html"), /id="derive"/);
   assert.doesNotMatch(videoLibrarySource, /← Bibliothèque enseignant/);
   assert.doesNotMatch(source("teacher-create.html"), /← Bibliothèque enseignant|Ouvrir la Library/);
   assert.ok(teacherPages.every(page => !source(page).includes("anonymization-advanced")));
+});
+
+test("la suppression d’activité annonce MariaDB sans promettre de sauvegarde JSON", () => {
+  const source = fs.readFileSync(
+    path.join(prototypeDirectory, "shared", "activity-library.js"),
+    "utf8"
+  );
+  const backupPromise = /\b(?:Une|La)\s+sauvegarde\s+(?:JSON|[^.\n]*\.bak)[^.\n]*(?:sera|est)\s+(?:créée|générée)/i;
+
+  assert.match(source, /La suppression est transactionnelle dans MariaDB\./);
+  assert.match(source, /refusée si des dépendances empêchent la suppression/);
+  assert.match(source, /Aucune sauvegarde JSON automatique n’est créée par cette action\./);
+  assert.doesNotMatch(source, /\.bak/i);
+  assert.doesNotMatch(source, backupPromise);
 });
 
 test("les surfaces enseignantes utilisent les dialogues partagés sans appel natif", () => {

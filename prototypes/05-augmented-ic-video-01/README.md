@@ -27,7 +27,9 @@ L’hypothèse n’est pas que l’annotation donne la “bonne lecture”, mais
 - Rattachement des phénomènes aux segments défini par
   `phenomena[].segmentId`; chaque phénomène conserve ses propres temps.
 - Bibliothèque enseignant avec duplication et suppression explicite sécurisée
-  par confirmation, sauvegarde `.bak` et remplacement atomique du JSON.
+  par confirmation. La suppression est transactionnelle dans MariaDB, refusée
+  lorsque des dépendances la bloquent, et ne crée aucune sauvegarde JSON
+  automatique.
 - Fiche d’identité pédagogique progressive et facultative, avec états explicites
   (`établi`, `inconnu`, `à vérifier`, `non applicable`), qualifications fondées
   sur des preuves et filiation créée uniquement par duplication pédagogique.

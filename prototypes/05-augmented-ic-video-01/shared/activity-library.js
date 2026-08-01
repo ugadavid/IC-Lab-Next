@@ -365,7 +365,9 @@
       message: `L’activité « ${title} » sera définitivement supprimée.`,
       details: [
         `Identifiant : ${activityId}`,
-        "Une sauvegarde .bak sera créée avant la suppression."
+        "La suppression est transactionnelle dans MariaDB.",
+        "Elle sera refusée si des dépendances empêchent la suppression.",
+        "Aucune sauvegarde JSON automatique n’est créée par cette action."
       ],
       confirmLabel: "Supprimer l’activité",
       destructive: true,

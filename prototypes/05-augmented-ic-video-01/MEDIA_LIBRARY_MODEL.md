@@ -412,6 +412,10 @@ ne peut être corrigée que par une réconciliation explicite et sauvegardée.
 
 ## 13. Schéma JSON cible illustratif
 
+La notation JSON ci-dessous illustre la forme du contrat échangé par l’API. Elle
+ne décrit pas un fichier de persistance : les entités métier correspondantes
+sont persistées uniquement dans MariaDB.
+
 L’exemple est volontairement sans donnée personnelle ni chemin réel.
 
 ```json
@@ -490,7 +494,12 @@ La tolérance de lecture ne vaut pas autorisation d’écriture silencieuse : un
 
 ## 14. Source de vérité et compatibilité activité
 
-Après migration, la Library est la source de vérité :
+État actuel depuis la Mission 146 : les tables MariaDB de la Library et des
+activités sont l’unique source de vérité métier. `activity.videoRef` est résolu
+depuis ces données et `activity.video` reste une projection de compatibilité.
+
+Le schéma suivant décrit uniquement la transition historique depuis la
+persistance fichier ; `video-library.json` n’est plus lu ni écrit par le runtime :
 
 ```text
 video-library.json
@@ -502,16 +511,18 @@ activity.video
 student / teacher / guided / author / preview
 ```
 
-La direction est à sens unique : la Library produit la référence et la
-projection de l’activité. `activity.video` ne sert jamais à remplacer un
+Dans ce modèle historique, la direction était à sens unique : la Library
+produisait la référence et la projection de l’activité. `activity.video` ne
+servait jamais à remplacer un
 enregistrement valide de la Library. Si `videoRef` et `video` se contredisent,
 le serveur doit refuser l’écriture ou reconstruire `video` depuis le
 `videoRef` résolu ; il ne doit pas choisir silencieusement l’ancienne
 projection.
 
-Les sept activités canoniques reçoivent des `videoRef` stables et valides. Le
-catalogue historique reste en lecture seule pour comparaison et fallback
-pendant la transition. Il ne peut être retiré qu’après :
+Pendant cette transition désormais achevée, les sept activités canoniques
+devaient recevoir des `videoRef` stables et valides. Le catalogue historique
+restait alors en lecture seule pour comparaison et fallback. Son retrait était
+conditionné par :
 
 1. que les sept activités possèdent un `videoRef` valide ;
 2. que chaque asset/playable référencé soit résolu depuis la Library ;
@@ -521,9 +532,12 @@ pendant la transition. Il ne peut être retiré qu’après :
 5. qu’un état pré-migration sauvegardé et une procédure de restauration aient
    été vérifiés.
 
-## 15. Plan de migration depuis le schéma 0.1
+## 15. Plan historique de migration depuis le schéma fichier 0.1
 
-La migration est versionnée, déterministe, idempotente et réversible.
+Cette section conserve le plan exécuté avant la Mission 146 à titre de
+traçabilité. Elle ne décrit ni le runtime actuel ni une procédure à employer sur
+la base MariaDB actuelle. Dans ce plan historique, la migration devait être
+versionnée, déterministe, idempotente et réversible.
 
 ### Phase M0 — sauvegarde et validation à blanc
 
@@ -604,11 +618,17 @@ n’est modifié par cette migration de modèle.
   représentations du même asset ;
 - **Dérivés existants** : IDs, hashes, provenance et fichiers présents restent
   lisibles ; les fichiers absents deviennent `missing-local` ;
-- **Écritures atomiques et `.bak`** : conservées pour chaque mutation ;
+- **Écritures atomiques et `.bak` historiques** : étaient conservées pour chaque
+  mutation pendant la phase de persistance fichier ; ce mécanisme n’est plus
+  opérationnel depuis l’autorité exclusive de MariaDB ;
 - **Autonomie** : aucune dépendance à IC-Hub ou à une Library partagée n’est
   introduite.
 
-## 17. Découpage d’implémentation proposé
+## 17. Découpage d’implémentation historique
+
+Ce découpage était une proposition antérieure à la bascule MariaDB de la
+Mission 146 ; il est conservé comme trace de conception et n’est plus un plan
+d’exécution actif.
 
 1. Contrat JSON cible, validation et index calculés.
 2. Migration à blanc sur copie, rapport des ambiguïtés et des fichiers absents.

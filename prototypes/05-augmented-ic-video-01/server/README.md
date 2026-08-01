@@ -48,6 +48,10 @@ adoptée sans DDL que si l’inventaire, les signatures et les corps corresponde
 exactement ; une définition divergente exige une mise à niveau explicite avec
 sauvegarde vérifiée, et un inventaire incomplet est refusé.
 
+Les manifestes JSON de ce répertoire sont des contrats techniques de schéma et
+de procédures. Ils ne contiennent pas les données métier et ne constituent pas
+une persistance métier parallèle à MariaDB.
+
 ## Anonymisation
 
 La fiche Vidéo++ propose deux ateliers distincts : **Anonymiser l’image** et
@@ -207,8 +211,8 @@ Le contrat se trouve dans `pedagogical-identity.js`. Il sépare :
 Une duplication conserve le contenu descriptif, crée une variante reliée à sa
 source, demande une nouvelle qualification et ne copie aucune qualification
 antérieure. La liste et le détail API exposent un résumé dérivé sans l’écrire
-dans `activities.json`. Aucun niveau de transmissibilité juridique n’est
-calculé.
+dans une seconde persistance. Aucun niveau de transmissibilité juridique n’est
+calculé ; l’activité demeure enregistrée uniquement dans MariaDB.
 
 ## Copie locale FFmpeg des références distantes (0.1.35)
 
@@ -249,10 +253,10 @@ secrets. La query string de l’URL finale reste intacte lorsqu’elle est néce
 à la lecture. Une référence distante ne possède pas de `storageKey` et ne
 propose donc jamais de suppression physique.
 
-Les écritures locales couvrent la création d’un brouillon, la duplication, la
+Les mutations métier couvrent la création d’un brouillon, la duplication, la
 suppression et les sauvegardes de métadonnées ou d’atelier auteur. Elles
-utilisent les validations du prototype ; la sauvegarde JSON est atomique,
-séquencée et précédée d’un fichier `.bak` UTF-8.
+utilisent les validations du prototype et les procédures transactionnelles
+MariaDB ; elles ne créent ni document métier JSON ni sauvegarde `.bak`.
 
 ## Contrat canonique de la Library vidéo
 
@@ -305,10 +309,11 @@ carte.
 
 La route `DELETE /api/proto05/activities/:id` refuse les identifiants mal formés
 (`400`), inconnus (`404`) ou ambigus (`409`) avant toute écriture. Une suppression
-acceptée retire exactement une entrée, crée `activities.json.bak`, écrit un
-fichier temporaire adjacent puis le renomme atomiquement. Il n’existe pas de
-protection par rôle ni de corbeille : la sauvegarde `.bak` est le retour arrière
-local immédiat et n’est jamais supprimée automatiquement.
+acceptée retire exactement une activité dans une transaction MariaDB. Les
+dépendances connues sont contrôlées avant l’action et réexpliquées si MariaDB
+les détecte encore pendant la suppression ; la transaction est annulée en cas
+d’échec. Cette action ne crée aucune sauvegarde JSON automatique ni fichier
+`.bak`.
 
 ## Relation segment–phénomène (0.1.13)
 
@@ -337,10 +342,12 @@ L’atelier auteur propose exclusivement les quatre entrées `fr`, `es`, `it` et
 identifiants et libellés locaux ; une duplication conserve les identifiants du
 référentiel au lieu d’en créer de nouveaux.
 
-Le script `scripts/migrate-language-catalog.js` réalise la migration sur un
-fichier explicitement désigné. En mode `--apply`, il exige une sauvegarde `.bak`,
-la crée sans écraser un fichier existant, puis remplace le JSON par renommage
-atomique après validation des volumes et des champs autorisés à changer.
+Historique (migration vers `0.1.12`, hors runtime depuis la Mission 146) : le
+script `scripts/migrate-language-catalog.js` réalisait la migration sur un
+fichier explicitement désigné. Son mode `--apply` exigeait une sauvegarde `.bak`,
+la créait sans écraser un fichier existant, puis remplaçait le JSON par renommage
+atomique après validation des volumes et des champs autorisés à changer. Ce
+mécanisme n’est pas une persistance opérationnelle actuelle.
 
 ## Brouillon vide et validation d’intégrité (0.1.10)
 
@@ -382,7 +389,8 @@ sans déclencher de redirection.
 `/teacher/create` crée un brouillon et `/teacher/author/:activityId` permet de
 préparer métadonnées, transcription, intervalles linguistiques, phénomènes,
 couches et annotations. La sauvegarde utilise
-`PUT /api/proto05/activities/:id/authoring` et reste limitée au JSON du prototype.
+`PUT /api/proto05/activities/:id/authoring` et persiste transactionnellement les
+données métier dans MariaDB, sans fichier JSON métier.
 Les temps sont des millisecondes entières ; les vidéos proviennent exclusivement
 de `/api/proto05/video-catalog`. L’atelier est local, sans authentification ni
 droits réels.
