@@ -52,6 +52,10 @@
     .access-card{min-width:0;border:1px solid #dbe1ea;border-radius:10px;background:#f8fafc;padding:1rem}
     .access-card .meta{margin:.35rem 0}
     .access-card .actions{margin-top:.75rem}
+    .action-status{flex-basis:100%;margin:.35rem 0 0;padding:.65rem .75rem;border-radius:8px;background:#f1f5f9;color:#334155;font-size:.86rem;overflow-wrap:anywhere}
+    .action-status:empty{display:none}
+    .action-status.error{background:#fdf2f8;border:1px solid #f5c2e7;color:#86198f}
+    .action-status.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
     .access-card details{margin:.65rem 0;color:#475569;font-size:.86rem}
     .empty{padding:1.25rem;text-align:center;color:#64748b;border:1px dashed #cbd5e1;border-radius:10px;background:#fff}
     .preview{margin-top:.75rem;padding-top:.75rem;border-top:1px solid #e5e7eb}
@@ -100,7 +104,7 @@
 <body>
   <header class="topbar">
     <a id="backLink" class="back" href="/teacher/videos">← Retour à la vidéothèque</a>
-    <span class="version">Proto05 · 0.1.57</span>
+    <span class="version">Proto05 · 0.1.58</span>
   </header>
   <main>
     <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -177,6 +181,17 @@
       if (message) status.scrollIntoView({ block: "center" });
     }
 
+    function setActionStatus(scope, message = "", type = "") {
+      const selector = scope === "asset"
+        ? "[data-asset-action-status]"
+        : `[data-access-status="${CSS.escape(scope || "")}"]`;
+      const node = document.querySelector(selector);
+      if (!node) return;
+      node.textContent = message;
+      node.className = `action-status ${type}`.trim();
+      if (message) node.scrollIntoView({ block: "nearest" });
+    }
+
     function sourceHost() {
       const source = asset.sources?.find(item => item.role === "original-remote") || asset.sources?.[0];
       const raw = source?.originUrl || source?.sourceUrl || source?.url || source?.origin?.originUrl;
@@ -233,6 +248,7 @@
         <p class="meta">${accessMeta(entry)}</p>
         ${recipe}
         <div class="actions">${previewButton}${workshop}${download}${associate}${remove}</div>
+        <p class="action-status" data-access-status="${esc(entry.id)}" role="status" aria-live="polite"></p>
         ${previewMarkup(entry.id)}
       </article>`;
     }
@@ -402,6 +418,7 @@
           <div class="general-actions">
             <button type="button" class="danger" data-action="remove-asset">Retirer l’entrée de la vidéothèque</button>
             ${asset.deletion?.canDeleteFile ? "<button type=\"button\" class=\"danger\" data-action=\"remove-physical\">Retirer l’entrée et supprimer le fichier</button>" : ""}
+            <p class="action-status" data-asset-action-status role="status" aria-live="polite"></p>
           </div>
         </section>`;
       bindView();
@@ -793,33 +810,79 @@
     async function removeDerivation(id) {
       const entry = asset.versionsAndAccess?.derivations?.find(item => item.derivationId === id);
       if (!entry) {
-        setStatus("La dérivation demandée est absente.", "error");
+        setActionStatus("asset", "La dérivation demandée est absente.", "error");
         return;
       }
-      const confirmed = await Proto05TeacherDialogs.confirm({
-        title: "Supprimer cette version dérivée ?",
-        message: `La tentative « ${entry?.label || "sélectionnée"} » sera supprimée.`,
-        details: ["La fiche vidéo et les autres versions seront conservées."],
-        confirmLabel: "Supprimer la tentative",
-        destructive: true,
-        trigger: document.activeElement
-      });
-      if (!confirmed) return;
+      const endpoint = `/api/proto05/library/assets/${encodeURIComponent(asset.id)}/derivations/${encodeURIComponent(id)}`;
+      setActionStatus(entry.id, "Vérification des dépendances de la tentative…");
       try {
-        await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/derivations/${encodeURIComponent(id)}`, { method: "DELETE" });
-        await reload("Tentative de dérivation supprimée.");
+        const preflight = await api(endpoint);
+        const conflicts = (preflight.deletion?.conflicts || [])
+          .flatMap(item => item.items || [])
+          .map(item => `${item.title || item.id}${item.passageCount ? ` (${item.passageCount} passage(s))` : ""}`)
+          .join(", ");
+        if (preflight.deletion?.allowed === false) {
+          setActionStatus(entry.id, [preflight.deletion.message, conflicts && `Éléments concernés : ${conflicts}`].filter(Boolean).join(" "), "error");
+          return;
+        }
+        const confirmed = await Proto05TeacherDialogs.confirm({
+          title: "Supprimer cette version dérivée ?",
+          message: `La tentative « ${entry?.label || "sélectionnée"} » sera supprimée.`,
+          details: [
+            preflight.deletion?.fileState === "missing"
+              ? "Le fichier de sortie est déjà absent ; seules les références seront retirées."
+              : "Le fichier de sortie local sera supprimé.",
+            "La fiche vidéo et les autres versions seront conservées."
+          ],
+          confirmLabel: "Supprimer la tentative",
+          destructive: true,
+          trigger: document.activeElement
+        });
+        if (!confirmed) {
+          setActionStatus(entry.id, "Suppression de la tentative annulée.");
+          return;
+        }
+        await api(endpoint, {
+          method: "DELETE",
+          headers: { "if-match": preflight.deletion.revisionToken }
+        });
+        setActionStatus(entry.id, "Tentative de dérivation supprimée.", "ok");
+        await new Promise(resolve => setTimeout(resolve, 450));
+        await reload();
       } catch (error) {
-        setStatus(error.message, "error");
+        const conflicts = (error.payload?.conflicts || [])
+          .flatMap(item => item.items || [])
+          .map(item => item.title || item.id)
+          .join(", ");
+        setActionStatus(entry.id, [error.message, conflicts && `Éléments concernés : ${conflicts}`].filter(Boolean).join(" "), "error");
       }
     }
 
     async function removeAsset(physical) {
+      setActionStatus("asset", "Vérification des dépendances avant suppression…");
+      try {
+        asset = (await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}`)).asset;
+        renderView();
+        setActionStatus("asset", "Vérification des dépendances terminée.");
+      } catch (error) {
+        setActionStatus("asset", `Préflight impossible : ${error.message || "réponse serveur inexploitable."}`, "error");
+        return;
+      }
       const understanding = asset.deletionUnderstanding || {};
       const preflight = physical
         ? asset.usage?.preflight?.physical
         : asset.usage?.preflight?.catalog;
       if (preflight && preflight.allowed === false) {
-        setStatus(preflight.message || "Suppression refusée par le préflight.", "error");
+        const usage = asset.usage || {};
+        const other = usage.otherDependencies || {};
+        const blockingItems = [
+          ...(usage.activities || []),
+          ...(other.derivations || []),
+          ...(other.treatments || []),
+          ...(other.audioPlans || []),
+          ...(other.sharedReferences || [])
+        ].map(item => item.title || item.name || item.id).filter(Boolean).join(", ");
+        setActionStatus("asset", [preflight.message || "Suppression refusée par le préflight.", blockingItems && `Éléments concernés : ${blockingItems}`].filter(Boolean).join(" "), "error");
         return;
       }
       const usageLabel = Meta.optionLabel(Meta.USAGES, asset.editorialMetadata?.usage);
@@ -846,16 +909,21 @@
         destructive: true,
         trigger: document.activeElement
       });
-      if (!confirmed) return;
+      if (!confirmed) {
+        setActionStatus("asset", "Suppression annulée.");
+        return;
+      }
       try {
         await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}${physical ? "/physical" : ""}`, { method: "DELETE", headers: { "if-match": asset.deletionRevisionToken } });
-        location.href = backLink.href;
+        setActionStatus("asset", physical ? "Entrée et fichier supprimés." : "Entrée retirée de la vidéothèque.", "ok");
+        await new Promise(resolve => setTimeout(resolve, 450));
+        location.href = new URL(backLink.href, location.origin).href;
       } catch (error) {
         const conflicts = (error.payload?.conflicts || [])
           .flatMap(item => item.items || [])
           .map(item => item.title || item.id)
           .join(", ");
-        setStatus([error.message, conflicts].filter(Boolean).join(" · "), "error");
+        setActionStatus("asset", [error.message, conflicts].filter(Boolean).join(" · "), "error");
       }
     }
 

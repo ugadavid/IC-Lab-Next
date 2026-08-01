@@ -1053,6 +1053,8 @@ function createMariaDbWriteAdapter({
           ? error.code
           : "PROTO05_MARIADB_WRITE_FAILED";
         wrapped.reasonCode = error?.code || "MARIA_TRANSACTION_ERROR";
+        wrapped.databaseErrno = Number(error?.errno) || null;
+        wrapped.internalMessage = error?.message || null;
         wrapped.differencePaths = error?.differencePaths
           || (error?.code?.startsWith("PROTO05_TARGETED_")
             || error?.code === "PROTO05_PROCEDURE_OPERATION_UNSUPPORTED" ? [error.message] : []);

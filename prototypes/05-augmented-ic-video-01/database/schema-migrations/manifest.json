@@ -78,6 +78,18 @@
         }
       ],
       "schemaManifest": "005_proto05_terminal_output_delete.manifest.json"
+    },
+    {
+      "version": "006",
+      "description": "Suppression d’un asset racine sans rupture temporaire de sa filiation",
+      "kind": "migration",
+      "adoptExisting": true,
+      "sources": [
+        {
+          "path": "006_proto05_asset_delete_lineage.sql"
+        }
+      ],
+      "schemaManifest": "006_proto05_asset_delete_lineage.manifest.json"
     }
   ]
 }

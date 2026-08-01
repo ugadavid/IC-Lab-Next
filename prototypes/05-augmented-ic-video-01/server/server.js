@@ -83,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.57";
+const VERSION = "0.1.59";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -367,6 +367,34 @@ function sendMutationFailure(response, error, fallback, additions = {}) {
     ...(error?.entityId ? { entityId: error.entityId } : {}),
     ...(error?.code === "PROTO05_CONCURRENCY_CONFLICT" ? { reloadRequired: true } : {}),
     ...additions
+  });
+}
+
+function deletionDiagnosticId() {
+  return `DEL-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString("hex").toUpperCase()}`;
+}
+
+function sendDeletionFailure(response, error, fallback, context = {}) {
+  const functional = Number(error?.statusCode) >= 400 && Number(error?.statusCode) < 500;
+  if (functional || error?.code === "PROTO05_CONCURRENCY_CONFLICT") {
+    return sendMutationFailure(response, error, fallback, {
+      conflicts: error?.conflicts || []
+    });
+  }
+  const diagnosticId = deletionDiagnosticId();
+  console.error(
+    `[media-delete] diagnostic=${diagnosticId}`
+      + ` asset=${JSON.stringify(String(context.assetId || "unknown").slice(0, 160))}`
+      + ` scope=${context.scope || "unknown"}`
+      + ` code=${error?.code || "ERROR"}`
+      + ` reason=${error?.reasonCode || "unknown"}`
+      + ` errno=${Number(error?.databaseErrno) || "unknown"}`
+      + ` detail=${JSON.stringify(String(error?.internalMessage || error?.message || fallback).slice(0, 500))}`
+  );
+  return sendJson(response, 500, {
+    error: "La suppression a échoué. Le détail a été enregistré dans le journal du serveur.",
+    code: "PROTO05_MEDIA_DELETE_FAILED",
+    diagnosticId
   });
 }
 
@@ -1401,7 +1429,7 @@ async function audioPlanDependenciesForPlayables(playables) {
     if (!plan) return null;
     return {
       id: plan.id,
-      title: plan.title || plan.name || plan.id,
+      title: plan.title || plan.name || `Plan audio ${plan.id}`,
       sourceAssetId: plan.sourceAssetId,
       sourcePlayableId: plan.sourcePlayableId,
       passageCount: Number(plan.passageCount ?? plan.passages?.length ?? 0)
@@ -1751,17 +1779,102 @@ async function removeLocalLibraryCopy(assetId, playableId, { preconditions = {} 
   }
 }
 
-async function removeLibraryDerivation(assetId, derivationId) {
-  const treatment = activeCanonicalVideoLibrary().treatments.find(item => item.id === derivationId && item.sourceAssetId === assetId);
+async function libraryDerivationDeletionPlan(assetId, derivationId) {
+  const library = activeCanonicalVideoLibrary();
+  const treatment = library.treatments.find(item => item.id === derivationId && item.sourceAssetId === assetId);
   if (!treatment) throw Object.assign(new Error("Tentative de dérivation introuvable."), { statusCode: 404 });
-  if (["queued", "running", "cancelling"].includes(treatment.status)) throw Object.assign(new Error("Une dérivation active ne peut pas être supprimée."), { statusCode: 409 });
-  if (treatment.publishedPlayableId) throw Object.assign(new Error("Cette dérivation est reliée à une version publiée."), { statusCode: 409 });
-  const playable = activeCanonicalVideoLibrary().playables.find(item => item.id === treatment.outputPlayableId && item.assetId === assetId);
+  const playable = library.playables.find(item => item.id === treatment.outputPlayableId && item.assetId === assetId) || null;
+  const source = library.sources.find(item => item.id === playable?.sourceId && item.assetId === assetId) || null;
+  const activities = (await readActivities()).activities || [];
+  const activityDependencies = playable
+    ? activities.filter(activity => activity?.videoRef?.playableId === playable.id).map(activity => ({
+        id: activity.id,
+        title: activity.title || "Activité sans titre"
+      }))
+    : [];
+  const treatmentDependencies = playable
+    ? canonicalPlayableTreatmentDependencies(library.treatments || [], playable.id).filter(item => item.id !== treatment.id)
+    : [];
+  const audioPlanDependencies = playable ? await audioPlanDependenciesForPlayables([playable]) : [];
+  const storageKey = playable ? localStorageKeyForPlayable(playable, source) : null;
+  const sharedReferences = storageKey
+    ? library.playables.filter(item => (
+        item.id !== playable.id
+        && localStorageKeyForPlayable(item, library.sources.find(candidate => candidate.id === item.sourceId)) === storageKey
+      )).map(item => {
+        const owner = library.assets.find(candidate => candidate.id === item.assetId);
+        return { id: item.id, title: owner?.title || item.id };
+      })
+    : [];
+  const fileObservation = playable ? observeLocalPlayableFile(playable, source) : { state: "missing", reason: "output-missing" };
   const expectedPrefix = `${assetId}/derived/${derivationId}/`;
-  const storageKey = playable?.location?.storageKey || null;
+  const conflicts = [];
+  if (["queued", "running", "cancelling"].includes(treatment.status)) {
+    conflicts.push({ type: "active-treatment", items: [{ id: treatment.id, title: treatment.label || treatment.id }] });
+  }
+  if (treatment.publishedPlayableId) {
+    conflicts.push({ type: "published-version", items: [{ id: treatment.publishedPlayableId, title: "Version publiée" }] });
+  }
+  if (!playable) conflicts.push({ type: "incompatible-output", items: [{ id: treatment.id, title: "Sortie locale introuvable" }] });
+  if (playable && (playable.kind !== "local-file" || explicitRole(playable) !== "derivation-local")) {
+    conflicts.push({ type: "incompatible-output", items: [{ id: playable.id, title: "Sortie non locale ou non qualifiée" }] });
+  }
+  if (playable && (!storageKey || playable.location?.storageScope !== "workspace" || !storageKey.startsWith(expectedPrefix))) {
+    conflicts.push({ type: "incompatible-file", items: [{ id: playable.id, title: "Fichier hors de l’espace de dérivation attendu" }] });
+  }
+  if (fileObservation.state === "access-error") {
+    conflicts.push({ type: "incompatible-file", items: [{ id: playable?.id || treatment.id, title: "Fichier impossible à contrôler" }] });
+  }
+  if (activityDependencies.length) conflicts.push({ type: "activities", items: activityDependencies });
+  if (treatmentDependencies.length) conflicts.push({ type: "treatments", items: treatmentDependencies });
+  if (audioPlanDependencies.length) conflicts.push({ type: "audio-plans", items: audioPlanDependencies });
+  if (sharedReferences.length) conflicts.push({ type: "shared-references", items: sharedReferences });
+  return {
+    assetId,
+    derivationId,
+    treatment,
+    playable,
+    source,
+    storageKey,
+    fileObservation,
+    conflicts,
+    allowed: conflicts.length === 0,
+    message: conflicts.length
+      ? "Suppression refusée : cette tentative possède encore une dépendance ou une sortie incompatible."
+      : fileObservation.state === "missing"
+        ? "Le fichier de sortie est déjà absent ; la tentative et ses références peuvent être retirées."
+        : "Cette tentative et son fichier de sortie peuvent être supprimés."
+  };
+}
+
+function derivationDeletionForClient(plan) {
+  return {
+    allowed: plan.allowed,
+    fileState: plan.fileObservation.state,
+    message: plan.message,
+    conflicts: plan.conflicts,
+    revisionToken: mediaDeletionRevisionToken({
+      assetId: plan.assetId,
+      library: activeCanonicalVideoLibrary(),
+      activities: READ_CONTEXT.getStore()?.activities?.activities || []
+    })
+  };
+}
+
+async function removeLibraryDerivation(assetId, derivationId, { preconditions = {} } = {}) {
+  const plan = await libraryDerivationDeletionPlan(assetId, derivationId);
+  if (!plan.allowed) {
+    throw Object.assign(new Error(plan.message), {
+      statusCode: 409,
+      code: "PROTO05_MEDIA_DELETE_BLOCKED",
+      conflicts: plan.conflicts
+    });
+  }
+  const { treatment, playable, storageKey } = plan;
+  const expectedPrefix = `${assetId}/derived/${derivationId}/`;
   if (storageKey && (playable.location?.storageScope !== "workspace" || !storageKey.startsWith(expectedPrefix))) throw Object.assign(new Error("Le fichier de dérivation n’appartient pas à son espace de travail."), { statusCode: 409 });
-  const file = storageKey ? safeLibraryMediaPath(storageKey, "workspace") : null;
-  const stat = file ? await fs.stat(file).catch(() => null) : null;
+  const file = plan.fileObservation.file || null;
+  const stat = plan.fileObservation.state === "present" ? await fs.stat(file) : null;
   const backup = stat?.isFile() ? path.join(os.tmpdir(), `proto05-derivation-${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.bak`) : null;
   const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
   canonical.treatments = canonical.treatments.filter(item => item.id !== derivationId);
@@ -1776,7 +1889,10 @@ async function removeLibraryDerivation(assetId, derivationId) {
   if (backup) await fs.copyFile(file, backup);
   try {
     if (file && stat?.isFile()) await fs.unlink(file);
-    await persistCanonicalLibrary(canonical);
+    await persistCanonicalLibrary(canonical, {
+      operation: "media-terminal-output-delete",
+      preconditions
+    });
     if (file) await removeEmptyParents(path.dirname(file), VIDEO_LIBRARY_WORKSPACES_DIR).catch(() => {});
     return { assetId, derivationId, deletedFile: Boolean(stat?.isFile()) };
   } catch (error) {
@@ -4087,8 +4203,8 @@ async function handleApiInReadContext(request, response, url) {
   const localCopyDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/local-copies\/([^/]+)$/.exec(url.pathname);
   if (localCopyDeleteMatch) {
     if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
+    const assetId = decodeURIComponent(localCopyDeleteMatch[1]);
     try {
-      const assetId = decodeURIComponent(localCopyDeleteMatch[1]);
       const preconditions = mediaWritePrecondition(request, assetId, "media-deletion");
       const result = await removeLocalLibraryCopy(
         assetId,
@@ -4097,17 +4213,42 @@ async function handleApiInReadContext(request, response, url) {
       );
       return sendJson(response, 200, result);
     } catch (error) {
-      return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression de la copie locale impossible.", conflicts: error.conflicts || [] });
+      return sendDeletionFailure(response, error, "Suppression de la copie locale impossible.", {
+        assetId,
+        scope: `local-copy:${String(decodeURIComponent(localCopyDeleteMatch[2])).slice(0, 160)}`
+      });
     }
   }
   const derivationDeleteMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/derivations\/([^/]+)$/.exec(url.pathname);
   if (derivationDeleteMatch) {
-    if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
+    const assetId = decodeURIComponent(derivationDeleteMatch[1]);
+    const derivationId = decodeURIComponent(derivationDeleteMatch[2]);
     try {
-      const result = await removeLibraryDerivation(decodeURIComponent(derivationDeleteMatch[1]), decodeURIComponent(derivationDeleteMatch[2]));
+      if (request.method === "GET") {
+        const plan = await libraryDerivationDeletionPlan(assetId, derivationId);
+        return sendJson(response, 200, { assetId, derivationId, deletion: derivationDeletionForClient(plan) });
+      }
+      if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, DELETE" });
+      const preconditions = mediaWritePrecondition(request, assetId, "media-deletion");
+      const result = await removeLibraryDerivation(assetId, derivationId, { preconditions });
       return sendJson(response, 200, result);
     } catch (error) {
-      return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression de la dérivation impossible." });
+      if ([30505, 30506, 30507, 30508].includes(Number(error?.databaseErrno))) {
+        try {
+          const freshPlan = await libraryDerivationDeletionPlan(assetId, derivationId);
+          if (freshPlan.conflicts.length) {
+            return sendJson(response, 409, {
+              error: freshPlan.message,
+              code: "PROTO05_MEDIA_DELETE_BLOCKED",
+              conflicts: freshPlan.conflicts
+            });
+          }
+        } catch {}
+      }
+      return sendDeletionFailure(response, error, "Suppression de la dérivation impossible.", {
+        assetId,
+        scope: `derivation:${String(derivationId).slice(0, 160)}`
+      });
     }
   }
   const accessRoleMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/accesses\/([^/]+)\/role$/.exec(url.pathname);
@@ -4136,8 +4277,9 @@ async function handleApiInReadContext(request, response, url) {
       });
     }
     if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
+    let assetId = "invalid";
     try {
-      const assetId = decodeURIComponent(libraryAssetDeleteMatch[1]);
+      assetId = decodeURIComponent(libraryAssetDeleteMatch[1]);
       const preconditions = mediaWritePrecondition(request, assetId, "media-deletion");
       const result = await removeLibraryAsset(assetId, {
         physical: Boolean(libraryAssetDeleteMatch[2]),
@@ -4145,7 +4287,10 @@ async function handleApiInReadContext(request, response, url) {
       });
       return sendJson(response, 200, result);
     } catch (error) {
-      return sendMutationFailure(response, error, "Suppression impossible.", { conflicts: error.conflicts || [] });
+      return sendDeletionFailure(response, error, "Suppression impossible.", {
+        assetId,
+        scope: libraryAssetDeleteMatch[2] ? "physical" : "catalog"
+      });
     }
   }
   if (url.pathname === "/api/proto05/library/assets") {

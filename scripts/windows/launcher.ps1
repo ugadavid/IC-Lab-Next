@@ -222,21 +222,43 @@ function Get-LegacyOwnership {
     }
     $ancestorId = [int]$ancestor.ParentProcessId
   }
+  # Un processus lance directement peut survivre a son parent et ne posseder
+  # aucun temoin. Dans ce cas, la commande exacte et l'identite HTTP propre au
+  # service doivent toutes deux correspondre avant de l'autoriser a l'arret.
+  try {
+    $response = Invoke-WebRequest -Uri ([string]$Service.readinessUrl) -UseBasicParsing -TimeoutSec 2
+    if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 400 -and ([string]$response.Content) -match ([string]$Service.readinessPattern)) {
+      return [ordered]@{ processId = $ProcessId; hostPid = 0; title = [string]$Service.title }
+    }
+  } catch {}
   return $null
 }
 
 function Stop-AuthenticatedLegacyProcesses {
+  $stopped = 0
   foreach ($service in @($script:Configuration.services)) {
-    foreach ($processIdValue in @(Get-ListenerProcessIds -Port ([int]$service.port))) {
+    $owners = @(Get-ListenerProcessIds -Port ([int]$service.port))
+    if (-not $owners.Count) {
+      Write-Control "$($service.title) : aucun processus a arreter sur le port $($service.port)."
+      continue
+    }
+    foreach ($processIdValue in $owners) {
       $ownership = Get-LegacyOwnership -Service $service -ProcessId ([int]$processIdValue)
-      if (-not $ownership) { continue }
+      if (-not $ownership) {
+        Write-Control "$($service.title) : PID $processIdValue refuse, l'appartenance a IC-Lab-Next n'est pas prouvee." "WARN"
+        continue
+      }
       Write-Control "Ancienne instance IC-Lab-Next authentifiee : arret de $($service.title), PID $processIdValue." "WARN"
       Stop-Process -Id ([int]$processIdValue) -Force -ErrorAction Stop
       Start-Sleep -Milliseconds 300
-      $host = Get-LiveProcess -ProcessId ([int]$ownership.hostPid)
-      if ($host) { Stop-Process -Id ([int]$ownership.hostPid) -Force -ErrorAction SilentlyContinue }
+      if ([int]$ownership.hostPid -gt 0) {
+        $host = Get-LiveProcess -ProcessId ([int]$ownership.hostPid)
+        if ($host) { Stop-Process -Id ([int]$ownership.hostPid) -Force -ErrorAction SilentlyContinue }
+      }
+      $stopped++
     }
   }
+  return $stopped
 }
 
 function Assert-NoForeignPortOwners {
@@ -314,7 +336,12 @@ try {
 
   if ($Action -eq "Stop") {
     if (-not $activeState) {
-      Write-Control "IC-Lab-Next est deja arrete. Aucun processus n'a ete touche."
+      $legacyStopped = Stop-AuthenticatedLegacyProcesses
+      if ($legacyStopped -gt 0) {
+        Write-Control "$legacyStopped ancien(s) service(s) IC-Lab-Next authentifie(s) ont ete arretes."
+      } else {
+        Write-Control "IC-Lab-Next est deja arrete. Aucun processus n'a ete touche."
+      }
       exit 0
     }
     Stop-AuthenticatedLaunch -State $activeState -StatePath $statePath
@@ -324,7 +351,7 @@ try {
 
   Write-Control "Redemarrage global IC-Lab-Next depuis $($script:RepositoryRoot)."
   if ($activeState) { Stop-AuthenticatedLaunch -State $activeState -StatePath $statePath }
-  else { Stop-AuthenticatedLegacyProcesses }
+  else { $null = Stop-AuthenticatedLegacyProcesses }
 
   $releaseDeadline = (Get-Date).AddSeconds(10)
   do {

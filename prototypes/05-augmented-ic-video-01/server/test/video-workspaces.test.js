@@ -155,17 +155,64 @@ test("l’aperçu remplace le visuel de la carte sans ajouter une ligne", () => 
   assert.doesNotMatch(html, /button\.onclick=async\(\)=>\{\s*shell\.hidden=false/);
 });
 
-test("les suppressions de la vidéothèque utilisent un préflight frais et un If-Match explicite", () => {
+test("les suppressions de la vidéothèque utilisent un préflight frais, un If-Match et des retours locaux", () => {
   const cards = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
   const detail = fs.readFileSync(path.resolve(__dirname, "../../teacher-video-detail.html"), "utf8");
+  const server = fs.readFileSync(path.resolve(__dirname, "../server.js"), "utf8");
+  const cardRemoval = cards.match(/async function removeAsset\(assetId, physical\)[\s\S]*?\n      let openSecondaryMenu=/)?.[0];
+  assert.ok(cardRemoval, "le parcours de retrait des cartes doit rester identifiable");
   assert.match(cards, /Vérification des dépendances avant suppression/);
+  assert.match(cardRemoval, /await api\(`\/api\/proto05\/library\/assets\/\$\{encodeURIComponent\(assetId\)\}`\)/);
+  assert.match(cardRemoval, /await refreshAssetList\(\)/);
+  assert.doesNotMatch(cardRemoval, /jsonApi|refreshLibrary/);
+  assert.match(cardRemoval, /Éléments concernés/);
   assert.match(cards, /headers:\{'if-match':asset\.deletionRevisionToken\}/);
+  assert.match(cards, /assetActionStatusMarkup\(asset\.id\)/);
+  assert.match(cards, /setAssetActionStatus\(assetId/);
+  assert.doesNotMatch(cardRemoval, /setStatus\(/);
   assert.match(cards, /fileWasAlreadyMissing/);
   assert.match(cards, /other\.audioPlans/);
+  assert.match(detail, /asset = \(await api\(`\/api\/proto05\/library\/assets\/\$\{encodeURIComponent\(asset\.id\)\}`\)\)\.asset/);
+  assert.match(detail, /Préflight impossible/);
   assert.match(detail, /headers: \{ "if-match": asset\.deletionRevisionToken \}/);
+  assert.match(detail, /data-asset-action-status/);
+  assert.match(detail, /setActionStatus\("asset"/);
   assert.match(detail, /fileWasAlreadyMissing/);
   assert.match(detail, /other\.audioPlans/);
   assert.match(detail, /await player\.waitUntilReady\(\)/);
+  assert.match(server, /\[media-delete\] diagnostic=/);
+  assert.match(server, /scope=\$\{context\.scope/);
+  assert.match(server, /errno=\$\{Number\(error\?\.databaseErrno\)/);
+  assert.match(server, /diagnosticId/);
+  assert.match(server, /Le détail a été enregistré dans le journal du serveur/);
+  assert.doesNotMatch(server, /communiquez l.identifiant/);
+  assert.match(cards, /Dépendances de \$\{esc\(asset\.title\|\|asset\.id\)\}/);
+  assert.match(cards, /data-delete-treatment/);
+  assert.match(cards, />Effacer<\/button>/);
+  assert.match(cards, /usageTrigger\(assetId\)\)openUsagePanel\(assetId,\{pinned:true\}\)/);
+  assert.doesNotMatch(cards, /libraryNotice/);
+});
+
+test("la suppression d’une dérivation préflight les plans audio dans son cartouche", () => {
+  const cards = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
+  const detail = fs.readFileSync(path.resolve(__dirname, "../../teacher-video-detail.html"), "utf8");
+  const server = fs.readFileSync(path.resolve(__dirname, "../server.js"), "utf8");
+  const cardFlow = cards.match(/async function removeDerivation\(asset,derivation\)[\s\S]*?\n  }/)?.[0];
+  const detailFlow = detail.match(/async function removeDerivation\(id\)[\s\S]*?\n    }/)?.[0];
+  assert.ok(cardFlow);
+  assert.ok(detailFlow);
+  assert.match(cardFlow, /const preflight=await jsonApi\(endpoint\)/);
+  assert.match(cardFlow, /headers:\{'if-match':preflight\.deletion\.revisionToken\}/);
+  assert.match(cardFlow, /setAssetActionStatus\(asset\.id/);
+  assert.doesNotMatch(cardFlow, /setStatus\(/);
+  assert.match(detailFlow, /const preflight = await api\(endpoint\)/);
+  assert.match(detailFlow, /headers: \{ "if-match": preflight\.deletion\.revisionToken \}/);
+  assert.match(detailFlow, /setActionStatus\(entry\.id/);
+  assert.doesNotMatch(detailFlow, /setStatus\(/);
+  assert.match(server, /async function libraryDerivationDeletionPlan/);
+  assert.match(server, /audioPlanDependenciesForPlayables\(\[playable\]\)/);
+  assert.match(server, /type: "audio-plans"/);
+  assert.match(server, /request\.method === "GET"/);
 });
 
 test("les retours d’action de la vidéothèque sont ramenés dans la zone visible", () => {

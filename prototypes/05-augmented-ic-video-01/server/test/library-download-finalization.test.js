@@ -42,6 +42,23 @@ async function databaseConnection() {
   });
 }
 
+async function adminDatabaseConnection() {
+  if (!localEnvironmentLoaded) {
+    process.loadEnvFile(path.join(prototypeDirectory, ".env.local"));
+    localEnvironmentLoaded = true;
+  }
+  return mysql.createConnection({
+    host: process.env.PROTO05_MARIADB_HOST,
+    port: Number(process.env.PROTO05_MARIADB_PORT),
+    database: process.env.PROTO05_MARIADB_DATABASE,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    charset: "utf8mb4",
+    dateStrings: true,
+    multipleStatements: false
+  });
+}
+
 async function request(baseUrl, pathname, options = {}) {
   const response = await fetch(`${baseUrl}${pathname}`, options);
   const body = await response.json().catch(() => ({}));
@@ -345,14 +362,18 @@ test("une sortie locale absente et son traitement terminal sont supprimés ensem
   );
   let asset = null;
   let database = null;
+  let adminDatabase = null;
+  let planId = null;
   try {
     asset = await createRemoteAsset(server, origin.url, "sortie terminale absente");
     const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
     const treatmentId = `m165-treatment-${suffix}`;
+    planId = `m166-audio-plan-${suffix}`;
     const sourceId = `source-${treatmentId}`;
     const playableId = `video-${treatmentId}`;
     const storageKey = `${asset.assetId}/derived/${treatmentId}/ghost-output.mp4`;
     database = await databaseConnection();
+    adminDatabase = await adminDatabaseConnection();
     await database.query(
       "CALL sp_media_inline_treatment_start(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
@@ -394,10 +415,41 @@ test("une sortie locale absente et son traitement terminal sont supprimés ensem
     assert.equal(output.id, playableId);
     assert.equal(output.localFileState, "missing");
 
+    await database.query(
+      "CALL sp_audio_anonymization_plan_save(?, ?, ?, ?, ?, ?)",
+      [planId, asset.assetId, playableId, 1000, 0, JSON.stringify([])]
+    );
+    const blockedPreflight = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}/derivations/${encodeURIComponent(treatmentId)}`
+    );
+    assert.equal(blockedPreflight.response.status, 200);
+    assert.equal(blockedPreflight.body.deletion.allowed, false);
+    assert.ok(blockedPreflight.body.deletion.conflicts.some(conflict => (
+      conflict.type === "audio-plans" && conflict.items.some(item => item.id === planId)
+    )));
+    const blockedDeletion = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}/derivations/${encodeURIComponent(treatmentId)}`,
+      { method: "DELETE", headers: { "if-match": blockedPreflight.body.deletion.revisionToken } }
+    );
+    assert.equal(blockedDeletion.response.status, 409);
+    assert.ok(blockedDeletion.body.conflicts.some(conflict => conflict.type === "audio-plans"));
+    assert.equal(fs.existsSync(emptyOutputDirectory), true);
+    await adminDatabase.query("DELETE FROM media_audio_anonymization_plans WHERE id = ?", [planId]);
+    planId = null;
+
+    const allowedPreflight = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}/derivations/${encodeURIComponent(treatmentId)}`
+    );
+    assert.equal(allowedPreflight.response.status, 200);
+    assert.equal(allowedPreflight.body.deletion.allowed, true);
+
     const removed = await request(
       server.baseUrl,
       `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}/derivations/${encodeURIComponent(treatmentId)}`,
-      { method: "DELETE" }
+      { method: "DELETE", headers: { "if-match": allowedPreflight.body.deletion.revisionToken } }
     );
     assert.equal(removed.response.status, 200, removed.body.error);
     assert.equal(removed.body.deletedFile, false);
@@ -422,6 +474,8 @@ test("une sortie locale absente et son traitement terminal sont supprimés ensem
     await removeRemoteAsset(server, asset.assetId);
     asset = null;
   } finally {
+    if (planId) await adminDatabase?.query("DELETE FROM media_audio_anonymization_plans WHERE id = ?", [planId]).catch(() => {});
+    await adminDatabase?.end();
     await database?.end();
     if (asset) await removeRemoteAsset(server, asset.assetId).catch(() => {});
     await server.cleanup();

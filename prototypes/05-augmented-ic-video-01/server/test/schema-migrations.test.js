@@ -124,6 +124,8 @@ function copyCanonicalContract(label) {
     ["database/schema-migrations/004_proto05_working_copy_delete.manifest.json", "database/schema-migrations/004_proto05_working_copy_delete.manifest.json"],
     ["database/schema-migrations/005_proto05_terminal_output_delete.sql", "database/schema-migrations/005_proto05_terminal_output_delete.sql"],
     ["database/schema-migrations/005_proto05_terminal_output_delete.manifest.json", "database/schema-migrations/005_proto05_terminal_output_delete.manifest.json"],
+    ["database/schema-migrations/006_proto05_asset_delete_lineage.sql", "database/schema-migrations/006_proto05_asset_delete_lineage.sql"],
+    ["database/schema-migrations/006_proto05_asset_delete_lineage.manifest.json", "database/schema-migrations/006_proto05_asset_delete_lineage.manifest.json"],
     ["database/drafts/003_proto05_schema_hardening.sql", "database/drafts/003_proto05_schema_hardening.sql"],
     ["database/migrations/002_proto05_mariadb_schema_alignment.sql", "database/migrations/002_proto05_mariadb_schema_alignment.sql"],
     ["database/migrations/004_proto05_document_metadata_schema.sql", "database/migrations/004_proto05_document_metadata_schema.sql"],
@@ -533,6 +535,36 @@ test("a divergent routine is never silently adopted", async () => {
         confirm: "APPLY PROTO05 SCHEMA MIGRATIONS"
       }),
       error => error.code === "PROTO05_MIGRATION_BACKUP_REQUIRED"
+    );
+  });
+});
+
+test("migration 006 adopts an exactly installed schema without planning DDL and rejects any other divergence", async () => {
+  await withDatabase("adoptsix", async (database, databaseName) => {
+    await installCanonical(database, databaseName);
+    await database.query("DELETE FROM schema_migrations WHERE version = '006'");
+
+    const planningQueries = [];
+    const planningDatabase = new Proxy(database, {
+      get(target, property) {
+        if (property !== "query") return Reflect.get(target, property, target);
+        return async (sql, values) => {
+          planningQueries.push(String(sql));
+          return target.query(sql, values);
+        };
+      }
+    });
+    const plan = await inspectMigrationState(planningDatabase, runnerOptions(databaseName));
+
+    assert.equal(plan.action.type, "adopt");
+    assert.deepEqual(plan.action.migrations.map(item => item.version), ["006"]);
+    assert.doesNotMatch(planningQueries.join("\n"), /^\s*(?:DROP|CREATE)\s+PROCEDURE/im);
+
+    await database.query("ALTER TABLE languages ADD COLUMN m167_unexpected_divergence INT NULL");
+    await assert.rejects(
+      inspectMigrationState(database, runnerOptions(databaseName)),
+      error => error.code === "PROTO05_ROUTINE_ADOPTION_REFUSED"
+        && error.comparison.equal === false
     );
   });
 });
