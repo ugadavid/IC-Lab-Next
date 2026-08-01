@@ -138,6 +138,36 @@ function rowChanged(current, desired) {
   ));
 }
 
+function rowDifferenceColumns(current, desired) {
+  return Object.keys(desired).filter(column => (
+    comparableValue(current[column], desired[column]) !== normalizeValue(desired[column])
+  ));
+}
+
+function valueShape(value) {
+  if (value === null) return "null";
+  if (value === undefined) return "undefined";
+  if (value instanceof Date) return "date";
+  return typeof value;
+}
+
+const WORKING_COPY_DATABASE_TIMESTAMPS = Object.freeze({
+  media_sources: ["created_at"],
+  media_playables: ["created_at", "updated_at"],
+  media_playable_metadata: ["analyzed_at"]
+});
+
+function databaseGeneratedWorkingCopyRow(table, row) {
+  const generated = WORKING_COPY_DATABASE_TIMESTAMPS[table] || [];
+  return Object.fromEntries(Object.entries(row).filter(([column]) => !generated.includes(column)));
+}
+
+function validDatabaseTimestamp(value) {
+  if (value instanceof Date) return Number.isFinite(value.getTime());
+  return typeof value === "string"
+    && /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z)?$/.test(value);
+}
+
 function tablePlan(definition, currentRows, desiredRows) {
   const current = new Map(currentRows.map(row => [rowKey(row, definition.pk), row]));
   const desired = new Map(desiredRows.map(row => [rowKey(row, definition.pk), row]));
@@ -780,11 +810,14 @@ function createMariaDbWriteAdapter({
     const row = (table, column, value) => model.tables.get(table).rows
       .map(entry => entry.data)
       .find(entry => entry[column] === value);
+    const playable = row("media_playables", "id", mutation.playable.id);
+    playable.availability = mutation.playable.availability;
+    playable.availability_reason = mutation.playable.availabilityReason ?? null;
     return {
       canonicalLibrary,
       asset: row("media_assets", "id", mutation.assetId),
       source: row("media_sources", "id", mutation.source.id),
-      playable: row("media_playables", "id", mutation.playable.id),
+      playable,
       metadata: row("media_playable_metadata", "playable_id", mutation.playable.id)
     };
   }
@@ -1157,7 +1190,8 @@ function createMariaDbWriteAdapter({
     },
 
     async appendWorkingCopy(snapshot, mutation, {
-      failAfterStatements = null
+      failAfterStatements = null,
+      beforeCommit = null
     } = {}) {
       if (!snapshot?.canonicalVideoLibrary) {
         throw new Error("Snapshot média canonique absent de la transaction MariaDB.");
@@ -1284,8 +1318,17 @@ function createMariaDbWriteAdapter({
           if (!wanted) continue;
           const primaryKey = table === "media_playable_metadata" ? "playable_id" : "id";
           const actual = resultingTables[table].find(row => row[primaryKey] === key);
-          if (!actual || rowChanged(actual, wanted)) {
-            const error = new Error(`La relecture ciblée de ${table} diverge.`);
+          const comparableWanted = databaseGeneratedWorkingCopyRow(table, wanted);
+          const invalidGeneratedTimestamp = (WORKING_COPY_DATABASE_TIMESTAMPS[table] || [])
+            .some(column => wanted[column] !== null && !validDatabaseTimestamp(actual?.[column]));
+          if (!actual || invalidGeneratedTimestamp || rowChanged(actual, comparableWanted)) {
+            const columns = actual ? rowDifferenceColumns(actual, comparableWanted) : [];
+            if (invalidGeneratedTimestamp) columns.push("database_timestamp");
+            const detail = columns.length ? ` (${columns.join(", ")})` : "";
+            const shapes = actual && columns.length
+              ? ` [${columns.map(column => `${column}:${valueShape(actual[column])}/${valueShape(comparableWanted[column])}`).join(", ")}]`
+              : "";
+            const error = new Error(`La relecture ciblée de ${table} diverge${detail}.${shapes}`);
             error.code = "PROTO05_TARGETED_WRITE_RECONCILIATION_FAILED";
             throw error;
           }
@@ -1293,6 +1336,7 @@ function createMariaDbWriteAdapter({
         const resultingSnapshot = projectMariaDbSnapshotForApplication(
           mapMariaDbTablesToSnapshot(resultingTables)
         );
+        if (beforeCommit) await beforeCommit();
         await database.commit();
         transactionStarted = false;
         return {
@@ -1306,12 +1350,17 @@ function createMariaDbWriteAdapter({
           try { await database.rollback(); } catch {}
           transactionStarted = false;
         }
-        if (error?.code === "PROTO05_FORCED_ROLLBACK") throw error;
+        if (["PROTO05_FORCED_ROLLBACK", "EEXIST"].includes(error?.code)) throw error;
+        const safeDetail = String(error?.sqlMessage || error?.message || "erreur MariaDB")
+          .replace(/\s+/g, " ")
+          .slice(0, 500);
         const wrapped = new Error("Création transactionnelle de la copie de travail impossible.");
         wrapped.code = error?.code?.startsWith("PROTO05_TARGETED_")
           ? error.code
           : "PROTO05_MARIADB_WRITE_FAILED";
         wrapped.reasonCode = error?.code || "MARIA_TARGETED_TRANSACTION_ERROR";
+        wrapped.internalDetail = safeDetail;
+        wrapped.cause = error;
         throw wrapped;
       } finally {
         try { await database.query("SET @proto05_runtime_transaction = NULL"); } catch {}

@@ -213,7 +213,11 @@ async function seedActivity(baseUrl, source, marker) {
   return { sourceId: source.id, id: activity.id, activity: authored.body.activity };
 }
 
-async function startTemporaryProto05Server(store = { activities: [] }, prefix = "proto05-server-test-") {
+async function startTemporaryProto05Server(
+  store = { activities: [] },
+  prefix = "proto05-server-test-",
+  { env = {} } = {}
+) {
   assert.ok(fs.existsSync(envFile), "La configuration locale MariaDB de Proto05 est requise.");
   const projectionMetadataSnapshot = await readProjectionMetadataSnapshot();
   const runtimeDirectory = isolatedRuntimeDirectory(prefix);
@@ -227,7 +231,7 @@ async function startTemporaryProto05Server(store = { activities: [] }, prefix = 
     [`--env-file=${envFile}`, "server.js"],
     {
       cwd: serverDirectory,
-      env: { ...process.env, PORT: String(port) },
+      env: { ...process.env, PORT: String(port), ...env },
       windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"]
     }

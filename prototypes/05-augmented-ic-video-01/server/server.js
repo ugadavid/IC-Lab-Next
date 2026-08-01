@@ -67,6 +67,12 @@ const {
   normalizeAudioPlan
 } = require("./audio-anonymization");
 const {
+  cleanupDownloadWorkspace,
+  createDownloadWorkspace,
+  publishDownloadedFile,
+  removeEmptyParents
+} = require("./library-download-finalization");
+const {
   assertPedagogicalLineage,
   createEmptyPedagogicalIdentity,
   normalizePedagogicalIdentityStates,
@@ -76,7 +82,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.54";
+const VERSION = "0.1.55";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -1034,7 +1040,7 @@ async function persistCanonicalLibrary(canonical, { preconditions = {}, operatio
   return VIDEO_LIBRARY;
 }
 
-async function persistWorkingCopyMutation(mutation) {
+async function persistWorkingCopyMutation(mutation, { beforeCommit = null } = {}) {
   const context = READ_CONTEXT.getStore();
   if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
   const snapshot = structuredClone(context);
@@ -1050,7 +1056,8 @@ async function persistWorkingCopyMutation(mutation) {
     {
       failAfterStatements: process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS
         ? Number(process.env.PROTO05_TEST_FAIL_WORKING_COPY_AFTER_STATEMENTS)
-        : null
+        : null,
+      beforeCommit
     }
   ));
   writeQueue = queued.catch(() => {});
@@ -1584,6 +1591,7 @@ async function removeLocalLibraryCopy(assetId, playableId) {
     if (asset.defaultPlayableId === playableId) asset.defaultPlayableId = canonical.playables.find(item => item.assetId === assetId)?.id || null;
     asset.updatedAt = new Date().toISOString();
     await persistCanonicalLibrary(canonical);
+    await removeEmptyParents(path.dirname(file), VIDEO_LIBRARY_WORKSPACES_DIR).catch(() => {});
     const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
     return { assetId, playableId, deletedFile: true, storageKey: plan.storageKey, asset: libraryAssetDetails(projectedAsset) };
   } catch (error) {
@@ -2585,7 +2593,7 @@ function downloadedTechnicalMetadata(probe, { mimeType, sizeBytes, sha256, fileN
     audioCodec: probe.audioCodec, hasAudio: probe.hasAudio,
     mimeType, sizeBytes, sha256, fileName,
     analyzedAt, analyzer: "ffprobe", analyzerVersion: null,
-    status: "available", error: null
+    status: "complete", error: null
   };
 }
 
@@ -2625,20 +2633,21 @@ async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
     location: { storageScope: "workspace", storageKey }, technicalMetadata: metadata,
     provenance, createdAt: now, updatedAt: now
   };
-  await fs.mkdir(path.dirname(targetPath), { recursive: true });
-  await renameWithWindowsRetries(job.temporaryPath, targetPath);
-  try {
-    await persistWorkingCopyMutation({
-      assetId: job.assetId,
-      expectedPlayableId: job.playableId,
-      source,
-      playable,
-      updatedAt: now
-    });
-  } catch (error) {
-    try { await fs.unlink(targetPath); } catch (rollbackError) { error.message += ` Nettoyage du fichier final impossible : ${rollbackError.message}`; }
-    throw error;
-  }
+  await publishDownloadedFile({
+    temporaryPath: job.temporaryPath,
+    targetPath,
+    workspaceRoot: VIDEO_LIBRARY_WORKSPACES_DIR,
+    persist: beforeCommit => persistWorkingCopyMutation(
+      {
+        assetId: job.assetId,
+        expectedPlayableId: job.playableId,
+        source,
+        playable,
+        updatedAt: now
+      },
+      { beforeCommit }
+    )
+  });
   job.finalPath = targetPath;
   job.storageKey = storageKey;
   const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === job.assetId);
@@ -2681,9 +2690,7 @@ async function runLibraryDownload(job, candidate, inspection, ffmpegStatus) {
   let terminalLabel = null;
   const timeout = setTimeout(() => { job.timeout = true; void terminateOwnedDownloadProcess(job); }, LIBRARY_DOWNLOAD_TIMEOUT_MS);
   try {
-    const tempRoot = safeAssetWorkspacePath(job.assetId, "temp");
-    await fs.mkdir(tempRoot, { recursive: true });
-    job.workspace = await fs.mkdtemp(path.join(tempRoot, `${job.id}-`));
+    job.workspace = await createDownloadWorkspace(LIBRARY_DOWNLOAD_ROOT, `${job.assetId}-${job.id}`);
     job.temporaryPath = path.join(job.workspace, `download.${job.container}.incomplete`);
     job.status = "downloading"; job.stateLabel = "Téléchargement"; job.updatedAt = new Date().toISOString();
     const inputUrl = new URL(inspection.inputPath, `http://127.0.0.1:${PORT}`).toString();
@@ -2726,6 +2733,11 @@ async function runLibraryDownload(job, candidate, inspection, ffmpegStatus) {
     job.result = await finalizeLibraryDownload(job, candidate, ffmpegStatus);
     terminalStatus = "completed"; terminalLabel = "Terminé"; job.progress = 100;
   } catch (error) {
+    if (error?.internalDetail) {
+      console.error(
+        `[library-download] ${error.code || "ERROR"}/${error.reasonCode || "UNKNOWN"} ${error.internalDetail}`
+      );
+    }
     job.error = libraryDownloadError(error, job);
     terminalStatus = job.cancelRequested ? "cancelled" : "failed";
     terminalLabel = job.cancelRequested ? "Annulé" : "Échec";
@@ -2734,7 +2746,12 @@ async function runLibraryDownload(job, candidate, inspection, ffmpegStatus) {
     clearTimeout(timeout);
     if (sizeMonitor) clearInterval(sizeMonitor);
     if (job.process) { await terminateOwnedDownloadProcess(job); delete job.process; }
-    if (job.workspace) { try { await fs.rm(job.workspace, { recursive: true, force: true }); } catch {} }
+    if (job.workspace) { try { await cleanupDownloadWorkspace(job.workspace, LIBRARY_DOWNLOAD_ROOT); } catch {} }
+    const legacyTempRoot = safeAssetWorkspacePath(job.assetId, "temp");
+    try {
+      await fs.rm(legacyTempRoot, { recursive: true, force: true });
+      await removeEmptyParents(path.dirname(legacyTempRoot), VIDEO_LIBRARY_WORKSPACES_DIR);
+    } catch {}
     job.workspace = null; job.temporaryPath = null; delete job.pid; delete job.progressBuffer;
     if (terminalStatus) {
       job.status = terminalStatus; job.stateLabel = terminalLabel;
@@ -2809,9 +2826,14 @@ async function shutdownLibraryDownloads() {
 }
 
 async function cleanupIncompleteWorkspaceDownloads() {
-  for (const asset of activeCanonicalVideoLibrary().assets) {
-    const tempRoot = safeAssetWorkspacePath(asset.id, "temp");
-    await fs.rm(tempRoot, { recursive: true, force: true });
+  await fs.rm(LIBRARY_DOWNLOAD_ROOT, { recursive: true, force: true });
+  const entries = await fs.readdir(VIDEO_LIBRARY_WORKSPACES_DIR, { withFileTypes: true }).catch(() => []);
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const assetRoot = path.join(VIDEO_LIBRARY_WORKSPACES_DIR, entry.name);
+    await fs.rm(path.join(assetRoot, "temp"), { recursive: true, force: true });
+    await removeEmptyParents(path.join(assetRoot, "source"), VIDEO_LIBRARY_WORKSPACES_DIR).catch(() => {});
+    await removeEmptyParents(assetRoot, VIDEO_LIBRARY_WORKSPACES_DIR).catch(() => {});
   }
 }
 
@@ -4870,6 +4892,13 @@ process.once("SIGTERM", () => { void shutdownServer("SIGTERM").finally(() => pro
 server.listen(PORT, "127.0.0.1", () => {
   console.log(`[startup] ${SERVICE} ${VERSION} (MariaDB obligatoire) sur http://127.0.0.1:${PORT}/`);
   void verifyMariaDbAvailability()
-    .then(() => console.log("[startup] MariaDB disponible."))
+    .then(async () => {
+      try {
+        await cleanupIncompleteWorkspaceDownloads();
+        console.log("[startup] MariaDB disponible ; temporaires de téléchargement nettoyés.");
+      } catch (error) {
+        console.error(`[startup] MariaDB disponible ; nettoyage des téléchargements incomplets impossible : ${error.message}`);
+      }
+    })
     .catch(() => console.error("[startup] Proto05 reste en mode diagnostic jusqu’au rétablissement de MariaDB."));
 });

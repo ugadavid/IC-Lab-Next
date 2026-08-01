@@ -1,6 +1,6 @@
 {
   "name": "proto05-augmented-video-server",
-  "version": "0.1.54",
+  "version": "0.1.55",
   "private": true,
   "description": "Serveur autonome local du Prototype 05.",
   "main": "server.js",
