@@ -67,6 +67,17 @@
         }
       ],
       "schemaManifest": "004_proto05_working_copy_delete.manifest.json"
+    },
+    {
+      "version": "005",
+      "description": "Suppression canonique d’un traitement terminal et de sa sortie locale non référencée",
+      "kind": "migration",
+      "sources": [
+        {
+          "path": "005_proto05_terminal_output_delete.sql"
+        }
+      ],
+      "schemaManifest": "005_proto05_terminal_output_delete.manifest.json"
     }
   ]
 }

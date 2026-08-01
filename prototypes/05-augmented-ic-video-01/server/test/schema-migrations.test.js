@@ -95,6 +95,8 @@ async function installCanonical(database, databaseName) {
 }
 
 async function removeAudioMigrationFixture(database) {
+  await database.query("DROP PROCEDURE sp_media_terminal_output_delete");
+  await database.query("DELETE FROM schema_migrations WHERE version = '005'");
   await database.query("DROP PROCEDURE sp_media_working_copy_delete");
   await database.query("DELETE FROM schema_migrations WHERE version = '004'");
   for (const routine of [
@@ -120,6 +122,8 @@ function copyCanonicalContract(label) {
     ["database/schema-migrations/003_proto05_audio_anonymization.manifest.json", "database/schema-migrations/003_proto05_audio_anonymization.manifest.json"],
     ["database/schema-migrations/004_proto05_working_copy_delete.sql", "database/schema-migrations/004_proto05_working_copy_delete.sql"],
     ["database/schema-migrations/004_proto05_working_copy_delete.manifest.json", "database/schema-migrations/004_proto05_working_copy_delete.manifest.json"],
+    ["database/schema-migrations/005_proto05_terminal_output_delete.sql", "database/schema-migrations/005_proto05_terminal_output_delete.sql"],
+    ["database/schema-migrations/005_proto05_terminal_output_delete.manifest.json", "database/schema-migrations/005_proto05_terminal_output_delete.manifest.json"],
     ["database/drafts/003_proto05_schema_hardening.sql", "database/drafts/003_proto05_schema_hardening.sql"],
     ["database/migrations/002_proto05_mariadb_schema_alignment.sql", "database/migrations/002_proto05_mariadb_schema_alignment.sql"],
     ["database/migrations/004_proto05_document_metadata_schema.sql", "database/migrations/004_proto05_document_metadata_schema.sql"],
@@ -210,13 +214,13 @@ test("empty install, populated baseline and a second run are deterministic", asy
     assert.equal(installed.state.action.type, "none");
     assert.deepEqual(installed.state.plan.currentSummary, {
       tables: 34, columns: 293, indexes: 95, foreignKeys: 51, checks: 74,
-      views: 0, routines: 48, triggers: 0, events: 0
+      views: 0, routines: 49, triggers: 0, events: 0
     });
-    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 48);
+    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 49);
     assert.ok(installed.state.actualSchema.routines.every(row => row.createStatement.startsWith("CREATE PROCEDURE")));
     const verified = await verifyDatabaseSchema({ database, ...runnerOptions(databaseName) });
-    assert.equal(verified.schemaVersion, "004");
-    assert.equal(verified.migrationCount, 4);
+    assert.equal(verified.schemaVersion, "005");
+    assert.equal(verified.migrationCount, 5);
     const second = await runMigrationCommand(database, runnerOptions(databaseName));
     assert.equal(second.changed, false);
 
@@ -245,6 +249,92 @@ test("empty install, populated baseline and a second run are deterministic", asy
     assert.deepEqual(after, before);
     const [[language]] = await database.query("SELECT label FROM languages WHERE id = 'm154-language'");
     assert.equal(language.label, "Mission 154");
+  });
+});
+
+test("terminal output deletion is transactional and refuses live dependencies", async () => {
+  await withDatabase("terminaloutput", async (database, databaseName) => {
+    await installCanonical(database, databaseName);
+    const suffix = crypto.randomBytes(4).toString("hex");
+    const assetId = `m165-asset-${suffix}`;
+    const originalSourceId = `m165-original-source-${suffix}`;
+    const originalPlayableId = `m165-original-playable-${suffix}`;
+    const treatmentId = `m165-treatment-${suffix}`;
+    const outputSourceId = `m165-output-source-${suffix}`;
+    const outputPlayableId = `m165-output-playable-${suffix}`;
+    await database.query(
+      "CALL sp_media_register_import(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        assetId, originalSourceId, originalPlayableId, "[TEST M165] asset",
+        "hls", "fixture", "hls", "original-remote",
+        "application/vnd.apple.mpegurl", "https://example.invalid/source.m3u8",
+        null, null, "https://example.invalid/source.m3u8", null, "available",
+        JSON.stringify({})
+      ]
+    );
+    await database.query(
+      "CALL sp_media_inline_treatment_start(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        treatmentId, null, assetId, originalPlayableId, "visual-anonymization",
+        "[TEST M165] output", treatmentId, "fixture", "1", JSON.stringify({})
+      ]
+    );
+    await database.query(
+      "CALL sp_media_inline_treatment_complete(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        treatmentId, outputSourceId, outputPlayableId, "workspace",
+        `${assetId}/derived/${treatmentId}/missing.mp4`, "video/mp4", 128, 1000,
+        "b".repeat(64), "aac", 1, "fixture-1", JSON.stringify({})
+      ]
+    );
+
+    const activityId = `m165-activity-${suffix}`;
+    await database.query(
+      "CALL sp_activity_create(?, ?, ?, ?, ?, ?)",
+      [activityId, "1.0.0", "[TEST M165] activité", "", "", ""]
+    );
+    await database.query(
+      "CALL sp_activity_set_primary_media(?, ?, ?, ?)",
+      [activityId, 1, assetId, outputPlayableId]
+    );
+    await assert.rejects(
+      database.query("CALL sp_media_terminal_output_delete(?, ?, ?)", [assetId, treatmentId, outputPlayableId]),
+      error => Number(error.errno) === 30505
+    );
+    await database.query("CALL sp_activity_delete(?, ?)", [activityId, 2]);
+
+    const dependentTreatmentId = `m165-dependent-${suffix}`;
+    await database.query(
+      "CALL sp_media_inline_treatment_start(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        dependentTreatmentId, null, assetId, outputPlayableId, "visual-anonymization",
+        "[TEST M165] dépendance", dependentTreatmentId, "fixture", "1", JSON.stringify({})
+      ]
+    );
+    await assert.rejects(
+      database.query("CALL sp_media_terminal_output_delete(?, ?, ?)", [assetId, treatmentId, outputPlayableId]),
+      error => Number(error.errno) === 30506
+    );
+    await database.query("DELETE FROM media_treatments WHERE id = ?", [dependentTreatmentId]);
+
+    await database.query(
+      "CALL sp_media_terminal_output_delete(?, ?, ?)",
+      [assetId, treatmentId, outputPlayableId]
+    );
+    const [[counts]] = await database.query(
+      "SELECT "
+        + "(SELECT COUNT(*) FROM media_treatments WHERE id = ?) treatments, "
+        + "(SELECT COUNT(*) FROM media_playables WHERE id = ?) outputs, "
+        + "(SELECT COUNT(*) FROM media_sources WHERE id = ?) output_sources, "
+        + "(SELECT COUNT(*) FROM media_playables WHERE id = ?) originals, "
+        + "(SELECT COUNT(*) FROM media_assets WHERE id = ?) assets",
+      [treatmentId, outputPlayableId, outputSourceId, originalPlayableId, assetId]
+    );
+    assert.deepEqual(
+      Object.fromEntries(Object.entries(counts).map(([key, value]) => [key, Number(value)])),
+      { treatments: 0, outputs: 0, output_sources: 0, originals: 1, assets: 1 }
+    );
+    await database.query("CALL sp_media_asset_delete(?)", [assetId]);
   });
 });
 
@@ -497,7 +587,7 @@ test("concurrent runners serialize and never double-register a migration", async
       const refused = results.find(item => item.status === "rejected");
       assert.equal(refused.reason.code, "PROTO05_MIGRATION_PLAN_DRIFT");
       const [[registry]] = await first.query("SELECT COUNT(*) count FROM schema_migrations");
-      assert.equal(Number(registry.count), 3);
+      assert.equal(Number(registry.count), 5);
     } finally {
       await second.end();
     }

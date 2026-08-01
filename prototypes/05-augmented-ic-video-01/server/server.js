@@ -83,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.56";
+const VERSION = "0.1.57";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -1777,7 +1777,7 @@ async function removeLibraryDerivation(assetId, derivationId) {
   try {
     if (file && stat?.isFile()) await fs.unlink(file);
     await persistCanonicalLibrary(canonical);
-    if (file) await fs.rm(path.dirname(file), { recursive: false }).catch(() => {});
+    if (file) await removeEmptyParents(path.dirname(file), VIDEO_LIBRARY_WORKSPACES_DIR).catch(() => {});
     return { assetId, derivationId, deletedFile: Boolean(stat?.isFile()) };
   } catch (error) {
     if (backup && file) try { await fs.copyFile(backup, file); } catch (restoreError) { error.message += ` Restauration impossible : ${restoreError.message}`; }

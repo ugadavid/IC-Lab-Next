@@ -7,6 +7,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const { startTemporaryProto05Server } = require("./helpers/temporary-proto05-server");
+const { mariadbConfigurationFromEnvironment } = require("../proto05-data-mode");
 const {
   cleanupDownloadWorkspace,
   createDownloadWorkspace,
@@ -16,6 +17,30 @@ const {
 const prototypeDirectory = path.resolve(__dirname, "..", "..");
 const workspaceRoot = path.join(prototypeDirectory, "data", "video-library-workspaces");
 const fakeFfmpeg = path.join(__dirname, "fixtures", "fake-ffmpeg.js");
+const mysql = require(path.resolve(
+  prototypeDirectory,
+  "..",
+  "00-ic-hub",
+  "server",
+  "node_modules",
+  "mysql2",
+  "promise"
+));
+
+let localEnvironmentLoaded = false;
+
+async function databaseConnection() {
+  if (!localEnvironmentLoaded) {
+    process.loadEnvFile(path.join(prototypeDirectory, ".env.local"));
+    localEnvironmentLoaded = true;
+  }
+  return mysql.createConnection({
+    ...mariadbConfigurationFromEnvironment(process.env),
+    charset: "utf8mb4",
+    dateStrings: true,
+    multipleStatements: false
+  });
+}
 
 async function request(baseUrl, pathname, options = {}) {
   const response = await fetch(`${baseUrl}${pathname}`, options);
@@ -72,7 +97,11 @@ async function createRemoteAsset(server, url, marker) {
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ token: analyzed.body.token })
   });
-  assert.equal(confirmed.response.status, 201, confirmed.body.error);
+  assert.equal(
+    confirmed.response.status,
+    201,
+    `${JSON.stringify(confirmed.body)}\n${server.stderr?.() || ""}`
+  );
   return { assetId: confirmed.body.assetId, playableId: confirmed.body.playableId };
 }
 
@@ -301,6 +330,99 @@ test("une copie dont le fichier a disparu peut être retirée logiquement sans t
     await removeRemoteAsset(server, asset.assetId);
     asset = null;
   } finally {
+    if (asset) await removeRemoteAsset(server, asset.assetId).catch(() => {});
+    await server.cleanup();
+    await origin.close();
+  }
+});
+
+test("une sortie locale absente et son traitement terminal sont supprimés ensemble", { timeout: 30_000 }, async () => {
+  const origin = await startHlsFixture();
+  const server = await startTemporaryProto05Server(
+    { activities: [] },
+    "proto05-m165-terminal-output-",
+    { env: { PROTO05_TEST_ALLOW_PRIVATE_REMOTE: "1" } }
+  );
+  let asset = null;
+  let database = null;
+  try {
+    asset = await createRemoteAsset(server, origin.url, "sortie terminale absente");
+    const suffix = `${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+    const treatmentId = `m165-treatment-${suffix}`;
+    const sourceId = `source-${treatmentId}`;
+    const playableId = `video-${treatmentId}`;
+    const storageKey = `${asset.assetId}/derived/${treatmentId}/ghost-output.mp4`;
+    database = await databaseConnection();
+    await database.query(
+      "CALL sp_media_inline_treatment_start(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        treatmentId,
+        null,
+        asset.assetId,
+        asset.playableId,
+        "visual-anonymization",
+        "[TEST M165] sortie absente",
+        treatmentId,
+        "fixture",
+        "1",
+        JSON.stringify({ mission: 165 })
+      ]
+    );
+    await database.query(
+      "CALL sp_media_inline_treatment_complete(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        treatmentId,
+        sourceId,
+        playableId,
+        "workspace",
+        storageKey,
+        "video/mp4",
+        128,
+        1000,
+        "a".repeat(64),
+        "aac",
+        1,
+        "fixture-1",
+        JSON.stringify({ completed: true })
+      ]
+    );
+    const emptyOutputDirectory = path.dirname(path.join(workspaceRoot, storageKey));
+    fs.mkdirSync(emptyOutputDirectory, { recursive: true });
+
+    const before = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}`);
+    const output = before.body.asset.versionsAndAccess.derivations.find(item => item.derivationId === treatmentId);
+    assert.equal(output.id, playableId);
+    assert.equal(output.localFileState, "missing");
+
+    const removed = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}/derivations/${encodeURIComponent(treatmentId)}`,
+      { method: "DELETE" }
+    );
+    assert.equal(removed.response.status, 200, removed.body.error);
+    assert.equal(removed.body.deletedFile, false);
+    assert.equal(fs.existsSync(emptyOutputDirectory), false);
+
+    const after = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}`);
+    assert.equal(after.response.status, 200);
+    assert.equal(after.body.asset.versionsAndAccess.derivations.some(item => item.id === playableId), false);
+    assert.equal(after.body.asset.usage.otherDependencies.treatments.some(item => item.id === treatmentId), false);
+    assert.ok(after.body.asset.playables.some(item => item.id === asset.playableId));
+    const [[counts]] = await database.query(
+      "SELECT "
+        + "(SELECT COUNT(*) FROM media_treatments WHERE id = ?) AS treatments, "
+        + "(SELECT COUNT(*) FROM media_playables WHERE id = ?) AS playables, "
+        + "(SELECT COUNT(*) FROM media_sources WHERE id = ?) AS sources",
+      [treatmentId, playableId, sourceId]
+    );
+    assert.deepEqual(
+      { treatments: Number(counts.treatments), playables: Number(counts.playables), sources: Number(counts.sources) },
+      { treatments: 0, playables: 0, sources: 0 }
+    );
+    await removeRemoteAsset(server, asset.assetId);
+    asset = null;
+  } finally {
+    await database?.end();
     if (asset) await removeRemoteAsset(server, asset.assetId).catch(() => {});
     await server.cleanup();
     await origin.close();

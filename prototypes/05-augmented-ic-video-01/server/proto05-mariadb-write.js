@@ -598,6 +598,7 @@ async function executeSnapshotProcedures({
   const sourcePlan = planFor(plans, "media_sources");
   const playablePlan = planFor(plans, "media_playables");
   const metadataPlan = planFor(plans, "media_playable_metadata");
+  const treatmentPlan = planFor(plans, "media_treatments");
   for (const asset of mediaAssetPlan.inserts.filter(row => row.lifecycle !== "reserved")) {
     const source = sourcePlan.inserts.find(row => row.asset_id === asset.id);
     const playable = playablePlan.inserts.find(row => row.asset_id === asset.id && row.source_id === source?.id);
@@ -680,7 +681,33 @@ async function executeSnapshotProcedures({
   }
 
   const deletedAssetIds = new Set(mediaAssetPlan.deletes.map(row => row.id));
-  for (const row of playablePlan.deletes.filter(item => !deletedAssetIds.has(item.asset_id))) {
+  const terminalOutputPlayableIds = new Set();
+  for (const treatment of treatmentPlan.deletes.filter(row => (
+    !deletedAssetIds.has(row.source_asset_id)
+    && !deletedAssetIds.has(row.output_asset_id)
+  ))) {
+    const output = playablePlan.deletes.find(row => (
+      row.id === treatment.output_playable_id
+      && row.asset_id === treatment.output_asset_id
+      && row.kind === "local-file"
+      && row.role === "derivation-local"
+    ));
+    if (!output) {
+      const error = new Error("La suppression d’un traitement isolé exige sa sortie locale de dérivation.");
+      error.code = "PROTO05_PROCEDURE_OPERATION_UNSUPPORTED";
+      throw error;
+    }
+    await invoke("sp_media_terminal_output_delete", [
+      output.asset_id,
+      treatment.id,
+      output.id
+    ]);
+    terminalOutputPlayableIds.add(output.id);
+  }
+  for (const row of playablePlan.deletes.filter(item => (
+    !deletedAssetIds.has(item.asset_id)
+    && !terminalOutputPlayableIds.has(item.id)
+  ))) {
     await invoke("sp_media_working_copy_delete", [row.asset_id, row.id]);
   }
 
