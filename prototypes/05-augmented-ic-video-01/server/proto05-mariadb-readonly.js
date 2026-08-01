@@ -3,7 +3,7 @@
 const { verifyDatabaseSchema } = require("./schema-migrations");
 
 const path = require("node:path");
-const { projectCanonicalLibrary } = require("./media-library-runtime");
+const { projectCanonicalLibrary } = require("./media-library-projection");
 
 const PEDAGOGICAL_TEXT_FIELDS = Object.freeze({
   "adaptable-elements": "adaptableElements",
