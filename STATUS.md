@@ -34,15 +34,21 @@ périmètre actif. Seven Sieves reste présent dans le composant Dico-IC.
 
 ## Launcher global
 
-**Vérifié.** [`START_IC_LAB_NEXT.bat`](START_IC_LAB_NEXT.bat) appelle les
-launchers dans l’ordre suivant : Proto05 `8791`, IC-Hub `8790`, Agent vocal
-`8788`, puis Dico-IC avec MariaDB `3306` avant Node `3000`. Le portail Hub est
-ensuite ouvert, même si un service autonome manque.
+**Vérifié le 1er août 2026.** [`START_IC_LAB_NEXT.bat`](START_IC_LAB_NEXT.bat)
+effectue un redémarrage réel de Proto05 `8791`, IC-Hub `8790`, Agent vocal
+`8788` et Dico-IC `3000`, puis les regroupe dans une fenêtre Windows Terminal.
+Chaque processus est authentifié, son port et sa disponibilité HTTP sont
+contrôlés, et le portail Hub est ouvert lorsque les quatre services sont prêts.
+
+[`STOP_IC_LAB_NEXT.bat`](STOP_IC_LAB_NEXT.bat) arrête uniquement les processus
+du lancement authentifié et peut être relancé sans erreur. Les deux lanceurs
+globaux ne pilotent jamais Docker ni MariaDB ; `3306` est seulement vérifié en
+lecture au démarrage.
 
 [`check-status.bat`](scripts/windows/check-status.bat) vérifie Docker et
 l’ouverture des cinq ports sans démarrer de service ni appeler d’endpoint HTTP.
-Les launchers ne font ni installation npm, ni migration, ni import SQL, ni
-réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
+Les launchers globaux ne font ni installation npm, ni migration, ni import SQL,
+ni réinitialisation de base. Voir [PROJECTS_LAUNCH.md](PROJECTS_LAUNCH.md).
 
 ## Proto05 — état prioritaire
 

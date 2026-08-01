@@ -1,6 +1,6 @@
 # Architecture d’IC-Lab-Next
 
-État observé dans le dépôt le **16 juillet 2026**. Ce document décrit
+État observé dans le dépôt, avec lanceur global revérifié le **1er août 2026**. Ce document décrit
 l’organisation courante du workspace et les frontières entre ses composants. Il
 ne remplace ni les guides de lancement, ni les README métier, ni le statut
 courant ou les règles de contribution.
@@ -17,8 +17,8 @@ Trois niveaux sont distingués dans la suite :
   actuelle.
 
 Les ports indiqués sont les ports déclarés par les configurations et launchers.
-Aucun service n’a été démarré pour produire ce document ; leur disponibilité
-runtime au 16 juillet 2026 n’est donc pas affirmée ici.
+La recette du lanceur global a confirmé leur disponibilité le 1er août 2026 ;
+les autres constats runtime historiques ne sont pas implicitement réactualisés.
 
 ## Périmètre du workspace
 
@@ -113,18 +113,24 @@ pas vérifiable sans consulter la configuration locale ou démarrer le serveur.
 ```text
 START_IC_LAB_NEXT.bat
   -> scripts/windows/start-all.bat
-       1. démarre ou réutilise Proto05             :8791
-       2. démarre ou réutilise IC-Hub              :8790
-       3. démarre ou réutilise l’Agent vocal       :8788
-       4. docker compose up -d pour Dico-IC
-          -> attend MariaDB                        :3306
-          -> démarre ou réutilise le serveur Node  :3000
-       5. vérifie les quatre serveurs et ouvre http://127.0.0.1:8790/
+       1. authentifie et arrête l’ancien lancement
+       2. attend la libération des ports applicatifs
+       3. vérifie MariaDB en lecture seule         :3306
+       4. ouvre une fenêtre Windows Terminal
+          -> Proto05                               :8791
+          -> IC-Hub                                :8790
+          -> Agent vocal                           :8788
+          -> Dico-IC                               :3000
+       5. vérifie PID, port et disponibilité HTTP
+       6. ouvre http://127.0.0.1:8790/
 ```
 
-Le launcher ne fait ni `npm install`, ni migration, ni exécution SQL, ni
-initialisation explicite de base. Le détail opérationnel et l’arrêt sûr restent
-dans [PROJECTS_LAUNCH.md](../PROJECTS_LAUNCH.md) et le
+Le lanceur global ne fait ni `npm install`, ni migration, ni exécution SQL, ni
+commande Docker. Son pendant `STOP_IC_LAB_NEXT.bat` arrête uniquement les
+processus authentifiés par le témoin local et le jeton du lancement. MariaDB est
+une dépendance externe contrôlée en lecture seule et n’est jamais une cible
+d’arrêt. Le détail opérationnel reste dans
+[PROJECTS_LAUNCH.md](../PROJECTS_LAUNCH.md) et le
 [guide des launchers Windows](../scripts/windows/README.md).
 
 ### Accès depuis le portail
@@ -269,8 +275,8 @@ la chaîne HLS complète, ni pour sa dépendance locale à hls.js.
 
 - **Portail** : présente les destinations et conserve les parcours Hub; il ne
   fusionne pas les applications.
-- **Launcher** : démarre ou réutilise les processus; il n’installe, ne migre et
-  ne possède rien.
+- **Launcher** : redémarre les processus applicatifs authentifiés; il n’installe,
+  ne migre, ne pilote pas Docker et ne possède aucune donnée.
 - **Prototypes** : conservent leur logique pédagogique, leurs pages et leurs
   données métier propres.
 - **Services transversaux Hub** : comptes, cours, assignations, runs, catalogues,
@@ -329,7 +335,7 @@ Les divergences les plus structurantes sont :
 | README racine et README Proto05 | Référencent encore `0.0.6`/`0.0.6.2` et présentent le serveur autonome comme futur | Le serveur sert `index-0.0.9.html`, version serveur/package `0.1.16` |
 | README IC-Hub | Présente la séparation Proto05 comme future | La séparation existe; seules les routes de compatibilité et le HLS restent au Hub |
 | README du serveur Proto05 | Affirme d’abord que `PUT` métadonnées est la seule écriture, puis documente l’atelier | Le code expose aussi `POST` de création et `PUT .../authoring` |
-| Guide des launchers Windows | Sa phrase d’ouverture omet Proto05 | `start-all.bat` lance effectivement Proto05 en premier |
+| Guide des launchers Windows (constat historique) | Sa phrase d’ouverture omettait Proto05 | Corrigé ; le démarrage global redémarre désormais les quatre serveurs dans Windows Terminal |
 
 Le rapport associé donne la liste complète des contrôles et contradictions :
 [rapport 028](../reports/028_workspace_architecture_documentation_report.md).

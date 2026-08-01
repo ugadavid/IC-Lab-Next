@@ -1,13 +1,14 @@
 # Lancement des projets IC-Lab-Next
 
-État documentaire vérifié le **16 juillet 2026** à partir de
+État documentaire vérifié le **1er août 2026** à partir de
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) et des launchers présents dans
 `scripts/windows/`.
 
 Ce document indique comment les composants actifs sont lancés et atteints en
-local. Les ports ci-dessous sont ceux déclarés par les scripts et serveurs. Aucun
-service n’a été démarré pendant cette vérification documentaire ; leur
-disponibilité runtime n’est donc pas affirmée ici.
+local. Les ports ci-dessous sont ceux déclarés par les scripts et serveurs. Le
+démarrage, le redémarrage et l’arrêt globaux ont été vérifiés sur les quatre
+services le 1er août 2026 ; les sections propres aux composants restent fondées
+sur leurs scripts et leur documentation spécialisée.
 
 ## Vue d’ensemble
 
@@ -26,31 +27,45 @@ Informaticaire n’a pas de serveur autonome : IC-Hub sert ses fichiers sous
 
 Le point d’entrée est
 [`START_IC_LAB_NEXT.bat`](START_IC_LAB_NEXT.bat). Il délègue à
-[`scripts/windows/start-all.bat`](scripts/windows/start-all.bat), qui appelle les
-launchers spécialisés dans cet ordre exact :
+[`scripts/windows/start-all.bat`](scripts/windows/start-all.bat), qui effectue un
+redémarrage authentifié dans cet ordre :
 
 ```text
 START_IC_LAB_NEXT.bat
   -> start-all.bat
-       1. start-proto05.bat       -> 8791
-       2. start-hub.bat           -> 8790
-       3. start-agent-vocal.bat   -> 8788
-       4. start-dico-seven.bat
-            -> docker compose up -d
-            -> attend MariaDB     -> 3306
-            -> démarre Node       -> 3000
-       5. contrôle les quatre serveurs
+       1. arrête le lancement IC-Lab-Next précédent
+       2. attend la libération de 8791, 8790, 8788 et 3000
+       3. vérifie MariaDB en lecture seule                 -> 3306
+       4. ouvre quatre onglets Windows Terminal
+            Proto05       -> 8791
+            IC-Hub        -> 8790
+            Agent vocal   -> 8788
+            Dico-IC       -> 3000
+       5. contrôle identité, port et disponibilité HTTP
        6. ouvre http://127.0.0.1:8790/
 ```
 
-Chaque launcher réutilise le service si son port est déjà ouvert. Après les
-appels de démarrage, `start-all.bat` attend jusqu’à 30 tentatives par serveur et
-affiche un résumé `démarré ou déjà actif`, `indisponible` ou `délai dépassé`.
-Le portail Hub est ouvert même si l’un des services autonomes manque.
+Le démarrage global ne réutilise jamais un serveur existant : il authentifie et
+arrête l’ancien lancement, puis crée de nouveaux processus à partir du code sur
+disque. Un port occupé par un processus étranger provoque un refus explicite et
+ce processus reste intact. IC-Hub n’est ouvert qu’après la disponibilité des
+quatre services. En l’absence de Windows Terminal, le lanceur annonce son repli
+vers une fenêtre PowerShell par service.
+
+[`STOP_IC_LAB_NEXT.bat`](STOP_IC_LAB_NEXT.bat) délègue à
+[`scripts/windows/stop-all.bat`](scripts/windows/stop-all.bat). L’arrêt repose
+sur le témoin local ignoré par Git, le jeton du lancement et l’identité exacte
+des processus ; un port ouvert ne constitue jamais une autorisation de tuer son
+propriétaire. STOP est idempotent.
 
 Les launchers utilisent des chemins calculés depuis leur propre emplacement. Ils
 peuvent donc être appelés depuis un autre répertoire courant ou depuis un clone
 placé dans un chemin contenant des espaces.
+
+Les lanceurs globaux n’exécutent aucune commande Docker. MariaDB doit déjà être
+active ; son port `3306` est uniquement contrôlé comme dépendance et n’est jamais
+une cible d’arrêt. Les lanceurs individuels conservent leur comportement
+historique lorsqu’ils sont appelés directement.
 
 ## Contrôle d’état sans démarrage
 

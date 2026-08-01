@@ -1,0 +1,63 @@
+{
+  "formatVersion": 1,
+  "projectId": "IC-Lab-Next",
+  "browserUrl": "http://127.0.0.1:8790/",
+  "dependencies": [
+    {
+      "id": "mariadb",
+      "label": "MariaDB",
+      "host": "127.0.0.1",
+      "port": 3306
+    }
+  ],
+  "services": [
+    {
+      "id": "proto05",
+      "title": "Proto05",
+      "workingDirectory": "prototypes/05-augmented-ic-video-01/server",
+      "executable": "node.exe",
+      "arguments": ["--env-file=../.env.local", "server.js"],
+      "requiredPaths": ["prototypes/05-augmented-ic-video-01/server/server.js", "prototypes/05-augmented-ic-video-01/.env.local"],
+      "port": 8791,
+      "readinessUrl": "http://127.0.0.1:8791/api/health",
+      "readinessPattern": "proto05-augmented-video",
+      "legacyCommandFragments": ["--env-file=../.env.local", "server.js"]
+    },
+    {
+      "id": "hub",
+      "title": "IC-Hub",
+      "workingDirectory": "prototypes/00-ic-hub/server",
+      "executable": "node.exe",
+      "arguments": ["server.js"],
+      "requiredPaths": ["prototypes/00-ic-hub/server/server.js", "prototypes/00-ic-hub/server/node_modules"],
+      "port": 8790,
+      "readinessUrl": "http://127.0.0.1:8790/api/health",
+      "readinessPattern": "ic-hub",
+      "legacyCommandFragments": ["server.js"]
+    },
+    {
+      "id": "voice",
+      "title": "Agent vocal",
+      "workingDirectory": "prototypes/06-voice-agent-ic/server",
+      "executable": "node.exe",
+      "arguments": ["server.js"],
+      "requiredPaths": ["prototypes/06-voice-agent-ic/server/server.js"],
+      "port": 8788,
+      "readinessUrl": "http://127.0.0.1:8788/api/health",
+      "readinessPattern": "proto06-connected-backend",
+      "legacyCommandFragments": ["server.js"]
+    },
+    {
+      "id": "dico",
+      "title": "Dico-IC",
+      "workingDirectory": "prototypes/08-dico-seven-sieves/Node",
+      "executable": "node.exe",
+      "arguments": ["server.js"],
+      "requiredPaths": ["prototypes/08-dico-seven-sieves/Node/server.js", "prototypes/08-dico-seven-sieves/Node/node_modules"],
+      "port": 3000,
+      "readinessUrl": "http://127.0.0.1:3000/admin-app/index-admin-0.1.html",
+      "readinessPattern": "Dico-IC",
+      "legacyCommandFragments": ["server.js"]
+    }
+  ]
+}
