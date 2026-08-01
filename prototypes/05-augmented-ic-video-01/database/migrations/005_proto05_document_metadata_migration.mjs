@@ -9,10 +9,9 @@ import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 
 import {
-  DEFAULT_PROTOTYPE_DIRECTORY,
-  TABLE_DEFINITIONS,
-  stableStringify
+  DEFAULT_PROTOTYPE_DIRECTORY
 } from "./001_proto05_json_to_mariadb_dry_run.mjs";
+import { TABLE_DEFINITIONS, stableStringify } from "../../server/proto05-relational-mapping.mjs";
 import {
   prepareValidatedPlan as prepareCorePlan,
   verifyBackup

@@ -1,5 +1,6 @@
 "use strict";
 
+const fs = require("node:fs");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const {
@@ -725,17 +726,30 @@ function createMariaDbWriteAdapter({
   mysql = null
 }) {
   const client = mysql || defaultMysqlModule(prototypeDirectory, mysqlModulePath);
-  const migrationModuleUrl = pathToFileURL(path.join(
+  const mappingModuleUrl = pathToFileURL(path.join(
     prototypeDirectory,
-    "database",
-    "migrations",
-    "001_proto05_json_to_mariadb_dry_run.mjs"
+    "server",
+    "proto05-relational-mapping.mjs"
   )).href;
   let contractPromise = null;
 
   async function contract() {
-    contractPromise ||= import(migrationModuleUrl);
+    contractPromise ||= import(mappingModuleUrl);
     return contractPromise;
+  }
+
+  function observeLocalPlayable({ storageScope, storageKey }) {
+    const physicalRoot = storageScope === "workspace"
+      ? path.join(prototypeDirectory, "data", "video-library-workspaces")
+      : path.join(prototypeDirectory, "data", "video-library-media");
+    const resolvedFile = storageKey ? path.resolve(physicalRoot, storageKey) : null;
+    const rootPrefix = `${path.resolve(physicalRoot)}${path.sep}`;
+    const safe = Boolean(resolvedFile && resolvedFile.startsWith(rootPrefix));
+    const exists = Boolean(safe && fs.existsSync(resolvedFile) && fs.statSync(resolvedFile).isFile());
+    return {
+      exists,
+      actualSize: exists ? fs.statSync(resolvedFile).size : null
+    };
   }
 
   async function connection() {
@@ -838,7 +852,7 @@ function createMariaDbWriteAdapter({
       languages: snapshot.languageCatalog
     };
     const { relationalModelFromCanonicalSnapshot } = await contract();
-    const { model } = relationalModelFromCanonicalSnapshot(mapperInput, { prototypeDirectory });
+    const { model } = relationalModelFromCanonicalSnapshot(mapperInput, { observeLocalPlayable });
     const row = (table, column, value) => model.tables.get(table).rows
       .map(entry => entry.data)
       .find(entry => entry[column] === value);
@@ -887,7 +901,7 @@ function createMariaDbWriteAdapter({
         languages: snapshot.languageCatalog
       };
       const { TABLE_DEFINITIONS, relationalModelFromCanonicalSnapshot } = await contract();
-      const { model } = relationalModelFromCanonicalSnapshot(mapperInput, { prototypeDirectory });
+      const { model } = relationalModelFromCanonicalSnapshot(mapperInput, { observeLocalPlayable });
       const definitions = [
         MANAGED_METADATA,
         ...TABLE_DEFINITIONS.filter(definition => READ_TABLES.some(([name]) => name === definition.name)

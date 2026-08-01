@@ -8,9 +8,9 @@ import path from "node:path";
 import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import {
-  deterministicResult,
-  stableStringify
+  deterministicResult
 } from "./001_proto05_json_to_mariadb_dry_run.mjs";
+import { stableStringify } from "../../server/proto05-relational-mapping.mjs";
 import { assertExplicitHistoricalTestDatabase } from "./historical-test-database-guard.mjs";
 
 const require = createRequire(import.meta.url);

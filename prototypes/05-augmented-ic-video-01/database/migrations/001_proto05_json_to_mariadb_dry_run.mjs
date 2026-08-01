@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
+import { relationalModelFromCanonicalSnapshot as mapCanonicalSnapshot } from "../../server/proto05-relational-mapping.mjs";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
 const SCRIPT_DIRECTORY = path.dirname(SCRIPT_FILE);
@@ -2290,6 +2291,20 @@ function addSourceRows(model, sources, diagnostics, prototypeDirectory) {
   return { physicalObservations };
 }
 
+function observeLocalPlayableFromFilesystem({ playable, storageScope, storageKey }, prototypeDirectory) {
+  const physicalRoot = storageScope === "workspace"
+    ? path.join(prototypeDirectory, "data", "video-library-workspaces")
+    : path.join(prototypeDirectory, "data", "video-library-media");
+  const resolvedFile = storageKey ? path.resolve(physicalRoot, storageKey) : null;
+  const rootPrefix = `${path.resolve(physicalRoot)}${path.sep}`;
+  const safe = Boolean(resolvedFile && resolvedFile.startsWith(rootPrefix));
+  const exists = Boolean(safe && fs.existsSync(resolvedFile) && fs.statSync(resolvedFile).isFile());
+  return {
+    exists,
+    actualSize: exists ? fs.statSync(resolvedFile).size : null
+  };
+}
+
 function assertUniqueIds(items, label) {
   const seen = new Set();
   for (const item of items) {
@@ -3587,9 +3602,13 @@ function deterministicResult(prototypeDirectory) {
     };
   }
 
-  const model = modelFactory();
-  const observations = addSourceRows(model, sources, collector, prototypeDirectory);
-  validateIntermediate(model, collector);
+  const snapshot = Object.fromEntries(sources.map(source => [source.key, source.value]));
+  const mapped = mapCanonicalSnapshot(snapshot, {
+    observeLocalPlayable: observation => observeLocalPlayableFromFilesystem(observation, prototypeDirectory),
+    throwOnBlockers: false
+  });
+  const { model, observations } = mapped;
+  collector.diagnostics.push(...mapped.diagnostics);
   const coverage = coverageInventory(sources, model, collector, prototypeDirectory);
   const fieldInventory = coverage.inventory;
 
@@ -3667,61 +3686,9 @@ function deterministicResult(prototypeDirectory) {
 function relationalModelFromCanonicalSnapshot(snapshot, {
   prototypeDirectory = DEFAULT_PROTOTYPE_DIRECTORY
 } = {}) {
-  if (!snapshot || typeof snapshot !== "object" || Array.isArray(snapshot)) {
-    throw new TypeError("canonical snapshot must be an object");
-  }
-  const values = {
-    activities: snapshot.activities,
-    activityLibrary: snapshot.activityLibrary,
-    mediaLibrary: snapshot.mediaLibrary || snapshot.videoLibrary,
-    videoCatalog: snapshot.videoCatalog,
-    languages: snapshot.languages || snapshot.languageCatalog
-  };
-  for (const definition of SOURCE_DEFINITIONS) {
-    if (!values[definition.key] || typeof values[definition.key] !== "object") {
-      const error = new Error(`canonical snapshot is missing ${definition.key}`);
-      error.code = "SNAPSHOT_SOURCE_MISSING";
-      throw error;
-    }
-  }
-  const sources = SOURCE_DEFINITIONS.map(definition => {
-    const value = structuredClone(values[definition.key]);
-    const bytes = Buffer.from(`${stableStringify(value)}\n`, "utf8");
-    return {
-      ...definition,
-      absolutePath: null,
-      size: bytes.length,
-      sha256: sha256(bytes),
-      value
-    };
+  return mapCanonicalSnapshot(snapshot, {
+    observeLocalPlayable: observation => observeLocalPlayableFromFilesystem(observation, prototypeDirectory)
   });
-  const collector = diagnosticCollector();
-  const model = modelFactory();
-  const observations = addSourceRows(model, sources, collector, prototypeDirectory);
-  validateIntermediate(model, collector);
-  for (const table of model.tables.values()) {
-    table.rows.sort((left, right) => (
-      rowKey(left.data, table.pk).localeCompare(rowKey(right.data, table.pk))
-    ));
-  }
-  collector.diagnostics.sort((a, b) => (
-    a.severity.localeCompare(b.severity)
-    || a.code.localeCompare(b.code)
-    || stableStringify(a.context).localeCompare(stableStringify(b.context))
-  ));
-  const blockers = collector.diagnostics.filter(item => item.severity === "blocker");
-  if (blockers.length) {
-    const error = new Error("canonical snapshot cannot be represented by the MariaDB contract");
-    error.code = "SNAPSHOT_RELATIONAL_MAPPING_BLOCKED";
-    error.diagnostics = blockers;
-    throw error;
-  }
-  return {
-    model,
-    sources,
-    diagnostics: collector.diagnostics,
-    observations
-  };
 }
 
 function expectErrorCode(label, expectedCode, callback) {

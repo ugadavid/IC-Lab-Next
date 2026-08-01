@@ -74,6 +74,7 @@ test("le graphe du serveur exclut les lecteurs et outils JSON métier historique
   }
   assert.doesNotMatch(sources, /activities\.json|activity-library\.json|video-catalog\.json|video-library\.json/);
   assert.doesNotMatch(sources, /readCanonicalMediaLibrary(?:Async)?/);
+  assert.doesNotMatch(sources, /database[\\/]["'`,\s]*migrations|001_proto05_json_to_mariadb_dry_run/);
 
   const projectionSource = fs.readFileSync(path.join(serverDirectory, "media-library-projection.js"), "utf8");
   assert.doesNotMatch(projectionSource, /node:fs|readFile|writeFile|rename|copyFile/);

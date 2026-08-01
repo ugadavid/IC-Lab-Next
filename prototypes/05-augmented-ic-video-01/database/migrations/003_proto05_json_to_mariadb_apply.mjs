@@ -8,10 +8,9 @@ import { fileURLToPath } from "node:url";
 
 import {
   DEFAULT_PROTOTYPE_DIRECTORY,
-  TABLE_DEFINITIONS,
-  deterministicResult,
-  stableStringify
+  deterministicResult
 } from "./001_proto05_json_to_mariadb_dry_run.mjs";
+import { TABLE_DEFINITIONS, stableStringify } from "../../server/proto05-relational-mapping.mjs";
 import { assertExplicitHistoricalTestDatabase } from "./historical-test-database-guard.mjs";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
