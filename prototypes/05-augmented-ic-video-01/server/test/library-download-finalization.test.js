@@ -80,10 +80,11 @@ async function removeRemoteAsset(server, assetId) {
   let detail = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(assetId)}`);
   if (detail.response.status === 404) return;
   for (const copy of detail.body.asset.localCopies || []) {
+    detail = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(assetId)}`);
     const removed = await request(
       server.baseUrl,
       `/api/proto05/library/assets/${encodeURIComponent(assetId)}/local-copies/${encodeURIComponent(copy.playableId)}`,
-      { method: "DELETE" }
+      { method: "DELETE", headers: { "if-match": detail.body.asset.deletionRevisionToken } }
     );
     assert.equal(removed.response.status, 200, removed.body.error);
   }
@@ -251,6 +252,56 @@ test("un téléchargement HLS court est publié sans écrasement puis nettoyé",
       await removeRemoteAsset(server, asset.assetId).catch(() => {});
       fs.rmSync(path.join(workspaceRoot, asset.assetId), { recursive: true, force: true });
     }
+    await server.cleanup();
+    await origin.close();
+  }
+});
+
+test("une copie dont le fichier a disparu peut être retirée logiquement sans toucher aux autres accès", { timeout: 30_000 }, async () => {
+  const origin = await startHlsFixture();
+  const server = await startTemporaryProto05Server(
+    { activities: [] },
+    "proto05-m164-missing-copy-",
+    { env: { PROTO05_TEST_ALLOW_PRIVATE_REMOTE: "1", PROTO05_TEST_FFMPEG_SCRIPT: fakeFfmpeg } }
+  );
+  let asset = null;
+  try {
+    asset = await createRemoteAsset(server, origin.url, "copie physiquement absente");
+    const started = await request(server.baseUrl, "/api/proto05/library/downloads", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...asset, fileName: "m164-missing-copy.mp4" })
+    });
+    assert.equal(started.response.status, 202, started.body.error);
+    const job = await waitForJob(server.baseUrl, started.body.job.id);
+    assert.equal(job.status, "completed", job.error);
+    const file = path.join(workspaceRoot, job.result.storageKey);
+    fs.rmSync(file);
+
+    const before = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}`);
+    const copy = before.body.asset.localCopies.find(item => item.playableId === job.result.playableId);
+    assert.equal(copy.fileState, "missing");
+    assert.equal(copy.deletion.allowed, true);
+    const removed = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}/local-copies/${encodeURIComponent(copy.playableId)}`,
+      { method: "DELETE", headers: { "if-match": before.body.asset.deletionRevisionToken } }
+    );
+    assert.equal(removed.response.status, 200, removed.body.error);
+    assert.equal(removed.body.deletedFile, false);
+    assert.equal(removed.body.fileWasAlreadyMissing, true);
+    const after = await request(server.baseUrl, `/api/proto05/library/assets/${encodeURIComponent(asset.assetId)}`);
+    assert.equal(after.response.status, 200);
+    assert.equal(
+      after.body.asset.localCopies.some(item => item.playableId === copy.playableId),
+      false,
+      JSON.stringify(after.body.asset.localCopies)
+    );
+    assert.ok(after.body.asset.playables.some(item => item.id === asset.playableId));
+    await removeRemoteAsset(server, asset.assetId);
+    asset = null;
+  } finally {
+    if (asset) await removeRemoteAsset(server, asset.assetId).catch(() => {});
     await server.cleanup();
     await origin.close();
   }

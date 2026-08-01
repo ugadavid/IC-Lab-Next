@@ -905,6 +905,7 @@ module.exports = {
   inspectDatabaseSchema,
   inspectMigrationState,
   loadMigrationContract,
+  normalizeRoutineCreateStatement,
   protectedDataWitness,
   runMigrationCommand,
   schemaFingerprint,

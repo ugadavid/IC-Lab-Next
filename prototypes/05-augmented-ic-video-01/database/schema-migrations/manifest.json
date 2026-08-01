@@ -56,6 +56,17 @@
         }
       ],
       "schemaManifest": "003_proto05_audio_anonymization.manifest.json"
+    },
+    {
+      "version": "004",
+      "description": "Suppression canonique d’une copie locale de travail non référencée",
+      "kind": "migration",
+      "sources": [
+        {
+          "path": "004_proto05_working_copy_delete.sql"
+        }
+      ],
+      "schemaManifest": "004_proto05_working_copy_delete.manifest.json"
     }
   ]
 }

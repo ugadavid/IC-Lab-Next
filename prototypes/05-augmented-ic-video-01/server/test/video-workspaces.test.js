@@ -150,7 +150,29 @@ test("l’aperçu remplace le visuel de la carte sans ajouter une ligne", () => 
   assert.match(html, /shell\.parentElement\?\.querySelector\('\.asset-visual'\)\?\.setAttribute\('hidden',''\)/);
   assert.match(html, /button\.textContent='Fermer l’aperçu'/);
   assert.match(html, /state\.previewPlayer\?\.destroy\?\.\(\)/);
+  assert.match(html, /await player\.waitUntilReady\(\)/);
+  assert.match(html, /localFileState==='missing'/);
   assert.doesNotMatch(html, /button\.onclick=async\(\)=>\{\s*shell\.hidden=false/);
+});
+
+test("les suppressions de la vidéothèque utilisent un préflight frais et un If-Match explicite", () => {
+  const cards = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
+  const detail = fs.readFileSync(path.resolve(__dirname, "../../teacher-video-detail.html"), "utf8");
+  assert.match(cards, /Vérification des dépendances avant suppression/);
+  assert.match(cards, /headers:\{'if-match':asset\.deletionRevisionToken\}/);
+  assert.match(cards, /fileWasAlreadyMissing/);
+  assert.match(cards, /other\.audioPlans/);
+  assert.match(detail, /headers: \{ "if-match": asset\.deletionRevisionToken \}/);
+  assert.match(detail, /fileWasAlreadyMissing/);
+  assert.match(detail, /other\.audioPlans/);
+  assert.match(detail, /await player\.waitUntilReady\(\)/);
+});
+
+test("les retours d’action de la vidéothèque sont ramenés dans la zone visible", () => {
+  const cards = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
+  const detail = fs.readFileSync(path.resolve(__dirname, "../../teacher-video-detail.html"), "utf8");
+  assert.match(cards, /if\(message\)node\.scrollIntoView\(\{block:'center'\}\)/);
+  assert.match(detail, /if \(message\) status\.scrollIntoView\(\{ block: "center" \}\)/);
 });
 
 test("la route détaillée projette un asset et traite proprement un identifiant inconnu", async t => {

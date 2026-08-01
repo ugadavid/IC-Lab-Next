@@ -95,6 +95,8 @@ async function installCanonical(database, databaseName) {
 }
 
 async function removeAudioMigrationFixture(database) {
+  await database.query("DROP PROCEDURE sp_media_working_copy_delete");
+  await database.query("DELETE FROM schema_migrations WHERE version = '004'");
   for (const routine of [
     "sp_audio_anonymization_plan_get",
     "sp_audio_anonymization_plan_save",
@@ -116,6 +118,8 @@ function copyCanonicalContract(label) {
     ["database/schema-migrations/002_proto05_canonical_routines.sql", "database/schema-migrations/002_proto05_canonical_routines.sql"],
     ["database/schema-migrations/003_proto05_audio_anonymization.sql", "database/schema-migrations/003_proto05_audio_anonymization.sql"],
     ["database/schema-migrations/003_proto05_audio_anonymization.manifest.json", "database/schema-migrations/003_proto05_audio_anonymization.manifest.json"],
+    ["database/schema-migrations/004_proto05_working_copy_delete.sql", "database/schema-migrations/004_proto05_working_copy_delete.sql"],
+    ["database/schema-migrations/004_proto05_working_copy_delete.manifest.json", "database/schema-migrations/004_proto05_working_copy_delete.manifest.json"],
     ["database/drafts/003_proto05_schema_hardening.sql", "database/drafts/003_proto05_schema_hardening.sql"],
     ["database/migrations/002_proto05_mariadb_schema_alignment.sql", "database/migrations/002_proto05_mariadb_schema_alignment.sql"],
     ["database/migrations/004_proto05_document_metadata_schema.sql", "database/migrations/004_proto05_document_metadata_schema.sql"],
@@ -191,18 +195,28 @@ test.after(async () => {
 
 test("empty install, populated baseline and a second run are deterministic", async () => {
   await withDatabase("lifecycle", async (database, databaseName) => {
-    const installed = await installCanonical(database, databaseName);
+    let installed;
+    try {
+      installed = await installCanonical(database, databaseName);
+    } catch (error) {
+      assert.fail(JSON.stringify({
+        message: error.message,
+        code: error.code,
+        diagnostics: error.diagnostics,
+        comparison: error.comparison
+      }, null, 2));
+    }
     assert.equal(installed.changed, true);
     assert.equal(installed.state.action.type, "none");
     assert.deepEqual(installed.state.plan.currentSummary, {
       tables: 34, columns: 293, indexes: 95, foreignKeys: 51, checks: 74,
-      views: 0, routines: 47, triggers: 0, events: 0
+      views: 0, routines: 48, triggers: 0, events: 0
     });
-    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 47);
+    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 48);
     assert.ok(installed.state.actualSchema.routines.every(row => row.createStatement.startsWith("CREATE PROCEDURE")));
     const verified = await verifyDatabaseSchema({ database, ...runnerOptions(databaseName) });
-    assert.equal(verified.schemaVersion, "003");
-    assert.equal(verified.migrationCount, 3);
+    assert.equal(verified.schemaVersion, "004");
+    assert.equal(verified.migrationCount, 4);
     const second = await runMigrationCommand(database, runnerOptions(databaseName));
     assert.equal(second.changed, false);
 

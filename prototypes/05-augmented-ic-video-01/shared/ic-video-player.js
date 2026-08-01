@@ -30,6 +30,7 @@
     let currentProvider = null;
     let timeTicker = null;
     let pendingLoadReject = null;
+    let ready = false;
     const facade = {
       lastError: null,
       get currentTime() { return currentProvider === "youtube" ? (youtubePlayer?.getCurrentTime?.() || 0) : (nativeVideo?.currentTime || 0); },
@@ -42,7 +43,10 @@
       pause() { return currentProvider === "youtube" ? youtubePlayer?.pauseVideo() : nativeVideo?.pause(); },
       load() { nativeVideo?.load(); },
       seek(seconds) { if (currentProvider === "youtube") youtubePlayer?.seekTo(Math.max(0, seconds), true); else if (nativeVideo) nativeVideo.currentTime = Math.max(0, seconds); },
-      emit(type, detail) { listeners.get(type)?.forEach(handler => handler(detail)); }
+      emit(type, detail) {
+        if (["loadedmetadata", "canplay"].includes(type)) ready = true;
+        listeners.get(type)?.forEach(handler => handler(detail));
+      }
     };
     function reset() {
       clearInterval(timeTicker); timeTicker = null;
@@ -53,13 +57,18 @@
         pendingLoadReject = null;
       }
       hls?.destroy(); hls = null; youtubePlayer?.destroy(); youtubePlayer = null;
-      nativeVideo?.remove(); nativeVideo = null; facade.lastError = null;
+      nativeVideo?.remove(); nativeVideo = null; facade.lastError = null; ready = false;
       container.classList.remove("youtube-active"); container.replaceChildren();
     }
     function attachNative(source, useHls = true) {
       nativeVideo = document.createElement("video");
       nativeVideo.controls = true; nativeVideo.preload = "metadata"; nativeVideo.className = "video";
-      ["loadstart", "loadedmetadata", "durationchange", "canplay", "timeupdate", "playing", "pause", "waiting", "stalled", "error"].forEach(type => nativeVideo.addEventListener(type, () => facade.emit(type)));
+      ["loadstart", "loadedmetadata", "durationchange", "canplay", "timeupdate", "playing", "pause", "waiting", "stalled"].forEach(type => nativeVideo.addEventListener(type, () => facade.emit(type)));
+      nativeVideo.addEventListener("error", () => {
+        const error = new Error("La ressource vidéo est indisponible ou illisible.");
+        facade.lastError = error;
+        facade.emit("error", error);
+      });
       container.append(nativeVideo);
       if (useHls && window.Hls && Hls.isSupported()) {
         return new Promise((resolve, reject) => {
@@ -114,9 +123,37 @@
       youtubePlayer = new YT.Player(frame, { videoId: video.videoId, playerVars: { enablejsapi: 1, playsinline: 1, origin: location.origin, rel: 0 }, events: {
         onReady: () => { timeTicker = setInterval(() => facade.emit("timeupdate"), 250); facade.emit("loadedmetadata"); },
         onStateChange: event => { if (event.data === YT.PlayerState.PLAYING) facade.emit("playing"); if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.ENDED) facade.emit("pause"); if (event.data === YT.PlayerState.BUFFERING) facade.emit("waiting"); },
-        onError: () => facade.emit("error")
+        onError: () => {
+          const error = new Error("La vidéo YouTube est indisponible ou non intégrable.");
+          facade.lastError = error;
+          facade.emit("error", error);
+        }
       }});
     }
+    facade.waitUntilReady = ({ timeoutMs = 10_000 } = {}) => {
+      if (ready) return Promise.resolve();
+      if (facade.lastError) return Promise.reject(facade.lastError);
+      return new Promise((resolve, reject) => {
+        const finish = (callback, value) => {
+          clearTimeout(timer);
+          facade.removeEventListener("loadedmetadata", onReady);
+          facade.removeEventListener("canplay", onReady);
+          facade.removeEventListener("error", onError);
+          callback(value);
+        };
+        const onReady = () => finish(resolve);
+        const onError = error => finish(reject, error || facade.lastError || new Error("Lecture impossible."));
+        const timer = setTimeout(
+          () => finish(reject, new Error("La ressource vidéo ne devient pas lisible.")),
+          timeoutMs
+        );
+        facade.addEventListener("loadedmetadata", onReady);
+        facade.addEventListener("canplay", onReady);
+        facade.addEventListener("error", onError);
+        if (ready) finish(resolve);
+        else if (facade.lastError) finish(reject, facade.lastError);
+      });
+    };
     facade.load = load;
     facade.destroy = reset;
     Object.defineProperty(facade, "element", { get: () => nativeVideo || container.querySelector("iframe") });

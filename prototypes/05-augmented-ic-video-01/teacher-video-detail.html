@@ -100,7 +100,7 @@
 <body>
   <header class="topbar">
     <a id="backLink" class="back" href="/teacher/videos">← Retour à la vidéothèque</a>
-    <span class="version">Proto05 · 0.1.55</span>
+    <span class="version">Proto05 · 0.1.56</span>
   </header>
   <main>
     <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -174,6 +174,7 @@
     function setStatus(message = "", type = "") {
       status.textContent = message;
       status.className = `status ${type}`.trim();
+      if (message) status.scrollIntoView({ block: "center" });
     }
 
     function sourceHost() {
@@ -249,6 +250,7 @@
       const otherItems = [
         ...(other.derivations || []),
         ...(other.treatments || []),
+        ...(other.audioPlans || []),
         ...(other.sharedReferences || [])
       ];
       if (!usage.whetherUsed && !items.length) {
@@ -616,13 +618,25 @@
       const entry = playable(id);
       const shell = document.querySelector(`[data-preview="${CSS.escape(id)}"]`);
       const mount = shell?.querySelector(".preview-mount");
-      if (!entry || !shell || !mount) return;
+      if (!entry || !shell || !mount) {
+        setStatus("La ressource ou sa zone d’aperçu est absente.", "error");
+        return;
+      }
+      if (entry.localFileState === "missing") {
+        setStatus("Aperçu indisponible : le fichier local est absent.", "error");
+        return;
+      }
+      if (entry.localFileState === "access-error") {
+        setStatus("Aperçu indisponible : le fichier local ne peut pas être contrôlé.", "error");
+        return;
+      }
       const current = players.get(id);
       if (current) {
         current.destroy();
         players.delete(id);
         shell.hidden = true;
         button.textContent = "Prévisualiser";
+        setStatus("Aperçu fermé.", "ok");
         return;
       }
       shell.hidden = false;
@@ -632,6 +646,7 @@
         const player = window.createICVideoPlayer({ container: mount });
         const value = entry.role === "derivation-local" ? { ...entry, provider: "local" } : entry;
         await player.load(value);
+        await player.waitUntilReady();
         players.set(id, player);
         button.textContent = "Fermer l’aperçu";
         setStatus("Aperçu chargé.", "ok");
@@ -733,19 +748,43 @@
 
     async function removeCopy(id) {
       const copy = (asset.localCopies || []).find(item => item.playableId === id);
-      if (!copy) return;
+      if (!copy) {
+        setStatus("La copie locale demandée est absente.", "error");
+        return;
+      }
+      if (copy.deletion?.allowed === false) {
+        const details = (copy.deletion.conflicts || [])
+          .flatMap(conflict => conflict.items || [])
+          .map(item => item.title || item.id)
+          .join(", ");
+        setStatus([copy.deletion.message, details && `Éléments concernés : ${details}`].filter(Boolean).join(" "), "error");
+        return;
+      }
       const confirmed = await Proto05TeacherDialogs.confirm({
         title: "Supprimer cette version locale ?",
         message: `La copie locale de travail de « ${asset.title} » sera supprimée.`,
-        details: ["La fiche, la référence distante et les dérivations seront conservées."],
+        details: [
+          copy.fileState === "missing"
+            ? "Le fichier est déjà absent : seule sa référence logique sera retirée."
+            : `Fichier : ${copy.storageKey}`,
+          "La fiche et la référence distante seront conservées."
+        ],
         confirmLabel: "Supprimer la copie",
         destructive: true,
         trigger: document.activeElement
       });
-      if (!confirmed) return;
+      if (!confirmed) {
+        setStatus("Suppression de la copie annulée.");
+        return;
+      }
       try {
-        await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/local-copies/${encodeURIComponent(id)}`, { method: "DELETE" });
-        await reload("Copie locale de travail supprimée.");
+        const result = await api(`/api/proto05/library/assets/${encodeURIComponent(asset.id)}/local-copies/${encodeURIComponent(id)}`, {
+          method: "DELETE",
+          headers: { "if-match": asset.deletionRevisionToken }
+        });
+        await reload(result.fileWasAlreadyMissing
+          ? "Référence locale retirée ; le fichier était déjà absent."
+          : "Copie locale de travail supprimée.");
       } catch (error) {
         setStatus(error.message, "error");
       }
@@ -753,6 +792,10 @@
 
     async function removeDerivation(id) {
       const entry = asset.versionsAndAccess?.derivations?.find(item => item.derivationId === id);
+      if (!entry) {
+        setStatus("La dérivation demandée est absente.", "error");
+        return;
+      }
       const confirmed = await Proto05TeacherDialogs.confirm({
         title: "Supprimer cette version dérivée ?",
         message: `La tentative « ${entry?.label || "sélectionnée"} » sera supprimée.`,

@@ -56,9 +56,10 @@ const {
   unavailablePayload
 } = require("./mariadb-diagnostics");
 const {
+  canonicalPlayableTreatmentDependencies,
   canonicalTreatmentDependencies
 } = require("./media-deletion-preflight");
-const { explicitRole, hasActiveDerivation, projectAssetAccesses } = require("./video-workspaces");
+const { explicitRole, projectAssetAccesses } = require("./video-workspaces");
 const {
   validateProfile: validateVideoMetadataProfile
 } = require("../shared/video-metadata-contract");
@@ -82,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.55";
+const VERSION = "0.1.56";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -1127,34 +1128,60 @@ function libraryAssetFromInput(payload) {
   return { asset, source: storedSource, playable };
 }
 
-function libraryAssetDetails(asset, usage = null) {
+function libraryAssetDetails(asset, usage = null, { activities = [], audioPlans = [] } = {}) {
   const sources = VIDEO_LIBRARY.sources.filter(source => source.assetId === asset.id);
   const playables = VIDEO_LIBRARY.playables.filter(playable => playable.assetId === asset.id);
-  const localCandidates = playables.map(playable => {
+  const localObservations = new Map(playables.map(playable => {
     const source = sources.find(item => item.id === playable.sourceId);
-    const storageKey = localStorageKeyForPlayable(playable, source);
-    if (!storageKey) return null;
-    try {
-      const file = safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(playable));
-      const stat = fsSync.statSync(file);
-      return stat.isFile() ? { storageKey, storageScope: localStorageScopeForPlayable(playable), sizeBytes: stat.size } : null;
-    } catch { return null; }
-  }).filter(Boolean);
+    return [playable.id, observeLocalPlayableFile(playable, source)];
+  }));
+  const localCandidates = [...localObservations.values()].filter(item => item.state === "present");
   const remoteCandidate = remoteDownloadCandidate(asset.id);
   const activeDownload = [...ACTIVE_LIBRARY_DOWNLOADS.values()].find(job => job.assetId === asset.id && ["preparing", "downloading", "finalizing", "cancelling"].includes(job.status));
   const hasRemoteSource = sources.some(source => ["hls", "direct-url"].includes(source.kind) && ["http", "https", "hls"].includes(source.transport || (source.kind === "hls" ? "hls" : "https")));
-  const localCopies = localCandidates.map(candidate => {
-    const playable = playables.find(item => localStorageKeyForPlayable(item, sources.find(source => source.id === item.sourceId)) === candidate.storageKey);
-    return { ...candidate, playableId: playable?.id || null, sourceId: playable?.sourceId || null, role: explicitRole(playable), isDefault: playable?.id === asset.defaultPlayableId };
-  });
+  const localCopies = playables.map(playable => {
+    const observation = localObservations.get(playable.id);
+    if (observation.state === "not-managed") return null;
+    const copyPlan = localCopyConflicts(asset.id, playable.id, activities, audioPlans);
+    return {
+      storageKey: observation.storageKey,
+      storageScope: observation.storageScope,
+      sizeBytes: observation.sizeBytes ?? null,
+      fileState: observation.state,
+      fileStateReason: observation.reason || null,
+      playableId: playable.id,
+      sourceId: playable.sourceId || null,
+      role: explicitRole(playable),
+      isDefault: playable.id === asset.defaultPlayableId,
+      deletion: localCopyUsageSummary(copyPlan)
+    };
+  }).filter(Boolean);
   const projectedAccesses = projectAssetAccesses(asset, sources, playables, VIDEO_LIBRARY.treatments || []);
+  for (const entries of Object.values(projectedAccesses)) {
+    for (const entry of entries || []) {
+      const observation = localObservations.get(entry.id);
+      if (observation && observation.state !== "not-managed") {
+        entry.localFileState = observation.state;
+        entry.localFileReason = observation.reason || null;
+      }
+    }
+  }
   const defaultPlayable = playables.find(playable => playable.id === asset.defaultPlayableId) || playables[0] || null;
-  const technicalPlayable = [defaultPlayable, ...playables].find(playable => (
+  const usablePlayables = playables.filter(playable => {
+    const observation = localObservations.get(playable.id);
+    return observation?.state === "present"
+      || (observation?.state === "not-managed" && playable.availability === "available");
+  });
+  const technicalPlayable = [
+    ...usablePlayables.filter(playable => explicitRole(playable) === "working-copy"),
+    defaultPlayable,
+    ...usablePlayables
+  ].find(playable => usablePlayables.includes(playable) && (
     Number.isFinite(playable?.technicalMetadata?.durationMs)
     || Number.isFinite(playable?.technicalMetadata?.width)
     || Number.isFinite(playable?.technicalMetadata?.sizeBytes)
     || playable?.technicalMetadata?.sha256
-  )) || defaultPlayable;
+  )) || usablePlayables.find(playable => playable === defaultPlayable) || usablePlayables[0] || null;
   const technicalSource = sources.find(source => source.id === technicalPlayable?.sourceId) || sources[0] || null;
   const storageKey = technicalPlayable
     ? localStorageKeyForPlayable(technicalPlayable, technicalSource)
@@ -1189,7 +1216,16 @@ function libraryAssetDetails(asset, usage = null) {
       activities: READ_CONTEXT.getStore()?.activities?.activities || []
     }),
     sources,
-    playables: playables.map(playableForClient),
+    playables: playables.map(playable => {
+      const observation = localObservations.get(playable.id);
+      return {
+        ...playableForClient(playable),
+        ...(observation?.state !== "not-managed" ? {
+          localFileState: observation.state,
+          localFileReason: observation.reason || null
+        } : {})
+      };
+    }),
     deletion: { canDeleteFile: localCandidates.length === 1 && !hasRemoteSource, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
     localCopies,
     versionsAndAccess: projectedAccesses,
@@ -1202,6 +1238,8 @@ function libraryAssetDetails(asset, usage = null) {
       sizeBytes: technicalPlayable?.technicalMetadata?.sizeBytes ?? null,
       sha256: technicalPlayable?.technicalMetadata?.sha256 ?? null,
       availability: technicalPlayable?.availability || null,
+      resourcePlayableId: technicalPlayable?.id || null,
+      resourceState: technicalPlayable ? "available" : "unavailable",
       localFilePresent: localCandidates.length > 0,
       importedAt: technicalPlayable?.createdAt || technicalSource?.createdAt || asset.createdAt || null
     },
@@ -1213,7 +1251,7 @@ function libraryAssetDetails(asset, usage = null) {
       publishedCount
     },
     download: {
-      canDownload: Boolean(remoteCandidate) && localCopies.length === 0 && !activeDownload,
+      canDownload: Boolean(remoteCandidate) && localCopies.every(copy => copy.role !== "working-copy") && !activeDownload,
       active: Boolean(activeDownload),
       jobId: activeDownload?.id || null,
       sourcePlayableId: remoteCandidate?.playable.id || null,
@@ -1330,6 +1368,50 @@ function localStorageScopeForPlayable(playable) {
   return playable?.location?.storageScope || playable?.storageScope || "legacy-media";
 }
 
+function observeLocalPlayableFile(playable, source) {
+  const storageKey = localStorageKeyForPlayable(playable, source);
+  if (!storageKey) return { state: "not-managed" };
+  const storageScope = localStorageScopeForPlayable(playable);
+  let file;
+  try {
+    file = safeLibraryMediaPath(storageKey, storageScope);
+  } catch {
+    return { state: "access-error", reason: "invalid-storage-key", storageKey, storageScope };
+  }
+  try {
+    const stat = fsSync.statSync(file);
+    if (!stat.isFile()) {
+      return { state: "access-error", reason: "not-a-file", storageKey, storageScope, file };
+    }
+    return { state: "present", storageKey, storageScope, file, sizeBytes: stat.size };
+  } catch (error) {
+    if (["ENOENT", "ENOTDIR"].includes(error?.code)) {
+      return { state: "missing", reason: "missing-file", storageKey, storageScope, file };
+    }
+    return { state: "access-error", reason: "unobservable-file", storageKey, storageScope, file };
+  }
+}
+
+async function audioPlanDependenciesForPlayables(playables) {
+  const requests = (playables || []).map(async playable => {
+    const plan = await proto05ReadBoundary().readAudioAnonymizationPlan({
+      sourceAssetId: playable.assetId,
+      sourcePlayableId: playable.id
+    });
+    if (!plan) return null;
+    return {
+      id: plan.id,
+      title: plan.title || plan.name || plan.id,
+      sourceAssetId: plan.sourceAssetId,
+      sourcePlayableId: plan.sourcePlayableId,
+      passageCount: Number(plan.passageCount ?? plan.passages?.length ?? 0)
+    };
+  });
+  const plans = (await Promise.all(requests)).filter(Boolean);
+  return [...new Map(plans.map(plan => [plan.id, plan])).values()]
+    .sort((left, right) => String(left.id).localeCompare(String(right.id)));
+}
+
 function activityDependencyRelations(activity, assetId, sourceIds, playableIds, playables, sources) {
   const ref = activity?.videoRef || {};
   const relations = [];
@@ -1338,7 +1420,7 @@ function activityDependencyRelations(activity, assetId, sourceIds, playableIds, 
   return [...new Set(relations)];
 }
 
-function libraryAssetDeletionPlan(assetId, activities) {
+function libraryAssetDeletionPlan(assetId, activities, audioPlans = []) {
   const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
   if (!asset) throw new Error("Asset vidéo introuvable.");
   const sources = (VIDEO_LIBRARY.sources || []).filter(source => source.assetId === assetId);
@@ -1383,17 +1465,18 @@ function libraryAssetDeletionPlan(assetId, activities) {
     VIDEO_LIBRARY.treatments,
     { assetId, playableIds }
   );
+  const audioPlanDependencies = (audioPlans || []).filter(plan => (
+    plan.sourceAssetId === assetId || playableIds.has(plan.sourcePlayableId)
+  ));
   const localFiles = playables.map(playable => {
     const source = sources.find(item => item.id === playable.sourceId);
-    const storageKey = localStorageKeyForPlayable(playable, source);
-    if (!storageKey) return null;
-    let file;
-    try { file = safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(playable)); }
-    catch {
+    const observation = observeLocalPlayableFile(playable, source);
+    if (observation.state === "not-managed") return null;
+    if (observation.state === "access-error") {
       internalIssues.push({ id: playable.id, title: "Chemin du fichier local invalide" });
-      return { storageKey, invalid: true, playableId: playable.id };
+      return { ...observation, invalid: true, playableId: playable.id };
     }
-    return { storageKey, file, playableId: playable.id };
+    return { ...observation, playableId: playable.id };
   }).filter(Boolean);
   const localStorageKeys = new Set(localFiles.map(item => item.storageKey));
   const sharedObjects = (VIDEO_LIBRARY.assets || []).filter(other => other.id !== assetId && ((other.sourceIds || []).some(id => sourceIds.has(id)) || (other.playableIds || []).some(id => playableIds.has(id)) || (VIDEO_LIBRARY.playables || []).filter(playable => playable.assetId === other.id).some(playable => localStorageKeys.has(localStorageKeyForPlayable(playable, (VIDEO_LIBRARY.sources || []).find(source => source.id === playable.sourceId)))))).map(other => ({ id: other.id, title: other.title || other.id }));
@@ -1401,8 +1484,7 @@ function libraryAssetDeletionPlan(assetId, activities) {
     if (localFiles.some(item => item.invalid)) return "inconsistent";
     if (localFiles.length === 0) return "not-managed";
     if (localFiles.length !== 1) return "ambiguous";
-    try { return fsSync.statSync(localFiles[0].file).isFile() ? "present" : "missing"; }
-    catch { return "missing"; }
+    return localFiles[0].state;
   })();
   const cleanupDependencies = {
     folder: asset.folderId ? [{ id: asset.folderId }] : [],
@@ -1415,6 +1497,7 @@ function libraryAssetDeletionPlan(assetId, activities) {
     activityDependencies,
     derivationDependencies,
     treatmentDependencies,
+    audioPlanDependencies,
     sharedObjects,
     localFiles,
     internalIssues,
@@ -1429,6 +1512,7 @@ function deletionConflict(plan, physical) {
   if (plan.activityDependencies.length) conflicts.push({ type: "activities", items: plan.activityDependencies });
   if (plan.derivationDependencies.length) conflicts.push({ type: "derivations", items: plan.derivationDependencies });
   if (plan.treatmentDependencies.length) conflicts.push({ type: "treatments", items: plan.treatmentDependencies });
+  if (plan.audioPlanDependencies.length) conflicts.push({ type: "audio-plans", items: plan.audioPlanDependencies });
   if (physical && plan.sharedObjects.length) conflicts.push({ type: "shared-references", items: plan.sharedObjects });
   return conflicts;
 }
@@ -1474,6 +1558,7 @@ function libraryUsageSummary(plan) {
     otherDependencies: {
       derivations: plan.derivationDependencies,
       treatments: plan.treatmentDependencies,
+      audioPlans: plan.audioPlanDependencies,
       sharedReferences: plan.sharedObjects
     },
     cleanupDependencies: plan.cleanupDependencies,
@@ -1499,7 +1584,9 @@ function libraryUsageSummary(plan) {
 
 async function removeLibraryAsset(assetId, { physical = false, preconditions = {} } = {}) {
   const activities = (await readActivities()).activities || [];
-  const plan = libraryAssetDeletionPlan(assetId, activities);
+  const targetPlayables = VIDEO_LIBRARY.playables.filter(item => item.assetId === assetId);
+  const audioPlans = await audioPlanDependenciesForPlayables(targetPlayables);
+  const plan = libraryAssetDeletionPlan(assetId, activities, audioPlans);
   const conflicts = deletionConflict(plan, physical);
   if (conflicts.length) {
     const error = new Error(plan.internalIssues.length
@@ -1551,7 +1638,7 @@ async function removeLibraryAsset(assetId, { physical = false, preconditions = {
   }
 }
 
-function localCopyConflicts(assetId, playableId, activities) {
+function localCopyConflicts(assetId, playableId, activities, audioPlans = []) {
   const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId && item.kind === "local-file");
   if (!playable) throw Object.assign(new Error("Copie locale introuvable."), { statusCode: 404 });
   const source = VIDEO_LIBRARY.sources.find(item => item.id === playable.sourceId && item.assetId === assetId);
@@ -1565,24 +1652,74 @@ function localCopyConflicts(assetId, playableId, activities) {
     const asset = VIDEO_LIBRARY.assets.find(candidate => candidate.id === item.assetId);
     return { id: item.id, title: asset?.title || item.id };
   });
-  return { playable, source, storageKey, activityDependencies, sharedReferences };
+  const treatmentDependencies = canonicalPlayableTreatmentDependencies(
+    VIDEO_LIBRARY.treatments || [],
+    playableId
+  );
+  const audioPlanDependencies = (audioPlans || []).filter(plan => plan.sourcePlayableId === playableId);
+  return {
+    playable,
+    source,
+    storageKey,
+    fileObservation: observeLocalPlayableFile(playable, source),
+    activityDependencies,
+    treatmentDependencies,
+    audioPlanDependencies,
+    sharedReferences
+  };
 }
 
-async function removeLocalLibraryCopy(assetId, playableId) {
-  const store = await readActivities();
-  const plan = localCopyConflicts(assetId, playableId, store.activities || []);
+function localCopyConflictList(plan) {
   const conflicts = [];
   if (plan.activityDependencies.length) conflicts.push({ type: "activities", items: plan.activityDependencies });
+  if (plan.treatmentDependencies.length) conflicts.push({ type: "treatments", items: plan.treatmentDependencies });
+  if (plan.audioPlanDependencies.length) conflicts.push({ type: "audio-plans", items: plan.audioPlanDependencies });
   if (plan.sharedReferences.length) conflicts.push({ type: "shared-references", items: plan.sharedReferences });
-  if (hasActiveDerivation(VIDEO_LIBRARY.treatments || [], assetId, playableId)) conflicts.push({ type: "active-derivations", items: [{ id: playableId }] });
-  if (conflicts.length) throw Object.assign(new Error("La copie locale est encore utilisée ou partage son fichier avec une autre référence."), { statusCode: 409, conflicts });
-  const file = safeLibraryMediaPath(plan.storageKey, localStorageScopeForPlayable(plan.playable));
-  const stat = await fs.stat(file).catch(() => null);
-  if (!stat?.isFile()) throw Object.assign(new Error("Le fichier de la copie locale est introuvable."), { statusCode: 409 });
-  const backup = path.join(os.tmpdir(), `proto05-local-copy-${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.bak`);
-  await fs.copyFile(file, backup);
+  return conflicts;
+}
+
+function localCopyUsageSummary(plan) {
+  const conflicts = localCopyConflictList(plan);
+  return {
+    allowed: conflicts.length === 0 && plan.fileObservation.state !== "access-error",
+    fileState: plan.fileObservation.state,
+    message: conflicts.length
+      ? "Suppression refusée : cette copie possède encore des dépendances."
+      : plan.fileObservation.state === "access-error"
+        ? "Suppression refusée : le fichier local ne peut pas être contrôlé en sécurité."
+        : plan.fileObservation.state === "missing"
+          ? "Le fichier est déjà absent ; la référence locale peut être retirée."
+          : "La copie locale peut être supprimée.",
+    conflicts
+  };
+}
+
+async function removeLocalLibraryCopy(assetId, playableId, { preconditions = {} } = {}) {
+  const store = await readActivities();
+  const target = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId);
+  const audioPlans = await audioPlanDependenciesForPlayables(target ? [target] : []);
+  const plan = localCopyConflicts(assetId, playableId, store.activities || [], audioPlans);
+  const conflicts = localCopyConflictList(plan);
+  if (conflicts.length) {
+    throw Object.assign(
+      new Error("La copie locale possède encore des dépendances ; aucune suppression n’a été effectuée."),
+      { statusCode: 409, conflicts }
+    );
+  }
+  if (plan.fileObservation.state === "access-error") {
+    throw Object.assign(
+      new Error("Le fichier local ne peut pas être contrôlé en sécurité ; aucune suppression n’a été effectuée."),
+      { statusCode: 409, reasonCode: plan.fileObservation.reason }
+    );
+  }
+  const file = plan.fileObservation.file;
+  const filePresent = plan.fileObservation.state === "present";
+  const backup = filePresent
+    ? path.join(os.tmpdir(), `proto05-local-copy-${process.pid}-${Date.now()}-${crypto.randomBytes(5).toString("hex")}.bak`)
+    : null;
+  if (backup) await fs.copyFile(file, backup);
   try {
-    await fs.unlink(file);
+    if (filePresent) await fs.unlink(file);
     const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
     const asset = canonical.assets.find(item => item.id === assetId);
     if (!asset) throw new Error("Asset vidéo introuvable.");
@@ -1590,15 +1727,27 @@ async function removeLocalLibraryCopy(assetId, playableId) {
     if (!canonical.playables.some(item => item.sourceId === plan.source?.id)) canonical.sources = canonical.sources.filter(item => item.id !== plan.source?.id);
     if (asset.defaultPlayableId === playableId) asset.defaultPlayableId = canonical.playables.find(item => item.assetId === assetId)?.id || null;
     asset.updatedAt = new Date().toISOString();
-    await persistCanonicalLibrary(canonical);
-    await removeEmptyParents(path.dirname(file), VIDEO_LIBRARY_WORKSPACES_DIR).catch(() => {});
+    await persistCanonicalLibrary(canonical, {
+      operation: "media-working-copy-delete",
+      preconditions
+    });
+    if (filePresent) await removeEmptyParents(path.dirname(file), VIDEO_LIBRARY_WORKSPACES_DIR).catch(() => {});
     const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
-    return { assetId, playableId, deletedFile: true, storageKey: plan.storageKey, asset: libraryAssetDetails(projectedAsset) };
+    return {
+      assetId,
+      playableId,
+      deletedFile: filePresent,
+      fileWasAlreadyMissing: !filePresent,
+      storageKey: plan.storageKey,
+      asset: libraryAssetDetails(projectedAsset)
+    };
   } catch (error) {
-    try { await fs.copyFile(backup, file); } catch (restoreError) { error.message += ` Restauration du fichier impossible : ${restoreError.message}`; }
+    if (backup) {
+      try { await fs.copyFile(backup, file); } catch (restoreError) { error.message += ` Restauration du fichier impossible : ${restoreError.message}`; }
+    }
     throw error;
   } finally {
-    try { await fs.unlink(backup); } catch {}
+    if (backup) { try { await fs.unlink(backup); } catch {} }
   }
 }
 
@@ -3939,7 +4088,13 @@ async function handleApiInReadContext(request, response, url) {
   if (localCopyDeleteMatch) {
     if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
     try {
-      const result = await removeLocalLibraryCopy(decodeURIComponent(localCopyDeleteMatch[1]), decodeURIComponent(localCopyDeleteMatch[2]));
+      const assetId = decodeURIComponent(localCopyDeleteMatch[1]);
+      const preconditions = mediaWritePrecondition(request, assetId, "media-deletion");
+      const result = await removeLocalLibraryCopy(
+        assetId,
+        decodeURIComponent(localCopyDeleteMatch[2]),
+        { preconditions }
+      );
       return sendJson(response, 200, result);
     } catch (error) {
       return sendJson(response, error.statusCode || 400, { error: error.message || "Suppression de la copie locale impossible.", conflicts: error.conflicts || [] });
@@ -3972,8 +4127,13 @@ async function handleApiInReadContext(request, response, url) {
       const asset = VIDEO_LIBRARY.assets.find(item => item.id === decodeURIComponent(libraryAssetDeleteMatch[1]));
       if (!asset) return sendJson(response, 404, { error: "Asset vidéo introuvable." });
       const activities = (await readActivities()).activities || [];
-      const plan = libraryAssetDeletionPlan(asset.id, activities);
-      return sendJson(response, 200, { asset: libraryAssetDetails(asset, libraryUsageSummary(plan)) });
+      const audioPlans = await audioPlanDependenciesForPlayables(
+        VIDEO_LIBRARY.playables.filter(item => item.assetId === asset.id)
+      );
+      const plan = libraryAssetDeletionPlan(asset.id, activities, audioPlans);
+      return sendJson(response, 200, {
+        asset: libraryAssetDetails(asset, libraryUsageSummary(plan), { activities, audioPlans })
+      });
     }
     if (request.method !== "DELETE") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "DELETE" });
     try {

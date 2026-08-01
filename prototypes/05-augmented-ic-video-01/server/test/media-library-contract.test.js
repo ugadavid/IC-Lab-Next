@@ -6,6 +6,7 @@ const path = require("node:path");
 const test = require("node:test");
 const { validateMediaLibrary, assertMediaLibrary } = require("../media-library-schema");
 const {
+  canonicalPlayableTreatmentDependencies,
   canonicalTreatmentDependencies
 } = require("../media-deletion-preflight");
 
@@ -440,4 +441,34 @@ test("le préflight ignore les anciens champs artificiels d’un traitement", ()
     playableIds: new Set(["playable-target"])
   });
   assert.deepEqual(dependencies, []);
+});
+
+test("le préflight d’une copie locale expose chaque traitement qui référence son playable", () => {
+  const library = readFixture();
+  assert.deepEqual(
+    canonicalPlayableTreatmentDependencies(library.treatments, "playable-derived"),
+    [{
+      id: "treatment-complete",
+      title: "treatment-complete",
+      status: "completed",
+      relations: ["output-playable"],
+      relationLabels: ["playable de sortie"]
+    }, {
+      id: "treatment-failed",
+      title: "treatment-failed",
+      status: "failed",
+      relations: ["source-playable"],
+      relationLabels: ["playable d’entrée"]
+    }]
+  );
+  assert.deepEqual(
+    canonicalPlayableTreatmentDependencies(library.treatments, "playable-local-copy"),
+    [{
+      id: "treatment-complete",
+      title: "treatment-complete",
+      status: "completed",
+      relations: ["source-playable"],
+      relationLabels: ["playable d’entrée"]
+    }]
+  );
 });

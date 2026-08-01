@@ -175,6 +175,31 @@ async function inspectLocalMediaAvailability(rows, options = {}) {
   });
 }
 
+function reconciliationDryRunReport(plan) {
+  return {
+    mode: "dry-run",
+    applied: 0,
+    safeToApply: Boolean(plan?.safeToApply),
+    planHash: plan?.planHash || null,
+    summary: plan?.summary || {},
+    changes: (plan?.changes || []).map(entry => ({
+      id: entry.id,
+      assetId: entry.assetId,
+      before: entry.before,
+      after: entry.after,
+      observation: {
+        status: entry.observation?.status || null,
+        reason: entry.observation?.reason || null
+      }
+    })),
+    refusals: (plan?.refusals || []).map(entry => ({
+      id: entry.id,
+      assetId: entry.assetId,
+      reason: entry.reason
+    }))
+  };
+}
+
 async function readAvailabilityRows(database, { ids = null, forUpdate = false } = {}) {
   const selectedIds = Array.isArray(ids) ? [...new Set(ids)].sort() : null;
   if (selectedIds?.length === 0) return [];
@@ -340,5 +365,6 @@ module.exports = {
   observeManagedStorage,
   planHash,
   readAvailabilityRows,
+  reconciliationDryRunReport,
   stableStringify
 };

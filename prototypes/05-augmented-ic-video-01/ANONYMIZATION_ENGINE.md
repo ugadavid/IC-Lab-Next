@@ -72,4 +72,4 @@ Le moteur ne prend pas encore en charge le VFR comme contrat distinct, la
 reprise/cache des segments, le parallélisme, le GPU, ni la détection automatique.
 # Version de référence
 
-Le serveur autonome Proto05 et son package sont servis en version **0.1.55**.
+Le serveur autonome Proto05 et son package sont servis en version **0.1.56**.

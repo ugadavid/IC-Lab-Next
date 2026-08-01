@@ -9,7 +9,8 @@ const test = require("node:test");
 const { collectLocalAvailability, isSafeStorageKey, resolveStorageKey } = require("../media-library-availability");
 const {
   hashFile,
-  inspectLocalMediaAvailability
+  inspectLocalMediaAvailability,
+  reconciliationDryRunReport
 } = require("../local-media-availability-reconciliation");
 
 test("le collecteur observe uniquement les clés demandées", async () => {
@@ -141,4 +142,26 @@ test("un stockage partagé est observé une fois et produit le même état pour 
   assert.equal(plan.safeToApply, true);
   assert.equal(plan.changes.length, 2);
   assert.ok(plan.changes.every(entry => entry.after.availability === "available"));
+});
+
+test("le rapport dry-run reste sans écriture et n’expose aucun chemin physique", async () => {
+  const plan = await inspectLocalMediaAvailability([{
+    id: "playable-missing",
+    asset_id: "asset-missing",
+    source_id: "source-missing",
+    kind: "local-file",
+    availability: "available",
+    availability_reason: null,
+    storage_scope: "workspace",
+    storage_key: "missing.mp4",
+    updated_at: "2026-01-01 00:00:00.000"
+  }], { roots: { workspace: os.tmpdir() } });
+  const report = reconciliationDryRunReport(plan);
+  assert.equal(report.mode, "dry-run");
+  assert.equal(report.applied, 0);
+  assert.deepEqual(report.changes.map(item => [item.id, item.after.availability]), [
+    ["playable-missing", "missing-local"]
+  ]);
+  assert.equal(JSON.stringify(report).includes(os.tmpdir()), false);
+  assert.equal(Object.hasOwn(report.changes[0], "storageKey"), false);
 });

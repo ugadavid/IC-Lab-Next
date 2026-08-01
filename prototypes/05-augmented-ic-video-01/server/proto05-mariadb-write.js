@@ -679,6 +679,11 @@ async function executeSnapshotProcedures({
     }
   }
 
+  const deletedAssetIds = new Set(mediaAssetPlan.deletes.map(row => row.id));
+  for (const row of playablePlan.deletes.filter(item => !deletedAssetIds.has(item.asset_id))) {
+    await invoke("sp_media_working_copy_delete", [row.asset_id, row.id]);
+  }
+
   for (const row of mediaAssetPlan.deletes) {
     await invoke(row.parent_asset_id ? "sp_media_derivation_delete" : "sp_media_asset_delete", [row.id]);
   }
