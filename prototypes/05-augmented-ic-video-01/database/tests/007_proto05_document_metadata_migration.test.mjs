@@ -64,16 +64,17 @@ function databaseRows(plan) {
   return plan.rows.map(row => ({ ...row.database }));
 }
 
-test("le mode par défaut est un dry-run non écrivant", () => {
-  const options = parseArguments([]);
-  assert.equal(options.mode, "dry-run");
-  assert.equal(options.database, "ic_augmented_video");
+test("le mode par défaut refuse une cible implicite", () => {
+  assert.throws(
+    () => parseArguments([]),
+    error => error.code === "HISTORICAL_TEST_DATABASE_REQUIRED"
+  );
 });
 
 test("les trois modes écrivants exigent tous les garde-fous", () => {
   for (const mode of ["install-schema", "rollback-test", "apply"]) {
     assert.throws(
-      () => parseArguments([`--${mode}`, "--database=ic_augmented_video"]),
+      () => parseArguments([`--${mode}`, "--database=proto05_test_m171"]),
       error => (
         error instanceof MetadataMigrationError
         && error.code === "EXPECTED_PLAN_HASH_REQUIRED"
@@ -84,7 +85,7 @@ test("les trois modes écrivants exigent tous les garde-fous", () => {
 
 test("les intentions DDL et données exactes sont acceptées", () => {
   const common = [
-    "--database=ic_augmented_video",
+    "--database=proto05_test_m171",
     `--expected-plan-hash=${EXPECTED_PLAN_HASH}`,
     `--expected-source-set-hash=${EXPECTED_SOURCE_SET_HASH}`,
     "--backup-file=C:\\Temp\\proto05-m136.sql"
@@ -105,7 +106,7 @@ test("un hash source différent est refusé avant toute connexion", () => {
   assert.throws(
     () => parseArguments([
       "--apply",
-      "--database=ic_augmented_video",
+      "--database=proto05_test_m171",
       `--expected-plan-hash=${EXPECTED_PLAN_HASH}`,
       "--expected-source-set-hash=incorrect",
       `--confirm=${APPLY_CONFIRMATION}`,
@@ -135,8 +136,7 @@ test("une base hors périmètre est refusée avant toute connexion", () => {
   assert.throws(
     () => parseArguments(["--verify-only", "--database=ic_dico"]),
     error => (
-      error instanceof MetadataMigrationError
-      && error.code === "DATABASE_MISMATCH"
+      error.code === "HISTORICAL_TEST_DATABASE_NAME_REQUIRED"
     )
   );
 });

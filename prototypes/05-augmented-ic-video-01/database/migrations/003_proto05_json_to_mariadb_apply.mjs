@@ -12,11 +12,11 @@ import {
   deterministicResult,
   stableStringify
 } from "./001_proto05_json_to_mariadb_dry_run.mjs";
+import { assertExplicitHistoricalTestDatabase } from "./historical-test-database-guard.mjs";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
 const SCRIPT_DIRECTORY = path.dirname(SCRIPT_FILE);
 const WORKSPACE_DIRECTORY = path.resolve(DEFAULT_PROTOTYPE_DIRECTORY, "..", "..");
-const TARGET_DATABASE = "ic_augmented_video";
 const EXPECTED_PLAN_HASH =
   "d2a76dace94e68cf1abea808902619a5d81fe99afda48aca0e48361fe6158233";
 const APPLY_CONFIRMATION = "APPLY_PROTO05_CANONICAL_JSON_TO_MARIADB";
@@ -71,13 +71,14 @@ function assertSafeIdentifier(value, label) {
 function parseArguments(argv) {
   const options = {
     mode: "verify-only",
-    database: TARGET_DATABASE,
+    database: null,
     expectedPlanHash: null,
     confirmation: null,
     container: DEFAULT_CONTAINER,
     backupFile: null
   };
   let explicitMode = false;
+  let explicitDatabase = false;
   for (const argument of argv) {
     if (["--verify-only", "--apply", "--rollback-test", "--backup"].includes(argument)) {
       if (explicitMode) throw new MigrationError("ARGUMENT_CONFLICT", "Only one mode may be selected.");
@@ -85,6 +86,7 @@ function parseArguments(argv) {
       options.mode = argument.slice(2);
     } else if (argument.startsWith("--database=")) {
       options.database = argument.slice("--database=".length);
+      explicitDatabase = true;
     } else if (argument.startsWith("--expected-plan-hash=")) {
       options.expectedPlanHash = argument.slice("--expected-plan-hash=".length);
     } else if (argument.startsWith("--confirm=")) {
@@ -99,12 +101,8 @@ function parseArguments(argv) {
       throw new MigrationError("UNKNOWN_ARGUMENT", `Unknown argument: ${argument}`);
     }
   }
-  if (options.database !== TARGET_DATABASE) {
-    throw new MigrationError(
-      "DATABASE_MISMATCH",
-      `The only authorized target is ${TARGET_DATABASE}.`,
-      { database: options.database }
-    );
+  if (options.mode !== "help") {
+    options.database = assertExplicitHistoricalTestDatabase(options.database, { explicit: explicitDatabase });
   }
   if (!/^[A-Za-z0-9_.-]+$/.test(options.container)) {
     throw new MigrationError("INVALID_CONTAINER", "The Docker container name is invalid.");
@@ -138,14 +136,14 @@ function parseArguments(argv) {
 function helpText() {
   return [
     "Usage:",
-    "  node 003_proto05_json_to_mariadb_apply.mjs [--verify-only]",
-    "  node 003_proto05_json_to_mariadb_apply.mjs --backup --backup-file=ABSOLUTE_PATH",
+    "  node 003_proto05_json_to_mariadb_apply.mjs --verify-only --database=proto05_test_NAME",
+    "  node 003_proto05_json_to_mariadb_apply.mjs --backup --database=proto05_test_NAME --backup-file=ABSOLUTE_PATH",
     "  node 003_proto05_json_to_mariadb_apply.mjs --rollback-test",
-    "    --database=ic_augmented_video",
+    "    --database=proto05_test_NAME",
     `    --expected-plan-hash=${EXPECTED_PLAN_HASH}`,
     `    --confirm=${APPLY_CONFIRMATION}`,
     "    --backup-file=ABSOLUTE_PATH",
-    "  node 003_proto05_json_to_mariadb_apply.mjs --apply (same guards)",
+    "  node 003_proto05_json_to_mariadb_apply.mjs --apply (same guards; real database always refused)",
     "",
     "Default mode is verify-only. No password argument is supported."
   ].join("\n");
@@ -186,6 +184,11 @@ async function openConnection(options, { readOnly = false } = {}) {
   password.fill?.(0);
   if (readOnly) await connection.query("SET SESSION TRANSACTION READ ONLY");
   return connection;
+}
+
+async function selectedDatabase(connection) {
+  const [[row]] = await connection.query("SELECT DATABASE() AS database_name");
+  return row.database_name;
 }
 
 function prepareValidatedPlan() {
@@ -307,6 +310,7 @@ function dataDumpHash(database, container = DEFAULT_CONTAINER) {
 }
 
 async function schemaSnapshot(connection) {
+  const databaseName = await selectedDatabase(connection);
   const [[counts]] = await connection.query(
     `SELECT
        (SELECT COUNT(*) FROM information_schema.TABLES
@@ -327,7 +331,7 @@ async function schemaSnapshot(connection) {
        (SELECT COUNT(*) FROM information_schema.TABLES
         WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'data_projection_metadata'
           AND TABLE_TYPE = 'BASE TABLE') AS metadata_table_count`,
-    Array(8).fill(TARGET_DATABASE)
+    Array(8).fill(databaseName)
   );
   const snapshot = Object.fromEntries(
     Object.entries(counts).map(([key, value]) => [key, Number(value)])
@@ -490,6 +494,7 @@ function normalizeActualValue(actual, expected) {
 }
 
 async function reconcile(connection, model) {
+  const databaseName = await selectedDatabase(connection);
   const tables = [];
   const mismatches = [];
   let expectedTotal = 0;
@@ -569,7 +574,7 @@ async function reconcile(connection, model) {
   }
   const canonicalReadback = {
     method: "proto05-mariadb-plan-columns-v1",
-    database: TARGET_DATABASE,
+    database: databaseName,
     tables
   };
   return {
@@ -583,6 +588,7 @@ async function reconcile(connection, model) {
 }
 
 async function orphanCount(connection) {
+  const databaseName = await selectedDatabase(connection);
   const [rows] = await connection.query(
     `SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME,
             REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME, ORDINAL_POSITION
@@ -590,7 +596,7 @@ async function orphanCount(connection) {
      WHERE CONSTRAINT_SCHEMA = ?
        AND REFERENCED_TABLE_NAME IS NOT NULL
      ORDER BY TABLE_NAME, CONSTRAINT_NAME, ORDINAL_POSITION`,
-    [TARGET_DATABASE]
+    [databaseName]
   );
   const groups = new Map();
   for (const row of rows) {

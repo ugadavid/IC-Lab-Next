@@ -11,6 +11,7 @@ import {
   deterministicResult,
   stableStringify
 } from "./001_proto05_json_to_mariadb_dry_run.mjs";
+import { assertExplicitHistoricalTestDatabase } from "./historical-test-database-guard.mjs";
 
 const require = createRequire(import.meta.url);
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
@@ -202,7 +203,7 @@ async function buildPlan() {
   });
 }
 
-function configuration() {
+function configuration(databaseName) {
   const required = key => {
     const value = process.env[key];
     if (!value) throw Object.assign(new Error(`Configuration absente : ${key}.`), { code: "CONFIGURATION_MISSING" });
@@ -213,7 +214,7 @@ function configuration() {
     port: Number(required("PROTO05_MARIADB_PORT")),
     user: required("PROTO05_MARIADB_USER"),
     password: required("PROTO05_MARIADB_PASSWORD"),
-    database: required("PROTO05_MARIADB_DATABASE")
+    database: databaseName
   };
 }
 
@@ -225,8 +226,8 @@ function mysqlClient() {
   return require(modulePath);
 }
 
-async function openDatabase() {
-  const config = configuration();
+async function openDatabase(options) {
+  const config = configuration(options.database);
   const database = await mysqlClient().createConnection({
     ...config,
     charset: "utf8mb4",
@@ -608,7 +609,8 @@ async function compareLiveProjectionAll(database) {
 }
 
 function parseArguments(args) {
-  const options = { mode: "inspect", expectedPlanHash: null, backup: null };
+  const options = { mode: "inspect", expectedPlanHash: null, backup: null, database: null };
+  let explicitDatabase = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === "--inspect") options.mode = "inspect";
@@ -620,8 +622,11 @@ function parseArguments(args) {
     else if (argument === "--apply") options.mode = "apply";
     else if (argument === "--expected-plan-hash") options.expectedPlanHash = args[++index];
     else if (argument === "--backup") options.backup = args[++index];
+    else if (argument === "--database") { options.database = args[++index]; explicitDatabase = true; }
+    else if (argument.startsWith("--database=")) { options.database = argument.slice("--database=".length); explicitDatabase = true; }
     else throw new Error(`Argument inconnu : ${argument}`);
   }
+  options.database = assertExplicitHistoricalTestDatabase(options.database, { explicit: explicitDatabase });
   if (!["compare", "compare-all", "inspect", "verify"].includes(options.mode) && !options.backup) throw new Error("--backup est obligatoire avant toute transaction.");
   if (["apply", "repair-projection-drift"].includes(options.mode) && !options.expectedPlanHash) {
     throw new Error("--expected-plan-hash est obligatoire avec cette écriture.");
@@ -632,7 +637,7 @@ function parseArguments(args) {
 async function main() {
   const options = parseArguments(process.argv.slice(2));
   const plan = await buildPlan();
-  const { database, identity } = await openDatabase();
+  const { database, identity } = await openDatabase(options);
   try {
     if (options.mode === "compare") {
       const witness = await readWitness(database, plan);
@@ -683,7 +688,7 @@ async function main() {
       console.log(`BACKUP_OK sha256=${backup.sha256}`);
       await repairAvailabilityProjection(database, before, plan);
       await database.end();
-      const reopened = await openDatabase();
+      const reopened = await openDatabase(options);
       try {
         const repaired = await readWitness(reopened.database, plan);
         assertReconciledState(repaired, plan);
@@ -730,7 +735,7 @@ async function main() {
     } catch (error) {
       if (options.mode !== "rollback-proof" || error.code !== "CONTROLLED_ROLLBACK") throw error;
       await database.end();
-      const reopened = await openDatabase();
+      const reopened = await openDatabase(options);
       try {
         const afterRollback = await readWitness(reopened.database, plan);
         if (stableStringify(afterRollback) !== stableStringify(before)) {
@@ -745,7 +750,7 @@ async function main() {
       return;
     }
     await database.end();
-    const reopened = await openDatabase();
+    const reopened = await openDatabase(options);
     try {
       const afterCommit = await readWitness(reopened.database, plan);
       assertAfterState(before, afterCommit, plan);
@@ -769,5 +774,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === SCRIPT_FILE) {
 export {
   EDITORIAL_ASSET_IDS,
   UGA_ASSET_ID,
-  buildPlan
+  buildPlan,
+  parseArguments
 };

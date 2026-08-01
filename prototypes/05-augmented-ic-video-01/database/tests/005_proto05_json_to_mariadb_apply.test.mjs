@@ -11,15 +11,16 @@ import {
   prepareValidatedPlan
 } from "../migrations/003_proto05_json_to_mariadb_apply.mjs";
 
-test("le mode par défaut est non écrivant", () => {
-  const options = parseArguments([]);
-  assert.equal(options.mode, "verify-only");
-  assert.equal(options.database, "ic_augmented_video");
+test("le mode par défaut refuse une cible implicite", () => {
+  assert.throws(
+    () => parseArguments([]),
+    error => error.code === "HISTORICAL_TEST_DATABASE_REQUIRED"
+  );
 });
 
 test("le mode apply refuse une intention incomplète", () => {
   assert.throws(
-    () => parseArguments(["--apply", "--database=ic_augmented_video"]),
+    () => parseArguments(["--apply", "--database=proto05_test_m171"]),
     error => error instanceof MigrationError && error.code === "EXPECTED_HASH_REQUIRED"
   );
 });
@@ -27,12 +28,13 @@ test("le mode apply refuse une intention incomplète", () => {
 test("le mode apply exige la base, le hash, la confirmation et la sauvegarde exacts", () => {
   const options = parseArguments([
     "--apply",
-    "--database=ic_augmented_video",
+    "--database=proto05_test_m171",
     `--expected-plan-hash=${EXPECTED_PLAN_HASH}`,
     `--confirm=${APPLY_CONFIRMATION}`,
     "--backup-file=C:\\Temp\\proto05.sql"
   ]);
   assert.equal(options.mode, "apply");
+  assert.equal(options.database, "proto05_test_m171");
   assert.equal(options.expectedPlanHash, EXPECTED_PLAN_HASH);
   assert.equal(options.confirmation, APPLY_CONFIRMATION);
 });
@@ -40,7 +42,7 @@ test("le mode apply exige la base, le hash, la confirmation et la sauvegarde exa
 test("une autre base est refusée avant toute connexion", () => {
   assert.throws(
     () => parseArguments(["--verify-only", "--database=ic_dico"]),
-    error => error instanceof MigrationError && error.code === "DATABASE_MISMATCH"
+    error => error.code === "HISTORICAL_TEST_DATABASE_NAME_REQUIRED"
   );
 });
 

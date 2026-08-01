@@ -17,6 +17,7 @@ import {
   prepareValidatedPlan as prepareCorePlan,
   verifyBackup
 } from "./003_proto05_json_to_mariadb_apply.mjs";
+import { assertExplicitHistoricalTestDatabase } from "./historical-test-database-guard.mjs";
 
 const SCRIPT_FILE = fileURLToPath(import.meta.url);
 const SCRIPT_DIRECTORY = path.dirname(SCRIPT_FILE);
@@ -453,7 +454,7 @@ function prepareMetadataPlan(
 function parseArguments(argv) {
   const options = {
     mode: "dry-run",
-    database: TARGET_DATABASE,
+    database: null,
     expectedPlanHash: null,
     expectedSourceSetHash: null,
     confirmation: null,
@@ -461,6 +462,7 @@ function parseArguments(argv) {
     container: DEFAULT_CONTAINER
   };
   let explicitMode = false;
+  let explicitDatabase = false;
   for (const argument of argv) {
     if (
       [
@@ -481,6 +483,7 @@ function parseArguments(argv) {
       options.mode = argument.slice(2);
     } else if (argument.startsWith("--database=")) {
       options.database = argument.slice("--database=".length);
+      explicitDatabase = true;
     } else if (argument.startsWith("--expected-plan-hash=")) {
       options.expectedPlanHash = argument.slice("--expected-plan-hash=".length);
     } else if (argument.startsWith("--expected-source-set-hash=")) {
@@ -502,12 +505,8 @@ function parseArguments(argv) {
       );
     }
   }
-  if (options.database !== TARGET_DATABASE) {
-    throw new MetadataMigrationError(
-      "DATABASE_MISMATCH",
-      `The only authorized target is ${TARGET_DATABASE}.`,
-      { database: options.database }
-    );
+  if (options.mode !== "help") {
+    options.database = assertExplicitHistoricalTestDatabase(options.database, { explicit: explicitDatabase });
   }
   if (!/^[A-Za-z0-9_.-]+$/.test(options.container)) {
     throw new MetadataMigrationError(
@@ -550,14 +549,14 @@ function parseArguments(argv) {
 function helpText() {
   return [
     "Usage:",
-    "  node 005_proto05_document_metadata_migration.mjs [--dry-run]",
-    "  node 005_proto05_document_metadata_migration.mjs --verify-only",
+    "  node 005_proto05_document_metadata_migration.mjs --dry-run --database=proto05_test_NAME",
+    "  node 005_proto05_document_metadata_migration.mjs --verify-only --database=proto05_test_NAME",
     "  node 005_proto05_document_metadata_migration.mjs --install-schema",
     "  node 005_proto05_document_metadata_migration.mjs --rollback-test",
     "  node 005_proto05_document_metadata_migration.mjs --apply",
     "",
     "Write-capable modes require:",
-    `  --database=${TARGET_DATABASE}`,
+    "  --database=proto05_test_NAME (la base réelle est toujours refusée)",
     `  --expected-plan-hash=${EXPECTED_PLAN_HASH}`,
     `  --expected-source-set-hash=${EXPECTED_SOURCE_SET_HASH}`,
     "  --backup-file=ABSOLUTE_PATH",
@@ -614,7 +613,13 @@ async function openConnection(options, { readOnly = false } = {}) {
   return connection;
 }
 
+async function selectedDatabase(connection) {
+  const [[row]] = await connection.query("SELECT DATABASE() AS database_name");
+  return row.database_name;
+}
+
 async function schemaCounts(connection) {
+  const databaseName = await selectedDatabase(connection);
   const [[row]] = await connection.query(
     `SELECT
        (SELECT COUNT(*) FROM information_schema.TABLES
@@ -632,7 +637,7 @@ async function schemaCounts(connection) {
        (SELECT COUNT(*) FROM information_schema.TABLES
         WHERE TABLE_SCHEMA = ? AND TABLE_TYPE = 'BASE TABLE'
           AND ENGINE <> 'InnoDB') AS non_innodb` ,
-    Array(7).fill(TARGET_DATABASE)
+    Array(7).fill(databaseName)
   );
   return Object.fromEntries(
     Object.entries(row).map(([key, value]) => [key, Number(value)])
@@ -652,13 +657,14 @@ function expectedSchemaCounts(metadataInstalled) {
 }
 
 async function metadataTableExists(connection) {
+  const databaseName = await selectedDatabase(connection);
   const [[row]] = await connection.query(
     `SELECT COUNT(*) AS table_count
      FROM information_schema.TABLES
      WHERE TABLE_SCHEMA = ?
        AND TABLE_NAME = ?
        AND TABLE_TYPE = 'BASE TABLE'`,
-    [TARGET_DATABASE, METADATA_TABLE]
+    [databaseName, METADATA_TABLE]
   );
   return Number(row.table_count) === 1;
 }
@@ -677,6 +683,7 @@ async function assertSchemaCounts(connection, metadataInstalled) {
 }
 
 async function assertMetadataTableDefinition(connection) {
+  const databaseName = await selectedDatabase(connection);
   if (!await metadataTableExists(connection)) {
     throw new MetadataMigrationError(
       "METADATA_TABLE_MISSING",
@@ -689,7 +696,7 @@ async function assertMetadataTableDefinition(connection) {
      FROM information_schema.COLUMNS
      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?
      ORDER BY ORDINAL_POSITION`,
-    [TARGET_DATABASE, METADATA_TABLE]
+    [databaseName, METADATA_TABLE]
   );
   const normalizedColumns = columns.map(column => ({
     name: column.COLUMN_NAME,
@@ -742,7 +749,7 @@ async function assertMetadataTableDefinition(connection) {
      FROM information_schema.KEY_COLUMN_USAGE
      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = 'PRIMARY'
      ORDER BY ORDINAL_POSITION`,
-    [TARGET_DATABASE, METADATA_TABLE]
+    [databaseName, METADATA_TABLE]
   );
   if (
     primaryKey.length !== 1
@@ -759,7 +766,7 @@ async function assertMetadataTableDefinition(connection) {
      FROM information_schema.CHECK_CONSTRAINTS
      WHERE CONSTRAINT_SCHEMA = ? AND TABLE_NAME = ?
      ORDER BY CONSTRAINT_NAME`,
-    [TARGET_DATABASE, METADATA_TABLE]
+    [databaseName, METADATA_TABLE]
   );
   const actualChecks = checks.map(check => check.CONSTRAINT_NAME);
   const expectedChecks = [
@@ -779,7 +786,7 @@ async function assertMetadataTableDefinition(connection) {
     `SELECT ENGINE, TABLE_COLLATION
      FROM information_schema.TABLES
      WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ?`,
-    [TARGET_DATABASE, METADATA_TABLE]
+    [databaseName, METADATA_TABLE]
   );
   if (
     table.ENGINE !== "InnoDB"
