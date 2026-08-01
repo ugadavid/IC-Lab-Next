@@ -402,15 +402,13 @@ arbitraire ni SSRF.
 
 ## Migration documentaire 0.1 → Library canonique
 
-La migration 0.1 est volontairement dormante et ne remplace aucun fichier
-fonctionnel. Elle est séparée en trois modules :
+La transformation historique 0.1 reste décrite par deux composants sans
+persistance métier JSON :
 
 - `media-library-migration.js` : cœur pur
   `migrateLegacyMediaLibrary({ legacyDocument, availabilitySnapshot, options })` ;
 - `media-library-availability.js` : collecteur local borné aux `storageKey`
-  explicitement fournis, sans hash, analyse ou parcours global ;
-- `media-library-dry-run.js` : orchestrateur exigeant un répertoire de sortie
-  temporaire explicite et vide.
+  explicitement fournis, sans hash, analyse ou parcours global.
 
 Le cœur conserve les identifiants historiques valides, trie les collections par
 identifiant et produit le schéma `1.0` sans persister `sourceIds` ni
@@ -419,10 +417,7 @@ ou valeur aléatoire n’est utilisée. La disponibilité locale absente devient
 `missing-local` avec `missing-file`. Les familles et traitements insuffisamment
 prouvés restent diagnostiqués, sans parent ni historique inventé.
 
-L’orchestrateur écrit uniquement des artefacts isolés de migration à blanc,
-appelle `validateMediaLibrary` du contrat 099 et expose séparément
-`valid`, `readable`, `writeEligible`, `requiresUnknownFieldPreservation`, la
-preuve de non-mutation et la preuve de déterminisme. Il n’est importé par aucune
-route, aucun démarrage de serveur et aucun parcours utilisateur. La migration
-réelle, le remplacement du catalogue et le branchement fonctionnel restent
-interdits jusqu’à validation dédiée.
+Le cœur pur est couvert directement par ses tests de déterminisme, de
+non-mutation, de diagnostics et de conservation des identifiants. Il n'est
+importé par aucune route comme source de données : les projections du runtime
+partent exclusivement des entités reconstruites depuis MariaDB.

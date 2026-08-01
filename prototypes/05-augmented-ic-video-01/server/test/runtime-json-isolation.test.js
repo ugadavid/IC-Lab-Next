@@ -72,7 +72,11 @@ test("le graphe du serveur exclut les lecteurs et outils JSON métier historique
   ]) {
     assert.ok(!relativeFiles.includes(excluded), `${excluded} ne doit pas être chargé au démarrage.`);
   }
-  for (const retired of ["media-library-runtime.js", "media-library-install.js"]) {
+  for (const retired of [
+    "media-library-runtime.js",
+    "media-library-install.js",
+    "media-library-dry-run.js"
+  ]) {
     assert.equal(fs.existsSync(path.join(serverDirectory, retired)), false, `${retired} doit rester supprimé.`);
   }
   assert.doesNotMatch(sources, /activities\.json|activity-library\.json|video-catalog\.json|video-library\.json/);

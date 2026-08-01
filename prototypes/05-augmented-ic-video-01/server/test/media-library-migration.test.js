@@ -100,7 +100,7 @@ test("les options et l’instantané de disponibilité ne sont pas mutés", () =
 test("deux exécutions identiques ne partagent pas de sous-objets mutables", () => {
   const first = migrate();
   const second = migrate();
-  assert.deepEqual(first.output, second.output);
+  assert.deepEqual(first, second);
   first.output.assets[0].rights.changed = true;
   assert.equal(second.output.assets[0].rights.changed, undefined);
 });
