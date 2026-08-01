@@ -76,7 +76,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.51";
+const VERSION = "0.1.52";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -97,6 +97,7 @@ const REMOTE_REFERENCE_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_REFERENCE_
 const REMOTE_REFERENCE_MAX_BYTES = Number(process.env.PROTO05_REMOTE_REFERENCE_MAX_BYTES || 256 * 1024);
 const REMOTE_REFERENCE_TOKEN_TTL_MS = Number(process.env.PROTO05_REMOTE_REFERENCE_TOKEN_TTL_MS || 10 * 60 * 1000);
 const REMOTE_REFERENCE_ANALYSES = new Map();
+const REMOTE_AVAILABILITY_CHECKS = new Map();
 const REMOTE_HLS_GATEWAY_PREFIX = "/api/proto05/library/remote-hls/";
 const REMOTE_HLS_GATEWAY_TIMEOUT_MS = Number(process.env.PROTO05_REMOTE_HLS_GATEWAY_TIMEOUT_MS || 30000);
 const REMOTE_MEDIA_GATEWAY_PREFIX = "/api/proto05/library/remote-media/";
@@ -1063,6 +1064,24 @@ async function persistWorkingCopyMutation(mutation) {
   return result;
 }
 
+async function persistRemoteAvailabilityObservation(observation) {
+  const context = READ_CONTEXT.getStore();
+  if (!context) throw new Error("Contexte MariaDB transactionnel absent.");
+  const queued = writeQueue.then(() => (
+    proto05WriteBoundary().updateRemotePlayableAvailability(observation)
+  ));
+  writeQueue = queued.catch(() => {});
+  const result = await queued;
+  Object.assign(context, result.snapshot);
+  Object.defineProperty(context, "canonicalVideoLibrary", {
+    configurable: true,
+    enumerable: false,
+    writable: true,
+    value: result.snapshot.canonicalVideoLibrary
+  });
+  return result;
+}
+
 function libraryAssetFromInput(payload) {
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Le corps JSON doit être un objet.");
   const title = typeof payload.title === "string" && payload.title.trim() ? payload.title.trim().slice(0, 500) : "Asset vidéo Proto05";
@@ -1798,6 +1817,12 @@ function isPrivateAddress(address) {
     || (first === "2001" && (secondValue <= 0x01ff || secondValue === 0x0db8));
 }
 
+function remoteReferenceFailure(message, availability = "unknown") {
+  const error = new Error(message);
+  error.remoteAvailability = availability;
+  return error;
+}
+
 async function validateRemoteCopyUrl(value, options = {}) {
   let current;
   try { current = new URL(String(value || "")); } catch { throw new Error("L’URL directe est invalide."); }
@@ -1891,8 +1916,10 @@ async function analyzeRemoteLibraryReference(payload) {
     let result = await remoteReferenceFetch(original, "HEAD", controller.signal);
     if ([405, 501].includes(result.response.status)) result = await remoteReferenceFetch(original, "GET", controller.signal);
     if (!result.response.ok) {
-      if ([401, 403].includes(result.response.status)) throw new Error("La ressource distante exige une authentification ou refuse l’accès.");
-      throw new Error(`Réponse HTTP distante invalide : ${result.response.status}.`);
+      if ([401, 403].includes(result.response.status)) {
+        throw remoteReferenceFailure("La ressource distante exige une authentification ou refuse l’accès.", "unreachable-remote");
+      }
+      throw remoteReferenceFailure(`Réponse HTTP distante invalide : ${result.response.status}.`, "unreachable-remote");
     }
     let contentType = (result.response.headers.get("content-type") || "").split(";", 1)[0].trim().toLowerCase();
     const directMime = contentType.startsWith("video/");
@@ -1900,15 +1927,21 @@ async function analyzeRemoteLibraryReference(payload) {
     let playlistType = null;
     if (!kind) {
       if (result.response.body === null || result.response.bodyUsed) result = await remoteReferenceFetch(result.finalUrl, "GET", controller.signal);
-      if (!result.response.ok) throw new Error(`Réponse HTTP distante invalide : ${result.response.status}.`);
+      if (!result.response.ok) {
+        throw remoteReferenceFailure(`Réponse HTTP distante invalide : ${result.response.status}.`, "unreachable-remote");
+      }
       contentType = (result.response.headers.get("content-type") || contentType).split(";", 1)[0].trim().toLowerCase();
-      if (contentType.startsWith("text/html")) throw new Error("La ressource distante est une page HTML, pas une vidéo.");
+      if (contentType.startsWith("text/html")) {
+        throw remoteReferenceFailure("La ressource distante est une page HTML, pas une vidéo.", "unreachable-remote");
+      }
       if (contentType.startsWith("video/")) {
         kind = "direct-url";
         try { await result.response.body?.cancel(); } catch {}
       } else {
         playlistType = hlsReferenceType(await boundedRemoteText(result.response));
-        if (!playlistType || playlistType === "invalid") throw new Error("La ressource distante n’est ni une vidéo directe ni un manifeste HLS valide.");
+        if (!playlistType || playlistType === "invalid") {
+          throw remoteReferenceFailure("La ressource distante n’est ni une vidéo directe ni un manifeste HLS valide.", "unreachable-remote");
+        }
         kind = "hls";
         if (!contentType || contentType === "application/octet-stream" || contentType.startsWith("text/")) contentType = "application/vnd.apple.mpegurl";
       }
@@ -1937,6 +1970,75 @@ async function analyzeRemoteLibraryReference(payload) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+function remotePlayableForAvailabilityCheck(assetId, playableId) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  const playable = VIDEO_LIBRARY.playables.find(item => (
+    item.id === playableId && item.assetId === assetId
+  ));
+  const source = VIDEO_LIBRARY.sources.find(item => item.id === playable?.sourceId);
+  if (
+    !asset
+    || !playable
+    || !source
+    || !["hls", "direct-url"].includes(playable.kind)
+    || !["hls", "direct-url"].includes(source.kind)
+  ) {
+    const error = new Error("La référence distante à contrôler est introuvable.");
+    error.statusCode = 404;
+    throw error;
+  }
+  const remoteUrl = remoteUrlForDownload(playable, source);
+  if (!remoteUrl) {
+    const error = new Error("L’URL distante à contrôler est absente.");
+    error.statusCode = 409;
+    throw error;
+  }
+  return { asset, playable, source, remoteUrl: remoteUrl.toString() };
+}
+
+async function performRemotePlayableAvailabilityCheck(assetId, playableId) {
+  const target = remotePlayableForAvailabilityCheck(assetId, playableId);
+  let availability = "unknown";
+  let availabilityReason = "remote-check-inconclusive";
+  try {
+    const analyzed = await analyzeRemoteLibraryReference({
+      url: target.remoteUrl,
+      title: target.asset.title
+    });
+    REMOTE_REFERENCE_ANALYSES.delete(analyzed.token);
+    availability = "available";
+    availabilityReason = null;
+  } catch (error) {
+    if (error.remoteAvailability === "unreachable-remote") {
+      availability = "unreachable-remote";
+      availabilityReason = "remote-check-unavailable";
+    }
+  }
+  const saved = await persistRemoteAvailabilityObservation({
+    assetId,
+    playableId,
+    availability,
+    availabilityReason
+  });
+  const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  return {
+    availability: saved.playable.availability,
+    checkedAt: saved.playable.technicalMetadata?.analyzedAt || null,
+    asset: libraryAssetDetails(projectedAsset)
+  };
+}
+
+function recheckRemotePlayableAvailability(assetId, playableId) {
+  remotePlayableForAvailabilityCheck(assetId, playableId);
+  const key = `${assetId}\u0000${playableId}`;
+  const active = REMOTE_AVAILABILITY_CHECKS.get(key);
+  if (active) return active;
+  const check = performRemotePlayableAvailabilityCheck(assetId, playableId)
+    .finally(() => REMOTE_AVAILABILITY_CHECKS.delete(key));
+  REMOTE_AVAILABILITY_CHECKS.set(key, check);
+  return check;
 }
 
 async function confirmRemoteLibraryReference(payload) {
@@ -1992,9 +2094,9 @@ async function confirmRemoteLibraryReference(payload) {
     canonical.playables.push({
       id: publishedPlayableId, assetId: targetAssetId, sourceId: publishedSourceId,
       kind: analysis.kind, provider: "direct", role: "published-remote",
-      availability: "unknown", availabilityReason: null,
+      availability: "available", availabilityReason: null,
       location: { url: analysis.finalUrl, ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}) },
-      technicalMetadata: { durationMs: null, width: null, height: null, frameRate: null, videoCodec: null, audioCodec: null, hasAudio: null, mimeType: analysis.contentType, sizeBytes: null, sha256: null, analyzedAt: analysis.analyzedAt, analyzer: null, analyzerVersion: null, error: null },
+      technicalMetadata: { durationMs: null, width: null, height: null, frameRate: null, videoCodec: null, audioCodec: null, hasAudio: null, mimeType: analysis.contentType, sizeBytes: null, sha256: null, analyzedAt: analysis.analyzedAt, status: "complete", analyzer: "remote-reference", analyzerVersion: "1", error: null },
       provenance: publicationProvenance, createdAt, updatedAt: createdAt
     });
     if (treatment) treatment.publishedPlayableId = publishedPlayableId;
@@ -2018,7 +2120,7 @@ async function confirmRemoteLibraryReference(payload) {
   };
   const playable = {
     id: playableId, assetId, sourceId, kind: analysis.kind, provider: "direct", role: "original-remote",
-    availability: "unknown", availabilityReason: null,
+    availability: "available", availabilityReason: null,
     location: {
       url: analysis.finalUrl,
       ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {})
@@ -2027,7 +2129,7 @@ async function confirmRemoteLibraryReference(payload) {
       durationMs: null, width: null, height: null, frameRate: null,
       videoCodec: null, audioCodec: null, hasAudio: null,
       mimeType: analysis.contentType, sizeBytes: null, sha256: null,
-      analyzedAt: analysis.analyzedAt, analyzer: null, analyzerVersion: null, error: null
+      analyzedAt: analysis.analyzedAt, status: "complete", analyzer: "remote-reference", analyzerVersion: "1", error: null
     },
     provenance, createdAt, updatedAt: createdAt
   };
@@ -3837,6 +3939,25 @@ async function handleApiInReadContext(request, response, url) {
     } catch (error) {
       const status = error.statusCode || 400;
       return sendJson(response, status, { error: status >= 500 ? "Enregistrement de la référence distante impossible." : (error.message || "Ajout de la référence distante impossible.") });
+    }
+  }
+  const remoteAvailabilityMatch = /^\/api\/proto05\/library\/assets\/([^/]+)\/playables\/([^/]+)\/availability-check$/.exec(url.pathname);
+  if (remoteAvailabilityMatch) {
+    if (request.method !== "POST") {
+      return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    }
+    try {
+      const result = await recheckRemotePlayableAvailability(
+        decodeURIComponent(remoteAvailabilityMatch[1]),
+        decodeURIComponent(remoteAvailabilityMatch[2])
+      );
+      return sendJson(response, 200, result);
+    } catch (error) {
+      return sendJson(response, error.statusCode || 500, {
+        error: error.statusCode && error.statusCode < 500
+          ? error.message
+          : "La vérification de disponibilité n’a pas pu être enregistrée."
+      });
     }
   }
   if (url.pathname === "/api/proto05/library/audio-anonymization/plans") {

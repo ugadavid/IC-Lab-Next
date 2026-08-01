@@ -10,6 +10,7 @@ function createProto05WriteBoundary({
     throw new TypeError("L’adaptateur MariaDB doit exposer appendWorkingCopy().");
   }
   for (const method of [
+    "updateRemotePlayableAvailability",
     "saveAudioAnonymizationPlan",
     "startInlineMediaTreatment",
     "updateMediaTreatment",
@@ -25,6 +26,9 @@ function createProto05WriteBoundary({
     },
     async appendWorkingCopy(snapshot, mutation, context = {}) {
       return mariadbAdapter.appendWorkingCopy(snapshot, mutation, context);
+    },
+    async updateRemotePlayableAvailability(observation) {
+      return mariadbAdapter.updateRemotePlayableAvailability(observation);
     },
     async saveAudioAnonymizationPlan(plan) {
       return mariadbAdapter.saveAudioAnonymizationPlan(plan);

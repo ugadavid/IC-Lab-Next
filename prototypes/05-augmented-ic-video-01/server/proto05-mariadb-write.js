@@ -1074,6 +1074,81 @@ function createMariaDbWriteAdapter({
       );
     },
 
+    async updateRemotePlayableAvailability(observation) {
+      if (
+        !observation?.assetId
+        || !observation?.playableId
+        || !["available", "unreachable-remote", "unknown"].includes(observation.availability)
+      ) {
+        throw new Error("Observation de disponibilité distante invalide.");
+      }
+      return targetedProcedureTransaction(
+        "Mise à jour de la disponibilité distante",
+        async database => {
+          const beforeTables = await readCanonicalTablesWithProcedures(database);
+          const playable = beforeTables.media_playables.find(row => (
+            row.id === observation.playableId && row.asset_id === observation.assetId
+          ));
+          const source = beforeTables.media_sources.find(row => row.id === playable?.source_id);
+          if (
+            !playable
+            || !source
+            || !["hls", "direct-url"].includes(playable.kind)
+            || !["hls", "direct-url"].includes(source.kind)
+          ) {
+            const error = new Error("La référence distante à contrôler est introuvable.");
+            error.code = "PROTO05_REMOTE_PLAYABLE_NOT_FOUND";
+            throw error;
+          }
+          const metadata = beforeTables.media_playable_metadata.find(row => (
+            row.playable_id === observation.playableId
+          )) || {};
+          await callProcedure(database, "sp_media_update_playable_availability", [
+            observation.playableId,
+            observation.availability,
+            observation.availabilityReason || null
+          ]);
+          await callProcedure(database, "sp_media_set_playable_metadata", [
+            observation.playableId,
+            observation.availability === "available"
+              ? "complete"
+              : observation.availability === "unreachable-remote" ? "failed" : "unknown",
+            metadata.mime_type ?? source.mime_type ?? null,
+            metadata.duration_ms ?? null,
+            metadata.size_bytes ?? null,
+            metadata.sha256 ?? null,
+            metadata.width ?? null,
+            metadata.height ?? null,
+            metadata.frame_rate ?? null,
+            metadata.video_codec ?? null,
+            metadata.audio_codec ?? null,
+            metadata.has_audio ?? null,
+            "remote-availability",
+            "1",
+            observation.availability === "available" ? null : observation.availabilityReason || null
+          ]);
+          const resultingTables = await readCanonicalTablesWithProcedures(database);
+          const result = projectMariaDbSnapshotForApplication(
+            mapMariaDbTablesToSnapshot(resultingTables)
+          );
+          const saved = result.canonicalVideoLibrary.playables.find(item => (
+            item.id === observation.playableId && item.assetId === observation.assetId
+          ));
+          if (
+            !saved
+            || saved.availability !== observation.availability
+            || !saved.technicalMetadata?.analyzedAt
+          ) {
+            const error = new Error("La relecture de la disponibilité distante diverge.");
+            error.code = "PROTO05_TARGETED_WRITE_RECONCILIATION_FAILED";
+            throw error;
+          }
+          return { snapshot: result, playable: saved };
+        },
+        { touchMediaLibrary: true }
+      );
+    },
+
     async appendWorkingCopy(snapshot, mutation, {
       failAfterStatements = null
     } = {}) {

@@ -37,6 +37,7 @@ function flattenPlayable(playable) {
     sha256: playable.technicalMetadata?.sha256 ?? null,
     sizeBytes: playable.technicalMetadata?.sizeBytes ?? null,
     fileName: playable.technicalMetadata?.fileName ?? null,
+    technicalMetadata: clone(playable.technicalMetadata || {}),
     provenance: clone(playable.provenance || {}),
     role: playable.role || null,
     ...location

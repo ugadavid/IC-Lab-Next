@@ -439,11 +439,19 @@ test("la frontière MariaDB normalise le transport filesystem vers le contrat fi
   );
 });
 
-test("une référence HLS analysée est enregistrée une seule fois et relue par la vidéothèque", {
+test("une référence HLS conserve son contrôle initial puis remplace honnêtement sa dernière disponibilité", {
   timeout: 30_000
 }, async () => {
+  let remoteMode = "available";
+  let remoteRequestCount = 0;
   const hls = http.createServer((request, response) => {
+    remoteRequestCount += 1;
+    if (remoteMode === "inconclusive") return request.socket.destroy();
     response.setHeader("content-type", "application/vnd.apple.mpegurl");
+    if (remoteMode === "unavailable") {
+      response.statusCode = 404;
+      return response.end("absent");
+    }
     if (request.method === "HEAD") return response.end();
     if (request.url === "/invalid.m3u8") return response.end("contenu invalide");
     response.end("#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=800000\nvariant.m3u8\n");
@@ -470,6 +478,7 @@ test("une référence HLS analysée est enregistrée une seule fois et relue par
     assert.equal(analyzed.response.status, 200, analyzed.body.error);
     assert.equal(analyzed.body.summary.kind, "hls");
     assert.equal(analyzed.body.summary.playlistType, "master");
+    const requestsAfterAnalysis = remoteRequestCount;
 
     const confirmations = await Promise.all([0, 1].map(() => request(
       server.baseUrl,
@@ -485,12 +494,15 @@ test("une référence HLS analysée est enregistrée une seule fois et relue par
     assert.ok(created, JSON.stringify(confirmations.map(result => result.body)));
     assert.ok(refused, "La confirmation concurrente doit être refusée.");
     assetId = created.body.assetId;
+    assert.equal(remoteRequestCount, requestsAfterAnalysis, "La confirmation ne doit pas recontacter la ressource.");
 
     const [rows] = await database.query(
       "SELECT a.id asset_id, a.default_playable_id, s.id source_id, s.transport, s.role source_role, "
-        + "p.id playable_id, p.location_url, p.role playable_role "
+        + "p.id playable_id, p.location_url, p.role playable_role, p.availability, "
+        + "m.analysis_status, m.analyzed_at "
         + "FROM media_assets a INNER JOIN media_sources s ON s.asset_id = a.id "
-        + "INNER JOIN media_playables p ON p.asset_id = a.id AND p.source_id = s.id WHERE a.id = ?",
+        + "INNER JOIN media_playables p ON p.asset_id = a.id AND p.source_id = s.id "
+        + "LEFT JOIN media_playable_metadata m ON m.playable_id = p.id WHERE a.id = ?",
       [assetId]
     );
     assert.equal(rows.length, 1);
@@ -499,6 +511,9 @@ test("une référence HLS analysée est enregistrée une seule fois et relue par
     assert.equal(rows[0].playable_role, "original-remote");
     assert.equal(rows[0].location_url, remoteUrl);
     assert.equal(rows[0].default_playable_id, rows[0].playable_id);
+    assert.equal(rows[0].availability, "available");
+    assert.equal(rows[0].analysis_status, "complete");
+    assert.ok(Number.isFinite(new Date(rows[0].analyzed_at).getTime()));
 
     const detail = await request(
       server.baseUrl,
@@ -507,8 +522,45 @@ test("une référence HLS analysée est enregistrée une seule fois et relue par
     assert.equal(detail.response.status, 200, detail.body.error);
     assert.equal(detail.body.asset.id, assetId);
     assert.equal(detail.body.asset.versionsAndAccess.originalRemote.length, 1);
+    const initialPlayable = detail.body.asset.playables.find(item => item.id === rows[0].playable_id);
+    assert.equal(initialPlayable.availability, "available");
+    assert.ok(initialPlayable.technicalMetadata.analyzedAt);
     const page = await fetch(`${server.baseUrl}/teacher/videos/${encodeURIComponent(assetId)}`);
     assert.equal(page.status, 200);
+
+    const requestsBeforeConcurrentCheck = remoteRequestCount;
+    const availabilityPath = `/api/proto05/library/assets/${encodeURIComponent(assetId)}/playables/${encodeURIComponent(rows[0].playable_id)}/availability-check`;
+    const concurrentChecks = await Promise.all([0, 1].map(() => request(
+      server.baseUrl,
+      availabilityPath,
+      { method: "POST" }
+    )));
+    assert.deepEqual(concurrentChecks.map(result => result.response.status), [200, 200]);
+    assert.equal(remoteRequestCount - requestsBeforeConcurrentCheck, 2, "Deux clics concurrents doivent partager un seul contrôle HEAD/GET.");
+    assert.ok(concurrentChecks.every(result => result.body.availability === "available"));
+    assert.ok(concurrentChecks.every(result => result.body.checkedAt));
+
+    remoteMode = "unavailable";
+    const unavailable = await request(server.baseUrl, availabilityPath, { method: "POST" });
+    assert.equal(unavailable.response.status, 200, unavailable.body.error);
+    assert.equal(unavailable.body.availability, "unreachable-remote");
+    assert.ok(unavailable.body.checkedAt);
+
+    remoteMode = "inconclusive";
+    const inconclusive = await request(server.baseUrl, availabilityPath, { method: "POST" });
+    assert.equal(inconclusive.response.status, 200, inconclusive.body.error);
+    assert.equal(inconclusive.body.availability, "unknown");
+    assert.ok(inconclusive.body.checkedAt);
+    const [lastRows] = await database.query(
+      "SELECT p.availability, p.availability_reason, m.analysis_status, m.analyzed_at "
+        + "FROM media_playables p INNER JOIN media_playable_metadata m ON m.playable_id = p.id WHERE p.id = ?",
+      [rows[0].playable_id]
+    );
+    assert.equal(lastRows[0].availability, "unknown");
+    assert.equal(lastRows[0].availability_reason, "remote-check-inconclusive");
+    assert.equal(lastRows[0].analysis_status, "unknown");
+    assert.ok(Number.isFinite(new Date(lastRows[0].analyzed_at).getTime()));
+    remoteMode = "available";
 
     const duplicateAnalysis = await request(server.baseUrl, "/api/proto05/library/remote-reference/analyze", {
       method: "POST",
