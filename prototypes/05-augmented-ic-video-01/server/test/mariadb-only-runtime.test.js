@@ -3,6 +3,7 @@
 const assert = require("node:assert/strict");
 const crypto = require("node:crypto");
 const fs = require("node:fs");
+const http = require("node:http");
 const net = require("node:net");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
@@ -36,6 +37,7 @@ const {
 const {
   READ_TABLES,
   createMariaDbReadonlyAdapter,
+  mapMariaDbTablesToSnapshot,
   readCanonicalTablesWithProcedures,
   runConsistentReadSnapshot
 } = require("../proto05-mariadb-readonly");
@@ -411,6 +413,151 @@ test("la frontière de lecture exécute réellement le bundle canonique par CALL
     parameters: ["__PROTO05_CANONICAL_SNAPSHOT__"]
   }]);
   assert.deepEqual(Object.keys(tables), READ_TABLES.map(([table]) => table));
+});
+
+test("la frontière MariaDB normalise le transport filesystem vers le contrat file", () => {
+  const tables = Object.fromEntries(READ_TABLES.map(([table]) => [table, []]));
+  tables.media_sources = [
+    { id: "source-m157b-filesystem", transport: "filesystem" },
+    { id: "source-m157b-file", transport: "file" },
+    { id: "source-m157b-https", transport: "https" }
+  ].map(source => ({
+    asset_id: `asset-${source.id}`,
+    kind: "derived-output",
+    provider: "proto05-derived",
+    role: "derivation-local",
+    mime_type: "video/mp4",
+    origin_json: {},
+    provenance_json: {},
+    created_at: "2026-08-01 12:00:00.000",
+    ...source
+  }));
+  const snapshot = mapMariaDbTablesToSnapshot(tables);
+  assert.deepEqual(
+    snapshot.videoLibrary.sources.map(source => source.transport),
+    ["file", "file", "https"]
+  );
+});
+
+test("une référence HLS analysée est enregistrée une seule fois et relue par la vidéothèque", {
+  timeout: 30_000
+}, async () => {
+  const hls = http.createServer((request, response) => {
+    response.setHeader("content-type", "application/vnd.apple.mpegurl");
+    if (request.method === "HEAD") return response.end();
+    if (request.url === "/invalid.m3u8") return response.end("contenu invalide");
+    response.end("#EXTM3U\n#EXT-X-STREAM-INF:BANDWIDTH=800000\nvariant.m3u8\n");
+  });
+  await new Promise((resolve, reject) => {
+    hls.once("error", reject);
+    hls.listen(0, "127.0.0.1", resolve);
+  });
+  const remoteUrl = `http://127.0.0.1:${hls.address().port}/livestream.m3u8`;
+  const server = await startServer({ PROTO05_TEST_ALLOW_PRIVATE_REMOTE: "1" });
+  let database;
+  let baseline;
+  let assetId = null;
+  try {
+    await server.ready();
+    database = await testDatabaseConnection();
+    baseline = await readTableCardinalities(database);
+
+    const analyzed = await request(server.baseUrl, "/api/proto05/library/remote-reference/analyze", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ url: remoteUrl, title: "[TEST M157B] HLS distant" })
+    });
+    assert.equal(analyzed.response.status, 200, analyzed.body.error);
+    assert.equal(analyzed.body.summary.kind, "hls");
+    assert.equal(analyzed.body.summary.playlistType, "master");
+
+    const confirmations = await Promise.all([0, 1].map(() => request(
+      server.baseUrl,
+      "/api/proto05/library/remote-reference/confirm",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: analyzed.body.token })
+      }
+    )));
+    const created = confirmations.find(result => result.response.status === 201);
+    const refused = confirmations.find(result => result.response.status === 409);
+    assert.ok(created, JSON.stringify(confirmations.map(result => result.body)));
+    assert.ok(refused, "La confirmation concurrente doit être refusée.");
+    assetId = created.body.assetId;
+
+    const [rows] = await database.query(
+      "SELECT a.id asset_id, a.default_playable_id, s.id source_id, s.transport, s.role source_role, "
+        + "p.id playable_id, p.location_url, p.role playable_role "
+        + "FROM media_assets a INNER JOIN media_sources s ON s.asset_id = a.id "
+        + "INNER JOIN media_playables p ON p.asset_id = a.id AND p.source_id = s.id WHERE a.id = ?",
+      [assetId]
+    );
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].transport, "hls");
+    assert.equal(rows[0].source_role, "original-remote");
+    assert.equal(rows[0].playable_role, "original-remote");
+    assert.equal(rows[0].location_url, remoteUrl);
+    assert.equal(rows[0].default_playable_id, rows[0].playable_id);
+
+    const detail = await request(
+      server.baseUrl,
+      `/api/proto05/library/assets/${encodeURIComponent(assetId)}`
+    );
+    assert.equal(detail.response.status, 200, detail.body.error);
+    assert.equal(detail.body.asset.id, assetId);
+    assert.equal(detail.body.asset.versionsAndAccess.originalRemote.length, 1);
+    const page = await fetch(`${server.baseUrl}/teacher/videos/${encodeURIComponent(assetId)}`);
+    assert.equal(page.status, 200);
+
+    const duplicateAnalysis = await request(server.baseUrl, "/api/proto05/library/remote-reference/analyze", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ url: remoteUrl })
+    });
+    assert.equal(duplicateAnalysis.response.status, 200);
+    assert.equal(duplicateAnalysis.body.summary.duplicate.assetId, assetId);
+    const duplicateConfirmation = await request(
+      server.baseUrl,
+      "/api/proto05/library/remote-reference/confirm",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: duplicateAnalysis.body.token })
+      }
+    );
+    assert.equal(duplicateConfirmation.response.status, 409);
+    assert.equal(duplicateConfirmation.body.assetId, assetId);
+
+    const invalid = await request(server.baseUrl, "/api/proto05/library/remote-reference/analyze", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ url: `http://127.0.0.1:${hls.address().port}/invalid.m3u8` })
+    });
+    assert.equal(invalid.response.status, 400);
+    assert.match(invalid.body.error, /manifeste HLS valide/);
+  } finally {
+    try {
+      if (assetId && server.child.exitCode === null) {
+        const removed = await request(
+          server.baseUrl,
+          `/api/proto05/library/assets/${encodeURIComponent(assetId)}`,
+          { method: "DELETE" }
+        );
+        assert.equal(removed.response.status, 200, removed.body.error);
+        const absent = await request(
+          server.baseUrl,
+          `/api/proto05/library/assets/${encodeURIComponent(assetId)}`
+        );
+        assert.equal(absent.response.status, 404);
+      }
+      if (database && baseline) assert.deepEqual(await readTableCardinalities(database), baseline);
+    } finally {
+      if (database) await database.end();
+      await server.stop();
+      await new Promise(resolve => hls.close(resolve));
+    }
+  }
 });
 
 test("le diagnostic MariaDB classe les erreurs sans exposer de secret", () => {

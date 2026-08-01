@@ -76,7 +76,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.50";
+const VERSION = "0.1.51";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -2004,32 +2004,47 @@ async function confirmRemoteLibraryReference(payload) {
     const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === targetAssetId);
     return { duplicate: false, asset: libraryAssetDetails(projectedAsset), assetId: targetAssetId, playableId: publishedPlayableId, sourceId: publishedSourceId, role: "published-remote" };
   }
+  const canonical = JSON.parse(JSON.stringify(activeCanonicalVideoLibrary()));
   const source = {
-    id: sourceId, assetId, title, kind: analysis.kind, provider: "direct", role: "original-remote",
-    originUrl: analysis.originalUrl, sourceUrl: analysis.originalUrl, url: analysis.finalUrl,
-    ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}),
-    mimeType: analysis.contentType, durationMs: null, authorized: true, availability: "unknown", provenance
+    id: sourceId, assetId, kind: analysis.kind, provider: "direct", role: "original-remote",
+    origin: {
+      originUrl: analysis.originalUrl,
+      sourceUrl: analysis.originalUrl,
+      url: analysis.finalUrl,
+      ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {})
+    },
+    transport: analysis.kind === "hls" ? "hls" : new URL(analysis.finalUrl).protocol.replace(":", ""),
+    mimeType: analysis.contentType, provenance, createdAt
   };
   const playable = {
     id: playableId, assetId, sourceId, kind: analysis.kind, provider: "direct", role: "original-remote",
-    status: "pending", availability: "unknown", durationMs: null, mimeType: analysis.contentType,
-    url: analysis.finalUrl, ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {}),
-    originUrl: analysis.originalUrl, provenance
+    availability: "unknown", availabilityReason: null,
+    location: {
+      url: analysis.finalUrl,
+      ...(analysis.kind === "hls" ? { manifestUrl: analysis.finalUrl } : {})
+    },
+    technicalMetadata: {
+      durationMs: null, width: null, height: null, frameRate: null,
+      videoCodec: null, audioCodec: null, hasAudio: null,
+      mimeType: analysis.contentType, sizeBytes: null, sha256: null,
+      analyzedAt: analysis.analyzedAt, analyzer: null, analyzerVersion: null, error: null
+    },
+    provenance, createdAt, updatedAt: createdAt
   };
   const asset = {
-    id: assetId, title, status: "active", sourceIds: [sourceId], playableIds: [playableId],
-    defaultPlayableId: playableId, provenance,
-    metadata: { originalUrl: analysis.originalUrl, finalUrl: analysis.finalUrl, mimeType: analysis.contentType, durationMs: null, analyzedAt: analysis.analyzedAt },
-    rights: {}
+    id: assetId, title, lifecycle: "active", folderId: null,
+    defaultPlayableId: playableId, parentAssetId: null, familyRootAssetId: assetId,
+    derivationTypes: [], tagIds: [], provenance, technicalMetadata: {}, rights: {},
+    createdAt, updatedAt: createdAt
   };
-  const nextLibrary = libraryMutationCopy();
-  nextLibrary.assets.push(asset);
-  nextLibrary.sources.push(source);
-  nextLibrary.playables.push(playable);
+  canonical.assets.push(asset);
+  canonical.sources.push(source);
+  canonical.playables.push(playable);
   try {
-    await persistLibraryMutation(nextLibrary);
+    await persistCanonicalLibrary(canonical);
     REMOTE_REFERENCE_ANALYSES.delete(token);
-    return { duplicate: false, asset: libraryAssetDetails(asset), assetId, playableId };
+    const projectedAsset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+    return { duplicate: false, asset: libraryAssetDetails(projectedAsset), assetId, playableId, sourceId };
   } catch (error) {
     analysis.confirming = false;
     error.statusCode = 500;

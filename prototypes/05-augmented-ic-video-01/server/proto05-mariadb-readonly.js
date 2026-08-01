@@ -445,7 +445,7 @@ function mapVideoLibrary(tables) {
     provider: row.provider,
     ...(row.role !== null ? { role: row.role } : {}),
     origin: jsonValue(row.origin_json, {}),
-    transport: row.transport,
+    transport: row.transport === "filesystem" ? "file" : row.transport,
     mimeType: row.mime_type,
     provenance: jsonValue(row.provenance_json, {}),
     createdAt: isoDate(row.created_at)
