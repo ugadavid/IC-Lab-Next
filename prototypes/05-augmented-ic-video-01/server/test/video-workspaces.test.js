@@ -101,6 +101,22 @@ test("la vidéothèque ouvre une fiche dédiée sans détail transitoire dans le
   assert.doesNotMatch(html, /Copie locale disponible · lecture par défaut/);
 });
 
+test("l’échec d’une référence distante reste dans le panneau analysé", () => {
+  const html = fs.readFileSync(path.resolve(__dirname, "../../teacher-videos.html"), "utf8");
+  const remoteFlow = html.slice(
+    html.indexOf("let remoteReferenceToken"),
+    html.indexOf("function decorateLibraryMetadata")
+  );
+  const analysisStart = remoteFlow.indexOf("<h4>Analyse terminée</h4>");
+  const errorStart = remoteFlow.indexOf('id="remoteReferenceError"', analysisStart);
+  const actionsStart = remoteFlow.indexOf('<div class="actions">', errorStart);
+  assert.ok(analysisStart >= 0 && errorStart > analysisStart && actionsStart > errorStart);
+  assert.equal((remoteFlow.match(/id="remoteReferenceError"/g) || []).length, 1);
+  assert.match(remoteFlow, /errorNode\.hidden=true;errorNode\.textContent=''/);
+  assert.match(remoteFlow, /setStatus\(''\);errorNode\.textContent='Impossible d’enregistrer cette référence distante\./);
+  assert.doesNotMatch(remoteFlow, /catch\(error\)\{button\.disabled=false;setStatus\(error\.message,'error'\)\}/);
+});
+
 test("la route détaillée projette un asset et traite proprement un identifiant inconnu", async t => {
   const server = await startTemporaryProto05Server({ schemaVersion: "0.1", activities: [] }, "proto05-video-detail-");
   t.after(() => server.cleanup());
