@@ -75,7 +75,8 @@ test("le graphe du serveur exclut les lecteurs et outils JSON métier historique
   for (const retired of [
     "media-library-runtime.js",
     "media-library-install.js",
-    "media-library-dry-run.js"
+    "media-library-dry-run.js",
+    "scripts/migrate-language-catalog.js"
   ]) {
     assert.equal(fs.existsSync(path.join(serverDirectory, retired)), false, `${retired} doit rester supprimé.`);
   }

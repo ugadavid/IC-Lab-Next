@@ -342,12 +342,12 @@ L’atelier auteur propose exclusivement les quatre entrées `fr`, `es`, `it` et
 identifiants et libellés locaux ; une duplication conserve les identifiants du
 référentiel au lieu d’en créer de nouveaux.
 
-Historique (migration vers `0.1.12`, hors runtime depuis la Mission 146) : le
-script `scripts/migrate-language-catalog.js` réalisait la migration sur un
-fichier explicitement désigné. Son mode `--apply` exigeait une sauvegarde `.bak`,
-la créait sans écraser un fichier existant, puis remplaçait le JSON par renommage
-atomique après validation des volumes et des champs autorisés à changer. Ce
-mécanisme n’est pas une persistance opérationnelle actuelle.
+Historique (migration vers `0.1.12`, hors runtime depuis la Mission 146) : un
+script ponctuel retiré en Mission 176 remappait les identifiants locaux d’un
+fichier explicitement désigné. Son mode d’application exigeait une sauvegarde
+`.bak`, puis remplaçait le JSON par renommage atomique après validation des
+volumes et des champs autorisés à changer. Ce mécanisme historique n’est ni un
+outil disponible ni une persistance opérationnelle actuelle.
 
 ## Brouillon vide et validation d’intégrité (0.1.10)
 
