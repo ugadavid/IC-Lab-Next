@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
 const { validateCorpusManifest } = require("../corpus-import-manifest");
-const { canonicalJson, createCorpusImportPlan, manifestSemanticHash } = require("../corpus-import-plan");
+const { ALLOWED_SOURCE_KINDS, canonicalJson, createCorpusImportPlan, manifestSemanticHash } = require("../corpus-import-plan");
 const { loadValidatedManifest, parseArguments, producePlan } = require("../scripts/corpus-import");
 
 const prototypeDirectory = path.resolve(__dirname, "..", "..");
@@ -56,6 +56,7 @@ test("une preuve manquante est rejetée", () => invalid(value => { delete value.
 test("un faux human-verified est rejeté", () => invalid(value => { value.entries[0].evidence.analysis.validation = "human-verified"; }, /validator/));
 
 test("le plan retrouve 4 correspondances et propose 20 créations", () => { const value = plan(); assert.equal(value.matchedExisting.length, 4); assert.equal(value.createTechnicalMedia.length, 20); });
+test("les 20 créations HLS respectent l’enum MariaDB 006", () => { const created = plan().createTechnicalMedia; assert.equal(created.length, 20); assert.ok(created.every(item => item.source.kind === "hls" && item.playable.kind === "hls")); assert.ok(created.every(item => ALLOWED_SOURCE_KINDS.has(item.source.kind))); assert.ok(created.every(item => item.source.kind !== "remote")); });
 test("aucun rapprochement flou n’est effectué", () => { const state = snapshot(); state.canonicalVideoLibrary.assets.push(asset("fake", "asset-same-title")); state.canonicalVideoLibrary.assets.at(-1).title = manifest().entries[0].functionalName; const value = plan(state); assert.ok(value.createTechnicalMedia.some(item => item.entryId === "repli4c-video-36970")); });
 test("une ambiguïté exacte est bloquante", () => { const state = snapshot(); state.canonicalVideoLibrary.sources.push({ ...state.canonicalVideoLibrary.sources[0], id: "ambiguous", assetId: state.canonicalVideoLibrary.assets[1].id }); assert.ok(plan(state).blockers.some(item => item.code === "AMBIGUOUS_EXACT_IDENTITY")); });
 test("une collision d’ID déterministe est bloquante", () => { const state = snapshot(); state.canonicalVideoLibrary.assets.push(asset("collision", "media-proto05-uga-36970")); assert.ok(plan(state).blockers.some(item => item.code === "DETERMINISTIC_ID_COLLISION")); });
@@ -69,5 +70,5 @@ test("l’ordre physique du manifeste est sans incidence hors corpusOrder", () =
 test("le planificateur pur n’accède ni au réseau ni à MariaDB", () => { const source = fs.readFileSync(path.join(__dirname, "..", "corpus-import-plan.js"), "utf8"); assert.doesNotMatch(source, /node:fs|mysql|fetch\(|https\.request|http\.request/); });
 test("la commande produit le plan avec un reader injecté sans écriture", async () => { let reads = 0; const value = await producePlan({ manifestPath, readSnapshot: async () => { reads += 1; return snapshot(); } }); assert.equal(reads, 1); assert.equal(value.createTechnicalMedia.length, 20); });
 test("aucun fallback JSON métier n’est introduit", () => { const sources = ["corpus-import-manifest.js", "corpus-import-plan.js", "scripts/corpus-import.js"].map(file => fs.readFileSync(path.join(__dirname, "..", file), "utf8")).join("\n"); assert.doesNotMatch(sources, /activities\.json|video-library\.json|activity-library\.json/); });
-test("la commande refuse apply et toute commande inconnue", () => { assert.throws(() => parseArguments(["apply"]), /seule.*plan/); assert.throws(() => parseArguments(["unknown"]), /seule.*plan/); assert.deepEqual(parseArguments(["plan"]).outputPath, null); });
+test("la commande accepte plan et apply explicites et refuse les commandes inconnues", () => { assert.equal(parseArguments(["apply"]).command, "apply"); assert.throws(() => parseArguments(["unknown"]), /plan ou apply/); assert.equal(parseArguments(["plan"]).outputPath, null); });
 test("les deux SHA-256 source réels correspondent au manifeste avant toute lecture métier", () => { const loaded = loadValidatedManifest(manifestPath); assert.deepEqual(loaded.sourceHashes, hashes()); });

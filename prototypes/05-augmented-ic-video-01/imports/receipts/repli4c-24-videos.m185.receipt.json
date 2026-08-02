@@ -1,0 +1,173 @@
+{
+  "appliedCount": 20,
+  "corpusId": "repli4c-24-videos",
+  "created": [
+    {
+      "assetId": "media-proto05-uga-36970",
+      "entryId": "repli4c-video-36970",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36970",
+      "sourceId": "source-proto05-uga-36970",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36970/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36972",
+      "entryId": "repli4c-video-36972",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36972",
+      "sourceId": "source-proto05-uga-36972",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36972/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36975",
+      "entryId": "repli4c-video-36975",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36975",
+      "sourceId": "source-proto05-uga-36975",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36975/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36977",
+      "entryId": "repli4c-video-36977",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36977",
+      "sourceId": "source-proto05-uga-36977",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36977/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36978",
+      "entryId": "repli4c-video-36978",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36978",
+      "sourceId": "source-proto05-uga-36978",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36978/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36979",
+      "entryId": "repli4c-video-36979",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36979",
+      "sourceId": "source-proto05-uga-36979",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36979/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36980",
+      "entryId": "repli4c-video-36980",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36980",
+      "sourceId": "source-proto05-uga-36980",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36980/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36982",
+      "entryId": "repli4c-video-36982",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36982",
+      "sourceId": "source-proto05-uga-36982",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36982/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36988",
+      "entryId": "repli4c-video-36988",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36988",
+      "sourceId": "source-proto05-uga-36988",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36988/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36984",
+      "entryId": "repli4c-video-36984",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36984",
+      "sourceId": "source-proto05-uga-36984",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36984/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36983",
+      "entryId": "repli4c-video-36983",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36983",
+      "sourceId": "source-proto05-uga-36983",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36983/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36985",
+      "entryId": "repli4c-video-36985",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36985",
+      "sourceId": "source-proto05-uga-36985",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36985/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36987",
+      "entryId": "repli4c-video-36987",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36987",
+      "sourceId": "source-proto05-uga-36987",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36987/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36996",
+      "entryId": "repli4c-video-36996",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36996",
+      "sourceId": "source-proto05-uga-36996",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36996/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36997",
+      "entryId": "repli4c-video-36997",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36997",
+      "sourceId": "source-proto05-uga-36997",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36997/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36998",
+      "entryId": "repli4c-video-36998",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36998",
+      "sourceId": "source-proto05-uga-36998",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36998/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-36995",
+      "entryId": "repli4c-video-36995",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-36995",
+      "sourceId": "source-proto05-uga-36995",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36995/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-37000",
+      "entryId": "repli4c-video-37000",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-37000",
+      "sourceId": "source-proto05-uga-37000",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37000/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-37001",
+      "entryId": "repli4c-video-37001",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-37001",
+      "sourceId": "source-proto05-uga-37001",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37001/livestream.m3u8"
+    },
+    {
+      "assetId": "media-proto05-uga-37003",
+      "entryId": "repli4c-video-37003",
+      "kind": "hls",
+      "playableId": "video-proto05-uga-37003",
+      "sourceId": "source-proto05-uga-37003",
+      "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37003/livestream.m3u8"
+    }
+  ],
+  "manifestHash": "549f9b8eb37d7aa963a81a5075632abf8cd23715db28a3ddad53f220aa4e48e1",
+  "planFileHash": "8dd95dd7f76d30c88a8e25bcbc4167399bcd9ef46fd8afc97b746dc42bada6d5",
+  "planHash": "f928ed0476437344d9b00a40228e78408b96bc8083b40479cff5e300b6772140",
+  "postImportSnapshotHash": "098b9da22e1d6433712caae63ab20f893a3cf1c667ef8842f79a1d37b5a726f8",
+  "postPlanHash": "334ab58c7aa71c28092778fababa2787675e451719ac78a787057e446c37d99d",
+  "preImportSnapshotHash": "7e1f44bf8f3e82b132bbc637f13e7f85cdd97d1a815d997ad556d1ae0007d221",
+  "schemaVersion": "proto05-corpus-import-receipt/1.0"
+}

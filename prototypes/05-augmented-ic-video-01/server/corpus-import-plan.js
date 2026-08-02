@@ -3,6 +3,8 @@
 const crypto = require("node:crypto");
 const { UGA_PREFIX } = require("./corpus-import-manifest");
 
+const ALLOWED_SOURCE_KINDS = new Set(["local-file", "direct-url", "hls", "youtube-embed", "derived-output"]);
+
 function canonicalize(value) {
   if (Array.isArray(value)) return value.map(canonicalize);
   if (!value || typeof value !== "object") return value;
@@ -112,7 +114,7 @@ function createCorpusImportPlan({ manifest, snapshot, manifestHash, sourceHashes
       externalIdentity: entry.externalIdentity,
       ids,
       asset: { id: ids.assetId, title: entry.functionalName },
-      source: { id: ids.sourceId, assetId: ids.assetId, kind: "remote", provider: "uga-video", transport: "hls", mimeType: entry.source.mimeType, origin: { externalVideoId: videoId, sourceUrl: entry.source.url }, provenance: { corpusId: manifest.corpus.id, entryId: entry.entryId } },
+      source: { id: ids.sourceId, assetId: ids.assetId, kind: entry.source.kind, provider: "uga-video", transport: "hls", mimeType: entry.source.mimeType, origin: { externalVideoId: videoId, sourceUrl: entry.source.url }, provenance: { corpusId: manifest.corpus.id, entryId: entry.entryId } },
       playable: { id: ids.playableId, assetId: ids.assetId, sourceId: ids.sourceId, kind: "hls", provider: "uga-video", availability: "unknown", location: { manifestUrl: entry.source.url } }
     });
   }
@@ -128,6 +130,11 @@ function createCorpusImportPlan({ manifest, snapshot, manifestHash, sourceHashes
     passages: entry.analysis.passages,
     notes: entry.notes
   }));
+  for (const item of createTechnicalMedia) {
+    if (!ALLOWED_SOURCE_KINDS.has(item.source.kind)) {
+      blockers.push({ code: "SOURCE_KIND_SCHEMA_INCOMPATIBLE", entryId: item.entryId, kind: item.source.kind });
+    }
+  }
   const proposedActivities = manifest.activityProposals.map(proposal => ({ ...proposal, canonicalWrite: false }));
   const snapshotProjection = { videoLibrary: library, activities };
   const core = {
@@ -162,4 +169,4 @@ function createCorpusImportPlan({ manifest, snapshot, manifestHash, sourceHashes
   return { ...core, planHash: sha256(canonicalJson(core)) };
 }
 
-module.exports = { canonicalJson, createCorpusImportPlan, exactUgaIdentity, manifestSemanticHash, sha256 };
+module.exports = { ALLOWED_SOURCE_KINDS, canonicalJson, createCorpusImportPlan, exactUgaIdentity, manifestSemanticHash, sha256 };

@@ -1,0 +1,3638 @@
+{
+  "blockers": [],
+  "conflicts": [],
+  "corpusId": "repli4c-24-videos",
+  "createTechnicalMedia": [
+    {
+      "asset": {
+        "id": "media-proto05-uga-36970",
+        "title": "GT01_RFC7_reu1_09m05-12m09"
+      },
+      "corpusOrder": 1,
+      "entryId": "repli4c-video-36970",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36970"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36970",
+        "playableId": "video-proto05-uga-36970",
+        "sourceId": "source-proto05-uga-36970"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36970",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36970",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36970/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36970"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36970",
+        "id": "source-proto05-uga-36970",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36970",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36970/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36970"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36972",
+        "title": "GT01_RFC7_reu1_21m10-26m15"
+      },
+      "corpusOrder": 3,
+      "entryId": "repli4c-video-36972",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36972"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36972",
+        "playableId": "video-proto05-uga-36972",
+        "sourceId": "source-proto05-uga-36972"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36972",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36972",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36972/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36972"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36972",
+        "id": "source-proto05-uga-36972",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36972",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36972/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36972"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36975",
+        "title": "GT01_RFC7_reu1_36m35-39m30"
+      },
+      "corpusOrder": 5,
+      "entryId": "repli4c-video-36975",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36975"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36975",
+        "playableId": "video-proto05-uga-36975",
+        "sourceId": "source-proto05-uga-36975"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36975",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36975",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36975/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36975"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36975",
+        "id": "source-proto05-uga-36975",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36975",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36975/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36975"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36977",
+        "title": "GT01_RFC7_reu1_44m15-48m12"
+      },
+      "corpusOrder": 7,
+      "entryId": "repli4c-video-36977",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36977"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36977",
+        "playableId": "video-proto05-uga-36977",
+        "sourceId": "source-proto05-uga-36977"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36977",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36977",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36977/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36977"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36977",
+        "id": "source-proto05-uga-36977",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36977",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36977/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36977"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36978",
+        "title": "GT01_RFC7_reu1_48m10-52m43"
+      },
+      "corpusOrder": 8,
+      "entryId": "repli4c-video-36978",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36978"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36978",
+        "playableId": "video-proto05-uga-36978",
+        "sourceId": "source-proto05-uga-36978"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36978",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36978",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36978/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36978"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36978",
+        "id": "source-proto05-uga-36978",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36978",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36978/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36978"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36979",
+        "title": "GT01_RFC7_reu1_59m20-1h01m40"
+      },
+      "corpusOrder": 9,
+      "entryId": "repli4c-video-36979",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36979"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36979",
+        "playableId": "video-proto05-uga-36979",
+        "sourceId": "source-proto05-uga-36979"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36979",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36979",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36979/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36979"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36979",
+        "id": "source-proto05-uga-36979",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36979",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36979/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36979"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36980",
+        "title": "GT01_RFC7_reu1_1h05m15-1h08m17"
+      },
+      "corpusOrder": 10,
+      "entryId": "repli4c-video-36980",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36980"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36980",
+        "playableId": "video-proto05-uga-36980",
+        "sourceId": "source-proto05-uga-36980"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36980",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36980",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36980/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36980"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36980",
+        "id": "source-proto05-uga-36980",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36980",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36980/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36980"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36982",
+        "title": "GT01_RFC7_reu1_1h17m23-1h24m03"
+      },
+      "corpusOrder": 11,
+      "entryId": "repli4c-video-36982",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36982"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36982",
+        "playableId": "video-proto05-uga-36982",
+        "sourceId": "source-proto05-uga-36982"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36982",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36982",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36982/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36982"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36982",
+        "id": "source-proto05-uga-36982",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36982",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36982/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36982"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36988",
+        "title": "GT08-RFC7_reu3_13m16-15m32"
+      },
+      "corpusOrder": 12,
+      "entryId": "repli4c-video-36988",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36988"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36988",
+        "playableId": "video-proto05-uga-36988",
+        "sourceId": "source-proto05-uga-36988"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36988",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36988",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36988/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36988"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36988",
+        "id": "source-proto05-uga-36988",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36988",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36988/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36988"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36984",
+        "title": "GT08-RFC7_reu3_17m42-23m30"
+      },
+      "corpusOrder": 13,
+      "entryId": "repli4c-video-36984",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36984"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36984",
+        "playableId": "video-proto05-uga-36984",
+        "sourceId": "source-proto05-uga-36984"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36984",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36984",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36984/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36984"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36984",
+        "id": "source-proto05-uga-36984",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36984",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36984/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36984"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36983",
+        "title": "GT08-RFC7_reu3_33m21-35m52"
+      },
+      "corpusOrder": 14,
+      "entryId": "repli4c-video-36983",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36983"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36983",
+        "playableId": "video-proto05-uga-36983",
+        "sourceId": "source-proto05-uga-36983"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36983",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36983",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36983/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36983"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36983",
+        "id": "source-proto05-uga-36983",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36983",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36983/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36983"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36985",
+        "title": "GT08-RFC7_reu3_43m07-45m55"
+      },
+      "corpusOrder": 15,
+      "entryId": "repli4c-video-36985",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36985"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36985",
+        "playableId": "video-proto05-uga-36985",
+        "sourceId": "source-proto05-uga-36985"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36985",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36985",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36985/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36985"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36985",
+        "id": "source-proto05-uga-36985",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36985",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36985/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36985"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36987",
+        "title": "GT08-RFC7_reu3_57m16-59m"
+      },
+      "corpusOrder": 16,
+      "entryId": "repli4c-video-36987",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36987"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36987",
+        "playableId": "video-proto05-uga-36987",
+        "sourceId": "source-proto05-uga-36987"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36987",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36987",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36987/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36987"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36987",
+        "id": "source-proto05-uga-36987",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36987",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36987/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36987"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36996",
+        "title": "GT05-RFC8_reu2_11nov25_08m50-14m30"
+      },
+      "corpusOrder": 17,
+      "entryId": "repli4c-video-36996",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36996"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36996",
+        "playableId": "video-proto05-uga-36996",
+        "sourceId": "source-proto05-uga-36996"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36996",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36996",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36996/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36996"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36996",
+        "id": "source-proto05-uga-36996",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36996",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36996/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36996"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36997",
+        "title": "GT05-RFC8_reu2_11nov25_18m40-23m40"
+      },
+      "corpusOrder": 18,
+      "entryId": "repli4c-video-36997",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36997"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36997",
+        "playableId": "video-proto05-uga-36997",
+        "sourceId": "source-proto05-uga-36997"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36997",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36997",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36997/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36997"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36997",
+        "id": "source-proto05-uga-36997",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36997",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36997/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36997"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36998",
+        "title": "GT05-RFC8_reu2_11nov25_27m25-31m37"
+      },
+      "corpusOrder": 19,
+      "entryId": "repli4c-video-36998",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36998"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36998",
+        "playableId": "video-proto05-uga-36998",
+        "sourceId": "source-proto05-uga-36998"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36998",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36998",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36998/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36998"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36998",
+        "id": "source-proto05-uga-36998",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36998",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36998/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36998"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-36995",
+        "title": "GT05-RFC8_reu2_11nov25_35m30-40m54"
+      },
+      "corpusOrder": 20,
+      "entryId": "repli4c-video-36995",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "36995"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-36995",
+        "playableId": "video-proto05-uga-36995",
+        "sourceId": "source-proto05-uga-36995"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-36995",
+        "availability": "unknown",
+        "id": "video-proto05-uga-36995",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36995/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-36995"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-36995",
+        "id": "source-proto05-uga-36995",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "36995",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36995/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-36995"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-37000",
+        "title": "GT05-RFC8_reu2_11nov25_41m02-47m27"
+      },
+      "corpusOrder": 21,
+      "entryId": "repli4c-video-37000",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "37000"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-37000",
+        "playableId": "video-proto05-uga-37000",
+        "sourceId": "source-proto05-uga-37000"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-37000",
+        "availability": "unknown",
+        "id": "video-proto05-uga-37000",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37000/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-37000"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-37000",
+        "id": "source-proto05-uga-37000",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "37000",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37000/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-37000"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-37001",
+        "title": "GT05-RFC8_reu2_11nov25_47m30-51m30"
+      },
+      "corpusOrder": 22,
+      "entryId": "repli4c-video-37001",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "37001"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-37001",
+        "playableId": "video-proto05-uga-37001",
+        "sourceId": "source-proto05-uga-37001"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-37001",
+        "availability": "unknown",
+        "id": "video-proto05-uga-37001",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37001/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-37001"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-37001",
+        "id": "source-proto05-uga-37001",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "37001",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37001/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-37001"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    },
+    {
+      "asset": {
+        "id": "media-proto05-uga-37003",
+        "title": "GT11-RFC8_reu1_28oct2025_0m-5m47"
+      },
+      "corpusOrder": 23,
+      "entryId": "repli4c-video-37003",
+      "externalIdentity": {
+        "provider": "uga-video",
+        "videoId": "37003"
+      },
+      "ids": {
+        "assetId": "media-proto05-uga-37003",
+        "playableId": "video-proto05-uga-37003",
+        "sourceId": "source-proto05-uga-37003"
+      },
+      "playable": {
+        "assetId": "media-proto05-uga-37003",
+        "availability": "unknown",
+        "id": "video-proto05-uga-37003",
+        "kind": "hls",
+        "location": {
+          "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37003/livestream.m3u8"
+        },
+        "provider": "uga-video",
+        "sourceId": "source-proto05-uga-37003"
+      },
+      "source": {
+        "assetId": "media-proto05-uga-37003",
+        "id": "source-proto05-uga-37003",
+        "kind": "hls",
+        "mimeType": "application/vnd.apple.mpegurl",
+        "origin": {
+          "externalVideoId": "37003",
+          "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37003/livestream.m3u8"
+        },
+        "provenance": {
+          "corpusId": "repli4c-24-videos",
+          "entryId": "repli4c-video-37003"
+        },
+        "provider": "uga-video",
+        "transport": "hls"
+      }
+    }
+  ],
+  "inputs": {
+    "manifestHash": "549f9b8eb37d7aa963a81a5075632abf8cd23715db28a3ddad53f220aa4e48e1",
+    "snapshotHash": "7e1f44bf8f3e82b132bbc637f13e7f85cdd97d1a815d997ad556d1ae0007d221",
+    "sourceHashes": {
+      "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md": "75af843398b32b6ad4cae436b1589891fcba54254d275b639b1929bf78079931",
+      "Liens_24videos.txt": "9468300016f50ac0c3d71840c7230b74c66a78fd1aade340d3d1597572906677"
+    }
+  },
+  "matchedExisting": [
+    {
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "entryId": "repli4c-video-36971",
+      "matchedBy": "exact-uga-url",
+      "videoId": "36971"
+    },
+    {
+      "assetId": "media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+      "entryId": "repli4c-video-36973",
+      "matchedBy": "exact-uga-url",
+      "videoId": "36973"
+    },
+    {
+      "assetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+      "entryId": "repli4c-video-36976",
+      "matchedBy": "exact-uga-url",
+      "videoId": "36976"
+    },
+    {
+      "assetId": "media-proto05-video-proto05-uga-37004",
+      "entryId": "repli4c-video-37004",
+      "matchedBy": "exact-uga-url",
+      "videoId": "37004"
+    }
+  ],
+  "noOp": false,
+  "observedState": {
+    "activityCount": 8,
+    "assetCount": 31,
+    "playableCount": 35,
+    "sourceCount": 35,
+    "treatmentCount": 2
+  },
+  "planHash": "f928ed0476437344d9b00a40228e78408b96bc8083b40479cff5e300b6772140",
+  "preserveExisting": [
+    {
+      "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+      "entryId": "repli4c-video-36971",
+      "snapshot": {
+        "activities": [],
+        "asset": {
+          "createdAt": "2026-07-24T20:54:14.167Z",
+          "defaultPlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+          "derivationTypes": [],
+          "description": "D'où viens tu ?",
+          "editorialMetadata": {
+            "captureDate": null,
+            "context": null,
+            "languageIds": [],
+            "notes": null,
+            "responsibleParty": null,
+            "usage": null
+          },
+          "familyRootAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+          "folderId": null,
+          "id": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+          "lifecycle": "active",
+          "parentAssetId": null,
+          "provenance": {
+            "creationType": "catalog-migration",
+            "familyRootAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "historical": {
+              "importedAt": "2026-07-24T20:54:14.167Z",
+              "kind": "remote-reference"
+            },
+            "importedAt": "2026-07-24T20:54:14.167Z",
+            "kind": "remote-reference",
+            "originReference": null,
+            "originalFileName": null,
+            "parentAssetId": null,
+            "provider": "direct"
+          },
+          "rights": {},
+          "tagIds": [],
+          "technicalMetadata": {
+            "analyzedAt": "2026-07-24T20:54:04.540Z",
+            "analyzer": null,
+            "analyzerVersion": null,
+            "audioCodec": null,
+            "durationMs": null,
+            "error": null,
+            "frameRate": null,
+            "hasAudio": null,
+            "height": null,
+            "mimeType": "application/vnd.apple.mpegurl",
+            "sha256": null,
+            "sizeBytes": null,
+            "videoCodec": null,
+            "width": null
+          },
+          "title": "2. GT01_RFC7_reu1_14m34-18m",
+          "updatedAt": "2026-08-01T14:48:44.011Z"
+        },
+        "playables": [
+          {
+            "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-07-25T16:26:17.024Z",
+            "id": "video-hls-temporal-derivation-1784996744983-f056bd47",
+            "kind": "local-file",
+            "location": {
+              "storageKey": "media-proto05-remote-ref-03738b8065e1866b8e956819/derived/hls-temporal-derivation-1784996744983-f056bd47/e88d23de16134588-anonymized.mp4",
+              "storageScope": "workspace"
+            },
+            "provenance": {
+              "blur": {
+                "filter": "boxblur",
+                "id": "light",
+                "label": "Léger",
+                "lumaPower": 1,
+                "lumaRadius": 2
+              },
+              "createdAt": "2026-07-25T16:26:17.024Z",
+              "derivationId": "hls-temporal-derivation-1784996744983-f056bd47",
+              "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+              "interpolation": "linear-between-keyframes-clamped-at-bounds",
+              "kind": "derived-anonymized",
+              "masks": [
+                {
+                  "height": 0.16463286434602814,
+                  "time": 0,
+                  "width": 0.16830434388527604,
+                  "x": 0.831695656114724,
+                  "y": 0.06029231358128632
+                },
+                {
+                  "height": 0.11140167026751518,
+                  "time": 10053,
+                  "width": 0.5285260803831204,
+                  "x": 0.271790814292881,
+                  "y": 0.2915830423765188
+                },
+                {
+                  "height": 0.0618154841129325,
+                  "time": 26469,
+                  "width": 0.06307453870483681,
+                  "x": 0.9369254612951632,
+                  "y": 0.05830250945093768
+                }
+              ],
+              "method": "ffmpeg-boxblur-temporal-steps",
+              "mode": "temporal",
+              "sha256": "e88d23de161345885ddc9e5c977de96d2f5fafa9dc29d63eab3be8e2e3914823",
+              "sizeBytes": 29130464,
+              "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+              "sourcePreparationJobId": "hls-prep-1784996658684-24a3edbc",
+              "status": "completed",
+              "temporalMasks": [
+                {
+                  "endMs": 26469,
+                  "id": "mask-1",
+                  "keyframes": [
+                    {
+                      "height": 0.16463286434602814,
+                      "time": 0,
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    },
+                    {
+                      "height": 0.16463286434602814,
+                      "time": 10053,
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    }
+                  ],
+                  "startMs": 0
+                },
+                {
+                  "endMs": 26469,
+                  "id": "mask-2",
+                  "keyframes": [
+                    {
+                      "height": 0.11140167026751518,
+                      "time": 10053,
+                      "width": 0.5285260803831204,
+                      "x": 0.271790814292881,
+                      "y": 0.2915830423765188
+                    }
+                  ],
+                  "startMs": 10053
+                },
+                {
+                  "endMs": 391838,
+                  "id": "mask-3",
+                  "keyframes": [
+                    {
+                      "height": 0.0618154841129325,
+                      "time": 26469,
+                      "width": 0.06307453870483681,
+                      "x": 0.9369254612951632,
+                      "y": 0.05830250945093768
+                    }
+                  ],
+                  "startMs": 26469
+                }
+              ],
+              "temporalSteps": [
+                {
+                  "endMs": 10053,
+                  "id": "step-1",
+                  "masks": [
+                    {
+                      "height": 0.16463286434602814,
+                      "id": "mask-1",
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    }
+                  ],
+                  "startMs": 0
+                },
+                {
+                  "endMs": 26469,
+                  "id": "step-2",
+                  "masks": [
+                    {
+                      "height": 0.16463286434602814,
+                      "id": "mask-1",
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    },
+                    {
+                      "height": 0.11140167026751518,
+                      "id": "mask-2",
+                      "width": 0.5285260803831204,
+                      "x": 0.271790814292881,
+                      "y": 0.2915830423765188
+                    }
+                  ],
+                  "startMs": 10053
+                },
+                {
+                  "endMs": 391838,
+                  "id": "step-3",
+                  "masks": [
+                    {
+                      "height": 0.0618154841129325,
+                      "id": "mask-3",
+                      "width": 0.06307453870483681,
+                      "x": 0.9369254612951632,
+                      "y": 0.05830250945093768
+                    }
+                  ],
+                  "startMs": 26469
+                }
+              ]
+            },
+            "provider": "proto05-derived",
+            "role": "derivation-local",
+            "sourceId": "source-hls-temporal-derivation-1784996744983-f056bd47",
+            "technicalMetadata": {
+              "durationMs": null,
+              "error": null,
+              "fileName": "e88d23de16134588-anonymized.mp4",
+              "height": null,
+              "mimeType": "video/mp4",
+              "sha256": "e88d23de161345885ddc9e5c977de96d2f5fafa9dc29d63eab3be8e2e3914823",
+              "sizeBytes": 29130464,
+              "status": "available",
+              "width": null
+            },
+            "updatedAt": "2026-07-31T09:47:48.789Z"
+          },
+          {
+            "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-07-24T20:54:14.167Z",
+            "id": "video-media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "kind": "hls",
+            "location": {
+              "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+              "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8"
+            },
+            "provenance": {
+              "historical": {
+                "importedAt": "2026-07-24T20:54:14.167Z",
+                "kind": "remote-reference"
+              },
+              "importedAt": "2026-07-24T20:54:14.167Z",
+              "kind": "remote-reference",
+              "legacyId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819"
+            },
+            "provider": "direct",
+            "role": "original-remote",
+            "sourceId": "source-media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "technicalMetadata": {
+              "analyzedAt": "2026-08-01T07:57:54.417Z",
+              "analyzer": "remote-availability",
+              "analyzerVersion": "1",
+              "audioCodec": null,
+              "durationMs": null,
+              "error": null,
+              "frameRate": null,
+              "hasAudio": null,
+              "height": null,
+              "mimeType": "application/vnd.apple.mpegurl",
+              "sha256": null,
+              "sizeBytes": null,
+              "videoCodec": null,
+              "width": null
+            },
+            "updatedAt": "2026-08-01T07:57:54.416Z"
+          },
+          {
+            "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-07-25T16:15:45.460Z",
+            "id": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+            "kind": "local-file",
+            "location": {
+              "storageKey": "media-proto05-remote-ref-03738b8065e1866b8e956819/source/47a3e7cf005c9fdc-yop_macopielocale.mp4",
+              "storageScope": "workspace"
+            },
+            "provenance": {
+              "creationType": "remote-copy",
+              "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+              "importedAt": "2026-07-25T16:15:45.460Z",
+              "kind": "managed-remote-copy",
+              "originalFileName": "yop_macopielocale.mp4",
+              "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
+              "sizeBytes": 108359167,
+              "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+              "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819"
+            },
+            "provider": "local",
+            "role": "working-copy",
+            "sourceId": "source-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+            "technicalMetadata": {
+              "analyzedAt": "2026-07-25T16:15:45.460Z",
+              "analyzer": "ffprobe",
+              "analyzerVersion": null,
+              "audioCodec": "aac",
+              "durationMs": 391838,
+              "error": null,
+              "fileName": "yop_macopielocale.mp4",
+              "frameRate": "60/1",
+              "hasAudio": true,
+              "height": 1080,
+              "mimeType": "video/mp4",
+              "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
+              "sizeBytes": 108359167,
+              "status": "available",
+              "videoCodec": "h264",
+              "width": 1920
+            },
+            "updatedAt": "2026-07-31T09:47:48.789Z"
+          }
+        ],
+        "sources": [
+          {
+            "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "createdAt": "2026-07-25T16:26:17.024Z",
+            "id": "source-hls-temporal-derivation-1784996744983-f056bd47",
+            "kind": "derived-output",
+            "mimeType": "video/mp4",
+            "origin": {
+              "derivationId": "hls-temporal-derivation-1784996744983-f056bd47"
+            },
+            "provenance": {
+              "blur": {
+                "filter": "boxblur",
+                "id": "light",
+                "label": "Léger",
+                "lumaPower": 1,
+                "lumaRadius": 2
+              },
+              "createdAt": "2026-07-25T16:26:17.024Z",
+              "derivationId": "hls-temporal-derivation-1784996744983-f056bd47",
+              "ffmpeg": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+              "interpolation": "linear-between-keyframes-clamped-at-bounds",
+              "kind": "derived-anonymized",
+              "masks": [
+                {
+                  "height": 0.16463286434602814,
+                  "time": 0,
+                  "width": 0.16830434388527604,
+                  "x": 0.831695656114724,
+                  "y": 0.06029231358128632
+                },
+                {
+                  "height": 0.11140167026751518,
+                  "time": 10053,
+                  "width": 0.5285260803831204,
+                  "x": 0.271790814292881,
+                  "y": 0.2915830423765188
+                },
+                {
+                  "height": 0.0618154841129325,
+                  "time": 26469,
+                  "width": 0.06307453870483681,
+                  "x": 0.9369254612951632,
+                  "y": 0.05830250945093768
+                }
+              ],
+              "method": "ffmpeg-boxblur-temporal-steps",
+              "mode": "temporal",
+              "sha256": "e88d23de161345885ddc9e5c977de96d2f5fafa9dc29d63eab3be8e2e3914823",
+              "sizeBytes": 29130464,
+              "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+              "sourcePreparationJobId": "hls-prep-1784996658684-24a3edbc",
+              "status": "completed",
+              "temporalMasks": [
+                {
+                  "endMs": 26469,
+                  "id": "mask-1",
+                  "keyframes": [
+                    {
+                      "height": 0.16463286434602814,
+                      "time": 0,
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    },
+                    {
+                      "height": 0.16463286434602814,
+                      "time": 10053,
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    }
+                  ],
+                  "startMs": 0
+                },
+                {
+                  "endMs": 26469,
+                  "id": "mask-2",
+                  "keyframes": [
+                    {
+                      "height": 0.11140167026751518,
+                      "time": 10053,
+                      "width": 0.5285260803831204,
+                      "x": 0.271790814292881,
+                      "y": 0.2915830423765188
+                    }
+                  ],
+                  "startMs": 10053
+                },
+                {
+                  "endMs": 391838,
+                  "id": "mask-3",
+                  "keyframes": [
+                    {
+                      "height": 0.0618154841129325,
+                      "time": 26469,
+                      "width": 0.06307453870483681,
+                      "x": 0.9369254612951632,
+                      "y": 0.05830250945093768
+                    }
+                  ],
+                  "startMs": 26469
+                }
+              ],
+              "temporalSteps": [
+                {
+                  "endMs": 10053,
+                  "id": "step-1",
+                  "masks": [
+                    {
+                      "height": 0.16463286434602814,
+                      "id": "mask-1",
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    }
+                  ],
+                  "startMs": 0
+                },
+                {
+                  "endMs": 26469,
+                  "id": "step-2",
+                  "masks": [
+                    {
+                      "height": 0.16463286434602814,
+                      "id": "mask-1",
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    },
+                    {
+                      "height": 0.11140167026751518,
+                      "id": "mask-2",
+                      "width": 0.5285260803831204,
+                      "x": 0.271790814292881,
+                      "y": 0.2915830423765188
+                    }
+                  ],
+                  "startMs": 10053
+                },
+                {
+                  "endMs": 391838,
+                  "id": "step-3",
+                  "masks": [
+                    {
+                      "height": 0.0618154841129325,
+                      "id": "mask-3",
+                      "width": 0.06307453870483681,
+                      "x": 0.9369254612951632,
+                      "y": 0.05830250945093768
+                    }
+                  ],
+                  "startMs": 26469
+                }
+              ]
+            },
+            "provider": "proto05-derived",
+            "role": "derivation-local",
+            "transport": "file"
+          },
+          {
+            "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "createdAt": "2026-07-24T20:54:14.167Z",
+            "id": "source-media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "kind": "hls",
+            "mimeType": "application/vnd.apple.mpegurl",
+            "origin": {
+              "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+              "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+              "originalFileName": null,
+              "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8",
+              "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8"
+            },
+            "provenance": {
+              "historical": {
+                "importedAt": "2026-07-24T20:54:14.167Z",
+                "kind": "remote-reference"
+              },
+              "importedAt": "2026-07-24T20:54:14.167Z",
+              "kind": "remote-reference",
+              "legacyId": "source-media-proto05-remote-ref-03738b8065e1866b8e956819"
+            },
+            "provider": "direct",
+            "role": "original-remote",
+            "transport": "hls"
+          },
+          {
+            "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "createdAt": "2026-07-25T16:15:45.460Z",
+            "id": "source-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+            "kind": "local-file",
+            "mimeType": "video/mp4",
+            "origin": {
+              "originalFileName": "yop_macopielocale.mp4",
+              "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+              "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819"
+            },
+            "provenance": {
+              "creationType": "remote-copy",
+              "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+              "importedAt": "2026-07-25T16:15:45.460Z",
+              "kind": "managed-remote-copy",
+              "originalFileName": "yop_macopielocale.mp4",
+              "sha256": "47a3e7cf005c9fdc05f8062479714d98fbde9c6c030ba47f923a5cb5dbd753d3",
+              "sizeBytes": 108359167,
+              "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+              "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819"
+            },
+            "provider": "local",
+            "role": "working-copy",
+            "transport": "file"
+          }
+        ],
+        "treatments": [
+          {
+            "createdAt": "2026-07-25T16:25:44.983Z",
+            "derivationId": "hls-temporal-derivation-1784996744983-f056bd47",
+            "diagnostics": {},
+            "engine": "ffmpeg",
+            "engineVersion": "proto05-0.1.36",
+            "error": null,
+            "ffmpegVersion": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+            "finishedAt": "2026-07-25T16:26:17.024Z",
+            "id": "hls-temporal-derivation-1784996744983-f056bd47",
+            "label": "Tentative 25/07/2026 18:26:17",
+            "outputAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "outputPlayableId": "video-hls-temporal-derivation-1784996744983-f056bd47",
+            "parameters": {
+              "blur": {
+                "filter": "boxblur",
+                "id": "light",
+                "label": "Léger",
+                "lumaPower": 1,
+                "lumaRadius": 2
+              },
+              "masks": [
+                {
+                  "height": 0.16463286434602814,
+                  "time": 0,
+                  "width": 0.16830434388527604,
+                  "x": 0.831695656114724,
+                  "y": 0.06029231358128632
+                },
+                {
+                  "height": 0.11140167026751518,
+                  "time": 10053,
+                  "width": 0.5285260803831204,
+                  "x": 0.271790814292881,
+                  "y": 0.2915830423765188
+                },
+                {
+                  "height": 0.0618154841129325,
+                  "time": 26469,
+                  "width": 0.06307453870483681,
+                  "x": 0.9369254612951632,
+                  "y": 0.05830250945093768
+                }
+              ],
+              "method": "ffmpeg-boxblur-temporal-steps",
+              "mode": "temporal",
+              "temporalMasks": [
+                {
+                  "endMs": 26469,
+                  "id": "mask-1",
+                  "keyframes": [
+                    {
+                      "height": 0.16463286434602814,
+                      "time": 0,
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    },
+                    {
+                      "height": 0.16463286434602814,
+                      "time": 10053,
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    }
+                  ],
+                  "startMs": 0
+                },
+                {
+                  "endMs": 26469,
+                  "id": "mask-2",
+                  "keyframes": [
+                    {
+                      "height": 0.11140167026751518,
+                      "time": 10053,
+                      "width": 0.5285260803831204,
+                      "x": 0.271790814292881,
+                      "y": 0.2915830423765188
+                    }
+                  ],
+                  "startMs": 10053
+                },
+                {
+                  "endMs": 391838,
+                  "id": "mask-3",
+                  "keyframes": [
+                    {
+                      "height": 0.0618154841129325,
+                      "time": 26469,
+                      "width": 0.06307453870483681,
+                      "x": 0.9369254612951632,
+                      "y": 0.05830250945093768
+                    }
+                  ],
+                  "startMs": 26469
+                }
+              ],
+              "temporalSteps": [
+                {
+                  "endMs": 10053,
+                  "id": "step-1",
+                  "masks": [
+                    {
+                      "height": 0.16463286434602814,
+                      "id": "mask-1",
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    }
+                  ],
+                  "startMs": 0
+                },
+                {
+                  "endMs": 26469,
+                  "id": "step-2",
+                  "masks": [
+                    {
+                      "height": 0.16463286434602814,
+                      "id": "mask-1",
+                      "width": 0.16830434388527604,
+                      "x": 0.831695656114724,
+                      "y": 0.06029231358128632
+                    },
+                    {
+                      "height": 0.11140167026751518,
+                      "id": "mask-2",
+                      "width": 0.5285260803831204,
+                      "x": 0.271790814292881,
+                      "y": 0.2915830423765188
+                    }
+                  ],
+                  "startMs": 10053
+                },
+                {
+                  "endMs": 391838,
+                  "id": "step-3",
+                  "masks": [
+                    {
+                      "height": 0.0618154841129325,
+                      "id": "mask-3",
+                      "width": 0.06307453870483681,
+                      "x": 0.9369254612951632,
+                      "y": 0.05830250945093768
+                    }
+                  ],
+                  "startMs": 26469
+                }
+              ]
+            },
+            "progress": 100,
+            "publishedPlayableId": null,
+            "retained": false,
+            "runtimeJobId": "hls-temporal-derivation-1784996744983-f056bd47",
+            "sourceAssetId": "media-proto05-remote-ref-03738b8065e1866b8e956819",
+            "sourcePlayableId": "video-media-proto05-remote-ref-03738b8065e1866b8e956819-download-47a3e7cf005c9fdc",
+            "sourcePreparationId": "hls-prep-1784996658684-24a3edbc",
+            "startedAt": "2026-07-25T16:25:44.983Z",
+            "status": "completed",
+            "type": "anonymization",
+            "updatedAt": "2026-07-25T16:26:17.024Z"
+          }
+        ]
+      },
+      "snapshotHash": "8eba45afeb28d9a5bdc6d209e83c0901741922d5345d8966604c0cde321722ef"
+    },
+    {
+      "assetId": "media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+      "entryId": "repli4c-video-36973",
+      "snapshot": {
+        "activities": [],
+        "asset": {
+          "createdAt": "2026-08-01T07:15:26.440Z",
+          "defaultPlayableId": "video-media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+          "derivationTypes": [],
+          "editorialMetadata": {},
+          "familyRootAssetId": "media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+          "folderId": null,
+          "id": "media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+          "lifecycle": "active",
+          "parentAssetId": null,
+          "provenance": {
+            "importedAt": "2026-08-01T07:15:25.810Z",
+            "kind": "remote-reference"
+          },
+          "rights": {},
+          "tagIds": [],
+          "technicalMetadata": {},
+          "title": "4. GT01_RFC7_reu1_26m20-29m40",
+          "updatedAt": "2026-08-01T07:15:26.454Z"
+        },
+        "playables": [
+          {
+            "assetId": "media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-08-01T07:15:26.441Z",
+            "id": "video-media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+            "kind": "hls",
+            "location": {
+              "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8",
+              "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8"
+            },
+            "provenance": {
+              "importedAt": "2026-08-01T07:15:25.810Z",
+              "kind": "remote-reference"
+            },
+            "provider": "direct",
+            "role": "original-remote",
+            "sourceId": "source-media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+            "technicalMetadata": {
+              "analyzedAt": "2026-08-01T07:57:59.180Z",
+              "analyzer": "remote-availability",
+              "analyzerVersion": "1",
+              "audioCodec": null,
+              "durationMs": null,
+              "error": null,
+              "frameRate": null,
+              "hasAudio": null,
+              "height": null,
+              "mimeType": "application/vnd.apple.mpegurl",
+              "sha256": null,
+              "sizeBytes": null,
+              "videoCodec": null,
+              "width": null
+            },
+            "updatedAt": "2026-08-01T07:57:59.179Z"
+          }
+        ],
+        "sources": [
+          {
+            "assetId": "media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+            "createdAt": "2026-08-01T07:15:26.441Z",
+            "id": "source-media-proto05-remote-ref-0b565a4a0ba865a02cd10c87",
+            "kind": "hls",
+            "mimeType": "application/vnd.apple.mpegurl",
+            "origin": {
+              "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8",
+              "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8",
+              "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8",
+              "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8"
+            },
+            "provenance": {
+              "importedAt": "2026-08-01T07:15:25.810Z",
+              "kind": "remote-reference"
+            },
+            "provider": "direct",
+            "role": "original-remote",
+            "transport": "hls"
+          }
+        ],
+        "treatments": []
+      },
+      "snapshotHash": "81d7fc469d2d201a6afbb066a1739acff11a34d84a090b102feca063cc944f65"
+    },
+    {
+      "assetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+      "entryId": "repli4c-video-36976",
+      "snapshot": {
+        "activities": [],
+        "asset": {
+          "createdAt": "2026-08-01T07:15:58.669Z",
+          "defaultPlayableId": "video-media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+          "derivationTypes": [],
+          "editorialMetadata": {},
+          "familyRootAssetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+          "folderId": null,
+          "id": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+          "lifecycle": "active",
+          "parentAssetId": null,
+          "provenance": {
+            "importedAt": "2026-08-01T07:15:57.919Z",
+            "kind": "remote-reference"
+          },
+          "rights": {},
+          "tagIds": [],
+          "technicalMetadata": {},
+          "title": "6. GT01_RFC7_reu1_41m30-44m",
+          "updatedAt": "2026-08-01T21:25:03.019Z"
+        },
+        "playables": [
+          {
+            "assetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-08-01T21:25:03.017Z",
+            "id": "video-hls-derivation-1785619500924-d6c052d4",
+            "kind": "local-file",
+            "location": {
+              "storageKey": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb/derived/hls-derivation-1785619500924-d6c052d4/a381b7ca23d96636-anonymized.mp4",
+              "storageScope": "workspace"
+            },
+            "provenance": {
+              "treatmentId": "hls-derivation-1785619500924-d6c052d4",
+              "type": "anonymization"
+            },
+            "provider": "proto05-derived",
+            "role": "derivation-local",
+            "sourceId": "source-hls-derivation-1785619500924-d6c052d4",
+            "technicalMetadata": {
+              "analyzedAt": "2026-08-01T21:25:03.018Z",
+              "analyzer": "treatment-output",
+              "analyzerVersion": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev",
+              "audioCodec": "aac",
+              "durationMs": 163438,
+              "error": null,
+              "frameRate": null,
+              "hasAudio": true,
+              "height": null,
+              "mimeType": "video/mp4",
+              "sha256": "a381b7ca23d96636aff231b48304d617b5f9e450113b58a7623b313e8e5764bd",
+              "sizeBytes": 3796874,
+              "videoCodec": null,
+              "width": null
+            },
+            "updatedAt": "2026-08-01T21:25:03.017Z"
+          },
+          {
+            "assetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-08-01T07:15:58.669Z",
+            "id": "video-media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "kind": "hls",
+            "location": {
+              "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8",
+              "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8"
+            },
+            "provenance": {
+              "importedAt": "2026-08-01T07:15:57.919Z",
+              "kind": "remote-reference"
+            },
+            "provider": "direct",
+            "role": "original-remote",
+            "sourceId": "source-media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "technicalMetadata": {
+              "analyzedAt": "2026-08-01T07:58:01.557Z",
+              "analyzer": "remote-availability",
+              "analyzerVersion": "1",
+              "audioCodec": null,
+              "durationMs": null,
+              "error": null,
+              "frameRate": null,
+              "hasAudio": null,
+              "height": null,
+              "mimeType": "application/vnd.apple.mpegurl",
+              "sha256": null,
+              "sizeBytes": null,
+              "videoCodec": null,
+              "width": null
+            },
+            "updatedAt": "2026-08-01T07:58:01.556Z"
+          }
+        ],
+        "sources": [
+          {
+            "assetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "createdAt": "2026-08-01T21:25:03.016Z",
+            "id": "source-hls-derivation-1785619500924-d6c052d4",
+            "kind": "derived-output",
+            "mimeType": "video/mp4",
+            "origin": {
+              "sourcePlayableId": "video-media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb"
+            },
+            "provenance": {
+              "treatmentId": "hls-derivation-1785619500924-d6c052d4",
+              "type": "anonymization"
+            },
+            "provider": "proto05-derived",
+            "role": "derivation-local",
+            "transport": "file"
+          },
+          {
+            "assetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "createdAt": "2026-08-01T07:15:58.669Z",
+            "id": "source-media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "kind": "hls",
+            "mimeType": "application/vnd.apple.mpegurl",
+            "origin": {
+              "manifestUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8",
+              "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8",
+              "sourceUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8",
+              "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8"
+            },
+            "provenance": {
+              "importedAt": "2026-08-01T07:15:57.919Z",
+              "kind": "remote-reference"
+            },
+            "provider": "direct",
+            "role": "original-remote",
+            "transport": "hls"
+          }
+        ],
+        "treatments": [
+          {
+            "createdAt": "2026-08-01T21:25:00.849Z",
+            "diagnostics": {
+              "ffmpegArgs": [
+                "-hide_banner",
+                "-y",
+                "-i",
+                "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-preparations\\hls-prep-1785619490332-573d2fe1-CmXYi0\\work.mp4",
+                "-filter_complex",
+                "[0:v]split=2[base][source0];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0/2)*2':eof_action=pass[outv]",
+                "-map",
+                "[outv]",
+                "-map",
+                "0:a?",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "23",
+                "-c:a",
+                "copy",
+                "-movflags",
+                "+faststart",
+                "C:\\Users\\david\\AppData\\Local\\Temp\\proto05-hls-derivations\\hls-derivation-1785619500924-d6c052d4-5uKHOG\\derived.mp4"
+              ],
+              "filter": "[0:v]split=2[base][source0];[source0]crop=x='trunc(iw*0/2)*2':y='trunc(ih*0/2)*2':w='trunc(iw*0.2/2)*2':h='trunc(ih*0.2/2)*2',boxblur=luma_radius=4:luma_power=1[blurred0];[base][blurred0]overlay=x='trunc(main_w*0/2)*2':y='trunc(main_h*0/2)*2':eof_action=pass[outv]",
+              "method": "ffmpeg-boxblur-rectangles",
+              "mode": "fixed",
+              "passages": null
+            },
+            "engine": "ffmpeg",
+            "engineVersion": "proto05-0.1.61",
+            "error": null,
+            "ffmpegVersion": "ffmpeg version 2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+            "finishedAt": "2026-08-01T21:25:03.019Z",
+            "id": "hls-derivation-1785619500924-d6c052d4",
+            "label": "Anonymisation visuelle",
+            "outputAssetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "outputPlayableId": "video-hls-derivation-1785619500924-d6c052d4",
+            "parameters": {
+              "blur": {
+                "filter": "boxblur",
+                "id": "standard",
+                "label": "Standard",
+                "lumaPower": 1,
+                "lumaRadius": 4
+              },
+              "masks": [
+                {
+                  "height": 0.2,
+                  "id": "mask-1",
+                  "width": 0.2,
+                  "x": 0,
+                  "y": 0
+                }
+              ],
+              "method": "ffmpeg-boxblur-rectangles",
+              "mode": "fixed"
+            },
+            "progress": 100,
+            "publishedPlayableId": null,
+            "retained": false,
+            "runtimeJobId": "hls-derivation-1785619500924-d6c052d4",
+            "sourceAssetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "sourcePlayableId": "video-media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb",
+            "sourcePreparationId": null,
+            "startedAt": "2026-08-01T21:25:00.849Z",
+            "status": "completed",
+            "type": "anonymization",
+            "updatedAt": "2026-08-01T21:25:03.019Z"
+          }
+        ]
+      },
+      "snapshotHash": "9487fb468af8f167ec8cde6ce9e81e6eeb062cfc17dbb417fb2d11a10ec1769f"
+    },
+    {
+      "assetId": "media-proto05-video-proto05-uga-37004",
+      "entryId": "repli4c-video-37004",
+      "snapshot": {
+        "activities": [
+          {
+            "description": "Lecture synchronisée de moments plurilingues, avec annotations pédagogiques IC.",
+            "id": "proto05-augmented-video-01",
+            "instruction": "",
+            "languageIntervals": [
+              {
+                "endMs": 23000,
+                "id": "language-interval-segment-01-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-01",
+                "startMs": 2000
+              },
+              {
+                "endMs": 58000,
+                "id": "language-interval-segment-02-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-02",
+                "startMs": 32000
+              },
+              {
+                "endMs": 84000,
+                "id": "language-interval-segment-03-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-03",
+                "startMs": 58000
+              },
+              {
+                "endMs": 84000,
+                "id": "language-interval-segment-03-lang-it",
+                "languageId": "it",
+                "segmentId": "segment-03",
+                "startMs": 58000
+              },
+              {
+                "endMs": 84000,
+                "id": "language-interval-segment-03-lang-es",
+                "languageId": "es",
+                "segmentId": "segment-03",
+                "startMs": 58000
+              },
+              {
+                "endMs": 102000,
+                "id": "language-interval-segment-04-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-04",
+                "startMs": 91000
+              },
+              {
+                "endMs": 118000,
+                "id": "language-interval-segment-05-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-05",
+                "startMs": 100000
+              },
+              {
+                "endMs": 136000,
+                "id": "language-interval-segment-06-lang-it",
+                "languageId": "it",
+                "segmentId": "segment-06",
+                "startMs": 118000
+              },
+              {
+                "endMs": 136000,
+                "id": "language-interval-segment-06-lang-es",
+                "languageId": "es",
+                "segmentId": "segment-06",
+                "startMs": 118000
+              },
+              {
+                "endMs": 136000,
+                "id": "language-interval-segment-06-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-06",
+                "startMs": 118000
+              },
+              {
+                "endMs": 172000,
+                "id": "language-interval-segment-07-lang-es",
+                "languageId": "es",
+                "segmentId": "segment-07",
+                "startMs": 143000
+              },
+              {
+                "endMs": 172000,
+                "id": "language-interval-segment-07-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-07",
+                "startMs": 143000
+              },
+              {
+                "endMs": 172000,
+                "id": "language-interval-segment-07-lang-it",
+                "languageId": "it",
+                "segmentId": "segment-07",
+                "startMs": 143000
+              },
+              {
+                "endMs": 172000,
+                "id": "language-interval-segment-07-lang-pt",
+                "languageId": "pt",
+                "segmentId": "segment-07",
+                "startMs": 143000
+              },
+              {
+                "endMs": 185000,
+                "id": "language-interval-segment-08-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-08",
+                "startMs": 176000
+              },
+              {
+                "endMs": 225000,
+                "id": "language-interval-segment-09-lang-es",
+                "languageId": "es",
+                "segmentId": "segment-09",
+                "startMs": 186000
+              },
+              {
+                "endMs": 225000,
+                "id": "language-interval-segment-09-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-09",
+                "startMs": 186000
+              },
+              {
+                "endMs": 273000,
+                "id": "language-interval-segment-10-lang-es",
+                "languageId": "es",
+                "segmentId": "segment-10",
+                "startMs": 241000
+              },
+              {
+                "endMs": 273000,
+                "id": "language-interval-segment-10-lang-it",
+                "languageId": "it",
+                "segmentId": "segment-10",
+                "startMs": 241000
+              },
+              {
+                "endMs": 273000,
+                "id": "language-interval-segment-10-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-10",
+                "startMs": 241000
+              },
+              {
+                "endMs": 302000,
+                "id": "language-interval-segment-11-lang-es",
+                "languageId": "es",
+                "segmentId": "segment-11",
+                "startMs": 273000
+              },
+              {
+                "endMs": 302000,
+                "id": "language-interval-segment-11-lang-fr",
+                "languageId": "fr",
+                "segmentId": "segment-11",
+                "startMs": 273000
+              }
+            ],
+            "languages": [
+              {
+                "code": "FR",
+                "id": "fr",
+                "label": "Français"
+              },
+              {
+                "code": "ES",
+                "id": "es",
+                "label": "Espagnol"
+              },
+              {
+                "code": "IT",
+                "id": "it",
+                "label": "Italien"
+              },
+              {
+                "code": "PT",
+                "id": "pt",
+                "label": "Portugais"
+              }
+            ],
+            "layerConfiguration": {
+              "allowLearnerToggle": true,
+              "defaultVisibleLayerIds": [
+                "layer-presentation",
+                "layer-changement-de-langue",
+                "layer-comprehension-collective",
+                "layer-clarification",
+                "layer-negociation-du-sens",
+                "layer-mot-piege",
+                "layer-repertoire-plurilingue"
+              ],
+              "id": "layer-config-proto05-default",
+              "learnerVisibleLayerIds": [
+                "layer-presentation",
+                "layer-changement-de-langue",
+                "layer-comprehension-collective",
+                "layer-clarification",
+                "layer-negociation-du-sens",
+                "layer-mot-piege",
+                "layer-repertoire-plurilingue"
+              ],
+              "teacherVisibleLayerIds": [
+                "layer-presentation",
+                "layer-changement-de-langue",
+                "layer-comprehension-collective",
+                "layer-clarification",
+                "layer-negociation-du-sens",
+                "layer-mot-piege",
+                "layer-repertoire-plurilingue"
+              ]
+            },
+            "layers": [
+              {
+                "color": "#6d9ed1",
+                "description": "",
+                "id": "layer-presentation",
+                "label": "Présentation"
+              },
+              {
+                "color": "#6d9ed1",
+                "description": "",
+                "id": "layer-changement-de-langue",
+                "label": "Changement de langue"
+              },
+              {
+                "color": "#6d9ed1",
+                "description": "",
+                "id": "layer-comprehension-collective",
+                "label": "Compréhension collective"
+              },
+              {
+                "color": "#6d9ed1",
+                "description": "",
+                "id": "layer-clarification",
+                "label": "Clarification"
+              },
+              {
+                "color": "#6d9ed1",
+                "description": "",
+                "id": "layer-negociation-du-sens",
+                "label": "Négociation du sens"
+              },
+              {
+                "color": "#6d9ed1",
+                "description": "",
+                "id": "layer-mot-piege",
+                "label": "Mot-piège"
+              },
+              {
+                "color": "#6d9ed1",
+                "description": "",
+                "id": "layer-repertoire-plurilingue",
+                "label": "Répertoire plurilingue"
+              }
+            ],
+            "overlays": [
+              {
+                "annotationId": "annotation-01",
+                "endMs": 23000,
+                "id": "overlay-annotation-01",
+                "layerIds": [
+                  "layer-presentation",
+                  "layer-repertoire-plurilingue"
+                ],
+                "startMs": 2000,
+                "text": "Chacun peut se présenter dans sa langue et rendre son répertoire visible.",
+                "title": "Cadre plurilingue"
+              },
+              {
+                "annotationId": "annotation-04",
+                "endMs": 102000,
+                "id": "overlay-annotation-04",
+                "layerIds": [
+                  "layer-clarification",
+                  "layer-comprehension-collective"
+                ],
+                "startMs": 91000,
+                "text": "Le groupe vérifie si la compréhension est suffisamment partagée pour continuer.",
+                "title": "Compréhension collective"
+              },
+              {
+                "annotationId": "annotation-05",
+                "endMs": 118000,
+                "id": "overlay-annotation-05",
+                "layerIds": [
+                  "layer-changement-de-langue",
+                  "layer-presentation"
+                ],
+                "startMs": 100000,
+                "text": "Le passage à une autre langue est annoncé comme une étape normale de l’échange.",
+                "title": "Changement de langue"
+              },
+              {
+                "annotationId": "annotation-07",
+                "endMs": 172000,
+                "id": "overlay-annotation-07",
+                "layerIds": [
+                  "layer-comprehension-collective",
+                  "layer-repertoire-plurilingue"
+                ],
+                "startMs": 143000,
+                "text": "La compréhension partielle devient une ressource : quelques langues, quelques mots, assez pour avancer.",
+                "title": "Répertoire plurilingue"
+              },
+              {
+                "annotationId": "annotation-09",
+                "endMs": 225000,
+                "id": "overlay-annotation-09",
+                "layerIds": [
+                  "layer-clarification",
+                  "layer-mot-piege",
+                  "layer-negociation-du-sens"
+                ],
+                "startMs": 186000,
+                "text": "La carrera... comment on dit ça en français ?",
+                "title": "Moment pédagogiquement riche"
+              },
+              {
+                "annotationId": "annotation-11",
+                "endMs": 302000,
+                "id": "overlay-annotation-11",
+                "layerIds": [
+                  "layer-clarification",
+                  "layer-comprehension-collective",
+                  "layer-repertoire-plurilingue"
+                ],
+                "startMs": 273000,
+                "text": "Le groupe rassemble des indices sur les langues disponibles et sur ce qui a été compris.",
+                "title": "Répertoire partagé"
+              }
+            ],
+            "pedagogicalIdentity": {
+              "adaptableElements": {
+                "state": "unknown"
+              },
+              "audience": {
+                "state": "known",
+                "value": "Etudiants DILIPEM, langues, enseignement"
+              },
+              "designStatus": "documented",
+              "indicativeDuration": {
+                "minutes": 60,
+                "state": "to-verify"
+              },
+              "intention": {
+                "state": "known",
+                "value": "Test fonctionnel"
+              },
+              "learningObjectives": {
+                "state": "unknown"
+              },
+              "limitations": {
+                "state": "unknown"
+              },
+              "lineage": {
+                "state": "unknown"
+              },
+              "modalities": {
+                "state": "unknown"
+              },
+              "origin": {
+                "state": "unknown"
+              },
+              "pedagogicalCore": {
+                "state": "unknown"
+              },
+              "prerequisites": {
+                "state": "unknown"
+              },
+              "qualifications": [],
+              "recommendedScenario": {
+                "state": "unknown"
+              },
+              "resourceNature": {
+                "state": "known",
+                "value": "functional-test"
+              },
+              "responsibility": {
+                "state": "unknown"
+              },
+              "schemaVersion": "0.1",
+              "useContext": {
+                "state": "to-verify",
+                "value": "Voir avec Christian"
+              }
+            },
+            "pedagogicalQuestion": "",
+            "phenomena": [
+              {
+                "endMs": 23000,
+                "id": "occurrence-01-01",
+                "layerId": "layer-presentation",
+                "segmentId": "segment-01",
+                "startMs": 2000
+              },
+              {
+                "endMs": 23000,
+                "id": "occurrence-01-02",
+                "layerId": "layer-repertoire-plurilingue",
+                "segmentId": "segment-01",
+                "startMs": 2000
+              },
+              {
+                "endMs": 58000,
+                "id": "occurrence-02-01",
+                "layerId": "layer-presentation",
+                "segmentId": "segment-02",
+                "startMs": 32000
+              },
+              {
+                "endMs": 58000,
+                "id": "occurrence-02-02",
+                "layerId": "layer-repertoire-plurilingue",
+                "segmentId": "segment-02",
+                "startMs": 32000
+              },
+              {
+                "endMs": 84000,
+                "id": "occurrence-03-01",
+                "layerId": "layer-repertoire-plurilingue",
+                "segmentId": "segment-03",
+                "startMs": 58000
+              },
+              {
+                "endMs": 84000,
+                "id": "occurrence-03-02",
+                "layerId": "layer-presentation",
+                "segmentId": "segment-03",
+                "startMs": 58000
+              },
+              {
+                "endMs": 102000,
+                "id": "occurrence-04-01",
+                "layerId": "layer-comprehension-collective",
+                "segmentId": "segment-04",
+                "startMs": 91000
+              },
+              {
+                "endMs": 102000,
+                "id": "occurrence-04-02",
+                "layerId": "layer-clarification",
+                "segmentId": "segment-04",
+                "startMs": 91000
+              },
+              {
+                "endMs": 118000,
+                "id": "occurrence-05-01",
+                "layerId": "layer-changement-de-langue",
+                "segmentId": "segment-05",
+                "startMs": 100000
+              },
+              {
+                "endMs": 118000,
+                "id": "occurrence-05-02",
+                "layerId": "layer-presentation",
+                "segmentId": "segment-05",
+                "startMs": 100000
+              },
+              {
+                "endMs": 136000,
+                "id": "occurrence-06-01",
+                "layerId": "layer-changement-de-langue",
+                "segmentId": "segment-06",
+                "startMs": 118000
+              },
+              {
+                "endMs": 136000,
+                "id": "occurrence-06-02",
+                "layerId": "layer-repertoire-plurilingue",
+                "segmentId": "segment-06",
+                "startMs": 118000
+              },
+              {
+                "endMs": 136000,
+                "id": "occurrence-06-03",
+                "layerId": "layer-mot-piege",
+                "segmentId": "segment-06",
+                "startMs": 118000
+              },
+              {
+                "endMs": 172000,
+                "id": "occurrence-07-01",
+                "layerId": "layer-repertoire-plurilingue",
+                "segmentId": "segment-07",
+                "startMs": 143000
+              },
+              {
+                "endMs": 172000,
+                "id": "occurrence-07-02",
+                "layerId": "layer-comprehension-collective",
+                "segmentId": "segment-07",
+                "startMs": 143000
+              },
+              {
+                "endMs": 185000,
+                "id": "occurrence-08-01",
+                "layerId": "layer-clarification",
+                "segmentId": "segment-08",
+                "startMs": 176000
+              },
+              {
+                "endMs": 185000,
+                "id": "occurrence-08-02",
+                "layerId": "layer-comprehension-collective",
+                "segmentId": "segment-08",
+                "startMs": 176000
+              },
+              {
+                "endMs": 225000,
+                "id": "occurrence-09-01",
+                "layerId": "layer-mot-piege",
+                "segmentId": "segment-09",
+                "startMs": 186000
+              },
+              {
+                "endMs": 225000,
+                "id": "occurrence-09-02",
+                "layerId": "layer-negociation-du-sens",
+                "segmentId": "segment-09",
+                "startMs": 186000
+              },
+              {
+                "endMs": 225000,
+                "id": "occurrence-09-03",
+                "layerId": "layer-clarification",
+                "segmentId": "segment-09",
+                "startMs": 186000
+              },
+              {
+                "endMs": 273000,
+                "id": "occurrence-10-01",
+                "layerId": "layer-changement-de-langue",
+                "segmentId": "segment-10",
+                "startMs": 241000
+              },
+              {
+                "endMs": 273000,
+                "id": "occurrence-10-02",
+                "layerId": "layer-repertoire-plurilingue",
+                "segmentId": "segment-10",
+                "startMs": 241000
+              },
+              {
+                "endMs": 273000,
+                "id": "occurrence-10-03",
+                "layerId": "layer-mot-piege",
+                "segmentId": "segment-10",
+                "startMs": 241000
+              },
+              {
+                "endMs": 302000,
+                "id": "occurrence-11-01",
+                "layerId": "layer-clarification",
+                "segmentId": "segment-11",
+                "startMs": 273000
+              },
+              {
+                "endMs": 302000,
+                "id": "occurrence-11-02",
+                "layerId": "layer-comprehension-collective",
+                "segmentId": "segment-11",
+                "startMs": 273000
+              },
+              {
+                "endMs": 302000,
+                "id": "occurrence-11-03",
+                "layerId": "layer-repertoire-plurilingue",
+                "segmentId": "segment-11",
+                "startMs": 273000
+              }
+            ],
+            "revision": 1,
+            "segments": [
+              {
+                "endMs": 23000,
+                "id": "segment-01",
+                "languageIds": [
+                  "fr"
+                ],
+                "phenomenonIds": [
+                  "occurrence-01-01",
+                  "occurrence-01-02"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-1"
+                ],
+                "startMs": 2000,
+                "text": "On va faire un essai, donc chacun va pouvoir se présenter dans sa langue, donc son nom, son université, les langues connues, les études, activités préférées, projets..."
+              },
+              {
+                "endMs": 58000,
+                "id": "segment-02",
+                "languageIds": [
+                  "fr"
+                ],
+                "phenomenonIds": [
+                  "occurrence-02-01",
+                  "occurrence-02-02"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-2"
+                ],
+                "startMs": 32000,
+                "text": "Bonjour, moi c’est Marie... J’étudie à l’Université Grenoble-Alpes en master en didactique des langues, en particulier le français langue étrangère."
+              },
+              {
+                "endMs": 84000,
+                "id": "segment-03",
+                "languageIds": [
+                  "es",
+                  "fr",
+                  "it"
+                ],
+                "phenomenonIds": [
+                  "occurrence-03-01",
+                  "occurrence-03-02"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-2"
+                ],
+                "startMs": 58000,
+                "text": "Je parle le français, l’anglais, l’italien couramment. J’apprends l’espagnol cette année... j’ai habité un an en République tchèque..."
+              },
+              {
+                "endMs": 102000,
+                "id": "segment-04",
+                "languageIds": [
+                  "fr"
+                ],
+                "phenomenonIds": [
+                  "occurrence-04-01",
+                  "occurrence-04-02"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-1"
+                ],
+                "startMs": 91000,
+                "text": "Vous avez bien compris ? Oui, je crois que tout le monde comprend bien le français, donc pas de problème."
+              },
+              {
+                "endMs": 118000,
+                "id": "segment-05",
+                "languageIds": [
+                  "fr"
+                ],
+                "phenomenonIds": [
+                  "occurrence-05-01",
+                  "occurrence-05-02"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-1"
+                ],
+                "startMs": 100000,
+                "text": "On change de langue. Allez, on change de langue. Nicoli, Andréa, Évelyne, Julien, qui veut commencer ?"
+              },
+              {
+                "endMs": 136000,
+                "id": "segment-06",
+                "languageIds": [
+                  "es",
+                  "fr",
+                  "it"
+                ],
+                "phenomenonIds": [
+                  "occurrence-06-01",
+                  "occurrence-06-02",
+                  "occurrence-06-03"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-4"
+                ],
+                "startMs": 118000,
+                "text": "Io sono di Espaa, studio en la Universidad de Salamanca. Sto facendo la carrera de Estudios franceses..."
+              },
+              {
+                "endMs": 172000,
+                "id": "segment-07",
+                "languageIds": [
+                  "es",
+                  "fr",
+                  "it",
+                  "pt"
+                ],
+                "phenomenonIds": [
+                  "occurrence-07-01",
+                  "occurrence-07-02"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-4"
+                ],
+                "startMs": 143000,
+                "text": "Entiendo la mayoría del francés... l’italiano un poco... portugués nunca lo he estudiado, pero alguna parola sí que la entiendo..."
+              },
+              {
+                "endMs": 185000,
+                "id": "segment-08",
+                "languageIds": [
+                  "fr"
+                ],
+                "phenomenonIds": [
+                  "occurrence-08-01",
+                  "occurrence-08-02"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-1"
+                ],
+                "startMs": 176000,
+                "text": "Alors, ça va ? Tout compris ? Un mot difficile, une expression plus difficile ?"
+              },
+              {
+                "endMs": 225000,
+                "id": "segment-09",
+                "languageIds": [
+                  "es",
+                  "fr"
+                ],
+                "phenomenonIds": [
+                  "occurrence-09-01",
+                  "occurrence-09-02",
+                  "occurrence-09-03"
+                ],
+                "speakerIds": [
+                  "speaker-groupe",
+                  "speaker-presentateur-1"
+                ],
+                "startMs": 186000,
+                "text": "La carrera... comment on dit ça en français, Marie ? La filière... Carrière, non ? Littéralement, oui... mais en français on dirait plutôt un cursus, un diplôme, une filière."
+              },
+              {
+                "endMs": 273000,
+                "id": "segment-10",
+                "languageIds": [
+                  "es",
+                  "fr",
+                  "it"
+                ],
+                "phenomenonIds": [
+                  "occurrence-10-01",
+                  "occurrence-10-02",
+                  "occurrence-10-03"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-6"
+                ],
+                "startMs": 241000,
+                "text": "Bueno, hola a todos. Mi chiamo Yassin, soy de Espagna... Vivo in Francia, in Lyon... estudio la carrera de el CEO espagnol..."
+              },
+              {
+                "endMs": 302000,
+                "id": "segment-11",
+                "languageIds": [
+                  "es",
+                  "fr"
+                ],
+                "phenomenonIds": [
+                  "occurrence-11-01",
+                  "occurrence-11-02",
+                  "occurrence-11-03"
+                ],
+                "speakerIds": [
+                  "speaker-presentateur-1",
+                  "speaker-presentateur-6"
+                ],
+                "startMs": 273000,
+                "text": "Mucho gusto, Yassine. Alors, bien compris ? Une question, une précision ? Oui, je hablo espagnol, français, anglais, un peu de catalan..."
+              }
+            ],
+            "speakers": [
+              {
+                "id": "speaker-presentateur-1",
+                "label": "Présentateur 1"
+              },
+              {
+                "id": "speaker-presentateur-2",
+                "label": "Présentateur 2"
+              },
+              {
+                "id": "speaker-presentateur-4",
+                "label": "Présentateur 4"
+              },
+              {
+                "id": "speaker-presentateur-6",
+                "label": "Présentateur 6"
+              },
+              {
+                "id": "speaker-groupe",
+                "label": "groupe"
+              }
+            ],
+            "status": "draft",
+            "teacherAnnotations": [
+              {
+                "id": "annotation-01",
+                "note": "Le dispositif est posé comme un tour de présentation plurilingue : chacun peut mobiliser sa langue et son répertoire.",
+                "pedagogicalQuestion": "Comment le cadre autorise-t-il chaque personne à utiliser son propre répertoire linguistique ?",
+                "segmentId": "segment-01"
+              },
+              {
+                "id": "annotation-02",
+                "note": "Présentation de soi et ancrage institutionnel. Moment utile pour observer la mise en place d’un contexte partagé.",
+                "pedagogicalQuestion": "Quels éléments de présentation créent un contexte partagé pour le groupe ?",
+                "segmentId": "segment-02"
+              },
+              {
+                "id": "annotation-03",
+                "note": "Le répertoire linguistique est explicité : langues maîtrisées, langues en cours d’apprentissage, expérience de mobilité.",
+                "pedagogicalQuestion": "Que nous apprend ce segment sur la diversité des compétences dans un même répertoire ?",
+                "segmentId": "segment-03"
+              },
+              {
+                "id": "annotation-04",
+                "note": "Premier contrôle collectif de compréhension. La compréhension devient un objet partagé, pas seulement individuel.",
+                "pedagogicalQuestion": "Qu’est-ce que le groupe vérifie collectivement à ce moment ?",
+                "segmentId": "segment-04"
+              },
+              {
+                "id": "annotation-05",
+                "note": "Le changement de langue est annoncé et ritualisé. C’est un marqueur fort pour une vidéo augmentée IC.",
+                "pedagogicalQuestion": "Comment le changement de langue est-il préparé pour ne pas devenir une rupture ?",
+                "segmentId": "segment-05"
+              },
+              {
+                "id": "annotation-06",
+                "note": "Segment hybride : italien, espagnol et français se croisent. Le mot carrera apparaît dans un contexte d’études.",
+                "pedagogicalQuestion": "Quel indice permet déjà d’interpréter le mot carrera avant la clarification ?",
+                "segmentId": "segment-06"
+              },
+              {
+                "id": "annotation-07",
+                "note": "La participante décrit une compréhension partielle mais opératoire : comprendre certaines langues sans les avoir toutes étudiées.",
+                "pedagogicalQuestion": "Comment ce segment montre-t-il une compréhension partielle mais utile ?",
+                "segmentId": "segment-07"
+              },
+              {
+                "id": "annotation-08",
+                "note": "Invitation à signaler une difficulté. Ce type de relance ouvre la négociation du sens.",
+                "pedagogicalQuestion": "Où voit-on l’ouverture d’un espace de clarification ?",
+                "segmentId": "segment-08"
+              },
+              {
+                "id": "annotation-09",
+                "note": "Moment central : le groupe répare collectivement un faux ami partiel entre carrera et carrière.",
+                "pedagogicalQuestion": "Où voit-on une négociation du sens autour de carrera ?",
+                "segmentId": "segment-09"
+              },
+              {
+                "id": "annotation-10",
+                "note": "Nouveau segment plurilingue spontané : le participant mobilise plusieurs langues dans une même présentation.",
+                "pedagogicalQuestion": "Comment le participant combine-t-il plusieurs langues pour rester compréhensible ?",
+                "segmentId": "segment-10"
+              },
+              {
+                "id": "annotation-11",
+                "note": "Le groupe revient à la compréhension et au répertoire linguistique. On observe la circulation entre présentation, clarification et pluralité des langues.",
+                "pedagogicalQuestion": "Qu’est-ce que le groupe comprend collectivement du répertoire de Yassine ?",
+                "segmentId": "segment-11"
+              }
+            ],
+            "title": "Vidéo augmentée d’intercompréhension",
+            "transcription": {
+              "id": "transcription-proto05-v0",
+              "languageId": "fr",
+              "segmentIds": [
+                "segment-01",
+                "segment-02",
+                "segment-03",
+                "segment-04",
+                "segment-05",
+                "segment-06",
+                "segment-07",
+                "segment-08",
+                "segment-09",
+                "segment-10",
+                "segment-11"
+              ]
+            },
+            "version": "0.1.2",
+            "videoRef": {
+              "assetId": "media-proto05-video-proto05-uga-37004",
+              "playableId": "video-proto05-uga-37004",
+              "schemaVersion": "0.1"
+            }
+          }
+        ],
+        "asset": {
+          "createdAt": "2026-07-24T07:05:31.666Z",
+          "defaultPlayableId": "video-proto05-uga-37004",
+          "derivationTypes": [],
+          "familyRootAssetId": "media-proto05-video-proto05-uga-37004",
+          "folderId": null,
+          "id": "media-proto05-video-proto05-uga-37004",
+          "lifecycle": "active",
+          "parentAssetId": null,
+          "provenance": {
+            "creationType": "catalog-migration",
+            "familyRootAssetId": "media-proto05-video-proto05-uga-37004",
+            "historical": {
+              "catalogId": "video-proto05-uga-37004",
+              "kind": "catalog-migration"
+            },
+            "originReference": "video-proto05-uga-37004",
+            "originalFileName": null,
+            "parentAssetId": null,
+            "provider": "uga"
+          },
+          "rights": {},
+          "tagIds": [],
+          "technicalMetadata": {
+            "analyzedAt": null,
+            "analyzer": null,
+            "analyzerVersion": null,
+            "audioCodec": null,
+            "durationMs": null,
+            "error": null,
+            "frameRate": null,
+            "hasAudio": null,
+            "height": null,
+            "mimeType": null,
+            "sha256": null,
+            "sizeBytes": null,
+            "videoCodec": null,
+            "width": null
+          },
+          "title": "Vidéo augmentée IC — source UGA",
+          "updatedAt": "2026-08-01T16:29:45.924Z"
+        },
+        "playables": [
+          {
+            "assetId": "media-proto05-video-proto05-uga-37004",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-07-30T13:34:11.231Z",
+            "id": "video-media-proto05-video-proto05-uga-37004-download-b6ddd6a7229a7528",
+            "kind": "local-file",
+            "location": {
+              "storageKey": "media-proto05-video-proto05-uga-37004/source/b6ddd6a7229a7528-Video-augmentee-IC---source-UGA.mp4",
+              "storageScope": "workspace"
+            },
+            "provenance": {
+              "creationType": "remote-copy",
+              "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+              "importedAt": "2026-07-30T13:34:11.231Z",
+              "kind": "managed-remote-copy",
+              "originalFileName": "Video-augmentee-IC---source-UGA.mp4",
+              "sha256": "b6ddd6a7229a7528fda2af45d1033676088b9253984281082b051ac54c8cbf27",
+              "sizeBytes": 270502622,
+              "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+              "sourcePlayableId": "video-proto05-uga-37004"
+            },
+            "provider": "local",
+            "role": "working-copy",
+            "sourceId": "source-media-proto05-video-proto05-uga-37004-download-b6ddd6a7229a7528",
+            "technicalMetadata": {
+              "analyzedAt": "2026-07-30T13:34:11.231Z",
+              "analyzer": "ffprobe",
+              "analyzerVersion": null,
+              "audioCodec": "aac",
+              "durationMs": 939238,
+              "error": null,
+              "fileName": "Video-augmentee-IC---source-UGA.mp4",
+              "frameRate": "60/1",
+              "hasAudio": true,
+              "height": 1080,
+              "mimeType": "video/mp4",
+              "sha256": "b6ddd6a7229a7528fda2af45d1033676088b9253984281082b051ac54c8cbf27",
+              "sizeBytes": 270502622,
+              "status": "available",
+              "videoCodec": "h264",
+              "width": 1920
+            },
+            "updatedAt": "2026-07-30T13:34:11.231Z"
+          },
+          {
+            "assetId": "media-proto05-video-proto05-uga-37004",
+            "availability": "available",
+            "availabilityReason": null,
+            "createdAt": "2026-07-24T07:05:31.666Z",
+            "id": "video-proto05-uga-37004",
+            "kind": "hls",
+            "location": {
+              "manifestUrl": "/api/hls/uga-37004/livestream.m3u8",
+              "url": "/api/hls/uga-37004/livestream.m3u8"
+            },
+            "provenance": {
+              "historical": {},
+              "legacyId": "video-proto05-uga-37004"
+            },
+            "provider": "uga",
+            "sourceId": "source-video-proto05-uga-37004",
+            "technicalMetadata": {
+              "analyzedAt": "2026-08-01T07:58:15.333Z",
+              "analyzer": "remote-availability",
+              "analyzerVersion": "1",
+              "audioCodec": null,
+              "durationMs": 939217,
+              "error": null,
+              "frameRate": null,
+              "hasAudio": null,
+              "height": null,
+              "mimeType": "application/vnd.apple.mpegurl",
+              "sha256": null,
+              "sizeBytes": null,
+              "videoCodec": null,
+              "width": null
+            },
+            "updatedAt": "2026-08-01T07:58:15.332Z"
+          }
+        ],
+        "sources": [
+          {
+            "assetId": "media-proto05-video-proto05-uga-37004",
+            "createdAt": "2026-07-30T13:34:11.231Z",
+            "id": "source-media-proto05-video-proto05-uga-37004-download-b6ddd6a7229a7528",
+            "kind": "local-file",
+            "mimeType": "video/mp4",
+            "origin": {
+              "originalFileName": "Video-augmentee-IC---source-UGA.mp4",
+              "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+              "sourcePlayableId": "video-proto05-uga-37004"
+            },
+            "provenance": {
+              "creationType": "remote-copy",
+              "ffmpegVersion": "2026-02-04-git-627da1111c-full_build-www.gyan.dev Copyright (c) 2000-2026 the FFmpeg developers",
+              "importedAt": "2026-07-30T13:34:11.231Z",
+              "kind": "managed-remote-copy",
+              "originalFileName": "Video-augmentee-IC---source-UGA.mp4",
+              "sha256": "b6ddd6a7229a7528fda2af45d1033676088b9253984281082b051ac54c8cbf27",
+              "sizeBytes": 270502622,
+              "sourceAssetId": "media-proto05-video-proto05-uga-37004",
+              "sourcePlayableId": "video-proto05-uga-37004"
+            },
+            "provider": "local",
+            "role": "working-copy",
+            "transport": "file"
+          },
+          {
+            "assetId": "media-proto05-video-proto05-uga-37004",
+            "createdAt": "2026-07-24T07:05:31.666Z",
+            "id": "source-video-proto05-uga-37004",
+            "kind": "hls",
+            "mimeType": "application/vnd.apple.mpegurl",
+            "origin": {
+              "manifestUrl": "/api/hls/uga-37004/livestream.m3u8",
+              "originUrl": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8",
+              "originalFileName": null,
+              "proxyUrl": "/api/hls/uga-37004/livestream.m3u8"
+            },
+            "provenance": {
+              "historical": {
+                "catalogId": "video-proto05-uga-37004"
+              },
+              "legacyId": "source-video-proto05-uga-37004"
+            },
+            "provider": "uga",
+            "transport": "hls"
+          }
+        ],
+        "treatments": []
+      },
+      "snapshotHash": "fa796527f3d8e6bafd8411b4be929e7c102a0d8b921cf8d9cdddbda3eeac4cd1"
+    }
+  ],
+  "proposedActivities": [
+    {
+      "canonicalWrite": false,
+      "entryId": "repli4c-video-37004",
+      "evidence": {
+        "origin": "automatic-synthesis",
+        "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:activité-A",
+        "validation": "to-verify"
+      },
+      "proposalId": "repli4c-activity-37004-ler-lire",
+      "range": {
+        "endMs": 627000,
+        "startMs": 456000
+      },
+      "summary": "Observer une explication lexicale, un geste et une réparation autour de ler/lire.",
+      "title": "Ler/lire : faire comprendre et réparer",
+      "verificationRequirements": [
+        "Vérifier les voix.",
+        "Vérifier que le geste est visible.",
+        "Vérifier les bornes exactes.",
+        "Vérifier la langue de chaque intervention."
+      ]
+    },
+    {
+      "canonicalWrite": false,
+      "entryId": "repli4c-video-36988",
+      "evidence": {
+        "origin": "automatic-synthesis",
+        "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:activité-B",
+        "validation": "to-verify"
+      },
+      "proposalId": "repli4c-activity-36988-climat",
+      "range": {
+        "endMs": 135000,
+        "startMs": 24000
+      },
+      "summary": "Comparer les conséquences locales du changement climatique dans plusieurs langues romanes.",
+      "title": "Un même changement climatique, plusieurs réalités locales",
+      "verificationRequirements": [
+        "Vérifier les bornes exactes.",
+        "Vérifier l’italien et le portugais.",
+        "Vérifier les transitions entre locuteurs.",
+        "Vérifier la cohérence audiovisuelle."
+      ]
+    }
+  ],
+  "proposedEnrichments": [
+    {
+      "canonicalWrite": false,
+      "durationMs": 193000,
+      "entryId": "repli4c-video-36970",
+      "languageIds": [
+        "pt",
+        "fr"
+      ],
+      "notes": [
+        "Analyse automatique sans vérification audiovisuelle intégrale."
+      ],
+      "passages": [
+        {
+          "endMs": 27000,
+          "purpose": "Compartilhar / partager.",
+          "startMs": 0
+        },
+        {
+          "endMs": 147000,
+          "purpose": "Passage du français au portugais pour préciser le thème.",
+          "startMs": 108000
+        }
+      ],
+      "pedagogicalInterest": "Intérêt moyen : partage du document et clarification plurilingue de assunto, temática et tema.",
+      "summary": "Prise en main d’un Framapad collaboratif et reprise des idées de production autour du changement climatique, notamment celle d’un journal ; problème de micro.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 392000,
+      "entryId": "repli4c-video-36971",
+      "languageIds": [
+        "pt",
+        "fr",
+        "es"
+      ],
+      "notes": [
+        "Le début recoupe partiellement 36970.",
+        "Préserver la description humaine canonique existante."
+      ],
+      "passages": [
+        {
+          "endMs": 339000,
+          "purpose": "Argumentation et reprises plurilingues.",
+          "startMs": 264000
+        }
+      ],
+      "pedagogicalInterest": "Intérêt moyen à bon : argumentation française, reprise portugaise et réponse hispanophone.",
+      "summary": "Développement de l’idée d’un journal réunissant des contributions diverses, résolution d’un problème de micro et justification du format.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 312000,
+      "entryId": "repli4c-video-36972",
+      "languageIds": [
+        "pt",
+        "fr"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 111000,
+          "purpose": "Circulation d’exemples et comparaison d’outils.",
+          "startMs": 0
+        },
+        {
+          "endMs": 312000,
+          "purpose": "Arbitrage pédagogique et technique.",
+          "startMs": 192000
+        }
+      ],
+      "pedagogicalInterest": "Bon pour la conception collaborative, moins fort pour une activité d’intercompréhension.",
+      "summary": "Discussion du format du journal : revue feuilletable, Genially, Canva, vidéos, jeux et arbitrage entre formats.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 198000,
+      "entryId": "repli4c-video-36973",
+      "languageIds": [
+        "pt",
+        "es",
+        "fr"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 159000,
+          "purpose": "Proposition et reformulations plurilingues.",
+          "startMs": 84000
+        }
+      ],
+      "pedagogicalInterest": "Bon : proposition espagnole, vérification française et reformulation portugaise.",
+      "summary": "Structuration des rubriques du journal avec articles d’opinion, entretiens, photographies et jeux.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 183000,
+      "entryId": "repli4c-video-36975",
+      "languageIds": [
+        "pt",
+        "es",
+        "fr"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 99000,
+          "purpose": "Alternance rapide PT–ES–FR.",
+          "startMs": 0
+        },
+        {
+          "endMs": 183000,
+          "purpose": "Décision et reformulation.",
+          "startMs": 120000
+        }
+      ],
+      "pedagogicalInterest": "Bon : alternance rapide et décision reformulée.",
+      "summary": "Négociation du caractère interactif des mots croisés et du journal, distinction numérique/papier et solution de repli.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 163000,
+      "entryId": "repli4c-video-36976",
+      "languageIds": [
+        "fr",
+        "it",
+        "pt"
+      ],
+      "notes": [
+        "Aucune borne remarquable exacte fournie par l’analyse."
+      ],
+      "passages": [],
+      "pedagogicalInterest": "Intérêt moyen pour documenter l’accompagnement technique et la réappropriation d’une ressource.",
+      "summary": "Présentation d’un ancien jeu Genially et discussion de l’expérience des participantes avec l’outil.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 252000,
+      "entryId": "repli4c-video-36977",
+      "languageIds": [
+        "fr",
+        "pt",
+        "es"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 219000,
+          "purpose": "Mots apparentés, aides et langues des définitions/réponses.",
+          "startMs": 48000
+        }
+      ],
+      "pedagogicalInterest": "Très bon candidat de réserve sur les stratégies d’intercompréhension.",
+      "summary": "Conception d’un jeu de mots croisés plurilingue et discussion des langues, indices et niveaux de difficulté.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 283000,
+      "entryId": "repli4c-video-36978",
+      "languageIds": [
+        "fr",
+        "pt",
+        "es"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 219000,
+          "purpose": "Explication du dispositif d’indices plurilingues.",
+          "startMs": 132000
+        },
+        {
+          "endMs": 279000,
+          "purpose": "Répertoire linguistique du groupe.",
+          "startMs": 204000
+        }
+      ],
+      "pedagogicalInterest": "Bon pour expliquer des indices plurilingues et le répertoire du groupe.",
+      "summary": "Récapitulatif puis démonstration d’un modèle de mots croisés espagnol–italien, aides et inventaire des langues.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 149000,
+      "entryId": "repli4c-video-36979",
+      "languageIds": [
+        "pt",
+        "it",
+        "fr"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 147000,
+          "purpose": "Transparence et distance lexicales entre langues.",
+          "startMs": 12000
+        }
+      ],
+      "pedagogicalInterest": "Excellent candidat de réserve, court et centré sur les stratégies lexicales.",
+      "summary": "Élaboration d’un glossaire climatique plurilingue autour d’environnement / meio ambiente et des mots transparents.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 190000,
+      "entryId": "repli4c-video-36980",
+      "languageIds": [
+        "pt",
+        "it",
+        "fr"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 51000,
+          "purpose": "Témoignage italien.",
+          "startMs": 0
+        },
+        {
+          "endMs": 159000,
+          "purpose": "Malentendu et clarification plurilingue.",
+          "startMs": 60000
+        },
+        {
+          "endMs": 135000,
+          "purpose": "Droit à l’image.",
+          "startMs": 108000
+        }
+      ],
+      "pedagogicalInterest": "Très bon : témoignage italien, malentendu et clarification plurilingue.",
+      "summary": "Photographies des effets locaux du changement climatique près du lac de Côme et clarification de leur nature.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 415000,
+      "entryId": "repli4c-video-36982",
+      "languageIds": [
+        "fr",
+        "it",
+        "pt"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 267000,
+          "purpose": "Photos avant/après proposées en italien.",
+          "startMs": 216000
+        },
+        {
+          "endMs": 399000,
+          "purpose": "Rubrique finale à visée d’alerte.",
+          "startMs": 348000
+        }
+      ],
+      "pedagogicalInterest": "Très utile pour résumer le projet.",
+      "summary": "Récapitulatif de la production finale et répartition des tâches autour du jeu, des témoignages, articles et photographies.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 142000,
+      "entryId": "repli4c-video-36988",
+      "languageIds": [
+        "es",
+        "it",
+        "pt",
+        "fr"
+      ],
+      "notes": [
+        "Vérifier l’italien, le portugais, les transitions et les bornes."
+      ],
+      "passages": [
+        {
+          "endMs": 135000,
+          "purpose": "Comparaison plurilingue des conséquences locales du changement climatique.",
+          "startMs": 24000
+        }
+      ],
+      "pedagogicalInterest": "Excellent : séquence quadrilingue compacte, cohérente et thématique ; activité B recommandée.",
+      "summary": "Comparaison de conséquences locales du changement climatique en Espagne, Italie et France.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 364000,
+      "entryId": "repli4c-video-36984",
+      "languageIds": [
+        "pt",
+        "it",
+        "es",
+        "fr"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 279000,
+          "purpose": "Proposition italienne et structuration plurilingue du projet.",
+          "startMs": 156000
+        }
+      ],
+      "pedagogicalInterest": "Bon pour la collaboration télématique.",
+      "summary": "Discussion du nom, du format, du nombre d’épisodes et des binômes interuniversitaires d’un podcast.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 159000,
+      "entryId": "repli4c-video-36983",
+      "languageIds": [
+        "pt",
+        "it",
+        "es",
+        "fr"
+      ],
+      "notes": [
+        "Aucune borne remarquable exacte fournie par l’analyse."
+      ],
+      "passages": [],
+      "pedagogicalInterest": "Intérêt moyen : alternance quadrilingue mais contenu organisationnel.",
+      "summary": "Validation des binômes et négociation de la durée des podcasts, fixée à cinq à dix minutes.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 179000,
+      "entryId": "repli4c-video-36985",
+      "languageIds": [
+        "pt",
+        "it",
+        "fr"
+      ],
+      "notes": [
+        "La détection Chinese à 02:12 est vraisemblablement fausse."
+      ],
+      "passages": [],
+      "pedagogicalInterest": "Faible à moyen ; contenu surtout organisationnel.",
+      "summary": "Répartition des tâches pour le canal YouTube, son image et sa bannière.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 110000,
+      "entryId": "repli4c-video-36987",
+      "languageIds": [
+        "pt"
+      ],
+      "notes": [
+        "Aucune borne remarquable exacte fournie par l’analyse."
+      ],
+      "passages": [],
+      "pedagogicalInterest": "Bon pour documenter l’interproduction, mais peu plurilingue dans cet extrait.",
+      "summary": "Explication du rôle du roteiro : script, vérification de compréhensibilité, enregistrement et publication.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 347000,
+      "entryId": "repli4c-video-36996",
+      "languageIds": [
+        "fr",
+        "pt",
+        "it"
+      ],
+      "notes": [
+        "Aucune borne remarquable exacte fournie par l’analyse."
+      ],
+      "passages": [],
+      "pedagogicalInterest": "Intérêt moyen : décision différée et gestion plurilingue du document collaboratif.",
+      "summary": "Recherche d’un titre plurilingue et discussion des langues du plan de travail.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 309000,
+      "entryId": "repli4c-video-36997",
+      "languageIds": [
+        "fr",
+        "pt",
+        "it"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 159000,
+          "purpose": "Justification du besoin de ressources.",
+          "startMs": 36000
+        },
+        {
+          "endMs": 279000,
+          "purpose": "Propositions de diffusion.",
+          "startMs": 192000
+        }
+      ],
+      "pedagogicalInterest": "Bon pour le mémoire et la circulation des ressources.",
+      "summary": "Définition du public et des lieux de diffusion d’un portfolio climatique en langues romanes.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 250000,
+      "entryId": "repli4c-video-36998",
+      "languageIds": [
+        "pt",
+        "it",
+        "fr"
+      ],
+      "notes": [
+        "La détection Chinese est un acquiescement fantôme."
+      ],
+      "passages": [
+        {
+          "endMs": 231000,
+          "purpose": "Définition, équivalence portugaise et attribution d’une responsabilité.",
+          "startMs": 108000
+        }
+      ],
+      "pedagogicalInterest": "Très bon candidat de réserve sur la demande de sens et l’équivalence fonctionnelle.",
+      "summary": "Lecture du plan et clarification de compte rendu, rapport et ata, puis répartition de la rédaction.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 361000,
+      "entryId": "repli4c-video-36995",
+      "languageIds": [
+        "pt",
+        "fr",
+        "it"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 291000,
+          "purpose": "Demande du sens de palestras et périphrase.",
+          "startMs": 216000
+        },
+        {
+          "endMs": 348000,
+          "purpose": "Comparaison conférences/entretiens.",
+          "startMs": 312000
+        }
+      ],
+      "pedagogicalInterest": "Excellent candidat de réserve sur le sens de palestras et la solution conférence.",
+      "summary": "Sélection des catégories d’un portfolio climatique et arbitrage sur les conférences.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 394000,
+      "entryId": "repli4c-video-37000",
+      "languageIds": [
+        "pt",
+        "fr"
+      ],
+      "notes": [
+        "Transcription parfois confuse sur les noms."
+      ],
+      "passages": [],
+      "pedagogicalInterest": "Intérêt moyen pour l’organisation télécollaborative.",
+      "summary": "Constitution de binômes plurilingues puis ajustement selon les préférences et disponibilités.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 248000,
+      "entryId": "repli4c-video-37001",
+      "languageIds": [
+        "pt",
+        "fr",
+        "it"
+      ],
+      "notes": [
+        "Analyse automatique à vérifier."
+      ],
+      "passages": [
+        {
+          "endMs": 171000,
+          "purpose": "Incompréhension, répétition italienne et réponse portugaise.",
+          "startMs": 120000
+        }
+      ],
+      "pedagogicalInterest": "Bon pour observer la gestion plurilingue des choix.",
+      "summary": "Répartition des catégories entre les binômes et reformulation italienne d’une demande de répétition.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 421000,
+      "entryId": "repli4c-video-37003",
+      "languageIds": [
+        "fr",
+        "es",
+        "it",
+        "pt"
+      ],
+      "notes": [
+        "La durée excède la plage textuelle du nom ; elle reste provisoire."
+      ],
+      "passages": [
+        {
+          "endMs": 408000,
+          "purpose": "Enquête orale sur les langues comprises et consigne d’adaptation.",
+          "startMs": 180000
+        }
+      ],
+      "pedagogicalInterest": "Excellent pour contextualiser le dispositif et l’effort pour se faire comprendre.",
+      "summary": "Mise en route et cartographie collective des répertoires de compréhension du groupe.",
+      "validation": "to-verify"
+    },
+    {
+      "canonicalWrite": false,
+      "durationMs": 939000,
+      "entryId": "repli4c-video-37004",
+      "languageIds": [
+        "fr",
+        "es",
+        "it",
+        "pt"
+      ],
+      "notes": [
+        "Préserver l’activité existante proto05-augmented-video-01.",
+        "Vérifier voix, geste, bornes et langues."
+      ],
+      "passages": [
+        {
+          "endMs": 219000,
+          "purpose": "Carrera / carrière / cursus / filière.",
+          "startMs": 168000
+        },
+        {
+          "endMs": 627000,
+          "purpose": "Ler/lire, geste, explication et réparation.",
+          "startMs": 456000
+        },
+        {
+          "endMs": 747000,
+          "purpose": "Présentation italienne, tedesco et nuotare.",
+          "startMs": 624000
+        },
+        {
+          "endMs": 927000,
+          "purpose": "Compréhension du portugais et comparaison des cursus.",
+          "startMs": 816000
+        }
+      ],
+      "pedagogicalInterest": "Excellent : activité A recommandée sur ler/lire, geste, explication et réparation.",
+      "summary": "Tour de table plurilingue avec vérifications de compréhension, explications lexicales et comparaisons universitaires.",
+      "validation": "to-verify"
+    }
+  ],
+  "schemaVersion": "proto05-corpus-import-plan/1.0",
+  "summary": {
+    "blockerCount": 0,
+    "conflictCount": 0,
+    "createTechnicalMediaCount": 20,
+    "entryCount": 24,
+    "matchedExistingCount": 4,
+    "proposedActivityCount": 2,
+    "proposedEnrichmentCount": 24
+  }
+}
