@@ -95,6 +95,15 @@ async function installCanonical(database, databaseName) {
 }
 
 async function removeAudioMigrationFixture(database) {
+  const canonicalContract = loadMigrationContract(prototypeDirectory);
+  const routineBeforeAudioMigrations = canonicalContract.migrations
+    .find(migration => migration.version === "002")
+    .expectedSchema.routines
+    .find(routine => routine.routineName === "sp_media_asset_delete");
+  assert.ok(routineBeforeAudioMigrations?.createStatement, "La définition 002 de sp_media_asset_delete doit être disponible.");
+  await database.query("DELETE FROM schema_migrations WHERE version = '006'");
+  await database.query("DROP PROCEDURE sp_media_asset_delete");
+  await database.query(routineBeforeAudioMigrations.createStatement);
   await database.query("DROP PROCEDURE sp_media_terminal_output_delete");
   await database.query("DELETE FROM schema_migrations WHERE version = '005'");
   await database.query("DROP PROCEDURE sp_media_working_copy_delete");
@@ -201,6 +210,7 @@ test.after(async () => {
 
 test("empty install, populated baseline and a second run are deterministic", async () => {
   await withDatabase("lifecycle", async (database, databaseName) => {
+    const canonicalContract = loadMigrationContract(prototypeDirectory);
     let installed;
     try {
       installed = await installCanonical(database, databaseName);
@@ -221,8 +231,8 @@ test("empty install, populated baseline and a second run are deterministic", asy
     assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 49);
     assert.ok(installed.state.actualSchema.routines.every(row => row.createStatement.startsWith("CREATE PROCEDURE")));
     const verified = await verifyDatabaseSchema({ database, ...runnerOptions(databaseName) });
-    assert.equal(verified.schemaVersion, "005");
-    assert.equal(verified.migrationCount, 5);
+    assert.equal(verified.schemaVersion, canonicalContract.latestVersion);
+    assert.equal(verified.migrationCount, canonicalContract.migrations.length);
     const second = await runMigrationCommand(database, runnerOptions(databaseName));
     assert.equal(second.changed, false);
 
@@ -619,7 +629,7 @@ test("concurrent runners serialize and never double-register a migration", async
       const refused = results.find(item => item.status === "rejected");
       assert.equal(refused.reason.code, "PROTO05_MIGRATION_PLAN_DRIFT");
       const [[registry]] = await first.query("SELECT COUNT(*) count FROM schema_migrations");
-      assert.equal(Number(registry.count), 5);
+      assert.equal(Number(registry.count), loadMigrationContract(prototypeDirectory).migrations.length);
     } finally {
       await second.end();
     }
