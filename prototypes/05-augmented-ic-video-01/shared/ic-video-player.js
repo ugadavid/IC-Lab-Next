@@ -22,6 +22,13 @@
     return youtubeApiPromise;
   }
 
+  window.canPreviewICPlayable = function canPreviewICPlayable(playable) {
+    if (!playable) return false;
+    if (playable.kind === "youtube") return Boolean(playable.videoId && playable.embedUrl);
+    return ["hls", "direct-url", "local-file"].includes(playable.kind)
+      && Boolean(playable.url || playable.proxyUrl || playable.manifestUrl);
+  };
+
   window.createICVideoPlayer = function createICVideoPlayer({ container }) {
     const listeners = new Map();
     let nativeVideo = null;
@@ -112,7 +119,7 @@
       return Promise.resolve();
     }
     async function load(video) {
-      reset(); const hlsSource = video.url || video.proxyUrl; currentProvider = video.provider || (hlsSource ? "uga" : null);
+      reset(); const hlsSource = video.url || video.proxyUrl || video.manifestUrl; currentProvider = video.provider || (hlsSource ? "uga" : null);
       if ((currentProvider === "uga" || currentProvider === "local" || currentProvider === "direct") && hlsSource) {
         return attachNative(hlsSource, currentProvider === "uga" || video.kind === "hls" || Boolean(video.manifestUrl));
       }

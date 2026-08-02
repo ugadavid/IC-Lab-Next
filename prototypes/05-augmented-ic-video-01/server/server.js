@@ -83,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.62";
+const VERSION = "0.1.63";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -360,12 +360,15 @@ function sendJson(response, status, payload, headers = {}) {
 
 function sendMutationFailure(response, error, fallback, additions = {}) {
   const status = error?.statusCode || 400;
+  const diagnosticId = status >= 500 ? deletionDiagnosticId().replace("DEL-", "ERR-") : null;
+  if (diagnosticId) console.error(`[mutation] diagnostic=${diagnosticId} code=${error?.code || "ERROR"} detail=${JSON.stringify(String(error?.internalMessage || error?.message || fallback).slice(0, 500))}`);
   return sendJson(response, status, {
     error: error?.message || fallback,
     ...(error?.code ? { code: error.code } : {}),
     ...(error?.entityType ? { entityType: error.entityType } : {}),
     ...(error?.entityId ? { entityId: error.entityId } : {}),
     ...(error?.code === "PROTO05_CONCURRENCY_CONFLICT" ? { reloadRequired: true } : {}),
+    ...(diagnosticId ? { diagnosticId } : {}),
     ...additions
   });
 }
@@ -375,13 +378,14 @@ function deletionDiagnosticId() {
 }
 
 function sendDeletionFailure(response, error, fallback, context = {}) {
+  const diagnosticId = deletionDiagnosticId();
   const functional = Number(error?.statusCode) >= 400 && Number(error?.statusCode) < 500;
   if (functional || error?.code === "PROTO05_CONCURRENCY_CONFLICT") {
     return sendMutationFailure(response, error, fallback, {
-      conflicts: error?.conflicts || []
+      conflicts: error?.conflicts || [],
+      diagnosticId
     });
   }
-  const diagnosticId = deletionDiagnosticId();
   console.error(
     `[media-delete] diagnostic=${diagnosticId}`
       + ` asset=${JSON.stringify(String(context.assetId || "unknown").slice(0, 160))}`

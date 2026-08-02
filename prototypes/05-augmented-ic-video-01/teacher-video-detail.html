@@ -167,7 +167,8 @@
       });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw Object.assign(new Error(payload.error || `Erreur HTTP ${response.status}`), {
+        const reference = payload.diagnosticId ? ` (référence ${payload.diagnosticId})` : "";
+        throw Object.assign(new Error(`${payload.error || `Erreur HTTP ${response.status}`}${reference}`), {
           status: response.status,
           payload
         });

@@ -90,6 +90,17 @@
         }
       ],
       "schemaManifest": "006_proto05_asset_delete_lineage.manifest.json"
+    },
+    {
+      "version": "007",
+      "description": "Refus explicite de suppression lorsqu'un plan d'anonymisation audio dépend de l'asset",
+      "kind": "migration",
+      "sources": [
+        {
+          "path": "007_proto05_asset_delete_audio_plan_guard.sql"
+        }
+      ],
+      "schemaManifest": "007_proto05_asset_delete_audio_plan_guard.manifest.json"
     }
   ]
 }

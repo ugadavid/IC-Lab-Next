@@ -30,10 +30,21 @@ function loadTestEnvironment() {
   testEnvironmentLoaded = true;
 }
 
+function assertIsolatedTestDatabase(environment = process.env) {
+  const configuration = mariadbConfigurationFromEnvironment(environment);
+  assert.match(
+    configuration.database || "",
+    /^proto05_test_[a-z0-9_]+$/,
+    "Les tests mutateurs Proto05 exigent une base dédiée nommée proto05_test_* ; la base métier est refusée."
+  );
+  return configuration;
+}
+
 async function testDatabaseConnection() {
   loadTestEnvironment();
+  const configuration = assertIsolatedTestDatabase(process.env);
   return mysql.createConnection({
-    ...mariadbConfigurationFromEnvironment(process.env),
+    ...configuration,
     charset: "utf8mb4",
     dateStrings: true,
     multipleStatements: false
@@ -219,6 +230,8 @@ async function startTemporaryProto05Server(
   { env = {} } = {}
 ) {
   assert.ok(fs.existsSync(envFile), "La configuration locale MariaDB de Proto05 est requise.");
+  loadTestEnvironment();
+  assertIsolatedTestDatabase({ ...process.env, ...env });
   const projectionMetadataSnapshot = await readProjectionMetadataSnapshot();
   const runtimeDirectory = isolatedRuntimeDirectory(prefix);
   fs.mkdirSync(runtimeDirectory, { recursive: false });
@@ -357,4 +370,4 @@ async function startTemporaryProto05Server(
   };
 }
 
-module.exports = { startTemporaryProto05Server };
+module.exports = { assertIsolatedTestDatabase, startTemporaryProto05Server };
