@@ -12,6 +12,7 @@
     "schema:verify": "node scripts/schema-migrations.js verify",
     "schema:rebuild-manifest": "node scripts/rebuild-schema-manifest.js",
     "availability:dry-run": "node scripts/local-media-availability-dry-run.js",
+    "corpus:plan": "node scripts/corpus-import.js plan",
     "test": "node scripts/run-tests.js"
   },
   "engines": {

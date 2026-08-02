@@ -1,0 +1,195 @@
+{
+  "schemaVersion": "proto05-corpus-import-manifest/1.0",
+  "corpus": {
+    "id": "repli4c-24-videos",
+    "sources": [
+      { "path": "Liens_24videos.txt", "sha256": "9468300016f50ac0c3d71840c7230b74c66a78fd1aade340d3d1597572906677", "role": "technical-source" },
+      { "path": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md", "sha256": "75af843398b32b6ad4cae436b1589891fcba54254d275b639b1929bf78079931", "role": "qwen-analysis" }
+    ]
+  },
+  "entries": [
+    {
+      "entryId": "repli4c-video-36970", "corpusOrder": 1, "functionalName": "GT01_RFC7_reu1_09m05-12m09",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "09m05-12m09" },
+      "externalIdentity": { "provider": "uga-video", "videoId": "36970" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36970/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 193000, "languageIds": ["pt", "fr"], "summary": "Prise en main d’un Framapad collaboratif et reprise des idées de production autour du changement climatique, notamment celle d’un journal ; problème de micro.", "pedagogicalInterest": "Intérêt moyen : partage du document et clarification plurilingue de assunto, temática et tema.", "passages": [{ "startMs": 0, "endMs": 27000, "purpose": "Compartilhar / partager." }, { "startMs": 108000, "endMs": 147000, "purpose": "Passage du français au portugais pour préciser le thème." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:1" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36970" } }, "notes": ["Analyse automatique sans vérification audiovisuelle intégrale."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36971", "corpusOrder": 2, "functionalName": "GT01_RFC7_reu1_14m34-18m",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "14m34-18m" }, "externalIdentity": { "provider": "uga-video", "videoId": "36971" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 392000, "languageIds": ["pt", "fr", "es"], "summary": "Développement de l’idée d’un journal réunissant des contributions diverses, résolution d’un problème de micro et justification du format.", "pedagogicalInterest": "Intérêt moyen à bon : argumentation française, reprise portugaise et réponse hispanophone.", "passages": [{ "startMs": 264000, "endMs": 339000, "purpose": "Argumentation et reprises plurilingues." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:2" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36971" } }, "notes": ["Le début recoupe partiellement 36970.", "Préserver la description humaine canonique existante."], "canonicalMatch": { "assetId": "media-proto05-remote-ref-03738b8065e1866b8e956819" }
+    },
+    {
+      "entryId": "repli4c-video-36972", "corpusOrder": 3, "functionalName": "GT01_RFC7_reu1_21m10-26m15",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "21m10-26m15" }, "externalIdentity": { "provider": "uga-video", "videoId": "36972" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36972/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 312000, "languageIds": ["pt", "fr"], "summary": "Discussion du format du journal : revue feuilletable, Genially, Canva, vidéos, jeux et arbitrage entre formats.", "pedagogicalInterest": "Bon pour la conception collaborative, moins fort pour une activité d’intercompréhension.", "passages": [{ "startMs": 0, "endMs": 111000, "purpose": "Circulation d’exemples et comparaison d’outils." }, { "startMs": 192000, "endMs": 312000, "purpose": "Arbitrage pédagogique et technique." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:3" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36972" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36973", "corpusOrder": 4, "functionalName": "GT01_RFC7_reu1_26m20-29m40",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "26m20-29m40" }, "externalIdentity": { "provider": "uga-video", "videoId": "36973" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 198000, "languageIds": ["pt", "es", "fr"], "summary": "Structuration des rubriques du journal avec articles d’opinion, entretiens, photographies et jeux.", "pedagogicalInterest": "Bon : proposition espagnole, vérification française et reformulation portugaise.", "passages": [{ "startMs": 84000, "endMs": 159000, "purpose": "Proposition et reformulations plurilingues." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:4" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36973" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": { "assetId": "media-proto05-remote-ref-0b565a4a0ba865a02cd10c87" }
+    },
+    {
+      "entryId": "repli4c-video-36975", "corpusOrder": 5, "functionalName": "GT01_RFC7_reu1_36m35-39m30",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "36m35-39m30" }, "externalIdentity": { "provider": "uga-video", "videoId": "36975" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36975/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 183000, "languageIds": ["pt", "es", "fr"], "summary": "Négociation du caractère interactif des mots croisés et du journal, distinction numérique/papier et solution de repli.", "pedagogicalInterest": "Bon : alternance rapide et décision reformulée.", "passages": [{ "startMs": 0, "endMs": 99000, "purpose": "Alternance rapide PT–ES–FR." }, { "startMs": 120000, "endMs": 183000, "purpose": "Décision et reformulation." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:5" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36975" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36976", "corpusOrder": 6, "functionalName": "GT01_RFC7_reu1_41m30-44m",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "41m30-44m" }, "externalIdentity": { "provider": "uga-video", "videoId": "36976" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 163000, "languageIds": ["fr", "it", "pt"], "summary": "Présentation d’un ancien jeu Genially et discussion de l’expérience des participantes avec l’outil.", "pedagogicalInterest": "Intérêt moyen pour documenter l’accompagnement technique et la réappropriation d’une ressource.", "passages": [] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:6" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36976" } }, "notes": ["Aucune borne remarquable exacte fournie par l’analyse."], "canonicalMatch": { "assetId": "media-proto05-remote-ref-c3bd95a1556c0bb08ba0e0fb" }
+    },
+    {
+      "entryId": "repli4c-video-36977", "corpusOrder": 7, "functionalName": "GT01_RFC7_reu1_44m15-48m12",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "44m15-48m12" }, "externalIdentity": { "provider": "uga-video", "videoId": "36977" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36977/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 252000, "languageIds": ["fr", "pt", "es"], "summary": "Conception d’un jeu de mots croisés plurilingue et discussion des langues, indices et niveaux de difficulté.", "pedagogicalInterest": "Très bon candidat de réserve sur les stratégies d’intercompréhension.", "passages": [{ "startMs": 48000, "endMs": 219000, "purpose": "Mots apparentés, aides et langues des définitions/réponses." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:7" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36977" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36978", "corpusOrder": 8, "functionalName": "GT01_RFC7_reu1_48m10-52m43",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "48m10-52m43" }, "externalIdentity": { "provider": "uga-video", "videoId": "36978" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36978/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 283000, "languageIds": ["fr", "pt", "es"], "summary": "Récapitulatif puis démonstration d’un modèle de mots croisés espagnol–italien, aides et inventaire des langues.", "pedagogicalInterest": "Bon pour expliquer des indices plurilingues et le répertoire du groupe.", "passages": [{ "startMs": 132000, "endMs": 219000, "purpose": "Explication du dispositif d’indices plurilingues." }, { "startMs": 204000, "endMs": 279000, "purpose": "Répertoire linguistique du groupe." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:8" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36978" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36979", "corpusOrder": 9, "functionalName": "GT01_RFC7_reu1_59m20-1h01m40",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "59m20-1h01m40" }, "externalIdentity": { "provider": "uga-video", "videoId": "36979" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36979/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 149000, "languageIds": ["pt", "it", "fr"], "summary": "Élaboration d’un glossaire climatique plurilingue autour d’environnement / meio ambiente et des mots transparents.", "pedagogicalInterest": "Excellent candidat de réserve, court et centré sur les stratégies lexicales.", "passages": [{ "startMs": 12000, "endMs": 147000, "purpose": "Transparence et distance lexicales entre langues." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:9" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36979" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36980", "corpusOrder": 10, "functionalName": "GT01_RFC7_reu1_1h05m15-1h08m17",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "1h05m15-1h08m17" }, "externalIdentity": { "provider": "uga-video", "videoId": "36980" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36980/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 190000, "languageIds": ["pt", "it", "fr"], "summary": "Photographies des effets locaux du changement climatique près du lac de Côme et clarification de leur nature.", "pedagogicalInterest": "Très bon : témoignage italien, malentendu et clarification plurilingue.", "passages": [{ "startMs": 0, "endMs": 51000, "purpose": "Témoignage italien." }, { "startMs": 60000, "endMs": 159000, "purpose": "Malentendu et clarification plurilingue." }, { "startMs": 108000, "endMs": 135000, "purpose": "Droit à l’image." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:10" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36980" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36982", "corpusOrder": 11, "functionalName": "GT01_RFC7_reu1_1h17m23-1h24m03",
+      "grouping": { "group": "GT01", "framework": "RFC7", "meeting": 1, "sourceRangeLabel": "1h17m23-1h24m03" }, "externalIdentity": { "provider": "uga-video", "videoId": "36982" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36982/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 415000, "languageIds": ["fr", "it", "pt"], "summary": "Récapitulatif de la production finale et répartition des tâches autour du jeu, des témoignages, articles et photographies.", "pedagogicalInterest": "Très utile pour résumer le projet.", "passages": [{ "startMs": 216000, "endMs": 267000, "purpose": "Photos avant/après proposées en italien." }, { "startMs": 348000, "endMs": 399000, "purpose": "Rubrique finale à visée d’alerte." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:11" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36982" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36988", "corpusOrder": 12, "functionalName": "GT08-RFC7_reu3_13m16-15m32",
+      "grouping": { "group": "GT08", "framework": "RFC7", "meeting": 3, "sourceRangeLabel": "13m16-15m32" }, "externalIdentity": { "provider": "uga-video", "videoId": "36988" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36988/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 142000, "languageIds": ["es", "it", "pt", "fr"], "summary": "Comparaison de conséquences locales du changement climatique en Espagne, Italie et France.", "pedagogicalInterest": "Excellent : séquence quadrilingue compacte, cohérente et thématique ; activité B recommandée.", "passages": [{ "startMs": 24000, "endMs": 135000, "purpose": "Comparaison plurilingue des conséquences locales du changement climatique." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:12" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36988" } }, "notes": ["Vérifier l’italien, le portugais, les transitions et les bornes."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36984", "corpusOrder": 13, "functionalName": "GT08-RFC7_reu3_17m42-23m30",
+      "grouping": { "group": "GT08", "framework": "RFC7", "meeting": 3, "sourceRangeLabel": "17m42-23m30" }, "externalIdentity": { "provider": "uga-video", "videoId": "36984" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36984/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 364000, "languageIds": ["pt", "it", "es", "fr"], "summary": "Discussion du nom, du format, du nombre d’épisodes et des binômes interuniversitaires d’un podcast.", "pedagogicalInterest": "Bon pour la collaboration télématique.", "passages": [{ "startMs": 156000, "endMs": 279000, "purpose": "Proposition italienne et structuration plurilingue du projet." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:13" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36984" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36983", "corpusOrder": 14, "functionalName": "GT08-RFC7_reu3_33m21-35m52",
+      "grouping": { "group": "GT08", "framework": "RFC7", "meeting": 3, "sourceRangeLabel": "33m21-35m52" }, "externalIdentity": { "provider": "uga-video", "videoId": "36983" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36983/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 159000, "languageIds": ["pt", "it", "es", "fr"], "summary": "Validation des binômes et négociation de la durée des podcasts, fixée à cinq à dix minutes.", "pedagogicalInterest": "Intérêt moyen : alternance quadrilingue mais contenu organisationnel.", "passages": [] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:14" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36983" } }, "notes": ["Aucune borne remarquable exacte fournie par l’analyse."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36985", "corpusOrder": 15, "functionalName": "GT08-RFC7_reu3_43m07-45m55",
+      "grouping": { "group": "GT08", "framework": "RFC7", "meeting": 3, "sourceRangeLabel": "43m07-45m55" }, "externalIdentity": { "provider": "uga-video", "videoId": "36985" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36985/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 179000, "languageIds": ["pt", "it", "fr"], "summary": "Répartition des tâches pour le canal YouTube, son image et sa bannière.", "pedagogicalInterest": "Faible à moyen ; contenu surtout organisationnel.", "passages": [] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:15" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36985" } }, "notes": ["La détection Chinese à 02:12 est vraisemblablement fausse."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36987", "corpusOrder": 16, "functionalName": "GT08-RFC7_reu3_57m16-59m",
+      "grouping": { "group": "GT08", "framework": "RFC7", "meeting": 3, "sourceRangeLabel": "57m16-59m" }, "externalIdentity": { "provider": "uga-video", "videoId": "36987" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36987/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 110000, "languageIds": ["pt"], "summary": "Explication du rôle du roteiro : script, vérification de compréhensibilité, enregistrement et publication.", "pedagogicalInterest": "Bon pour documenter l’interproduction, mais peu plurilingue dans cet extrait.", "passages": [] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:16" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36987" } }, "notes": ["Aucune borne remarquable exacte fournie par l’analyse."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36996", "corpusOrder": 17, "functionalName": "GT05-RFC8_reu2_11nov25_08m50-14m30",
+      "grouping": { "group": "GT05", "framework": "RFC8", "meeting": 2, "sourceRangeLabel": "11nov25_08m50-14m30" }, "externalIdentity": { "provider": "uga-video", "videoId": "36996" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36996/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 347000, "languageIds": ["fr", "pt", "it"], "summary": "Recherche d’un titre plurilingue et discussion des langues du plan de travail.", "pedagogicalInterest": "Intérêt moyen : décision différée et gestion plurilingue du document collaboratif.", "passages": [] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:17" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36996" } }, "notes": ["Aucune borne remarquable exacte fournie par l’analyse."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36997", "corpusOrder": 18, "functionalName": "GT05-RFC8_reu2_11nov25_18m40-23m40",
+      "grouping": { "group": "GT05", "framework": "RFC8", "meeting": 2, "sourceRangeLabel": "11nov25_18m40-23m40" }, "externalIdentity": { "provider": "uga-video", "videoId": "36997" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36997/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 309000, "languageIds": ["fr", "pt", "it"], "summary": "Définition du public et des lieux de diffusion d’un portfolio climatique en langues romanes.", "pedagogicalInterest": "Bon pour le mémoire et la circulation des ressources.", "passages": [{ "startMs": 36000, "endMs": 159000, "purpose": "Justification du besoin de ressources." }, { "startMs": 192000, "endMs": 279000, "purpose": "Propositions de diffusion." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:18" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36997" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36998", "corpusOrder": 19, "functionalName": "GT05-RFC8_reu2_11nov25_27m25-31m37",
+      "grouping": { "group": "GT05", "framework": "RFC8", "meeting": 2, "sourceRangeLabel": "11nov25_27m25-31m37" }, "externalIdentity": { "provider": "uga-video", "videoId": "36998" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36998/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 250000, "languageIds": ["pt", "it", "fr"], "summary": "Lecture du plan et clarification de compte rendu, rapport et ata, puis répartition de la rédaction.", "pedagogicalInterest": "Très bon candidat de réserve sur la demande de sens et l’équivalence fonctionnelle.", "passages": [{ "startMs": 108000, "endMs": 231000, "purpose": "Définition, équivalence portugaise et attribution d’une responsabilité." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:19" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36998" } }, "notes": ["La détection Chinese est un acquiescement fantôme."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-36995", "corpusOrder": 20, "functionalName": "GT05-RFC8_reu2_11nov25_35m30-40m54",
+      "grouping": { "group": "GT05", "framework": "RFC8", "meeting": 2, "sourceRangeLabel": "11nov25_35m30-40m54" }, "externalIdentity": { "provider": "uga-video", "videoId": "36995" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36995/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 361000, "languageIds": ["pt", "fr", "it"], "summary": "Sélection des catégories d’un portfolio climatique et arbitrage sur les conférences.", "pedagogicalInterest": "Excellent candidat de réserve sur le sens de palestras et la solution conférence.", "passages": [{ "startMs": 216000, "endMs": 291000, "purpose": "Demande du sens de palestras et périphrase." }, { "startMs": 312000, "endMs": 348000, "purpose": "Comparaison conférences/entretiens." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:20" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:36995" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-37000", "corpusOrder": 21, "functionalName": "GT05-RFC8_reu2_11nov25_41m02-47m27",
+      "grouping": { "group": "GT05", "framework": "RFC8", "meeting": 2, "sourceRangeLabel": "11nov25_41m02-47m27" }, "externalIdentity": { "provider": "uga-video", "videoId": "37000" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37000/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 394000, "languageIds": ["pt", "fr"], "summary": "Constitution de binômes plurilingues puis ajustement selon les préférences et disponibilités.", "pedagogicalInterest": "Intérêt moyen pour l’organisation télécollaborative.", "passages": [] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:21" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:37000" } }, "notes": ["Transcription parfois confuse sur les noms."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-37001", "corpusOrder": 22, "functionalName": "GT05-RFC8_reu2_11nov25_47m30-51m30",
+      "grouping": { "group": "GT05", "framework": "RFC8", "meeting": 2, "sourceRangeLabel": "11nov25_47m30-51m30" }, "externalIdentity": { "provider": "uga-video", "videoId": "37001" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37001/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 248000, "languageIds": ["pt", "fr", "it"], "summary": "Répartition des catégories entre les binômes et reformulation italienne d’une demande de répétition.", "pedagogicalInterest": "Bon pour observer la gestion plurilingue des choix.", "passages": [{ "startMs": 120000, "endMs": 171000, "purpose": "Incompréhension, répétition italienne et réponse portugaise." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:22" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:37001" } }, "notes": ["Analyse automatique à vérifier."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-37003", "corpusOrder": 23, "functionalName": "GT11-RFC8_reu1_28oct2025_0m-5m47",
+      "grouping": { "group": "GT11", "framework": "RFC8", "meeting": 1, "sourceRangeLabel": "28oct2025_0m-5m47" }, "externalIdentity": { "provider": "uga-video", "videoId": "37003" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37003/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 421000, "languageIds": ["fr", "es", "it", "pt"], "summary": "Mise en route et cartographie collective des répertoires de compréhension du groupe.", "pedagogicalInterest": "Excellent pour contextualiser le dispositif et l’effort pour se faire comprendre.", "passages": [{ "startMs": 180000, "endMs": 408000, "purpose": "Enquête orale sur les langues comprises et consigne d’adaptation." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:23" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:37003" } }, "notes": ["La durée excède la plage textuelle du nom ; elle reste provisoire."], "canonicalMatch": null
+    },
+    {
+      "entryId": "repli4c-video-37004", "corpusOrder": 24, "functionalName": "GT11-RFC8_reu1_28oct2025_05m47-22m24",
+      "grouping": { "group": "GT11", "framework": "RFC8", "meeting": 1, "sourceRangeLabel": "28oct2025_05m47-22m24" }, "externalIdentity": { "provider": "uga-video", "videoId": "37004" },
+      "source": { "kind": "hls", "url": "https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8", "mimeType": "application/vnd.apple.mpegurl" },
+      "analysis": { "durationMs": 939000, "languageIds": ["fr", "es", "it", "pt"], "summary": "Tour de table plurilingue avec vérifications de compréhension, explications lexicales et comparaisons universitaires.", "pedagogicalInterest": "Excellent : activité A recommandée sur ler/lire, geste, explication et réparation.", "passages": [{ "startMs": 168000, "endMs": 219000, "purpose": "Carrera / carrière / cursus / filière." }, { "startMs": 456000, "endMs": 627000, "purpose": "Ler/lire, geste, explication et réparation." }, { "startMs": 624000, "endMs": 747000, "purpose": "Présentation italienne, tedesco et nuotare." }, { "startMs": 816000, "endMs": 927000, "purpose": "Compréhension du portugais et comparaison des cursus." }] },
+      "evidence": { "technical": { "origin": "source-technical", "validation": "machine-observed", "sourceRef": "Liens_24videos.txt:24" }, "analysis": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:37004" } }, "notes": ["Préserver l’activité existante proto05-augmented-video-01.", "Vérifier voix, geste, bornes et langues."], "canonicalMatch": { "assetId": "media-proto05-video-proto05-uga-37004" }
+    }
+  ],
+  "activityProposals": [
+    {
+      "proposalId": "repli4c-activity-37004-ler-lire", "entryId": "repli4c-video-37004", "title": "Ler/lire : faire comprendre et réparer",
+      "range": { "startMs": 456000, "endMs": 627000 }, "summary": "Observer une explication lexicale, un geste et une réparation autour de ler/lire.",
+      "verificationRequirements": ["Vérifier les voix.", "Vérifier que le geste est visible.", "Vérifier les bornes exactes.", "Vérifier la langue de chaque intervention."],
+      "evidence": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:activité-A" }
+    },
+    {
+      "proposalId": "repli4c-activity-36988-climat", "entryId": "repli4c-video-36988", "title": "Un même changement climatique, plusieurs réalités locales",
+      "range": { "startMs": 24000, "endMs": 135000 }, "summary": "Comparer les conséquences locales du changement climatique dans plusieurs langues romanes.",
+      "verificationRequirements": ["Vérifier les bornes exactes.", "Vérifier l’italien et le portugais.", "Vérifier les transitions entre locuteurs.", "Vérifier la cohérence audiovisuelle."],
+      "evidence": { "origin": "automatic-synthesis", "validation": "to-verify", "sourceRef": "ANALYSE_CORPUS_QWEN3_24_VIDEOS.md:activité-B" }
+    }
+  ]
+}
