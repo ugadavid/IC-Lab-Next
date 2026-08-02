@@ -1,5 +1,20 @@
-.precise-time-navigation{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;margin-top:.65rem}
-.precise-time-navigation output{min-width:9.5rem;font-variant-numeric:tabular-nums;font-weight:700}
-.precise-time-navigation button{min-width:3.8rem;padding:.45rem .6rem;white-space:nowrap}
-.precise-time-navigation button:focus-visible{outline:3px solid #0e749066;outline-offset:2px}
-@media(max-width:480px){.precise-time-navigation output{flex-basis:100%}.precise-time-navigation button{flex:1 1 calc(25% - .4rem);min-width:4.25rem}}
+.video-transport{display:flex;align-items:stretch;justify-content:center;width:100%;margin:.65rem auto 0;color:#29445f;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+.video-transport__controls{display:grid;grid-template-columns:repeat(3,2.9rem) 3.45rem repeat(3,2.9rem);align-items:center;overflow:hidden;border:1px solid #c8d6e2;border-radius:999px 0 0 999px;background:#f1f6fa;box-shadow:0 2px 8px #17324d12;max-width:100%}
+.video-transport .video-transport__button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.03rem;min-width:0;height:2.75rem;margin:0;padding:.22rem .08rem;border:0;border-radius:0;background:transparent!important;color:#385a78!important;font:inherit;cursor:pointer;box-shadow:none!important;transition:background-color .12s ease,color .12s ease}
+.video-transport .video-transport__button+.video-transport__button::before{content:"";position:absolute;left:0;top:25%;height:50%;width:1px;background:#cbd8e3}
+.video-transport .video-transport__button:hover:not(:disabled){background:#e4edf4!important;color:#173f63!important}
+.video-transport .video-transport__button:active:not(:disabled){background:#d5e3ed!important;color:#102f4b!important}
+.video-transport__button:focus-visible{position:relative;z-index:3;outline:3px solid #087f9c;outline-offset:-3px;border-radius:.35rem}
+.video-transport__button:disabled{cursor:not-allowed;opacity:.48}
+.video-transport .video-transport__toggle{z-index:2;width:2.45rem;height:2.45rem;justify-self:center;margin:0;background:#315f86!important;color:#fff!important;border-radius:50%;box-shadow:0 1px 4px #17324d24!important}
+.video-transport .video-transport__toggle::before,.video-transport .video-transport__toggle+.video-transport__button::before{display:none}
+.video-transport .video-transport__toggle:hover:not(:disabled){background:#244f75!important;color:#fff!important}
+.video-transport .video-transport__toggle:active:not(:disabled){background:#193f61!important}
+.video-transport__symbol{display:flex;width:1.45rem;height:1rem;align-items:center;justify-content:center;line-height:1}
+.video-transport__icon{display:block;width:1.45rem;height:1.1rem;fill:none;stroke:currentColor;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+.video-transport__icon--playback{width:1.35rem;height:1.35rem}
+.video-transport__hint{font-size:.57rem;font-weight:700;line-height:1;white-space:nowrap;color:inherit;opacity:.88}
+.video-transport__toggle .video-transport__hint{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.video-transport__time{display:flex;align-items:center;margin:0;padding:0 .72rem;border:1px solid #c8d6e2;border-left:0;border-radius:0 999px 999px 0;background:#e8f0f6;box-shadow:0 2px 8px #17324d12;font-variant-numeric:tabular-nums;font-feature-settings:"tnum" 1;font-size:.75rem;font-weight:700;letter-spacing:.015em;color:#3b5268;white-space:nowrap}
+@media(max-width:540px){.video-transport{flex-direction:column;align-items:center}.video-transport__controls{grid-template-columns:repeat(3,minmax(2.5rem,1fr)) minmax(3rem,1.15fr) repeat(3,minmax(2.5rem,1fr));width:100%;border-radius:999px}.video-transport__time{min-height:1.75rem;margin-top:-1px;padding:.08rem .75rem;border-left:1px solid #c8d6e2;border-radius:0 0 .8rem .8rem}.video-transport__button{height:2.7rem}}
+@media(max-width:390px){.video-transport__controls{grid-template-columns:repeat(3,minmax(2.35rem,1fr)) minmax(2.8rem,1.1fr) repeat(3,minmax(2.35rem,1fr))}.video-transport .video-transport__button{height:2.65rem;padding:.18rem .03rem}.video-transport .video-transport__toggle{width:2.3rem;height:2.3rem}.video-transport__hint{font-size:.53rem}.video-transport__icon{width:1.3rem}}

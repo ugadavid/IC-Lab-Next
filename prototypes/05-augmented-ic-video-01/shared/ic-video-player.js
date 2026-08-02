@@ -64,7 +64,7 @@
     function attachNative(source, useHls = true) {
       nativeVideo = document.createElement("video");
       nativeVideo.controls = true; nativeVideo.preload = "metadata"; nativeVideo.className = "video";
-      ["loadstart", "loadedmetadata", "durationchange", "canplay", "timeupdate", "playing", "pause", "waiting", "stalled"].forEach(type => nativeVideo.addEventListener(type, () => facade.emit(type)));
+      ["loadstart", "loadedmetadata", "durationchange", "canplay", "timeupdate", "play", "playing", "pause", "ended", "waiting", "stalled"].forEach(type => nativeVideo.addEventListener(type, () => facade.emit(type)));
       nativeVideo.addEventListener("error", () => {
         const error = new Error("La ressource vidéo est indisponible ou illisible.");
         facade.lastError = error;
