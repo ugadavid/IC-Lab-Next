@@ -1,0 +1,71 @@
+1.  GT01_RFC7_reu1_09m05-12m09
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36970/livestream.m3u8
+
+2.  GT01_RFC7_reu1_14m34-18m
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36971/livestream.m3u8
+
+3.  GT01_RFC7_reu1_21m10-26m15
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36972/livestream.m3u8
+
+4.  GT01_RFC7_reu1_26m20-29m40
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36973/livestream.m3u8
+
+5.  GT01_RFC7_reu1_36m35-39m30
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36975/livestream.m3u8
+
+6.  GT01_RFC7_reu1_41m30-44m
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36976/livestream.m3u8
+
+7.  GT01_RFC7_reu1_44m15-48m12
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36977/livestream.m3u8
+
+8   GT01_RFC7_reu1_48m10-52m43
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36978/livestream.m3u8
+
+9.  GT01_RFC7_reu1_59m20-1h01m40
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36979/livestream.m3u8
+
+10. GT01_RFC7_reu1_1h05m15-1h08m17
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36980/livestream.m3u8
+
+11. GT01_RFC7_reu1_1h17m23-1h24m03
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36982/livestream.m3u8
+
+12. GT08-RFC7_reu3_13m16-15m32
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36988/livestream.m3u8
+
+13. GT08-RFC7_reu3_17m42-23m30
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36984/livestream.m3u8
+
+14. GT08-RFC7_reu3_33m21-35m52
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36983/livestream.m3u8
+
+15. GT08-RFC7_reu3_43m07-45m55
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36985/livestream.m3u8
+
+16. GT08-RFC7_reu3_57m16-59m
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36987/livestream.m3u8
+
+17. GT05-RFC8_reu2_11nov25_08m50-14m30
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36996/livestream.m3u8
+
+18. GT05-RFC8_reu2_11nov25_18m40-23m40
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36997/livestream.m3u8
+
+19. GT05-RFC8_reu2_11nov25_27m25-31m37
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36998/livestream.m3u8
+
+20. GT05-RFC8_reu2_11nov25_35m30-40m54
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/36995/livestream.m3u8
+
+21. GT05-RFC8_reu2_11nov25_41m02-47m27
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37000/livestream.m3u8
+
+22. GT05-RFC8_reu2_11nov25_47m30-51m30
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37001/livestream.m3u8
+
+23. GT11-RFC8_reu1_28oct2025_0m-5m47
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37003/livestream.m3u8
+
+24. GT11-RFC8_reu1_28oct2025_05m47-22m24
+https://videos.univ-grenoble-alpes.fr/media/videos/7d74074b07ff1dfc9ed59cdade1a126fc17fed888ca9d26da6e5b2875e8b5120/37004/livestream.m3u8
