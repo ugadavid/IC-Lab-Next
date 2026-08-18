@@ -1,0 +1,39 @@
+{
+  "mission": 209,
+  "fixture_database": "ic_dico_m209_fixture_fb2161f",
+  "source_database": "ic_dico",
+  "source_head": "fb2161f5d20174f86b0003c1a8dc1208fb26414d",
+  "status": "passed",
+  "initial_check": {
+    "state": "initial",
+    "changed_rows": 36,
+    "conserved_rows": 87,
+    "lexical_entry_hash": "0de59878ff98c0b6b6d4a6e49ac34c2754198a82d2803a4269a34ef1463ed787"
+  },
+  "first_apply": {
+    "state": "applied",
+    "changed_rows": 36,
+    "conserved_rows": 87,
+    "lexical_entry_hash": "847ae38ba9ff8f7dd4ab688e80509c2a6017debf6857cb9f8f50ecc88793564e"
+  },
+  "second_apply": {
+    "state": "already_applied",
+    "changed_rows": 0,
+    "conserved_rows": 87,
+    "lexical_entry_hash": "847ae38ba9ff8f7dd4ab688e80509c2a6017debf6857cb9f8f50ecc88793564e"
+  },
+  "rollback": {
+    "state": "restored",
+    "changed_rows": 36,
+    "conserved_rows": 87,
+    "lexical_entry_hash": "0de59878ff98c0b6b6d4a6e49ac34c2754198a82d2803a4269a34ef1463ed787"
+  },
+  "partial_state_refusal": {
+    "simulated_change": "ID 331 ENVIRONMENT_BIODIVERSITY → nature",
+    "command_exit_code": 1,
+    "message": "État MariaDB partiel ou inconnu : aucune écriture autorisée.",
+    "unrelated_decision_checked": "ID 328 est resté ENVIRONMENT_FIRE"
+  },
+  "fixture_privilege_revoked": true,
+  "fixture_dropped": true
+}

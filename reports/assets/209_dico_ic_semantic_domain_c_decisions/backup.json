@@ -1,0 +1,2481 @@
+{
+  "mission": 209,
+  "backup_version": 1,
+  "source_head": "fb2161f5d20174f86b0003c1a8dc1208fb26414d",
+  "source_database": "ic_dico",
+  "source_hashes": {
+    "reports/assets/207_dico_ic_semantic_domain_audit/semantic_domain_normalization_map.json": "cdca09967e039b5be82e88c4165eef09e667fd661d33a289d2078240f0b45429",
+    "reports/assets/208_dico_ic_semantic_domain_ab_normalization/backup.json": "8f838c1c64246d75d3f8bacb6d71575dfd410e5312de40d699376b3adbf6a05c",
+    "reports/208_dico_ic_semantic_domain_ab_normalization_report.md": "ed7bc8ffec5d83d0b22901c03fb8df69981688c41d898484808d3a460aaf3579"
+  },
+  "counts": {
+    "language": 12,
+    "lexical_entry": 270,
+    "lexical_form": 1125,
+    "inflected_form": 41,
+    "connector_help": 12,
+    "form_relation": 70,
+    "pattern_rule": 1,
+    "ic_feature": 8
+  },
+  "table_hashes_initial": {
+    "language": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff",
+    "lexical_entry": "0de59878ff98c0b6b6d4a6e49ac34c2754198a82d2803a4269a34ef1463ed787",
+    "lexical_form": "8b3d2cd9098213395ce9cc78ac257424adc13f22a5775472c536a773529ea4f5",
+    "inflected_form": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184",
+    "connector_help": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846",
+    "form_relation": "4d3f55cfe964bcba184d07d63eb05e631cc186aaf26da42974a1c17ac2ceaa43",
+    "pattern_rule": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d",
+    "ic_feature": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a"
+  },
+  "c_ids": [
+    3,
+    11,
+    12,
+    15,
+    16,
+    20,
+    22,
+    23,
+    26,
+    27,
+    31,
+    33,
+    34,
+    35,
+    52,
+    55,
+    58,
+    60,
+    70,
+    72,
+    73,
+    75,
+    76,
+    79,
+    81,
+    82,
+    83,
+    85,
+    86,
+    88,
+    89,
+    91,
+    96,
+    103,
+    108,
+    116,
+    122,
+    126,
+    127,
+    130,
+    133,
+    134,
+    137,
+    138,
+    139,
+    141,
+    142,
+    145,
+    147,
+    149,
+    152,
+    159,
+    161,
+    164,
+    165,
+    166,
+    167,
+    169,
+    171,
+    175,
+    176,
+    178,
+    179,
+    181,
+    183,
+    184,
+    185,
+    186,
+    191,
+    192,
+    193,
+    194,
+    195,
+    196,
+    197,
+    202,
+    203,
+    204,
+    207,
+    210,
+    213,
+    214,
+    216,
+    218,
+    221,
+    222,
+    223,
+    229,
+    230,
+    231,
+    232,
+    233,
+    235,
+    237,
+    239,
+    247,
+    252,
+    253,
+    255,
+    256,
+    257,
+    258,
+    259,
+    267,
+    268,
+    270,
+    272,
+    273,
+    274,
+    275,
+    280,
+    285,
+    286,
+    288,
+    291,
+    310,
+    311,
+    325,
+    326,
+    327,
+    328,
+    329,
+    331
+  ],
+  "changed_ids": [
+    3,
+    15,
+    16,
+    20,
+    22,
+    23,
+    26,
+    27,
+    31,
+    33,
+    34,
+    35,
+    58,
+    126,
+    145,
+    152,
+    165,
+    179,
+    192,
+    195,
+    203,
+    221,
+    229,
+    232,
+    233,
+    253,
+    257,
+    258,
+    275,
+    285,
+    310,
+    311,
+    326,
+    328,
+    329,
+    331
+  ],
+  "conserved_ids": [
+    11,
+    12,
+    52,
+    55,
+    60,
+    70,
+    72,
+    73,
+    75,
+    76,
+    79,
+    81,
+    82,
+    83,
+    85,
+    86,
+    88,
+    89,
+    91,
+    96,
+    103,
+    108,
+    116,
+    122,
+    127,
+    130,
+    133,
+    134,
+    137,
+    138,
+    139,
+    141,
+    142,
+    147,
+    149,
+    159,
+    161,
+    164,
+    166,
+    167,
+    169,
+    171,
+    175,
+    176,
+    178,
+    181,
+    183,
+    184,
+    185,
+    186,
+    191,
+    193,
+    194,
+    196,
+    197,
+    202,
+    204,
+    207,
+    210,
+    213,
+    214,
+    216,
+    218,
+    222,
+    223,
+    230,
+    231,
+    235,
+    237,
+    239,
+    247,
+    252,
+    255,
+    256,
+    259,
+    267,
+    268,
+    270,
+    272,
+    273,
+    274,
+    280,
+    286,
+    288,
+    291,
+    325,
+    327
+  ],
+  "decisions": [
+    {
+      "id": 331,
+      "entry_key": "BIODIVERSITE",
+      "old_value": "ENVIRONMENT_BIODIVERSITY",
+      "new_value": "nature"
+    },
+    {
+      "id": 328,
+      "entry_key": "INCENDIE",
+      "old_value": "ENVIRONMENT_FIRE",
+      "new_value": "catastrophe"
+    },
+    {
+      "id": 329,
+      "entry_key": "ETRE",
+      "old_value": "VERB_TO_BE",
+      "new_value": "verbe auxiliaire"
+    },
+    {
+      "id": 285,
+      "entry_key": "AGRICOLE",
+      "old_value": "activité",
+      "new_value": "agriculture"
+    },
+    {
+      "id": 165,
+      "entry_key": "TRES",
+      "old_value": "adverbe",
+      "new_value": "quantité"
+    },
+    {
+      "id": 232,
+      "entry_key": "PROVOQUER",
+      "old_value": "agir",
+      "new_value": "action"
+    },
+    {
+      "id": 233,
+      "entry_key": "SUBIR",
+      "old_value": "agir",
+      "new_value": "action"
+    },
+    {
+      "id": 15,
+      "entry_key": "WIDE_BROAD",
+      "old_value": "description",
+      "new_value": "qualité"
+    },
+    {
+      "id": 16,
+      "entry_key": "LONG_LENGTHY",
+      "old_value": "description",
+      "new_value": "qualité"
+    },
+    {
+      "id": 26,
+      "entry_key": "REASONABLE_SENSIBLE",
+      "old_value": "description",
+      "new_value": "qualité"
+    },
+    {
+      "id": 27,
+      "entry_key": "SENSITIVE_EMOTIONAL",
+      "old_value": "description",
+      "new_value": "qualité"
+    },
+    {
+      "id": 326,
+      "entry_key": "NATUREL",
+      "old_value": "description",
+      "new_value": "qualité"
+    },
+    {
+      "id": 3,
+      "entry_key": "IMPORTANT_SIGNIFICANT",
+      "old_value": "general",
+      "new_value": "qualité"
+    },
+    {
+      "id": 20,
+      "entry_key": "PROBLEM_DIFFICULTY",
+      "old_value": "general",
+      "new_value": "situation"
+    },
+    {
+      "id": 22,
+      "entry_key": "GENERAL_COMMON",
+      "old_value": "general",
+      "new_value": "qualité"
+    },
+    {
+      "id": 23,
+      "entry_key": "DIFFERENT_NOT_SAME",
+      "old_value": "general",
+      "new_value": "qualité"
+    },
+    {
+      "id": 31,
+      "entry_key": "ORGANIZATION_ENTITY",
+      "old_value": "general",
+      "new_value": "organisation"
+    },
+    {
+      "id": 33,
+      "entry_key": "SCIENTIFIC_PROPERTY",
+      "old_value": "general",
+      "new_value": "science"
+    },
+    {
+      "id": 34,
+      "entry_key": "PROMOTE_ACTION",
+      "old_value": "general",
+      "new_value": "action"
+    },
+    {
+      "id": 35,
+      "entry_key": "UNDERSTAND_COMPREHEND",
+      "old_value": "general",
+      "new_value": "cognition"
+    },
+    {
+      "id": 311,
+      "entry_key": "PRONOM_DEFINI_MAS_SING",
+      "old_value": "grammaire/déterminant",
+      "new_value": "grammaire"
+    },
+    {
+      "id": 310,
+      "entry_key": "PRONOM_DEFINI_PLURIEL",
+      "old_value": "grammaire/pronom",
+      "new_value": "grammaire"
+    },
+    {
+      "id": 195,
+      "entry_key": "ELEVATION",
+      "old_value": "quantité",
+      "new_value": "mouvement"
+    },
+    {
+      "id": 145,
+      "entry_key": "SANS",
+      "old_value": "relation",
+      "new_value": "absence"
+    },
+    {
+      "id": 152,
+      "entry_key": "DONC",
+      "old_value": "relation",
+      "new_value": "relations logiques"
+    },
+    {
+      "id": 192,
+      "entry_key": "PAR_CONSEQUENT",
+      "old_value": "relation",
+      "new_value": "relations logiques"
+    },
+    {
+      "id": 253,
+      "entry_key": "CAUSE",
+      "old_value": "relation",
+      "new_value": "causalité"
+    },
+    {
+      "id": 275,
+      "entry_key": "CAUSE_NOM",
+      "old_value": "relation",
+      "new_value": "causalité"
+    },
+    {
+      "id": 58,
+      "entry_key": "QUICKLY",
+      "old_value": "temps",
+      "new_value": "manière"
+    },
+    {
+      "id": 179,
+      "entry_key": "PREMIEREMENT",
+      "old_value": "temps",
+      "new_value": "discours"
+    },
+    {
+      "id": 229,
+      "entry_key": "EVENEMENT",
+      "old_value": "temps",
+      "new_value": "événement"
+    },
+    {
+      "id": 221,
+      "entry_key": "CONSEQUEMMENT",
+      "old_value": "temps_manière",
+      "new_value": "relations logiques"
+    },
+    {
+      "id": 126,
+      "entry_key": "RESULTAT",
+      "old_value": "économie",
+      "new_value": "causalité"
+    },
+    {
+      "id": 257,
+      "entry_key": "PRODUCTION_AGRICOLE",
+      "old_value": "économie",
+      "new_value": "agriculture"
+    },
+    {
+      "id": 258,
+      "entry_key": "FOOD_SUPPLY",
+      "old_value": "économie",
+      "new_value": "alimentation"
+    },
+    {
+      "id": 203,
+      "entry_key": "PERSONNE",
+      "old_value": "être",
+      "new_value": "personne"
+    }
+  ],
+  "c_rows": [
+    {
+      "id": 3,
+      "entry_key": "IMPORTANT_SIGNIFICANT",
+      "gloss_fr": "important, significatif",
+      "gloss_en": "important, significant",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 11,
+      "entry_key": "ATTEND_BE_PRESENT",
+      "gloss_fr": "assister à, être présent à",
+      "gloss_en": "attend, be present at",
+      "semantic_domain": "action",
+      "notes": null
+    },
+    {
+      "id": 12,
+      "entry_key": "HELP_ASSIST",
+      "gloss_fr": "aider, porter assistance",
+      "gloss_en": "help, assist",
+      "semantic_domain": "action",
+      "notes": null
+    },
+    {
+      "id": 15,
+      "entry_key": "WIDE_BROAD",
+      "gloss_fr": "large, de grande largeur",
+      "gloss_en": "wide, broad",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 16,
+      "entry_key": "LONG_LENGTHY",
+      "gloss_fr": "long, de grande longueur",
+      "gloss_en": "long, lengthy",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 20,
+      "entry_key": "PROBLEM_DIFFICULTY",
+      "gloss_fr": "problème, difficulté ou question à résoudre",
+      "gloss_en": "problem, difficulty or question to solve",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 22,
+      "entry_key": "GENERAL_COMMON",
+      "gloss_fr": "général, commun ou global",
+      "gloss_en": "general, common or global",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 23,
+      "entry_key": "DIFFERENT_NOT_SAME",
+      "gloss_fr": "différent, pas identique",
+      "gloss_en": "different, not the same",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 26,
+      "entry_key": "REASONABLE_SENSIBLE",
+      "gloss_fr": "sensible, raisonnable",
+      "gloss_en": "sensible, reasonable",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 27,
+      "entry_key": "SENSITIVE_EMOTIONAL",
+      "gloss_fr": "sensible, qui ressent facilement / sensitive",
+      "gloss_en": "sensitive, easily affected",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 31,
+      "entry_key": "ORGANIZATION_ENTITY",
+      "gloss_fr": "organisation, structure organisée",
+      "gloss_en": "organization, organized structure",
+      "semantic_domain": "general",
+      "notes": "Support expérimental du mock API Seven Sieves V0."
+    },
+    {
+      "id": 33,
+      "entry_key": "SCIENTIFIC_PROPERTY",
+      "gloss_fr": "scientifique",
+      "gloss_en": "scientific",
+      "semantic_domain": "general",
+      "notes": "Support lexical minimal pour le tamis grapho-phonique du mock."
+    },
+    {
+      "id": 34,
+      "entry_key": "PROMOTE_ACTION",
+      "gloss_fr": "promouvoir, favoriser",
+      "gloss_en": "promote, foster",
+      "semantic_domain": "general",
+      "notes": "Support lexical minimal pour le signal morphosyntaxique du mock."
+    },
+    {
+      "id": 35,
+      "entry_key": "UNDERSTAND_COMPREHEND",
+      "gloss_fr": "comprendre",
+      "gloss_en": "understand, comprehend",
+      "semantic_domain": "general",
+      "notes": "Entrée pan-romane minimale pour le mock API Seven Sieves V0."
+    },
+    {
+      "id": 52,
+      "entry_key": "OBSERVE",
+      "gloss_fr": "Regarder attentivement",
+      "gloss_en": "To watch carefully",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 55,
+      "entry_key": "ACCESSIBLE",
+      "gloss_fr": "Facile d'accès",
+      "gloss_en": "Easy to access or understand",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 58,
+      "entry_key": "QUICKLY",
+      "gloss_fr": "D'une manière rapide",
+      "gloss_en": "In a fast manner",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 60,
+      "entry_key": "COMMON",
+      "gloss_fr": "Partagé par plusieurs",
+      "gloss_en": "Shared by several",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 70,
+      "entry_key": "IDENTIFY",
+      "gloss_fr": "Reconnaître et nommer",
+      "gloss_en": "To recognize and name",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 72,
+      "entry_key": "FAMILIAR",
+      "gloss_fr": "Bien connu, habituel",
+      "gloss_en": "Well known, usual",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 73,
+      "entry_key": "RECOGNIZE",
+      "gloss_fr": "Identifier par la mémoire ou l'examen",
+      "gloss_en": "To identify by memory or examination",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 75,
+      "entry_key": "USEFUL",
+      "gloss_fr": "Qui sert à quelque chose",
+      "gloss_en": "That serves a purpose",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 76,
+      "entry_key": "BUILD",
+      "gloss_fr": "Assembler ou former",
+      "gloss_en": "To assemble or form",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 79,
+      "entry_key": "PROGRESSIVE",
+      "gloss_fr": "Qui avance par étapes",
+      "gloss_en": "Advancing by stages",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 81,
+      "entry_key": "BASED",
+      "gloss_fr": "Fondé sur quelque chose",
+      "gloss_en": "Founded on something",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 82,
+      "entry_key": "OBSERVATION",
+      "gloss_fr": "Action d'observer",
+      "gloss_en": "Act of watching attentively",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 83,
+      "entry_key": "COMPARISON",
+      "gloss_fr": "Action de comparer",
+      "gloss_en": "Act of comparing",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 85,
+      "entry_key": "ALLOW",
+      "gloss_fr": "Permettre",
+      "gloss_en": "To permit",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 86,
+      "entry_key": "DEVELOP",
+      "gloss_fr": "Faire croître ou progresser",
+      "gloss_en": "To make grow or progress",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 88,
+      "entry_key": "LASTING",
+      "gloss_fr": "Qui dure longtemps",
+      "gloss_en": "That lasts a long time",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 89,
+      "entry_key": "BETTER",
+      "gloss_fr": "De meilleure qualité",
+      "gloss_en": "Of higher quality",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 91,
+      "entry_key": "UNKNOWN",
+      "gloss_fr": "Qui n'est pas connu",
+      "gloss_en": "That is not known",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 96,
+      "entry_key": "BEAUCOUP_DE",
+      "gloss_fr": "quantificateur exprimant une grande quantité",
+      "gloss_en": "quantifier expressing large amount or many",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 103,
+      "entry_key": "MAS_ADVERB_MORE",
+      "gloss_fr": "adverbe de degré signifiant 'plus'",
+      "gloss_en": "adverb indicating comparative degree 'more'",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 108,
+      "entry_key": "CUANDO_CONJUNCTION_WHEN",
+      "gloss_fr": "conjonction de temps signifiant 'quand'",
+      "gloss_en": "temporal conjunction meaning 'when'",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 116,
+      "entry_key": "CADA_DETERMINER_EACH_EVERY",
+      "gloss_fr": "déterminant indiquant une unité dans un ensemble",
+      "gloss_en": "determiner indicating each one in a set",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 122,
+      "entry_key": "PERMITIR_VERB_TO_ALLOW",
+      "gloss_fr": "donner la permission ou rendre possible",
+      "gloss_en": "to give permission or make possible",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 126,
+      "entry_key": "RESULTAT",
+      "gloss_fr": "résultat d'une action ou d'un événement",
+      "gloss_en": "result of an action or event",
+      "semantic_domain": "économie",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 127,
+      "entry_key": "MODESTE",
+      "gloss_fr": "qui a une faible importance ou intensité",
+      "gloss_en": "having low importance or intensity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 130,
+      "entry_key": "BEAUCOUP",
+      "gloss_fr": "en grande quantité ou intensité",
+      "gloss_en": "in great quantity or intensity",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 133,
+      "entry_key": "ALGUNO",
+      "gloss_fr": "quantificateur indéfini, désigne une ou plusieurs entités",
+      "gloss_en": "indefinite quantifier, denotes one or more entities",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 134,
+      "entry_key": "ABANDONNER",
+      "gloss_fr": "quitter ou renoncer à quelque chose",
+      "gloss_en": "to leave or give up something",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 137,
+      "entry_key": "NECESSAIRE",
+      "gloss_fr": "qui doit être fait ou exister",
+      "gloss_en": "that must be done or exist",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 138,
+      "entry_key": "ADAPTER",
+      "gloss_fr": "ajuster pour convenir à un nouvel usage ou condition",
+      "gloss_en": "to adjust to suit a new use or condition",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 139,
+      "entry_key": "CONTINUER",
+      "gloss_fr": "poursuivre une action ou un état",
+      "gloss_en": "to continue an action or state",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 141,
+      "entry_key": "TROUVER",
+      "gloss_fr": "découvrir ou localiser quelque chose ou quelqu’un",
+      "gloss_en": "to find or locate something or someone",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 142,
+      "entry_key": "FUIR",
+      "gloss_fr": "quitter un lieu, partir",
+      "gloss_en": "to leave, to go away",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 145,
+      "entry_key": "SANS",
+      "gloss_fr": "indiquant l'absence de quelque chose",
+      "gloss_en": "without",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 147,
+      "entry_key": "ALLER",
+      "gloss_fr": "se déplacer vers un lieu",
+      "gloss_en": "to go",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 149,
+      "entry_key": "QUELQUES",
+      "gloss_fr": "une petite quantité indéfinie",
+      "gloss_en": "some, a few",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 152,
+      "entry_key": "DONC",
+      "gloss_fr": "conclusion ou conséquence",
+      "gloss_en": "therefore, so",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 159,
+      "entry_key": "GLACIER",
+      "gloss_fr": "masse de glace en mouvement",
+      "gloss_en": "moving mass of ice",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 161,
+      "entry_key": "PLANETE_TERRE",
+      "gloss_fr": "planète habitée par l'humanité",
+      "gloss_en": "planet inhabited by humanity",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 164,
+      "entry_key": "CLIMATIQUE",
+      "gloss_fr": "relatif au climat",
+      "gloss_en": "relating to climate",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 165,
+      "entry_key": "TRES",
+      "gloss_fr": "adverbe d’intensité",
+      "gloss_en": "adverb of intensity",
+      "semantic_domain": "adverbe",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 166,
+      "entry_key": "GRAVE",
+      "gloss_fr": "d’importance ou de danger sérieux",
+      "gloss_en": "serious or important",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 167,
+      "entry_key": "PREOCCUPANT",
+      "gloss_fr": "causant une inquiétude",
+      "gloss_en": "causing concern",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 169,
+      "entry_key": "GLOBAL",
+      "gloss_fr": "qui concerne l’ensemble",
+      "gloss_en": "concerning the whole",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 171,
+      "entry_key": "CONSTANT",
+      "gloss_fr": "qui ne change pas",
+      "gloss_en": "unchanging",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 175,
+      "entry_key": "PRODUIRE",
+      "gloss_fr": "faire apparaître, engendrer",
+      "gloss_en": "to cause to appear, to generate",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 176,
+      "entry_key": "NATURE",
+      "gloss_fr": "monde naturel, environnement",
+      "gloss_en": "natural world, environment",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 178,
+      "entry_key": "ENTIER",
+      "gloss_fr": "tout complet, total",
+      "gloss_en": "entire, whole",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 179,
+      "entry_key": "PREMIEREMENT",
+      "gloss_fr": "adverbe indiquant le premier point",
+      "gloss_en": "adverb indicating the first point",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 181,
+      "entry_key": "OBSERVER",
+      "gloss_fr": "regarder pour étudier",
+      "gloss_en": "to watch in order to study",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 183,
+      "entry_key": "ACCELERER",
+      "gloss_fr": "augmenter la vitesse",
+      "gloss_en": "to increase speed",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 184,
+      "entry_key": "DESASTREUX",
+      "gloss_fr": "qui cause un désastre",
+      "gloss_en": "disastrous",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 185,
+      "entry_key": "POLAIRE",
+      "gloss_fr": "relatif aux pôles terrestres",
+      "gloss_en": "polar (related to the poles)",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 186,
+      "entry_key": "OCEAN",
+      "gloss_fr": "grande étendue d'eau salée",
+      "gloss_en": "ocean",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 191,
+      "entry_key": "CONTINU",
+      "gloss_fr": "qui ne s'interrompt pas",
+      "gloss_en": "continuous",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 192,
+      "entry_key": "PAR_CONSEQUENT",
+      "gloss_fr": "indique une conséquence",
+      "gloss_en": "therefore, consequently",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 193,
+      "entry_key": "NIVEAU",
+      "gloss_fr": "hauteur ou degré",
+      "gloss_en": "level",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 194,
+      "entry_key": "S_ELEVER",
+      "gloss_fr": "monter en hauteur ou en nombre",
+      "gloss_en": "to rise",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 195,
+      "entry_key": "ELEVATION",
+      "gloss_fr": "action de monter, hausse",
+      "gloss_en": "elevation, rise",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 196,
+      "entry_key": "MARITIME",
+      "gloss_fr": "relatif à la mer",
+      "gloss_en": "maritime, sea-related",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 197,
+      "entry_key": "MENACER",
+      "gloss_fr": "constituer un danger",
+      "gloss_en": "to threaten",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 202,
+      "entry_key": "MILLION",
+      "gloss_fr": "un nombre égal à mille milliers (1 000 000)",
+      "gloss_en": "a number equal to one thousand thousands (1,000,000)",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 203,
+      "entry_key": "PERSONNE",
+      "gloss_fr": "être humain",
+      "gloss_en": "human being",
+      "semantic_domain": "être",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 204,
+      "entry_key": "SOUFFRIR_VERB",
+      "gloss_fr": "ressentir une douleur ou une détresse",
+      "gloss_en": "to feel pain or distress",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 207,
+      "entry_key": "AUGMENTER_VERB",
+      "gloss_fr": "devenir plus grand ou plus nombreux",
+      "gloss_en": "to become larger or more numerous",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 210,
+      "entry_key": "PRODUIRE_VERB",
+      "gloss_fr": "faire apparaître, créer ou fabriquer",
+      "gloss_en": "to make, create or manufacture",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 213,
+      "entry_key": "OBSERVER_VERB",
+      "gloss_fr": "regarder attentivement pour noter",
+      "gloss_en": "to watch carefully to note",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 214,
+      "entry_key": "ACCELERE",
+      "gloss_fr": "qui s'accélère, devient plus rapide",
+      "gloss_en": "that accelerates, becomes faster",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 216,
+      "entry_key": "S_ELEVER_VERB",
+      "gloss_fr": "monter à une certaine hauteur ou niveau",
+      "gloss_en": "to rise to a certain height or level",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 218,
+      "entry_key": "MER",
+      "gloss_fr": "grande étendue d'eau salée qui couvre une grande partie de la Terre",
+      "gloss_en": "large body of salt water covering much of the Earth",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 221,
+      "entry_key": "CONSEQUEMMENT",
+      "gloss_fr": "en conséquence, par suite",
+      "gloss_en": "as a result, consequently",
+      "semantic_domain": "temps_manière",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 222,
+      "entry_key": "ELEVER",
+      "gloss_fr": "monter, augmenter",
+      "gloss_en": "to raise, to increase",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 223,
+      "entry_key": "RISQUER",
+      "gloss_fr": "être en danger de",
+      "gloss_en": "to be in danger of",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 229,
+      "entry_key": "EVENEMENT",
+      "gloss_fr": "fait marquant ou incidence survenant un moment donné",
+      "gloss_en": "notable fact or occurrence at a given time",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 230,
+      "entry_key": "METEOROLOGIQUE",
+      "gloss_fr": "relatif à l'étude du temps atmosphérique",
+      "gloss_en": "related to atmospheric weather study",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 231,
+      "entry_key": "EXTREME",
+      "gloss_fr": "au niveau le plus élevé ou intense possible",
+      "gloss_en": "at the highest or most intense level possible",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 232,
+      "entry_key": "PROVOQUER",
+      "gloss_fr": "causer ou déclencher",
+      "gloss_en": "to cause or trigger",
+      "semantic_domain": "agir",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 233,
+      "entry_key": "SUBIR",
+      "gloss_fr": "endurer, supporter un effet ou une action",
+      "gloss_en": "to endure or undergo an effect or action",
+      "semantic_domain": "agir",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 235,
+      "entry_key": "VIOLENT",
+      "gloss_fr": "Qualifie une intensité forte et souvent nuisible",
+      "gloss_en": "Describes a strong and often harmful intensity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 237,
+      "entry_key": "DEVASTATING",
+      "gloss_fr": "Caractérise quelque chose qui cause de grands dégâts",
+      "gloss_en": "Describes something that causes great damage",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 239,
+      "entry_key": "INTENSE",
+      "gloss_fr": "Qui se manifeste avec une forte intensité",
+      "gloss_en": "That manifests with strong intensity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 247,
+      "entry_key": "WHOLE",
+      "gloss_fr": "Tout ce qui constitue un ensemble complet",
+      "gloss_en": "Everything that makes up a complete set",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 252,
+      "entry_key": "CLIMATE",
+      "gloss_fr": "Ensemble des conditions météorologiques d'une région",
+      "gloss_en": "Set of weather conditions of a region",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 253,
+      "entry_key": "CAUSE",
+      "gloss_fr": "Être l'origine de quelque chose",
+      "gloss_en": "To be the origin of something",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 255,
+      "entry_key": "ARID",
+      "gloss_fr": "Climat très sec, sans pluie",
+      "gloss_en": "Climate very dry, without rain",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 256,
+      "entry_key": "RUIN",
+      "gloss_fr": "Détruire partiellement ou totalement une chose",
+      "gloss_en": "To destroy partially or totally something",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 257,
+      "entry_key": "PRODUCTION_AGRICOLE",
+      "gloss_fr": "Production liée à l'agriculture",
+      "gloss_en": "Production related to agriculture",
+      "semantic_domain": "économie",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 258,
+      "entry_key": "FOOD_SUPPLY",
+      "gloss_fr": "Ensemble des aliments disponibles pour une population",
+      "gloss_en": "Set of foods available for a population",
+      "semantic_domain": "économie",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 259,
+      "entry_key": "CONSEQUENT",
+      "gloss_fr": "Qui découle logiquement d'une cause",
+      "gloss_en": "Logically resulting from a cause",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 267,
+      "entry_key": "RISQUER_VERB",
+      "gloss_fr": "Être en danger de subir un mal",
+      "gloss_en": "To be in danger of suffering harm",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 268,
+      "entry_key": "TOTAL_ADJECTIVE",
+      "gloss_fr": "Qui couvre toute la quantité",
+      "gloss_en": "Covering the entire quantity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 270,
+      "entry_key": "SUBIR_VERB",
+      "gloss_fr": "Endurer quelque chose de négatif",
+      "gloss_en": "To endure something negative",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 272,
+      "entry_key": "EAU",
+      "gloss_fr": "Substance liquide essentielle à la vie",
+      "gloss_en": "Liquid substance essential for life",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 273,
+      "entry_key": "FAUNE",
+      "gloss_fr": "Ensemble des animaux d'une région",
+      "gloss_en": "Animal life of a region",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 274,
+      "entry_key": "FLORE",
+      "gloss_fr": "Ensemble des plantes d'une région",
+      "gloss_en": "Plant life of a region",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 275,
+      "entry_key": "CAUSE_NOM",
+      "gloss_fr": "Raison ou motif d'un événement",
+      "gloss_en": "Reason or motive of an event",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 280,
+      "entry_key": "HUMAIN",
+      "gloss_fr": "Relatif à l'être humain",
+      "gloss_en": "Relating to human beings",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 285,
+      "entry_key": "AGRICOLE",
+      "gloss_fr": "relatif à l'agriculture",
+      "gloss_en": "related to agriculture",
+      "semantic_domain": "activité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 286,
+      "entry_key": "PRODUCTION",
+      "gloss_fr": "action de produire ou résultat produit",
+      "gloss_en": "act of producing or result produced",
+      "semantic_domain": "activité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 288,
+      "entry_key": "GRAND",
+      "gloss_fr": "de grande taille ou importance",
+      "gloss_en": "large in size or importance",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 291,
+      "entry_key": "HABITAT_NATUREL",
+      "gloss_fr": "milieu naturel d'un organisme ou d'une espèce",
+      "gloss_en": "natural environment of an organism or species",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 310,
+      "entry_key": "PRONOM_DEFINI_PLURIEL",
+      "gloss_fr": "pronom défini pluriel, sujet",
+      "gloss_en": "definite plural subject pronoun",
+      "semantic_domain": "grammaire/pronom",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 311,
+      "entry_key": "PRONOM_DEFINI_MAS_SING",
+      "gloss_fr": "article défini masculin singulier",
+      "gloss_en": "definite article masculine singular",
+      "semantic_domain": "grammaire/déterminant",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 325,
+      "entry_key": "HABITAT",
+      "gloss_fr": "Lieu où vit un organisme vivant",
+      "gloss_en": "Place where a living organism lives",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 326,
+      "entry_key": "NATUREL",
+      "gloss_fr": "Qui appartient ou provient de la nature",
+      "gloss_en": "Belonging to or derived from nature",
+      "semantic_domain": "description",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 327,
+      "entry_key": "DEFORESTATION",
+      "gloss_fr": "Destruction des forêts",
+      "gloss_en": "Destruction of forests",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 328,
+      "entry_key": "INCENDIE",
+      "gloss_fr": "Feu de grande ampleur dans la nature ou en milieu bâti",
+      "gloss_en": "Large fire, often in nature or urban areas",
+      "semantic_domain": "ENVIRONMENT_FIRE",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 329,
+      "entry_key": "ETRE",
+      "gloss_fr": "Verbe servant à exprimer l'existence ou l'état",
+      "gloss_en": "Verb to express existence or state",
+      "semantic_domain": "VERB_TO_BE",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 331,
+      "entry_key": "BIODIVERSITE",
+      "gloss_fr": "Diversité des formes de vie dans un milieu",
+      "gloss_en": "Variety of life forms in an environment",
+      "semantic_domain": "ENVIRONMENT_BIODIVERSITY",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    }
+  ],
+  "changed_rows": [
+    {
+      "id": 3,
+      "entry_key": "IMPORTANT_SIGNIFICANT",
+      "gloss_fr": "important, significatif",
+      "gloss_en": "important, significant",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 15,
+      "entry_key": "WIDE_BROAD",
+      "gloss_fr": "large, de grande largeur",
+      "gloss_en": "wide, broad",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 16,
+      "entry_key": "LONG_LENGTHY",
+      "gloss_fr": "long, de grande longueur",
+      "gloss_en": "long, lengthy",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 20,
+      "entry_key": "PROBLEM_DIFFICULTY",
+      "gloss_fr": "problème, difficulté ou question à résoudre",
+      "gloss_en": "problem, difficulty or question to solve",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 22,
+      "entry_key": "GENERAL_COMMON",
+      "gloss_fr": "général, commun ou global",
+      "gloss_en": "general, common or global",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 23,
+      "entry_key": "DIFFERENT_NOT_SAME",
+      "gloss_fr": "différent, pas identique",
+      "gloss_en": "different, not the same",
+      "semantic_domain": "general",
+      "notes": null
+    },
+    {
+      "id": 26,
+      "entry_key": "REASONABLE_SENSIBLE",
+      "gloss_fr": "sensible, raisonnable",
+      "gloss_en": "sensible, reasonable",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 27,
+      "entry_key": "SENSITIVE_EMOTIONAL",
+      "gloss_fr": "sensible, qui ressent facilement / sensitive",
+      "gloss_en": "sensitive, easily affected",
+      "semantic_domain": "description",
+      "notes": null
+    },
+    {
+      "id": 31,
+      "entry_key": "ORGANIZATION_ENTITY",
+      "gloss_fr": "organisation, structure organisée",
+      "gloss_en": "organization, organized structure",
+      "semantic_domain": "general",
+      "notes": "Support expérimental du mock API Seven Sieves V0."
+    },
+    {
+      "id": 33,
+      "entry_key": "SCIENTIFIC_PROPERTY",
+      "gloss_fr": "scientifique",
+      "gloss_en": "scientific",
+      "semantic_domain": "general",
+      "notes": "Support lexical minimal pour le tamis grapho-phonique du mock."
+    },
+    {
+      "id": 34,
+      "entry_key": "PROMOTE_ACTION",
+      "gloss_fr": "promouvoir, favoriser",
+      "gloss_en": "promote, foster",
+      "semantic_domain": "general",
+      "notes": "Support lexical minimal pour le signal morphosyntaxique du mock."
+    },
+    {
+      "id": 35,
+      "entry_key": "UNDERSTAND_COMPREHEND",
+      "gloss_fr": "comprendre",
+      "gloss_en": "understand, comprehend",
+      "semantic_domain": "general",
+      "notes": "Entrée pan-romane minimale pour le mock API Seven Sieves V0."
+    },
+    {
+      "id": 58,
+      "entry_key": "QUICKLY",
+      "gloss_fr": "D'une manière rapide",
+      "gloss_en": "In a fast manner",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 126,
+      "entry_key": "RESULTAT",
+      "gloss_fr": "résultat d'une action ou d'un événement",
+      "gloss_en": "result of an action or event",
+      "semantic_domain": "économie",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 145,
+      "entry_key": "SANS",
+      "gloss_fr": "indiquant l'absence de quelque chose",
+      "gloss_en": "without",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 152,
+      "entry_key": "DONC",
+      "gloss_fr": "conclusion ou conséquence",
+      "gloss_en": "therefore, so",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 165,
+      "entry_key": "TRES",
+      "gloss_fr": "adverbe d’intensité",
+      "gloss_en": "adverb of intensity",
+      "semantic_domain": "adverbe",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 179,
+      "entry_key": "PREMIEREMENT",
+      "gloss_fr": "adverbe indiquant le premier point",
+      "gloss_en": "adverb indicating the first point",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 192,
+      "entry_key": "PAR_CONSEQUENT",
+      "gloss_fr": "indique une conséquence",
+      "gloss_en": "therefore, consequently",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 195,
+      "entry_key": "ELEVATION",
+      "gloss_fr": "action de monter, hausse",
+      "gloss_en": "elevation, rise",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 203,
+      "entry_key": "PERSONNE",
+      "gloss_fr": "être humain",
+      "gloss_en": "human being",
+      "semantic_domain": "être",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 221,
+      "entry_key": "CONSEQUEMMENT",
+      "gloss_fr": "en conséquence, par suite",
+      "gloss_en": "as a result, consequently",
+      "semantic_domain": "temps_manière",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 229,
+      "entry_key": "EVENEMENT",
+      "gloss_fr": "fait marquant ou incidence survenant un moment donné",
+      "gloss_en": "notable fact or occurrence at a given time",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 232,
+      "entry_key": "PROVOQUER",
+      "gloss_fr": "causer ou déclencher",
+      "gloss_en": "to cause or trigger",
+      "semantic_domain": "agir",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 233,
+      "entry_key": "SUBIR",
+      "gloss_fr": "endurer, supporter un effet ou une action",
+      "gloss_en": "to endure or undergo an effect or action",
+      "semantic_domain": "agir",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 253,
+      "entry_key": "CAUSE",
+      "gloss_fr": "Être l'origine de quelque chose",
+      "gloss_en": "To be the origin of something",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 257,
+      "entry_key": "PRODUCTION_AGRICOLE",
+      "gloss_fr": "Production liée à l'agriculture",
+      "gloss_en": "Production related to agriculture",
+      "semantic_domain": "économie",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 258,
+      "entry_key": "FOOD_SUPPLY",
+      "gloss_fr": "Ensemble des aliments disponibles pour une population",
+      "gloss_en": "Set of foods available for a population",
+      "semantic_domain": "économie",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 275,
+      "entry_key": "CAUSE_NOM",
+      "gloss_fr": "Raison ou motif d'un événement",
+      "gloss_en": "Reason or motive of an event",
+      "semantic_domain": "relation",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 285,
+      "entry_key": "AGRICOLE",
+      "gloss_fr": "relatif à l'agriculture",
+      "gloss_en": "related to agriculture",
+      "semantic_domain": "activité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 310,
+      "entry_key": "PRONOM_DEFINI_PLURIEL",
+      "gloss_fr": "pronom défini pluriel, sujet",
+      "gloss_en": "definite plural subject pronoun",
+      "semantic_domain": "grammaire/pronom",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 311,
+      "entry_key": "PRONOM_DEFINI_MAS_SING",
+      "gloss_fr": "article défini masculin singulier",
+      "gloss_en": "definite article masculine singular",
+      "semantic_domain": "grammaire/déterminant",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 326,
+      "entry_key": "NATUREL",
+      "gloss_fr": "Qui appartient ou provient de la nature",
+      "gloss_en": "Belonging to or derived from nature",
+      "semantic_domain": "description",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 328,
+      "entry_key": "INCENDIE",
+      "gloss_fr": "Feu de grande ampleur dans la nature ou en milieu bâti",
+      "gloss_en": "Large fire, often in nature or urban areas",
+      "semantic_domain": "ENVIRONMENT_FIRE",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 329,
+      "entry_key": "ETRE",
+      "gloss_fr": "Verbe servant à exprimer l'existence ou l'état",
+      "gloss_en": "Verb to express existence or state",
+      "semantic_domain": "VERB_TO_BE",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 331,
+      "entry_key": "BIODIVERSITE",
+      "gloss_fr": "Diversité des formes de vie dans un milieu",
+      "gloss_en": "Variety of life forms in an environment",
+      "semantic_domain": "ENVIRONMENT_BIODIVERSITY",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    }
+  ],
+  "conserved_rows": [
+    {
+      "id": 11,
+      "entry_key": "ATTEND_BE_PRESENT",
+      "gloss_fr": "assister à, être présent à",
+      "gloss_en": "attend, be present at",
+      "semantic_domain": "action",
+      "notes": null
+    },
+    {
+      "id": 12,
+      "entry_key": "HELP_ASSIST",
+      "gloss_fr": "aider, porter assistance",
+      "gloss_en": "help, assist",
+      "semantic_domain": "action",
+      "notes": null
+    },
+    {
+      "id": 52,
+      "entry_key": "OBSERVE",
+      "gloss_fr": "Regarder attentivement",
+      "gloss_en": "To watch carefully",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 55,
+      "entry_key": "ACCESSIBLE",
+      "gloss_fr": "Facile d'accès",
+      "gloss_en": "Easy to access or understand",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 60,
+      "entry_key": "COMMON",
+      "gloss_fr": "Partagé par plusieurs",
+      "gloss_en": "Shared by several",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 70,
+      "entry_key": "IDENTIFY",
+      "gloss_fr": "Reconnaître et nommer",
+      "gloss_en": "To recognize and name",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 72,
+      "entry_key": "FAMILIAR",
+      "gloss_fr": "Bien connu, habituel",
+      "gloss_en": "Well known, usual",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 73,
+      "entry_key": "RECOGNIZE",
+      "gloss_fr": "Identifier par la mémoire ou l'examen",
+      "gloss_en": "To identify by memory or examination",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 75,
+      "entry_key": "USEFUL",
+      "gloss_fr": "Qui sert à quelque chose",
+      "gloss_en": "That serves a purpose",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 76,
+      "entry_key": "BUILD",
+      "gloss_fr": "Assembler ou former",
+      "gloss_en": "To assemble or form",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 79,
+      "entry_key": "PROGRESSIVE",
+      "gloss_fr": "Qui avance par étapes",
+      "gloss_en": "Advancing by stages",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 81,
+      "entry_key": "BASED",
+      "gloss_fr": "Fondé sur quelque chose",
+      "gloss_en": "Founded on something",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 82,
+      "entry_key": "OBSERVATION",
+      "gloss_fr": "Action d'observer",
+      "gloss_en": "Act of watching attentively",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 83,
+      "entry_key": "COMPARISON",
+      "gloss_fr": "Action de comparer",
+      "gloss_en": "Act of comparing",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 85,
+      "entry_key": "ALLOW",
+      "gloss_fr": "Permettre",
+      "gloss_en": "To permit",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 86,
+      "entry_key": "DEVELOP",
+      "gloss_fr": "Faire croître ou progresser",
+      "gloss_en": "To make grow or progress",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 88,
+      "entry_key": "LASTING",
+      "gloss_fr": "Qui dure longtemps",
+      "gloss_en": "That lasts a long time",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 89,
+      "entry_key": "BETTER",
+      "gloss_fr": "De meilleure qualité",
+      "gloss_en": "Of higher quality",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 91,
+      "entry_key": "UNKNOWN",
+      "gloss_fr": "Qui n'est pas connu",
+      "gloss_en": "That is not known",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 96,
+      "entry_key": "BEAUCOUP_DE",
+      "gloss_fr": "quantificateur exprimant une grande quantité",
+      "gloss_en": "quantifier expressing large amount or many",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 103,
+      "entry_key": "MAS_ADVERB_MORE",
+      "gloss_fr": "adverbe de degré signifiant 'plus'",
+      "gloss_en": "adverb indicating comparative degree 'more'",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 108,
+      "entry_key": "CUANDO_CONJUNCTION_WHEN",
+      "gloss_fr": "conjonction de temps signifiant 'quand'",
+      "gloss_en": "temporal conjunction meaning 'when'",
+      "semantic_domain": "temps",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 116,
+      "entry_key": "CADA_DETERMINER_EACH_EVERY",
+      "gloss_fr": "déterminant indiquant une unité dans un ensemble",
+      "gloss_en": "determiner indicating each one in a set",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 122,
+      "entry_key": "PERMITIR_VERB_TO_ALLOW",
+      "gloss_fr": "donner la permission ou rendre possible",
+      "gloss_en": "to give permission or make possible",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 127,
+      "entry_key": "MODESTE",
+      "gloss_fr": "qui a une faible importance ou intensité",
+      "gloss_en": "having low importance or intensity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 130,
+      "entry_key": "BEAUCOUP",
+      "gloss_fr": "en grande quantité ou intensité",
+      "gloss_en": "in great quantity or intensity",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 133,
+      "entry_key": "ALGUNO",
+      "gloss_fr": "quantificateur indéfini, désigne une ou plusieurs entités",
+      "gloss_en": "indefinite quantifier, denotes one or more entities",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 134,
+      "entry_key": "ABANDONNER",
+      "gloss_fr": "quitter ou renoncer à quelque chose",
+      "gloss_en": "to leave or give up something",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 137,
+      "entry_key": "NECESSAIRE",
+      "gloss_fr": "qui doit être fait ou exister",
+      "gloss_en": "that must be done or exist",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 138,
+      "entry_key": "ADAPTER",
+      "gloss_fr": "ajuster pour convenir à un nouvel usage ou condition",
+      "gloss_en": "to adjust to suit a new use or condition",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 139,
+      "entry_key": "CONTINUER",
+      "gloss_fr": "poursuivre une action ou un état",
+      "gloss_en": "to continue an action or state",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 141,
+      "entry_key": "TROUVER",
+      "gloss_fr": "découvrir ou localiser quelque chose ou quelqu’un",
+      "gloss_en": "to find or locate something or someone",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 142,
+      "entry_key": "FUIR",
+      "gloss_fr": "quitter un lieu, partir",
+      "gloss_en": "to leave, to go away",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 147,
+      "entry_key": "ALLER",
+      "gloss_fr": "se déplacer vers un lieu",
+      "gloss_en": "to go",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 149,
+      "entry_key": "QUELQUES",
+      "gloss_fr": "une petite quantité indéfinie",
+      "gloss_en": "some, a few",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 159,
+      "entry_key": "GLACIER",
+      "gloss_fr": "masse de glace en mouvement",
+      "gloss_en": "moving mass of ice",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 161,
+      "entry_key": "PLANETE_TERRE",
+      "gloss_fr": "planète habitée par l'humanité",
+      "gloss_en": "planet inhabited by humanity",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 164,
+      "entry_key": "CLIMATIQUE",
+      "gloss_fr": "relatif au climat",
+      "gloss_en": "relating to climate",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 166,
+      "entry_key": "GRAVE",
+      "gloss_fr": "d’importance ou de danger sérieux",
+      "gloss_en": "serious or important",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 167,
+      "entry_key": "PREOCCUPANT",
+      "gloss_fr": "causant une inquiétude",
+      "gloss_en": "causing concern",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 169,
+      "entry_key": "GLOBAL",
+      "gloss_fr": "qui concerne l’ensemble",
+      "gloss_en": "concerning the whole",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 171,
+      "entry_key": "CONSTANT",
+      "gloss_fr": "qui ne change pas",
+      "gloss_en": "unchanging",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 175,
+      "entry_key": "PRODUIRE",
+      "gloss_fr": "faire apparaître, engendrer",
+      "gloss_en": "to cause to appear, to generate",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 176,
+      "entry_key": "NATURE",
+      "gloss_fr": "monde naturel, environnement",
+      "gloss_en": "natural world, environment",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 178,
+      "entry_key": "ENTIER",
+      "gloss_fr": "tout complet, total",
+      "gloss_en": "entire, whole",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 181,
+      "entry_key": "OBSERVER",
+      "gloss_fr": "regarder pour étudier",
+      "gloss_en": "to watch in order to study",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 183,
+      "entry_key": "ACCELERER",
+      "gloss_fr": "augmenter la vitesse",
+      "gloss_en": "to increase speed",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 184,
+      "entry_key": "DESASTREUX",
+      "gloss_fr": "qui cause un désastre",
+      "gloss_en": "disastrous",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 185,
+      "entry_key": "POLAIRE",
+      "gloss_fr": "relatif aux pôles terrestres",
+      "gloss_en": "polar (related to the poles)",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 186,
+      "entry_key": "OCEAN",
+      "gloss_fr": "grande étendue d'eau salée",
+      "gloss_en": "ocean",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 191,
+      "entry_key": "CONTINU",
+      "gloss_fr": "qui ne s'interrompt pas",
+      "gloss_en": "continuous",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 193,
+      "entry_key": "NIVEAU",
+      "gloss_fr": "hauteur ou degré",
+      "gloss_en": "level",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 194,
+      "entry_key": "S_ELEVER",
+      "gloss_fr": "monter en hauteur ou en nombre",
+      "gloss_en": "to rise",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 196,
+      "entry_key": "MARITIME",
+      "gloss_fr": "relatif à la mer",
+      "gloss_en": "maritime, sea-related",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 197,
+      "entry_key": "MENACER",
+      "gloss_fr": "constituer un danger",
+      "gloss_en": "to threaten",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 202,
+      "entry_key": "MILLION",
+      "gloss_fr": "un nombre égal à mille milliers (1 000 000)",
+      "gloss_en": "a number equal to one thousand thousands (1,000,000)",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 204,
+      "entry_key": "SOUFFRIR_VERB",
+      "gloss_fr": "ressentir une douleur ou une détresse",
+      "gloss_en": "to feel pain or distress",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 207,
+      "entry_key": "AUGMENTER_VERB",
+      "gloss_fr": "devenir plus grand ou plus nombreux",
+      "gloss_en": "to become larger or more numerous",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 210,
+      "entry_key": "PRODUIRE_VERB",
+      "gloss_fr": "faire apparaître, créer ou fabriquer",
+      "gloss_en": "to make, create or manufacture",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 213,
+      "entry_key": "OBSERVER_VERB",
+      "gloss_fr": "regarder attentivement pour noter",
+      "gloss_en": "to watch carefully to note",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 214,
+      "entry_key": "ACCELERE",
+      "gloss_fr": "qui s'accélère, devient plus rapide",
+      "gloss_en": "that accelerates, becomes faster",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 216,
+      "entry_key": "S_ELEVER_VERB",
+      "gloss_fr": "monter à une certaine hauteur ou niveau",
+      "gloss_en": "to rise to a certain height or level",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 218,
+      "entry_key": "MER",
+      "gloss_fr": "grande étendue d'eau salée qui couvre une grande partie de la Terre",
+      "gloss_en": "large body of salt water covering much of the Earth",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 222,
+      "entry_key": "ELEVER",
+      "gloss_fr": "monter, augmenter",
+      "gloss_en": "to raise, to increase",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 223,
+      "entry_key": "RISQUER",
+      "gloss_fr": "être en danger de",
+      "gloss_en": "to be in danger of",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 230,
+      "entry_key": "METEOROLOGIQUE",
+      "gloss_fr": "relatif à l'étude du temps atmosphérique",
+      "gloss_en": "related to atmospheric weather study",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 231,
+      "entry_key": "EXTREME",
+      "gloss_fr": "au niveau le plus élevé ou intense possible",
+      "gloss_en": "at the highest or most intense level possible",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 235,
+      "entry_key": "VIOLENT",
+      "gloss_fr": "Qualifie une intensité forte et souvent nuisible",
+      "gloss_en": "Describes a strong and often harmful intensity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 237,
+      "entry_key": "DEVASTATING",
+      "gloss_fr": "Caractérise quelque chose qui cause de grands dégâts",
+      "gloss_en": "Describes something that causes great damage",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 239,
+      "entry_key": "INTENSE",
+      "gloss_fr": "Qui se manifeste avec une forte intensité",
+      "gloss_en": "That manifests with strong intensity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 247,
+      "entry_key": "WHOLE",
+      "gloss_fr": "Tout ce qui constitue un ensemble complet",
+      "gloss_en": "Everything that makes up a complete set",
+      "semantic_domain": "quantité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 252,
+      "entry_key": "CLIMATE",
+      "gloss_fr": "Ensemble des conditions météorologiques d'une région",
+      "gloss_en": "Set of weather conditions of a region",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 255,
+      "entry_key": "ARID",
+      "gloss_fr": "Climat très sec, sans pluie",
+      "gloss_en": "Climate very dry, without rain",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 256,
+      "entry_key": "RUIN",
+      "gloss_fr": "Détruire partiellement ou totalement une chose",
+      "gloss_en": "To destroy partially or totally something",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 259,
+      "entry_key": "CONSEQUENT",
+      "gloss_fr": "Qui découle logiquement d'une cause",
+      "gloss_en": "Logically resulting from a cause",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 267,
+      "entry_key": "RISQUER_VERB",
+      "gloss_fr": "Être en danger de subir un mal",
+      "gloss_en": "To be in danger of suffering harm",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 268,
+      "entry_key": "TOTAL_ADJECTIVE",
+      "gloss_fr": "Qui couvre toute la quantité",
+      "gloss_en": "Covering the entire quantity",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 270,
+      "entry_key": "SUBIR_VERB",
+      "gloss_fr": "Endurer quelque chose de négatif",
+      "gloss_en": "To endure something negative",
+      "semantic_domain": "action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 272,
+      "entry_key": "EAU",
+      "gloss_fr": "Substance liquide essentielle à la vie",
+      "gloss_en": "Liquid substance essential for life",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 273,
+      "entry_key": "FAUNE",
+      "gloss_fr": "Ensemble des animaux d'une région",
+      "gloss_en": "Animal life of a region",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 274,
+      "entry_key": "FLORE",
+      "gloss_fr": "Ensemble des plantes d'une région",
+      "gloss_en": "Plant life of a region",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 280,
+      "entry_key": "HUMAIN",
+      "gloss_fr": "Relatif à l'être humain",
+      "gloss_en": "Relating to human beings",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 286,
+      "entry_key": "PRODUCTION",
+      "gloss_fr": "action de produire ou résultat produit",
+      "gloss_en": "act of producing or result produced",
+      "semantic_domain": "activité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 288,
+      "entry_key": "GRAND",
+      "gloss_fr": "de grande taille ou importance",
+      "gloss_en": "large in size or importance",
+      "semantic_domain": "qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 291,
+      "entry_key": "HABITAT_NATUREL",
+      "gloss_fr": "milieu naturel d'un organisme ou d'une espèce",
+      "gloss_en": "natural environment of an organism or species",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 325,
+      "entry_key": "HABITAT",
+      "gloss_fr": "Lieu où vit un organisme vivant",
+      "gloss_en": "Place where a living organism lives",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 327,
+      "entry_key": "DEFORESTATION",
+      "gloss_fr": "Destruction des forêts",
+      "gloss_en": "Destruction of forests",
+      "semantic_domain": "nature",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    }
+  ],
+  "changed_static_hash": "d44f4be3eaef1f5e0686dac5fff7d977b1a2cbb8fafdc265c3bd8f79bfc68d2b",
+  "conserved_rows_hash": "092d0dc7dc7f27e0159c50f57e169379c0f48c39b92c0942ae3570e1991851e6",
+  "outside_c_hash": "dee2e60442bf561ed296223fddbab5f2c6d0c0c6242ebb3da4794dae89a8c978",
+  "initial_lexical_entry_hash": "0de59878ff98c0b6b6d4a6e49ac34c2754198a82d2803a4269a34ef1463ed787",
+  "final_lexical_entry_hash": "847ae38ba9ff8f7dd4ab688e80509c2a6017debf6857cb9f8f50ecc88793564e",
+  "plan_fingerprint": "2068fb8cc10cb671d0052ac4442735edd6f1ef42c965e903b36f7cc3f9ef3784"
+}
