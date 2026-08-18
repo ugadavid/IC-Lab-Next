@@ -1,0 +1,2863 @@
+{
+  "mission": 204,
+  "proposal_only": true,
+  "execution_authorized": false,
+  "action_count": 69,
+  "deletion_count": 48,
+  "rename_count": 21,
+  "actions": [
+    {
+      "type": "delete_empty_duplicate",
+      "id": 97,
+      "old_key": "ESTUDIANTE_NOUN_STUDENT",
+      "new_key": null,
+      "survivor": {
+        "id": 51,
+        "entry_key": "STUDENT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 97 conserve la clé ESTUDIANTE_NOUN_STUDENT",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 51:STUDENT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 97 n'existe plus",
+        "l'entrée survivante 51:STUDENT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 100,
+      "old_key": "ACADEMICO_ADJECTIVE_ACADEMIC",
+      "new_key": "ACADEMIQUE",
+      "survivor": null,
+      "justification": "La forme française académique et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 100 conserve la clé ACADEMICO_ADJECTIVE_ACADEMIC",
+        "la clé cible ACADEMIQUE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 100 porte exactement la clé ACADEMIQUE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé ACADEMICO_ADJECTIVE_ACADEMIC est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 102,
+      "old_key": "RESULTAR_VERB_TO_RESULT",
+      "new_key": "RESULTER",
+      "survivor": null,
+      "justification": "La forme française résulter et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 102 conserve la clé RESULTAR_VERB_TO_RESULT",
+        "la clé cible RESULTER reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 102 porte exactement la clé RESULTER",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé RESULTAR_VERB_TO_RESULT est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 126,
+      "old_key": "RESULTADO",
+      "new_key": "RESULTAT",
+      "survivor": null,
+      "justification": "La forme française résultat et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 1,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 126 conserve la clé RESULTADO",
+        "la clé cible RESULTAT reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 126 porte exactement la clé RESULTAT",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé RESULTADO est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 128,
+      "old_key": "PARTICIPANTE",
+      "new_key": "PARTICIPANT",
+      "survivor": null,
+      "justification": "La forme française participant et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 1,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 128 conserve la clé PARTICIPANTE",
+        "la clé cible PARTICIPANT reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 128 porte exactement la clé PARTICIPANT",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé PARTICIPANTE est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 137,
+      "old_key": "NECESARIO",
+      "new_key": "NECESSAIRE",
+      "survivor": null,
+      "justification": "La forme française nécessaire et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 137 conserve la clé NECESARIO",
+        "la clé cible NECESSAIRE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 137 porte exactement la clé NECESSAIRE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé NECESARIO est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 143,
+      "old_key": "TRAVAILLER",
+      "new_key": null,
+      "survivor": {
+        "id": 129,
+        "entry_key": "TRABAJAR"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 143 conserve la clé TRAVAILLER",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 129:TRABAJAR existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 143 n'existe plus",
+        "l'entrée survivante 129:TRABAJAR et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 144,
+      "old_key": "BEAUCOUP",
+      "new_key": null,
+      "survivor": {
+        "id": 130,
+        "entry_key": "MUCHO"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 144 conserve la clé BEAUCOUP",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 130:MUCHO existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 144 n'existe plus",
+        "l'entrée survivante 130:MUCHO et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 146,
+      "old_key": "CEPENDANT",
+      "new_key": null,
+      "survivor": {
+        "id": 131,
+        "entry_key": "SIN_EMBARGO"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 146 conserve la clé CEPENDANT",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 131:SIN_EMBARGO existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 146 n'existe plus",
+        "l'entrée survivante 131:SIN_EMBARGO et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 150,
+      "old_key": "ABANDONNER",
+      "new_key": null,
+      "survivor": {
+        "id": 134,
+        "entry_key": "ABANDONAR"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 150 conserve la clé ABANDONNER",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 134:ABANDONAR existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 150 n'existe plus",
+        "l'entrée survivante 134:ABANDONAR et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 151,
+      "old_key": "PROJET",
+      "new_key": null,
+      "survivor": {
+        "id": 135,
+        "entry_key": "PROYECTO"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 151 conserve la clé PROJET",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 135:PROYECTO existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 151 n'existe plus",
+        "l'entrée survivante 135:PROYECTO et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 153,
+      "old_key": "ADAPTER",
+      "new_key": null,
+      "survivor": {
+        "id": 138,
+        "entry_key": "ADAPTAR"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 153 conserve la clé ADAPTER",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 138:ADAPTAR existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 153 n'existe plus",
+        "l'entrée survivante 138:ADAPTAR et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 154,
+      "old_key": "CONTINUER",
+      "new_key": null,
+      "survivor": {
+        "id": 139,
+        "entry_key": "CONTINUAR"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 154 conserve la clé CONTINUER",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 139:CONTINUAR existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 154 n'existe plus",
+        "l'entrée survivante 139:CONTINUAR et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 155,
+      "old_key": "PARCE_QUE",
+      "new_key": null,
+      "survivor": {
+        "id": 140,
+        "entry_key": "PORQUE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 155 conserve la clé PARCE_QUE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 140:PORQUE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 155 n'existe plus",
+        "l'entrée survivante 140:PORQUE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 156,
+      "old_key": "TROUVER",
+      "new_key": null,
+      "survivor": {
+        "id": 141,
+        "entry_key": "ENCONTRAR"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+        ],
+        "reports": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 156 conserve la clé TROUVER",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 141:ENCONTRAR existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 156 n'existe plus",
+        "l'entrée survivante 141:ENCONTRAR et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 190,
+      "old_key": "CONSTANTE",
+      "new_key": null,
+      "survivor": {
+        "id": 171,
+        "entry_key": "CONSTANT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 190 conserve la clé CONSTANTE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 171:CONSTANT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 190 n'existe plus",
+        "l'entrée survivante 171:CONSTANT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 199,
+      "old_key": "DESASTREUX_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 184,
+        "entry_key": "DESASTREUX"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 199 conserve la clé DESASTREUX_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 184:DESASTREUX existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 199 n'existe plus",
+        "l'entrée survivante 184:DESASTREUX et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 200,
+      "old_key": "COTIER_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 188,
+        "entry_key": "COTIER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 200 conserve la clé COTIER_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 188:COTIER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 200 n'existe plus",
+        "l'entrée survivante 188:COTIER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 201,
+      "old_key": "PROCHE_ADJ",
+      "new_key": "PROCHE",
+      "survivor": null,
+      "justification": "La forme française proche et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 1,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 201 conserve la clé PROCHE_ADJ",
+        "la clé cible PROCHE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 201 porte exactement la clé PROCHE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé PROCHE_ADJ est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 202,
+      "old_key": "MILLION_NOUN",
+      "new_key": "MILLION",
+      "survivor": null,
+      "justification": "La forme française million et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 1,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 202 conserve la clé MILLION_NOUN",
+        "la clé cible MILLION reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 202 porte exactement la clé MILLION",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé MILLION_NOUN est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 203,
+      "old_key": "PERSONNE_NOUN",
+      "new_key": "PERSONNE",
+      "survivor": null,
+      "justification": "La forme française personne et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 1,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 203 conserve la clé PERSONNE_NOUN",
+        "la clé cible PERSONNE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 203 porte exactement la clé PERSONNE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé PERSONNE_NOUN est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 205,
+      "old_key": "PREOCCUPANT_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 167,
+        "entry_key": "PREOCCUPANT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 205 conserve la clé PREOCCUPANT_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 167:PREOCCUPANT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 205 n'existe plus",
+        "l'entrée survivante 167:PREOCCUPANT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 206,
+      "old_key": "GLOBAL_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 169,
+        "entry_key": "GLOBALE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 206 conserve la clé GLOBAL_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 169:GLOBALE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 206 n'existe plus",
+        "l'entrée survivante 169:GLOBALE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 208,
+      "old_key": "CONSTANT_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 171,
+        "entry_key": "CONSTANT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 208 conserve la clé CONSTANT_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 171:CONSTANT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 208 n'existe plus",
+        "l'entrée survivante 171:CONSTANT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 209,
+      "old_key": "CONTINU_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 191,
+        "entry_key": "CONTINU"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 209 conserve la clé CONTINU_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 191:CONTINU existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 209 n'existe plus",
+        "l'entrée survivante 191:CONTINU et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 211,
+      "old_key": "HUMANITE_NOUN",
+      "new_key": null,
+      "survivor": {
+        "id": 177,
+        "entry_key": "HUMANITE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 211 conserve la clé HUMANITE_NOUN",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 177:HUMANITE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 211 n'existe plus",
+        "l'entrée survivante 177:HUMANITE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 212,
+      "old_key": "ENTIER_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 178,
+        "entry_key": "ENTIER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 212 conserve la clé ENTIER_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 178:ENTIER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 212 n'existe plus",
+        "l'entrée survivante 178:ENTIER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 215,
+      "old_key": "CONSEQUENCE_NOUN",
+      "new_key": null,
+      "survivor": {
+        "id": 157,
+        "entry_key": "CONSEQUENCE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 215 conserve la clé CONSEQUENCE_NOUN",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 157:CONSEQUENCE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 215 n'existe plus",
+        "l'entrée survivante 157:CONSEQUENCE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 217,
+      "old_key": "MENACE_NOUN",
+      "new_key": "MENACE",
+      "survivor": null,
+      "justification": "La forme française menace et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 217 conserve la clé MENACE_NOUN",
+        "la clé cible MENACE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 217 porte exactement la clé MENACE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé MENACE_NOUN est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 218,
+      "old_key": "MER_NOUN",
+      "new_key": "MER",
+      "survivor": null,
+      "justification": "La forme française mer et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 218 conserve la clé MER_NOUN",
+        "la clé cible MER reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 218 porte exactement la clé MER",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé MER_NOUN est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 220,
+      "old_key": "GLOBAL",
+      "new_key": null,
+      "survivor": {
+        "id": 169,
+        "entry_key": "GLOBALE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 220 conserve la clé GLOBAL",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 169:GLOBALE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 220 n'existe plus",
+        "l'entrée survivante 169:GLOBALE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 221,
+      "old_key": "CONSEQUENT_ADVERBE",
+      "new_key": "CONSEQUEMMENT",
+      "survivor": null,
+      "justification": "La forme française conséquemment et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 4,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 221 conserve la clé CONSEQUENT_ADVERBE",
+        "la clé cible CONSEQUEMMENT reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 221 porte exactement la clé CONSEQUEMMENT",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé CONSEQUENT_ADVERBE est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 242,
+      "old_key": "WORRYING",
+      "new_key": null,
+      "survivor": {
+        "id": 167,
+        "entry_key": "PREOCCUPANT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 242 conserve la clé WORRYING",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 167:PREOCCUPANT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 242 n'existe plus",
+        "l'entrée survivante 167:PREOCCUPANT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 243,
+      "old_key": "INCREASE",
+      "new_key": null,
+      "survivor": {
+        "id": 170,
+        "entry_key": "AUGMENTER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 243 conserve la clé INCREASE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 170:AUGMENTER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 243 n'existe plus",
+        "l'entrée survivante 170:AUGMENTER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 244,
+      "old_key": "CONTINUOUS",
+      "new_key": null,
+      "survivor": {
+        "id": 191,
+        "entry_key": "CONTINU"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 244 conserve la clé CONTINUOUS",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 191:CONTINU existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 244 n'existe plus",
+        "l'entrée survivante 191:CONTINU et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 245,
+      "old_key": "PRODUCE",
+      "new_key": null,
+      "survivor": {
+        "id": 175,
+        "entry_key": "PRODUIRE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 245 conserve la clé PRODUCE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 175:PRODUIRE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 245 n'existe plus",
+        "l'entrée survivante 175:PRODUIRE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 246,
+      "old_key": "HUMANITY",
+      "new_key": null,
+      "survivor": {
+        "id": 177,
+        "entry_key": "HUMANITE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 246 conserve la clé HUMANITY",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 177:HUMANITE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 246 n'existe plus",
+        "l'entrée survivante 177:HUMANITE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 248,
+      "old_key": "ACCELERATED",
+      "new_key": null,
+      "survivor": {
+        "id": 214,
+        "entry_key": "ACCELERE_ADJ"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 248 conserve la clé ACCELERATED",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 214:ACCELERE_ADJ existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 248 n'existe plus",
+        "l'entrée survivante 214:ACCELERE_ADJ et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 249,
+      "old_key": "RISE",
+      "new_key": null,
+      "survivor": {
+        "id": 194,
+        "entry_key": "S_ELEVER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 249 conserve la clé RISE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 194:S_ELEVER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 249 n'existe plus",
+        "l'entrée survivante 194:S_ELEVER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 259,
+      "old_key": "CONSEQUENT_ADJECTIVE",
+      "new_key": "CONSEQUENT",
+      "survivor": null,
+      "justification": "La forme française conséquent et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 259 conserve la clé CONSEQUENT_ADJECTIVE",
+        "la clé cible CONSEQUENT reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 259 porte exactement la clé CONSEQUENT",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé CONSEQUENT_ADJECTIVE est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 261,
+      "old_key": "GLOBALE_ADJECTIVE",
+      "new_key": null,
+      "survivor": {
+        "id": 169,
+        "entry_key": "GLOBALE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 261 conserve la clé GLOBALE_ADJECTIVE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 169:GLOBALE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 261 n'existe plus",
+        "l'entrée survivante 169:GLOBALE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 262,
+      "old_key": "CONSTANTE_ADJECTIVE",
+      "new_key": null,
+      "survivor": {
+        "id": 171,
+        "entry_key": "CONSTANT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 262 conserve la clé CONSTANTE_ADJECTIVE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 171:CONSTANT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 262 n'existe plus",
+        "l'entrée survivante 171:CONSTANT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 263,
+      "old_key": "CONTINU_ADJECTIVE",
+      "new_key": null,
+      "survivor": {
+        "id": 191,
+        "entry_key": "CONTINU"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 263 conserve la clé CONTINU_ADJECTIVE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 191:CONTINU existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 263 n'existe plus",
+        "l'entrée survivante 191:CONTINU et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 264,
+      "old_key": "ENTIER_ADJECTIVE",
+      "new_key": null,
+      "survivor": {
+        "id": 178,
+        "entry_key": "ENTIER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 264 conserve la clé ENTIER_ADJECTIVE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 178:ENTIER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 264 n'existe plus",
+        "l'entrée survivante 178:ENTIER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 265,
+      "old_key": "ACCELERE_ADJECTIVE",
+      "new_key": null,
+      "survivor": {
+        "id": 214,
+        "entry_key": "ACCELERE_ADJ"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 265 conserve la clé ACCELERE_ADJECTIVE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 214:ACCELERE_ADJ existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 265 n'existe plus",
+        "l'entrée survivante 214:ACCELERE_ADJ et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 266,
+      "old_key": "ELEVERSER_VERB",
+      "new_key": null,
+      "survivor": {
+        "id": 194,
+        "entry_key": "S_ELEVER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/203_dico_ic_french_pronominal_concept_keys_report.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 266 conserve la clé ELEVERSER_VERB",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 194:S_ELEVER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 266 n'existe plus",
+        "l'entrée survivante 194:S_ELEVER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 269,
+      "old_key": "PROVOQUER_VERB",
+      "new_key": null,
+      "survivor": {
+        "id": 232,
+        "entry_key": "PROVOQUER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 269 conserve la clé PROVOQUER_VERB",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 232:PROVOQUER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 269 n'existe plus",
+        "l'entrée survivante 232:PROVOQUER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 273,
+      "old_key": "FAUNE_NOUN",
+      "new_key": "FAUNE",
+      "survivor": null,
+      "justification": "La forme française faune et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 273 conserve la clé FAUNE_NOUN",
+        "la clé cible FAUNE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 273 porte exactement la clé FAUNE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé FAUNE_NOUN est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 274,
+      "old_key": "FLORE_NOUN",
+      "new_key": "FLORE",
+      "survivor": null,
+      "justification": "La forme française flore et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 274 conserve la clé FLORE_NOUN",
+        "la clé cible FLORE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 274 porte exactement la clé FLORE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé FLORE_NOUN est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 283,
+      "old_key": "TOTAL_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 225,
+        "entry_key": "TOTAL"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 283 conserve la clé TOTAL_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 225:TOTAL existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 283 n'existe plus",
+        "l'entrée survivante 225:TOTAL et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 285,
+      "old_key": "AGRICULTURE_ADJ",
+      "new_key": "AGRICOLE",
+      "survivor": null,
+      "justification": "La forme française agricole et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 285 conserve la clé AGRICULTURE_ADJ",
+        "la clé cible AGRICOLE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 285 porte exactement la clé AGRICOLE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé AGRICULTURE_ADJ est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 286,
+      "old_key": "PRODUCTION_NOUN",
+      "new_key": "PRODUCTION",
+      "survivor": null,
+      "justification": "La forme française production et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 286 conserve la clé PRODUCTION_NOUN",
+        "la clé cible PRODUCTION reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 286 porte exactement la clé PRODUCTION",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé PRODUCTION_NOUN est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 287,
+      "old_key": "HUMAIN_ADJ",
+      "new_key": null,
+      "survivor": {
+        "id": 280,
+        "entry_key": "HUMAIN_ADJECTIVE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 287 conserve la clé HUMAIN_ADJ",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 280:HUMAIN_ADJECTIVE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 287 n'existe plus",
+        "l'entrée survivante 280:HUMAIN_ADJECTIVE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 288,
+      "old_key": "GRAND_ADJ",
+      "new_key": "GRAND",
+      "survivor": null,
+      "justification": "La forme française grand et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 288 conserve la clé GRAND_ADJ",
+        "la clé cible GRAND reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 288 porte exactement la clé GRAND",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé GRAND_ADJ est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 289,
+      "old_key": "DANGER_NOUN",
+      "new_key": "DANGER",
+      "survivor": null,
+      "justification": "La forme française danger et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 289 conserve la clé DANGER_NOUN",
+        "la clé cible DANGER reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 289 porte exactement la clé DANGER",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé DANGER_NOUN est absente"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 291,
+      "old_key": "HABITAT_NATUREL_NOUN",
+      "new_key": "HABITAT_NATUREL",
+      "survivor": null,
+      "justification": "La forme française habitat naturel et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 291 conserve la clé HABITAT_NATUREL_NOUN",
+        "la clé cible HABITAT_NATUREL reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 291 porte exactement la clé HABITAT_NATUREL",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé HABITAT_NATUREL_NOUN est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 299,
+      "old_key": "TOTALE",
+      "new_key": null,
+      "survivor": {
+        "id": 225,
+        "entry_key": "TOTAL"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 299 conserve la clé TOTALE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 225:TOTAL existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 299 n'existe plus",
+        "l'entrée survivante 225:TOTAL et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 304,
+      "old_key": "CONTRARIO",
+      "new_key": "CONTRAIRE",
+      "survivor": null,
+      "justification": "La forme française contraire et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 304 conserve la clé CONTRARIO",
+        "la clé cible CONTRAIRE reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 304 porte exactement la clé CONTRAIRE",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé CONTRARIO est absente"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 305,
+      "old_key": "ABSENCE",
+      "new_key": null,
+      "survivor": {
+        "id": 271,
+        "entry_key": "ABSENCE_NOUN"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 305 conserve la clé ABSENCE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 271:ABSENCE_NOUN existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 305 n'existe plus",
+        "l'entrée survivante 271:ABSENCE_NOUN et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 306,
+      "old_key": "EAU",
+      "new_key": null,
+      "survivor": {
+        "id": 272,
+        "entry_key": "EAU_NOUN"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 306 conserve la clé EAU",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 272:EAU_NOUN existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 306 n'existe plus",
+        "l'entrée survivante 272:EAU_NOUN et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 312,
+      "old_key": "HUMAIN",
+      "new_key": null,
+      "survivor": {
+        "id": 280,
+        "entry_key": "HUMAIN_ADJECTIVE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 312 conserve la clé HUMAIN",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 280:HUMAIN_ADJECTIVE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 312 n'existe plus",
+        "l'entrée survivante 280:HUMAIN_ADJECTIVE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 313,
+      "old_key": "PERDRE",
+      "new_key": null,
+      "survivor": {
+        "id": 290,
+        "entry_key": "PERDRE_VERB"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 313 conserve la clé PERDRE",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 290:PERDRE_VERB existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 313 n'existe plus",
+        "l'entrée survivante 290:PERDRE_VERB et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 314,
+      "old_key": "PREOCCUPANT_ADJECTIF",
+      "new_key": null,
+      "survivor": {
+        "id": 167,
+        "entry_key": "PREOCCUPANT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md"
+        ],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 314 conserve la clé PREOCCUPANT_ADJECTIF",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 167:PREOCCUPANT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 314 n'existe plus",
+        "l'entrée survivante 167:PREOCCUPANT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 315,
+      "old_key": "GLOBAL_ADJECTIF",
+      "new_key": null,
+      "survivor": {
+        "id": 169,
+        "entry_key": "GLOBALE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 315 conserve la clé GLOBAL_ADJECTIF",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 169:GLOBALE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 315 n'existe plus",
+        "l'entrée survivante 169:GLOBALE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 316,
+      "old_key": "CONSTANT_ADJECTIF",
+      "new_key": null,
+      "survivor": {
+        "id": 171,
+        "entry_key": "CONSTANT"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 316 conserve la clé CONSTANT_ADJECTIF",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 171:CONSTANT existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 316 n'existe plus",
+        "l'entrée survivante 171:CONSTANT et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 317,
+      "old_key": "ENTIER_ADJECTIF",
+      "new_key": null,
+      "survivor": {
+        "id": 178,
+        "entry_key": "ENTIER"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 317 conserve la clé ENTIER_ADJECTIF",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 178:ENTIER existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 317 n'existe plus",
+        "l'entrée survivante 178:ENTIER et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 319,
+      "old_key": "TOTAL_ADJECTIF",
+      "new_key": null,
+      "survivor": {
+        "id": 225,
+        "entry_key": "TOTAL"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 319 conserve la clé TOTAL_ADJECTIF",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 225:TOTAL existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 319 n'existe plus",
+        "l'entrée survivante 225:TOTAL et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "delete_empty_duplicate",
+      "id": 324,
+      "old_key": "HUMAIN_ADJECTIF",
+      "new_key": null,
+      "survivor": {
+        "id": 280,
+        "entry_key": "HUMAIN_ADJECTIVE"
+      },
+      "justification": "Entrée sans forme ni dépendance, rapprochée d'une entrée survivante renseignée par le sens et/ou la forme française exacte.",
+      "dependency_counts": {
+        "forms": 0,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 0
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 324 conserve la clé HUMAIN_ADJECTIF",
+        "tous les compteurs directs restent à zéro",
+        "l'entrée survivante 280:HUMAIN_ADJECTIVE existe toujours",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue"
+      ],
+      "post_checks": [
+        "l'ID 324 n'existe plus",
+        "l'entrée survivante 280:HUMAIN_ADJECTIVE et ses dépendances sont inchangées",
+        "les volumes diminuent uniquement du nombre de suppressions explicitement validées"
+      ]
+    },
+    {
+      "type": "rename_keep_id",
+      "id": 326,
+      "old_key": "NATUREL_ADJECTIF",
+      "new_key": "NATUREL",
+      "survivor": null,
+      "justification": "La forme française naturel et la glose confirment une cible française non occupée ; l'ID préserve les dépendances SQL.",
+      "dependency_counts": {
+        "forms": 5,
+        "inflected_forms": 0,
+        "outgoing_relations": 0,
+        "incoming_relations": 0,
+        "ic_features": 0,
+        "connector_helps": 0,
+        "indirect_pattern_rules": 1
+      },
+      "repository_references": {
+        "code": [],
+        "routes": [],
+        "tests": [],
+        "seeds": [],
+        "scripts": [],
+        "docs": [],
+        "reports": [],
+        "other": []
+      },
+      "preconditions": [
+        "lexical_entry.id = 326 conserve la clé NATUREL_ADJECTIF",
+        "la clé cible NATUREL reste absente",
+        "les formes, gloses et POS restent identiques au relevé 204",
+        "aucune nouvelle référence fonctionnelle du dépôt n'est apparue",
+        "David accepte le risque résiduel de consommateurs externes inconnus"
+      ],
+      "post_checks": [
+        "l'ID 326 porte exactement la clé NATUREL",
+        "toutes les dépendances SQL et tous les contenus associés sont inchangés",
+        "l'ancienne clé NATUREL_ADJECTIF est absente"
+      ]
+    }
+  ]
+}
