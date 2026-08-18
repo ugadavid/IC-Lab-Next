@@ -15,7 +15,10 @@ CREATE TABLE language (
     family          VARCHAR(50) NULL,
     is_romance      TINYINT(1) NOT NULL DEFAULT 0,
     is_active       TINYINT(1) NOT NULL DEFAULT 1,
-    CONSTRAINT uq_language_code UNIQUE (code)
+    documentation_status VARCHAR(20) NOT NULL DEFAULT 'DOCUMENTED',
+    CONSTRAINT uq_language_code UNIQUE (code),
+    CONSTRAINT chk_language_documentation_status
+      CHECK (documentation_status IN ('DOCUMENTED', 'REFERENCED'))
 ) ENGINE=InnoDB;
 
 CREATE TABLE lexical_entry (

@@ -18,6 +18,36 @@ function placeholders(values) {
   return values.map(() => "?").join(", ");
 }
 
+const PUBLIC_LANGUAGE_ORDER = ["fr", "es", "it", "pt", "en"];
+
+function languageClassification(language) {
+  if (language.documentation_status === "REFERENCED" && language.is_romance) {
+    return "Langue romane référencée — prête à documenter";
+  }
+  if (language.documentation_status === "DOCUMENTED" && !language.is_romance) {
+    return "Langue de comparaison — non romane";
+  }
+  if (language.documentation_status === "DOCUMENTED" && language.is_romance) {
+    return "Langue romane documentée";
+  }
+  return "Statut documentaire non reconnu";
+}
+
+function summarizeLanguageCatalog(languages) {
+  return {
+    total: languages.length,
+    romance_documented: languages.filter((language) => (
+      language.is_romance && language.documentation_status === "DOCUMENTED"
+    )).length,
+    non_romance_comparison: languages.filter((language) => (
+      !language.is_romance && language.documentation_status === "DOCUMENTED"
+    )).length,
+    romance_referenced: languages.filter((language) => (
+      language.is_romance && language.documentation_status === "REFERENCED"
+    )).length,
+  };
+}
+
 function createRepository(pool) {
   async function readLexicalEntryByKey(executor, entryKey) {
     const [rows] = await executor.execute(`
@@ -87,7 +117,7 @@ function createRepository(pool) {
       JOIN language l ON l.id = ch.language_id
       LEFT JOIN lexical_entry le ON le.id = ch.lexical_entry_id
       WHERE ch.id = ?
-        ${validatedOnly ? "AND ch.status = 'VALIDATED' AND l.is_active = 1" : ""}
+        ${validatedOnly ? "AND ch.status = 'VALIDATED' AND l.is_active = 1 AND l.documentation_status = 'DOCUMENTED'" : ""}
     `, [id]);
     return rows[0] || null;
   }
@@ -106,6 +136,7 @@ function createRepository(pool) {
     if (validatedOnly) {
       conditions.push("ch.status = 'VALIDATED'");
       conditions.push("l.is_active = 1");
+      conditions.push("l.documentation_status = 'DOCUMENTED'");
     } else if (status) {
       conditions.push("ch.status = ?");
       parameters.push(status);
@@ -166,7 +197,7 @@ function createRepository(pool) {
     const [languageRows] = await connection.execute(`
       SELECT id, code
       FROM language
-      WHERE code = ? AND is_active = 1
+      WHERE code = ? AND is_active = 1 AND documentation_status = 'DOCUMENTED'
       FOR UPDATE
     `, [connectorHelp.language]);
     if (languageRows.length === 0 || !new Set(["es", "fr"]).has(languageRows[0].code)) {
@@ -231,7 +262,8 @@ function createRepository(pool) {
         SELECT code, name, family, is_romance, is_active
         FROM language
         WHERE is_active = 1
-        ORDER BY code
+          AND documentation_status = 'DOCUMENTED'
+        ORDER BY FIELD(code, 'fr', 'es', 'it', 'pt', 'en'), code
       `);
       return rows.map((row) => ({
         code: row.code,
@@ -240,6 +272,50 @@ function createRepository(pool) {
         is_romance: Boolean(row.is_romance),
         is_active: Boolean(row.is_active),
       }));
+    },
+
+    async getLanguageCatalog() {
+      const [rows] = await pool.execute(`
+        SELECT
+          l.code,
+          l.name,
+          l.family,
+          l.is_romance,
+          l.is_active,
+          l.documentation_status,
+          (SELECT COUNT(*) FROM lexical_form lf WHERE lf.language_id = l.id) AS lexical_forms,
+          (SELECT COUNT(DISTINCT lf.entry_id) FROM lexical_form lf WHERE lf.language_id = l.id) AS lexical_entries,
+          (SELECT COUNT(*)
+             FROM inflected_form inflected
+             JOIN lexical_form lf ON lf.id = inflected.lexical_form_id
+            WHERE lf.language_id = l.id) AS inflected_forms,
+          (SELECT COUNT(*) FROM connector_help ch WHERE ch.language_id = l.id) AS connector_helps
+        FROM language l
+        ORDER BY
+          CASE
+            WHEN l.documentation_status = 'DOCUMENTED' AND l.is_romance = 1 THEN 1
+            WHEN l.documentation_status = 'DOCUMENTED' AND l.is_romance = 0 THEN 2
+            ELSE 3
+          END,
+          FIELD(l.code, 'fr', 'es', 'it', 'pt', 'en'),
+          l.code
+      `);
+      const languages = rows.map((row) => {
+        const language = {
+          code: row.code,
+          name: row.name,
+          family: row.family,
+          is_romance: Boolean(row.is_romance),
+          is_active: Boolean(row.is_active),
+          documentation_status: row.documentation_status,
+          lexical_entries: Number(row.lexical_entries),
+          lexical_forms: Number(row.lexical_forms),
+          inflected_forms: Number(row.inflected_forms),
+          connector_helps: Number(row.connector_helps),
+        };
+        return { ...language, public_classification: languageClassification(language) };
+      });
+      return { languages, summary: summarizeLanguageCatalog(languages) };
     },
 
     async loadAnalysisResources(request) {
@@ -261,6 +337,7 @@ function createRepository(pool) {
           JOIN language l ON l.id = ch.language_id
           WHERE l.code = ?
             AND l.is_active = 1
+            AND l.documentation_status = 'DOCUMENTED'
             AND ch.status = 'VALIDATED'
           ORDER BY CHAR_LENGTH(ch.normalized_expression) DESC, ch.id ASC
         `, [request.source_language]);
@@ -474,7 +551,7 @@ function createRepository(pool) {
           comparison_english_entries: Number(coverageRows[0].comparison_english_entries || 0),
         },
         tables: [
-          { name: "language", role: "Langues disponibles et propriétés générales." },
+          { name: "language", role: "Catalogue des langues et propriétés générales." },
           { name: "lexical_entry", role: "Concept lexical mutualisé entre plusieurs langues." },
           { name: "lexical_form", role: "Forme linguistique rattachée à une entrée et une langue." },
           { name: "inflected_form", role: "Pluriel attesté et validé donnant accès à un lemme canonique." },
@@ -673,7 +750,7 @@ function createRepository(pool) {
 
         for (const form of existingFormUpdates) {
           const [languageRows] = await connection.execute(
-            "SELECT id FROM language WHERE code = ? AND is_active = 1",
+            "SELECT id FROM language WHERE code = ? AND is_active = 1 AND documentation_status = 'DOCUMENTED'",
             [form.language]
           );
           if (languageRows.length === 0) {
@@ -698,7 +775,7 @@ function createRepository(pool) {
 
         for (const form of newForms) {
           const [languageRows] = await connection.execute(
-            "SELECT id FROM language WHERE code = ? AND is_active = 1",
+            "SELECT id FROM language WHERE code = ? AND is_active = 1 AND documentation_status = 'DOCUMENTED'",
             [form.language]
           );
           if (languageRows.length === 0) {
@@ -845,6 +922,7 @@ function createRepository(pool) {
         JOIN language l ON l.id = ch.language_id
         WHERE l.code = ?
           AND l.is_active = 1
+          AND l.documentation_status = 'DOCUMENTED'
           AND ch.status = 'VALIDATED'
           AND ch.normalized_expression = ?
         ORDER BY ch.id
@@ -1325,4 +1403,10 @@ function createRepository(pool) {
   };
 }
 
-module.exports = { createPool, createRepository };
+module.exports = {
+  PUBLIC_LANGUAGE_ORDER,
+  createPool,
+  createRepository,
+  languageClassification,
+  summarizeLanguageCatalog,
+};

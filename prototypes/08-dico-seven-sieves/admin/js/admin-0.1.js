@@ -21,6 +21,7 @@ const coverageCounts = document.getElementById("coverageCounts");
 const modelTableBody = document.getElementById("modelTableBody");
 const languagesTableBody = document.getElementById("languagesTableBody");
 const languageCount = document.getElementById("languageCount");
+const languageCatalogSummary = document.getElementById("languageCatalogSummary");
 const entriesTableBody = document.getElementById("entriesTableBody");
 const lexiconMeta = document.getElementById("lexiconMeta");
 const previousPageButton = document.getElementById("previousPageButton");
@@ -207,16 +208,41 @@ function renderModel(model) {
   }
 }
 
-function renderLanguages(items) {
+function appendLanguageSummary(value, label, className) {
+  const metric = document.createElement("div");
+  metric.className = `language-summary-item ${className}`;
+  const count = document.createElement("strong");
+  count.textContent = String(value);
+  const caption = document.createElement("span");
+  caption.textContent = label;
+  metric.append(count, caption);
+  languageCatalogSummary.appendChild(metric);
+}
+
+function renderLanguageCatalog(items, summary) {
   languagesTableBody.replaceChildren();
-  languageCount.textContent = `${items.length} langue${items.length > 1 ? "s" : ""}`;
+  languageCatalogSummary.replaceChildren();
+  languageCount.textContent = `${summary.total} langue${summary.total > 1 ? "s" : ""} au catalogue`;
+  appendLanguageSummary(summary.romance_documented, "langues romanes documentées", "documented");
+  appendLanguageSummary(summary.non_romance_comparison, "langue de comparaison non romane", "comparison");
+  if (summary.romance_referenced > 0) {
+    appendLanguageSummary(
+      summary.romance_referenced,
+      "langues romanes référencées — prêtes à documenter",
+      "referenced"
+    );
+  }
   for (const language of items) {
     const row = document.createElement("tr");
     appendCell(row, language.code.toUpperCase(), "code-value");
     appendCell(row, language.name);
     appendCell(row, language.family);
-    appendCell(row, language.is_romance ? "Oui" : "Non", language.is_romance ? "status-yes" : "status-no");
-    appendCell(row, language.is_active ? "Active" : "Inactive", language.is_active ? "status-yes" : "status-no");
+    appendCell(row, language.public_classification, language.is_romance ? "status-yes" : "status-comparison");
+    appendCell(
+      row,
+      `${language.lexical_entries} concepts · ${language.lexical_forms} formes`,
+      "language-content"
+    );
     languagesTableBody.appendChild(row);
   }
 }
@@ -290,9 +316,12 @@ async function loadModelSummary() {
 }
 
 async function loadLanguages() {
-  const data = await apiRequest("/languages");
-  languages = data.languages;
-  renderLanguages(languages);
+  const [operational, catalog] = await Promise.all([
+    apiRequest("/languages"),
+    apiRequest("/language-catalog"),
+  ]);
+  languages = operational.languages;
+  renderLanguageCatalog(catalog.languages, catalog.summary);
 }
 
 async function loadEntries(search = currentSearch, offset = currentOffset) {

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.1">
-  <title>Dico-IC Admin V0.1.1</title>
+  <meta name="app-version" content="0.1.3">
+  <title>Dico-IC Admin V0.1.3</title>
   <link rel="stylesheet" href="./css/admin-0.1.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
       <p>Consultation et enrichissement local de la base de connaissances</p>
     </div>
     <div class="header-actions">
-      <span class="environment-label">V0.1.1 locale</span>
+      <span class="environment-label">V0.1.3 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Connexion à l’API…</span>
     </div>
   </header>
@@ -83,18 +83,19 @@
       <div class="section-heading">
         <div>
           <p class="eyebrow">Référentiel</p>
-          <h2 id="languagesTitle">Langues actives</h2>
+          <h2 id="languagesTitle">Catalogue des langues</h2>
         </div>
-        <span id="languageCount" class="section-count">0 langue</span>
+        <span id="languageCount" class="section-count">0 langue au catalogue</span>
       </div>
+      <div id="languageCatalogSummary" class="language-summary" aria-live="polite"></div>
       <details class="context-help">
-        <summary>? Comprendre</summary>
-        <div><strong>Les langues</strong> indiquent dans quels systèmes linguistiques les formes sont décrites. Le français, l’espagnol, l’italien et le portugais sont centraux ; l’anglais sert ici de comparaison. Les responsables du corpus les documentent, puis les clients les utilisent selon leurs capacités.</div>
+        <summary>? Comprendre le catalogue des langues</summary>
+        <div><strong>Le catalogue</strong> distingue les langues déjà documentées, la langue non romane utilisée pour la comparaison et les langues prêtes à accueillir de futurs contenus validés. Seules les langues disposant des ressources attendues sont proposées dans les usages actuels.</div>
       </details>
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Code</th><th>Nom</th><th>Famille</th><th>Romane</th><th>État</th></tr>
+            <tr><th>Code</th><th>Nom</th><th>Famille</th><th>Position dans le catalogue</th><th>Contenu actuel</th></tr>
           </thead>
           <tbody id="languagesTableBody">
             <tr><td colspan="5" class="empty-cell">Chargement des langues…</td></tr>

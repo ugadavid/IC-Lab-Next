@@ -281,6 +281,31 @@ select { font: inherit; }
   color: var(--muted);
 }
 
+.language-summary {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: -2px 0 12px;
+}
+
+.language-summary-item {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid #cdd9e3;
+  border-radius: 6px;
+  background: #f7fafc;
+}
+
+.language-summary-item strong { color: var(--navy-dark); font-size: 19px; }
+.language-summary-item span { max-width: 190px; color: var(--muted); font-size: 11px; line-height: 1.25; }
+.language-summary-item.comparison { border-color: #d8c79f; background: #fffaf0; }
+.language-summary-item.referenced { border-style: dashed; background: #f8f6fc; }
+.status-comparison { color: #765b22; font-weight: 700; }
+.language-content { color: var(--muted); white-space: nowrap; }
+
 .metric-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));

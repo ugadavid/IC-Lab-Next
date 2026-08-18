@@ -3,7 +3,11 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const { createRepository } = require("../src/repository");
+const {
+  createRepository,
+  languageClassification,
+  summarizeLanguageCatalog,
+} = require("../src/repository");
 const { createApp } = require("../server");
 const {
   confidenceLabel,
@@ -16,6 +20,11 @@ const {
   EXPECTED_FORMS,
   validateTargetForms,
 } = require("../scripts/correct-information-data-source-label.js");
+const {
+  classifyState,
+  validateLanguages,
+  validateVolumes,
+} = require("../scripts/migrate-language-documentation-status.js");
 
 async function withServer(repository, callback) {
   const server = createApp(repository).listen(0, "127.0.0.1");
@@ -50,6 +59,111 @@ test("model summary calculates central and English comparison coverage from data
   });
   assert.match(queries[1], /MAX\(l\.code = 'fr'\)/);
   assert.match(queries[1], /has_fr AND has_es AND has_it AND has_pt AND has_en/);
+});
+
+test("language repository separates the operational list from the documentary catalog", async () => {
+  const operationalRows = [
+    ["fr", "Français", "Romance", 1, 1],
+    ["es", "Español", "Romance", 1, 1],
+    ["it", "Italiano", "Romance", 1, 1],
+    ["pt", "Português", "Romance", 1, 1],
+    ["en", "English", "Germanic", 0, 1],
+  ].map(([code, name, family, is_romance, is_active]) => ({ code, name, family, is_romance, is_active }));
+  const catalogRows = operationalRows.map((language, index) => ({
+    ...language,
+    documentation_status: "DOCUMENTED",
+    lexical_entries: [123, 126, 117, 115, 116][index],
+    lexical_forms: [123, 126, 117, 115, 116][index],
+    inflected_forms: index === 1 ? 16 : 0,
+    connector_helps: index < 2 ? 6 : 0,
+  }));
+  const queries = [];
+  const pool = {
+    async execute(sql) {
+      queries.push(sql);
+      return [queries.length === 1 ? operationalRows : catalogRows];
+    },
+  };
+  const repository = createRepository(pool);
+  const operational = await repository.getLanguages();
+  const catalog = await repository.getLanguageCatalog();
+
+  assert.deepEqual(operational.map((language) => language.code), ["fr", "es", "it", "pt", "en"]);
+  assert.deepEqual(catalog.summary, {
+    total: 5,
+    romance_documented: 4,
+    non_romance_comparison: 1,
+    romance_referenced: 0,
+  });
+  assert.match(queries[0], /is_active = 1[\s\S]*documentation_status = 'DOCUMENTED'/);
+  assert.match(queries[0], /FIELD\(code, 'fr', 'es', 'it', 'pt', 'en'\)/);
+  assert.match(queries[1], /FROM language l/);
+});
+
+test("language catalog derives public classifications without mixing technical statuses", () => {
+  assert.equal(languageClassification({ is_romance: true, documentation_status: "DOCUMENTED" }), "Langue romane documentée");
+  assert.equal(languageClassification({ is_romance: false, documentation_status: "DOCUMENTED" }), "Langue de comparaison — non romane");
+  assert.equal(languageClassification({ is_romance: true, documentation_status: "REFERENCED" }), "Langue romane référencée — prête à documenter");
+  assert.deepEqual(summarizeLanguageCatalog([
+    ...Array.from({ length: 4 }, () => ({ is_romance: true, documentation_status: "DOCUMENTED" })),
+    { is_romance: false, documentation_status: "DOCUMENTED" },
+  ]), { total: 5, romance_documented: 4, non_romance_comparison: 1, romance_referenced: 0 });
+});
+
+test("language migration validates the five historical rows and refuses partial schema state", () => {
+  const rows = [
+    [1, "fr", "Français", "Romance", 1],
+    [2, "es", "Español", "Romance", 1],
+    [3, "it", "Italiano", "Romance", 1],
+    [4, "pt", "Português", "Romance", 1],
+    [5, "en", "English", "Germanic", 0],
+  ].map(([id, code, name, family, is_romance]) => ({
+    id, code, name, family, is_romance, is_active: 1, documentation_status: "DOCUMENTED",
+  }));
+  assert.equal(validateLanguages(rows, true).length, 5);
+  assert.throws(() => validateLanguages(rows.map((row, index) => (
+    index === 0 ? { ...row, documentation_status: "REFERENCED" } : row
+  )), true), /ne porte pas le statut DOCUMENTED/);
+  assert.doesNotThrow(() => validateVolumes({
+    languages: 5, lexical_entries: 150, lexical_forms: 597, inflected_forms: 16,
+    connector_helps: 12, form_relations: 70, pattern_rules: 1, ic_features: 8,
+  }));
+
+  const baseColumns = [
+    ["id", "int(11)", "NO", null, "auto_increment"],
+    ["code", "varchar(5)", "NO", null, ""],
+    ["name", "varchar(50)", "NO", null, ""],
+    ["family", "varchar(50)", "YES", null, ""],
+    ["is_romance", "tinyint(1)", "NO", "0", ""],
+    ["is_active", "tinyint(1)", "NO", "1", ""],
+  ].map(([COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA], index) => ({
+    COLUMN_NAME, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT, EXTRA, ORDINAL_POSITION: index + 1,
+  }));
+  assert.equal(classifyState(baseColumns, []), "pending");
+  assert.equal(classifyState([
+    ...baseColumns,
+    { COLUMN_NAME: "documentation_status", COLUMN_TYPE: "varchar(20)", IS_NULLABLE: "NO", COLUMN_DEFAULT: "DOCUMENTED", EXTRA: "", ORDINAL_POSITION: 7 },
+  ], []), "partial");
+});
+
+test("language routes preserve the operational response and expose a distinct catalog", async () => {
+  const languages = ["fr", "es", "it", "pt", "en"].map((code) => ({ code }));
+  const summary = { total: 5, romance_documented: 4, non_romance_comparison: 1, romance_referenced: 0 };
+  await withServer({
+    async getLanguages() { return languages; },
+    async getLanguageCatalog() { return { languages, summary }; },
+  }, async (baseUrl) => {
+    const operationalResponse = await fetch(`${baseUrl}/languages`);
+    const operational = await operationalResponse.json();
+    assert.equal(operational.contract_version, "0.1");
+    assert.deepEqual(operational.languages.map((language) => language.code), ["fr", "es", "it", "pt", "en"]);
+
+    const catalogResponse = await fetch(`${baseUrl}/language-catalog`);
+    const catalog = await catalogResponse.json();
+    assert.equal(catalogResponse.status, 200);
+    assert.deepEqual(catalog.summary, summary);
+    assert.equal(catalog.languages.length, 5);
+  });
 });
 
 test("read-only lexical entry endpoint exposes five forms and four relations with provenance fields", async () => {

@@ -120,6 +120,15 @@ function createApp(repository) {
     }
   });
 
+  app.get("/language-catalog", async (_req, res, next) => {
+    try {
+      const catalog = await repository.getLanguageCatalog();
+      res.json({ contract_version: CONTRACT_VERSION, ...catalog });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/connector-helps", async (req, res, next) => {
     try {
       const language = typeof req.query.language === "string" ? req.query.language.toLowerCase() : "";

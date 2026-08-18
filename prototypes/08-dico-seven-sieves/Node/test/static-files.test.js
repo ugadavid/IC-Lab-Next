@@ -6,6 +6,10 @@ const { createApp } = require("../server");
 async function createStaticFileTestServer() {
   const repository = {
     getLanguages: async () => [],
+    getLanguageCatalog: async () => ({
+      languages: [],
+      summary: { total: 0, romance_documented: 0, non_romance_comparison: 0, romance_referenced: 0 },
+    }),
   };
   const server = createApp(repository).listen(0, "127.0.0.1");
   await new Promise((resolve, reject) => {
@@ -27,6 +31,12 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     const admin = await fetch(`${server.baseUrl}/admin-app/index-admin-0.1.html`);
     assert.equal(admin.status, 200);
     assert.match(await admin.text(), /Dico-IC Admin/);
+
+    const adminHtml = await (await fetch(`${server.baseUrl}/admin-app/index-admin-0.1.html`)).text();
+    assert.match(adminHtml, /app-version" content="0\.1\.3"/);
+    assert.match(adminHtml, /Catalogue des langues/);
+    assert.match(adminHtml, /\? Comprendre le catalogue des langues/);
+    assert.doesNotMatch(adminHtml, /documentation_status|DOCUMENTED|REFERENCED/);
 
     const entryView = await fetch(`${server.baseUrl}/admin-app/index-admin-entry-0.1.1.html?entry_key=INFORMATION_DATA`);
     assert.equal(entryView.status, 200);

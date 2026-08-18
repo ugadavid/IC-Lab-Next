@@ -26,6 +26,18 @@ Il n'est pas encore une version finale ni une source de vérité validée. Il se
 - `50_inflected_form.sql` ajoute la couche V0 expérimentale de pluriels attestés et validés, séparée des lemmes canoniques.
 - `60_connector_help.sql` ajoute l'objet pédagogique transversal Connector Help V0 et son catalogue ES/FR validé.
 
+## Reproduction du statut documentaire
+
+Depuis la mission 192, `00_schema.sql` est l'artefact de reproduction à neuf
+qui déclare `language.documentation_status` et sa contrainte à deux valeurs.
+Les cinq appels historiques de `20_seed_base.sql` restent compatibles avec
+`sp_upsert_language` : la valeur par défaut `DOCUMENTED` leur est appliquée.
+
+Pour une base de développement déjà existante, ne pas rejouer ce brouillon ni
+les anciens scripts destructifs. Utiliser exclusivement le script versionné
+`Node/scripts/migrate-language-documentation-status.js`, avec sa sauvegarde et
+ses modes `--check`, `--apply` et `--rollback`.
+
 ## Prudence
 
 Ce dossier ne change pas `docker-compose.yml`.
