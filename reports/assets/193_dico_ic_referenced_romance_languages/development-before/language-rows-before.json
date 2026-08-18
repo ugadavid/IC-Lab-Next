@@ -1,0 +1,47 @@
+[
+  {
+    "id": 1,
+    "code": "fr",
+    "name": "Français",
+    "family": "Romance",
+    "is_romance": 1,
+    "documentation_status": "DOCUMENTED",
+    "is_active": 1
+  },
+  {
+    "id": 2,
+    "code": "es",
+    "name": "Español",
+    "family": "Romance",
+    "is_romance": 1,
+    "documentation_status": "DOCUMENTED",
+    "is_active": 1
+  },
+  {
+    "id": 3,
+    "code": "it",
+    "name": "Italiano",
+    "family": "Romance",
+    "is_romance": 1,
+    "documentation_status": "DOCUMENTED",
+    "is_active": 1
+  },
+  {
+    "id": 4,
+    "code": "pt",
+    "name": "Português",
+    "family": "Romance",
+    "is_romance": 1,
+    "documentation_status": "DOCUMENTED",
+    "is_active": 1
+  },
+  {
+    "id": 5,
+    "code": "en",
+    "name": "English",
+    "family": "Germanic",
+    "is_romance": 0,
+    "documentation_status": "DOCUMENTED",
+    "is_active": 1
+  }
+]

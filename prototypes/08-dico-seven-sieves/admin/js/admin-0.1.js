@@ -101,6 +101,10 @@ function publicLabel(value) {
   return PUBLIC_LABELS[value] || value || "Non renseigné";
 }
 
+function publicFamily(value) {
+  return { Romance: "Romane", Germanic: "Germanique" }[value] || value;
+}
+
 function labelWithCode(value) {
   const label = publicLabel(value);
   return label === value ? label : `${label} · ${value}`;
@@ -224,23 +228,29 @@ function renderLanguageCatalog(items, summary) {
   languageCatalogSummary.replaceChildren();
   languageCount.textContent = `${summary.total} langue${summary.total > 1 ? "s" : ""} au catalogue`;
   appendLanguageSummary(summary.romance_documented, "langues romanes documentées", "documented");
-  appendLanguageSummary(summary.non_romance_comparison, "langue de comparaison non romane", "comparison");
   if (summary.romance_referenced > 0) {
     appendLanguageSummary(
       summary.romance_referenced,
-      "langues romanes référencées — prêtes à documenter",
+      "langues romanes prêtes à documenter",
       "referenced"
     );
   }
+  appendLanguageSummary(summary.non_romance_comparison, "langue de comparaison — non romane", "comparison");
   for (const language of items) {
     const row = document.createElement("tr");
+    if (!language.is_romance) row.classList.add("language-row-comparison");
+    if (language.public_classification === "Langue romane référencée — prête à documenter") {
+      row.classList.add("language-row-referenced");
+    }
     appendCell(row, language.code.toUpperCase(), "code-value");
     appendCell(row, language.name);
-    appendCell(row, language.family);
+    appendCell(row, publicFamily(language.family));
     appendCell(row, language.public_classification, language.is_romance ? "status-yes" : "status-comparison");
     appendCell(
       row,
-      `${language.lexical_entries} concepts · ${language.lexical_forms} formes`,
+      language.public_classification === "Langue romane référencée — prête à documenter"
+        ? "Prête à accueillir des contenus validés"
+        : `${language.lexical_entries} concepts · ${language.lexical_forms} formes`,
       "language-content"
     );
     languagesTableBody.appendChild(row);

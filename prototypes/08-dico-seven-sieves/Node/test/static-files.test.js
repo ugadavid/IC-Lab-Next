@@ -33,10 +33,17 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.match(await admin.text(), /Dico-IC Admin/);
 
     const adminHtml = await (await fetch(`${server.baseUrl}/admin-app/index-admin-0.1.html`)).text();
-    assert.match(adminHtml, /app-version" content="0\.1\.3"/);
+    assert.match(adminHtml, /app-version" content="0\.1\.4"/);
     assert.match(adminHtml, /Catalogue des langues/);
+    assert.match(adminHtml, /Dico-IC documente actuellement quatre langues romanes/);
     assert.match(adminHtml, /\? Comprendre le catalogue des langues/);
     assert.doesNotMatch(adminHtml, /documentation_status|DOCUMENTED|REFERENCED/);
+
+    const adminScript = await (await fetch(`${server.baseUrl}/admin-app/js/admin-0.1.js`)).text();
+    assert.match(adminScript, /langues romanes prêtes à documenter/);
+    assert.match(adminScript, /langue de comparaison — non romane/);
+    assert.match(adminScript, /Prête à accueillir des contenus validés/);
+    assert.match(adminScript, /Romance: "Romane", Germanic: "Germanique"/);
 
     const entryView = await fetch(`${server.baseUrl}/admin-app/index-admin-entry-0.1.1.html?entry_key=INFORMATION_DATA`);
     assert.equal(entryView.status, 200);

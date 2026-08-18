@@ -18,7 +18,7 @@ function placeholders(values) {
   return values.map(() => "?").join(", ");
 }
 
-const PUBLIC_LANGUAGE_ORDER = ["fr", "es", "it", "pt", "en"];
+const PUBLIC_LANGUAGE_ORDER = ["fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en"];
 
 function languageClassification(language) {
   if (language.documentation_status === "REFERENCED" && language.is_romance) {
@@ -291,14 +291,7 @@ function createRepository(pool) {
             WHERE lf.language_id = l.id) AS inflected_forms,
           (SELECT COUNT(*) FROM connector_help ch WHERE ch.language_id = l.id) AS connector_helps
         FROM language l
-        ORDER BY
-          CASE
-            WHEN l.documentation_status = 'DOCUMENTED' AND l.is_romance = 1 THEN 1
-            WHEN l.documentation_status = 'DOCUMENTED' AND l.is_romance = 0 THEN 2
-            ELSE 3
-          END,
-          FIELD(l.code, 'fr', 'es', 'it', 'pt', 'en'),
-          l.code
+        ORDER BY FIELD(l.code, 'fr', 'es', 'it', 'pt', 'ca', 'gl', 'oc', 'ro', 'co', 'sc', 'rm', 'en'), l.code
       `);
       const languages = rows.map((row) => {
         const language = {

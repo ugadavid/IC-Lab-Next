@@ -69,7 +69,7 @@ test("language repository separates the operational list from the documentary ca
     ["pt", "Português", "Romance", 1, 1],
     ["en", "English", "Germanic", 0, 1],
   ].map(([code, name, family, is_romance, is_active]) => ({ code, name, family, is_romance, is_active }));
-  const catalogRows = operationalRows.map((language, index) => ({
+  const documentedRows = operationalRows.map((language, index) => ({
     ...language,
     documentation_status: "DOCUMENTED",
     lexical_entries: [123, 126, 117, 115, 116][index],
@@ -77,6 +77,15 @@ test("language repository separates the operational list from the documentary ca
     inflected_forms: index === 1 ? 16 : 0,
     connector_helps: index < 2 ? 6 : 0,
   }));
+  const referencedRows = [
+    ["ca", "Català"], ["gl", "Galego"], ["oc", "Occitan"], ["ro", "Română"],
+    ["co", "Corsu"], ["sc", "Sardu"], ["rm", "Rumantsch"],
+  ].map(([code, name]) => ({
+    code, name, family: "Romance", is_romance: 1, is_active: 0,
+    documentation_status: "REFERENCED", lexical_entries: 0, lexical_forms: 0,
+    inflected_forms: 0, connector_helps: 0,
+  }));
+  const catalogRows = [...documentedRows.slice(0, 4), ...referencedRows, documentedRows[4]];
   const queries = [];
   const pool = {
     async execute(sql) {
@@ -90,14 +99,18 @@ test("language repository separates the operational list from the documentary ca
 
   assert.deepEqual(operational.map((language) => language.code), ["fr", "es", "it", "pt", "en"]);
   assert.deepEqual(catalog.summary, {
-    total: 5,
+    total: 12,
     romance_documented: 4,
     non_romance_comparison: 1,
-    romance_referenced: 0,
+    romance_referenced: 7,
   });
   assert.match(queries[0], /is_active = 1[\s\S]*documentation_status = 'DOCUMENTED'/);
   assert.match(queries[0], /FIELD\(code, 'fr', 'es', 'it', 'pt', 'en'\)/);
   assert.match(queries[1], /FROM language l/);
+  assert.match(queries[1], /'ca', 'gl', 'oc', 'ro', 'co', 'sc', 'rm', 'en'/);
+  assert.deepEqual(catalog.languages.map((language) => language.code), [
+    "fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en",
+  ]);
 });
 
 test("language catalog derives public classifications without mixing technical statuses", () => {
@@ -106,8 +119,9 @@ test("language catalog derives public classifications without mixing technical s
   assert.equal(languageClassification({ is_romance: true, documentation_status: "REFERENCED" }), "Langue romane référencée — prête à documenter");
   assert.deepEqual(summarizeLanguageCatalog([
     ...Array.from({ length: 4 }, () => ({ is_romance: true, documentation_status: "DOCUMENTED" })),
+    ...Array.from({ length: 7 }, () => ({ is_romance: true, documentation_status: "REFERENCED" })),
     { is_romance: false, documentation_status: "DOCUMENTED" },
-  ]), { total: 5, romance_documented: 4, non_romance_comparison: 1, romance_referenced: 0 });
+  ]), { total: 12, romance_documented: 4, non_romance_comparison: 1, romance_referenced: 7 });
 });
 
 test("language migration validates the five historical rows and refuses partial schema state", () => {
@@ -148,10 +162,12 @@ test("language migration validates the five historical rows and refuses partial 
 
 test("language routes preserve the operational response and expose a distinct catalog", async () => {
   const languages = ["fr", "es", "it", "pt", "en"].map((code) => ({ code }));
-  const summary = { total: 5, romance_documented: 4, non_romance_comparison: 1, romance_referenced: 0 };
+  const catalogLanguages = ["fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en"]
+    .map((code) => ({ code }));
+  const summary = { total: 12, romance_documented: 4, non_romance_comparison: 1, romance_referenced: 7 };
   await withServer({
     async getLanguages() { return languages; },
-    async getLanguageCatalog() { return { languages, summary }; },
+    async getLanguageCatalog() { return { languages: catalogLanguages, summary }; },
   }, async (baseUrl) => {
     const operationalResponse = await fetch(`${baseUrl}/languages`);
     const operational = await operationalResponse.json();
@@ -162,7 +178,9 @@ test("language routes preserve the operational response and expose a distinct ca
     const catalog = await catalogResponse.json();
     assert.equal(catalogResponse.status, 200);
     assert.deepEqual(catalog.summary, summary);
-    assert.equal(catalog.languages.length, 5);
+    assert.deepEqual(catalog.languages.map((language) => language.code), [
+      "fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en",
+    ]);
   });
 });
 

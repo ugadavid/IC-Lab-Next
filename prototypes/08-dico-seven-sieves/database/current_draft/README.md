@@ -31,12 +31,20 @@ Il n'est pas encore une version finale ni une source de vérité validée. Il se
 Depuis la mission 192, `00_schema.sql` est l'artefact de reproduction à neuf
 qui déclare `language.documentation_status` et sa contrainte à deux valeurs.
 Les cinq appels historiques de `20_seed_base.sql` restent compatibles avec
-`sp_upsert_language` : la valeur par défaut `DOCUMENTED` leur est appliquée.
+`sp_upsert_language` : la valeur par défaut `DOCUMENTED` leur est appliquée. Le
+même seed insère ensuite CA, GL, OC, RO, CO, SC et RM explicitement comme
+`REFERENCED` et inactives. Une exécution à neuf recrée donc les douze lignes
+exactes du catalogue sans changer la signature historique à cinq paramètres.
 
 Pour une base de développement déjà existante, ne pas rejouer ce brouillon ni
 les anciens scripts destructifs. Utiliser exclusivement le script versionné
 `Node/scripts/migrate-language-documentation-status.js`, avec sa sauvegarde et
 ses modes `--check`, `--apply` et `--rollback`.
+
+Pour ajouter les sept langues romanes référencées à une base existante, utiliser
+`Node/scripts/manage-referenced-romance-languages.js`. Il valide les cinq lignes
+historiques et les volumes fonctionnels, crée une sauvegarde exclusive et bloque
+le rollback dès qu'une langue référencée possède une dépendance.
 
 ## Prudence
 

@@ -288,6 +288,13 @@ select { font: inherit; }
   margin: -2px 0 12px;
 }
 
+.language-catalog-message {
+  max-width: 1080px;
+  margin: -2px 0 12px;
+  color: #344760;
+  line-height: 1.45;
+}
+
 .language-summary-item {
   display: flex;
   min-height: 42px;
@@ -305,6 +312,14 @@ select { font: inherit; }
 .language-summary-item.referenced { border-style: dashed; background: #f8f6fc; }
 .status-comparison { color: #765b22; font-weight: 700; }
 .language-content { color: var(--muted); white-space: nowrap; }
+.language-row-referenced td { background: #fbfafe; }
+.language-row-comparison td { background: #fffaf0; border-top: 2px solid #d8c79f; }
+.language-row-comparison:hover td { background: #fff6df; }
+
+#languages th,
+#languages td { padding-top: 7px; padding-bottom: 7px; }
+
+#languages .language-content { white-space: normal; }
 
 .metric-grid {
   display: grid;

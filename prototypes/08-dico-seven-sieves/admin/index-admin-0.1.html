@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.3">
-  <title>Dico-IC Admin V0.1.3</title>
+  <meta name="app-version" content="0.1.4">
+  <title>Dico-IC Admin V0.1.4</title>
   <link rel="stylesheet" href="./css/admin-0.1.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
       <p>Consultation et enrichissement local de la base de connaissances</p>
     </div>
     <div class="header-actions">
-      <span class="environment-label">V0.1.3 locale</span>
+      <span class="environment-label">V0.1.4 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Connexion à l’API…</span>
     </div>
   </header>
@@ -87,10 +87,11 @@
         </div>
         <span id="languageCount" class="section-count">0 langue au catalogue</span>
       </div>
+      <p class="language-catalog-message">Dico-IC documente actuellement quatre langues romanes et utilise l’anglais comme langue non romane de comparaison. Sept autres langues romanes sont déjà référencées dans le dispositif, prêtes à accueillir des contenus produits et validés par les spécialistes concernés.</p>
       <div id="languageCatalogSummary" class="language-summary" aria-live="polite"></div>
       <details class="context-help">
         <summary>? Comprendre le catalogue des langues</summary>
-        <div><strong>Le catalogue</strong> distingue les langues déjà documentées, la langue non romane utilisée pour la comparaison et les langues prêtes à accueillir de futurs contenus validés. Seules les langues disposant des ressources attendues sont proposées dans les usages actuels.</div>
+        <div><strong>Le catalogue</strong> distingue les langues déjà documentées, la langue non romane utilisée pour la comparaison et les langues prêtes à accueillir de futurs contenus validés. Une langue prête à documenter ne comporte pas encore de contenu validé et n’est donc pas proposée à l’analyse.</div>
       </details>
       <div class="table-wrap">
         <table>
