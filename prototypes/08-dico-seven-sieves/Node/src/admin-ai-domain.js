@@ -1,5 +1,6 @@
 const fs = require("node:fs");
 const path = require("node:path");
+const { canonicalizeEntryKey } = require("../../admin/js/entry-key-canonicalization-0.1.js");
 
 const ALLOWED_COUNTS = new Set([10, 20, 30, 50]);
 const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2"]);
@@ -146,6 +147,18 @@ function extractResponseText(response) {
   throw new AdminAiError(502, "OPENAI_EMPTY_RESPONSE", "OpenAI n’a renvoyé aucun contenu exploitable.");
 }
 
+function canonicalizeCandidateEntryKey(value, index) {
+  try {
+    return canonicalizeEntryKey(value);
+  } catch {
+    throw new AdminAiError(
+      502,
+      "OPENAI_INVALID_CANDIDATE",
+      `La clé technique du candidat ${index + 1} est vide après canonicalisation.`
+    );
+  }
+}
+
 function parseAndValidateCandidateJson(raw, request) {
   let parsed;
   try {
@@ -189,7 +202,7 @@ function parseAndValidateCandidateJson(raw, request) {
       };
     });
     return {
-      entry_key: candidate.entry_key.trim().toUpperCase(),
+      entry_key: canonicalizeCandidateEntryKey(candidate.entry_key, index),
       gloss_fr: candidate.gloss_fr.trim(),
       gloss_en: candidate.gloss_en.trim(),
       semantic_domain: candidate.semantic_domain.trim(),
@@ -204,7 +217,7 @@ function buildPrompts(request) {
   const system = [
     "Tu proposes des brouillons lexicaux pour une base d’intercompréhension romane.",
     "Retourne uniquement les données demandées par le schéma JSON.",
-    "Chaque entry_key est une clé conceptuelle stable en MAJUSCULES_AVEC_UNDERSCORES.",
+    "Chaque entry_key est une clé conceptuelle ASCII stable contenant uniquement A-Z, 0-9 et des underscores, sans accent, apostrophe, espace ni trait d’union.",
     "Les formes doivent être usuelles, pédagogiquement pertinentes et distinctes.",
     ...DICTIONARY_LEMMA_INSTRUCTIONS,
     "N’invente pas de langues et n’ajoute aucune explication hors JSON.",
@@ -228,11 +241,22 @@ async function generateStructuredCandidates(request, prompts, schemaName, option
   const fetchImpl = options.fetchImpl || fetch;
   const schema = options.schema || candidateSchema();
   const parseResponse = options.parseResponse || parseAndValidateCandidateJson;
+  const cancellationSignal = options.signal;
   if (!apiKey) {
     throw new AdminAiError(503, "OPENAI_NOT_CONFIGURED", "La clé OpenAI n’est pas configurée côté serveur.");
   }
 
   const controller = new AbortController();
+  let cancelledByClient = Boolean(cancellationSignal?.aborted);
+  const cancelFromClient = () => {
+    cancelledByClient = true;
+    controller.abort();
+  };
+  if (cancellationSignal && !cancellationSignal.aborted) {
+    cancellationSignal.addEventListener("abort", cancelFromClient, { once: true });
+  } else if (cancelledByClient) {
+    controller.abort();
+  }
   const timeout = setTimeout(() => controller.abort(), 90_000);
   try {
     const response = await fetchImpl("https://api.openai.com/v1/responses", {
@@ -259,6 +283,9 @@ async function generateStructuredCandidates(request, prompts, schemaName, option
       signal: controller.signal,
     });
     const data = await response.json().catch(() => null);
+    if (cancelledByClient || cancellationSignal?.aborted) {
+      throw new AdminAiError(499, "OPENAI_CANCELLED", "La génération OpenAI a été annulée par le client.");
+    }
     if (!response.ok) {
       const message = data?.error?.message || `OpenAI a répondu avec le statut ${response.status}.`;
       throw new AdminAiError(502, "OPENAI_REQUEST_FAILED", message);
@@ -270,12 +297,16 @@ async function generateStructuredCandidates(request, prompts, schemaName, option
     };
   } catch (error) {
     if (error.name === "AbortError") {
+      if (cancelledByClient || cancellationSignal?.aborted) {
+        throw new AdminAiError(499, "OPENAI_CANCELLED", "La génération OpenAI a été annulée par le client.");
+      }
       throw new AdminAiError(504, "OPENAI_TIMEOUT", "La génération OpenAI a dépassé le délai autorisé.");
     }
     if (error instanceof AdminAiError) throw error;
     throw new AdminAiError(502, "OPENAI_UNAVAILABLE", "Impossible de joindre OpenAI.");
   } finally {
     clearTimeout(timeout);
+    cancellationSignal?.removeEventListener("abort", cancelFromClient);
   }
 }
 

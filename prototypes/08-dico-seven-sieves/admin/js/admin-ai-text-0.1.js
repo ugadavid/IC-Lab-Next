@@ -3,6 +3,21 @@
 const API_BASE_URL = "http://localhost:3000";
 const DEFAULT_LANGUAGE_CODES = new Set(["fr", "es", "it", "pt"]);
 const PARTS_OF_SPEECH = ["noun", "verb", "adjective", "adverb"];
+const {
+  DEFAULT_BATCH_SIZE,
+  ManualInflectedBatchSession,
+  buildInflectedBatchRequest,
+  formIdentity: inflectedFormIdentity,
+  formatIgnoredProposalWarning,
+} = window.DicoManualInflectedBatches;
+const {
+  CancellableGenerationSession,
+  isAbortError,
+} = window.DicoTextGeneration;
+const {
+  canonicalizeEntryKey,
+  findDuplicateCanonicalEntryKeys,
+} = window.DicoEntryKey;
 
 let languages = [];
 let candidates = [];
@@ -10,6 +25,9 @@ let existingEntryKeys = new Set();
 let unknownWordValues = [];
 let reviewItems = [];
 let inflectedCandidates = [];
+const inflectedBatchSession = new ManualInflectedBatchSession();
+let inflectedBatchLoading = false;
+const lexicalGenerationSession = new CancellableGenerationSession();
 
 const apiStatus = document.getElementById("apiStatus");
 const coverageForm = document.getElementById("coverageForm");
@@ -24,6 +42,8 @@ const unknownList = document.getElementById("unknownList");
 const conceptAbsentList = document.getElementById("conceptAbsentList");
 const generateInflectedButton = document.getElementById("generateInflectedButton");
 const inflectedGenerationMessage = document.getElementById("inflectedGenerationMessage");
+const inflectedBatchProgress = document.getElementById("inflectedBatchProgress");
+const inflectedBatchSize = document.getElementById("inflectedBatchSize");
 const inflectedCandidateTableBody = document.getElementById("inflectedCandidateTableBody");
 const inflectedCandidateTotal = document.getElementById("inflectedCandidateTotal");
 const inflectedReadyTotal = document.getElementById("inflectedReadyTotal");
@@ -34,6 +54,11 @@ const lexicalGenerationSection = document.getElementById("lexicalGenerationSecti
 const languageChoices = document.getElementById("languageChoices");
 const generateButton = document.getElementById("generateButton");
 const generationMessage = document.getElementById("generationMessage");
+const generationProgress = document.getElementById("generationProgress");
+const generationProgressLabel = document.getElementById("generationProgressLabel");
+const generationElapsed = document.getElementById("generationElapsed");
+const generationLanguages = document.getElementById("generationLanguages");
+const cancelGenerationButton = document.getElementById("cancelGenerationButton");
 const candidateTableBody = document.getElementById("candidateTableBody");
 const candidateTotal = document.getElementById("candidateTotal");
 const selectedTotal = document.getElementById("selectedTotal");
@@ -58,9 +83,75 @@ function setCoverageMessage(kind, message) {
   coverageMessage.textContent = message;
 }
 
+function targetLanguageInputs() {
+  return [...document.querySelectorAll('input[name="targetLanguage"]')];
+}
+
+function setLexicalGenerationLoading(loading, languageSnapshot = []) {
+  targetLanguageInputs().forEach(input => { input.disabled = loading; });
+  generateButton.disabled = loading || unknownWordValues.length === 0;
+  cancelGenerationButton.hidden = !loading;
+  cancelGenerationButton.disabled = !loading;
+  generationProgress.hidden = !loading;
+  if (loading) {
+    generationProgressLabel.textContent = "Génération OpenAI en cours…";
+    generationElapsed.textContent = "0 s";
+    generationLanguages.textContent = `Langues demandées : ${languageSnapshot.map(code => code.toUpperCase()).join(", ")}`;
+  }
+}
+
+function cancelLexicalGeneration(options = {}) {
+  const cancelled = lexicalGenerationSession.cancel();
+  if (!cancelled) return false;
+  setLexicalGenerationLoading(false);
+  if (options.showMessage !== false) {
+    setMessage("info", "Génération annulée. Aucun nouveau brouillon n’a été créé.");
+  }
+  return true;
+}
+
 function setInflectedMessage(kind, message) {
   inflectedGenerationMessage.className = `message ${kind}`;
   inflectedGenerationMessage.textContent = message;
+}
+
+function updateInflectedBatchControls() {
+  const progress = inflectedBatchSession.progress();
+  if (progress.total === 0) {
+    inflectedBatchProgress.textContent = "Analysez un texte pour préparer les formes à examiner.";
+    generateInflectedButton.textContent = "Examiner le prochain lot";
+    generateInflectedButton.disabled = true;
+    inflectedBatchSize.disabled = true;
+    return;
+  }
+  if (progress.complete) {
+    inflectedBatchProgress.textContent = `${progress.total} formes examinées`;
+    generateInflectedButton.textContent = "Toutes les formes ont été examinées";
+    generateInflectedButton.disabled = true;
+    inflectedBatchSize.disabled = true;
+    return;
+  }
+  inflectedBatchProgress.textContent = progress.examined
+    ? `${progress.examined} examinées · ${progress.remaining} restantes`
+    : `${progress.total} formes à examiner · prochain lot : ${progress.nextSize}`;
+  generateInflectedButton.textContent = progress.remaining <= inflectedBatchSession.batchSize
+    ? `Examiner les ${progress.nextSize} formes restantes`
+    : `Examiner le prochain lot — ${progress.nextSize} formes`;
+  generateInflectedButton.disabled = inflectedBatchLoading;
+  inflectedBatchSize.disabled = inflectedBatchLoading;
+}
+
+function applySelectedInflectedBatchSize() {
+  try {
+    inflectedBatchSession.setBatchSize(inflectedBatchSize.value);
+    updateInflectedBatchControls();
+    return true;
+  } catch (error) {
+    inflectedBatchSize.value = String(inflectedBatchSession.batchSize);
+    setInflectedMessage("error", error.message);
+    updateInflectedBatchControls();
+    return false;
+  }
 }
 
 async function apiRequest(path, options = {}) {
@@ -116,16 +207,72 @@ async function loadLanguages() {
   }
 }
 
-function validateDraft(candidate) {
-  if (!/^[A-Z][A-Z0-9_]{2,99}$/.test(candidate.entry_key)) return { code: "error", label: "Erreur" };
+function canonicalKeyOrNull(value) {
+  try {
+    return canonicalizeEntryKey(value);
+  } catch {
+    return null;
+  }
+}
+
+function validateDraft(candidate, candidateIndex = -1) {
+  const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+  if (!canonicalKey || !/^[A-Z][A-Z0-9_]{2,99}$/.test(canonicalKey)) {
+    return { code: "error", label: "Erreur" };
+  }
   if (!candidate.gloss_fr.trim() || !candidate.semantic_domain.trim()) return { code: "incomplete", label: "Incomplet" };
   const requestedLanguages = checkedValues("targetLanguage");
   const complete = requestedLanguages.every(code =>
     candidate.forms.some(form => form.language_code === code && form.lemma.trim() && PARTS_OF_SPEECH.includes(form.part_of_speech))
   );
   if (!complete) return { code: "incomplete", label: "Incomplet" };
-  if (existingEntryKeys.has(candidate.entry_key)) return { code: "duplicate", label: "Doublon possible" };
+  const duplicateKeys = findDuplicateCanonicalEntryKeys(
+    candidates.map(item => item.entry_key),
+    [...existingEntryKeys]
+  );
+  if (duplicateKeys.has(canonicalKey)) {
+    return { code: "duplicate", label: "Doublon possible" };
+  }
   return { code: "ready", label: "Prêt" };
+}
+
+function canonicalizeCandidateForReview(candidate, index) {
+  const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+  if (!canonicalKey) return false;
+  candidate.entry_key = canonicalKey;
+  const status = validateDraft(candidate, index);
+  if (status.code === "duplicate" || status.code === "error") candidate.keep = false;
+  return true;
+}
+
+function canonicalizeAllCandidateKeys() {
+  candidates.forEach((candidate) => {
+    const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+    if (canonicalKey) candidate.entry_key = canonicalKey;
+    else candidate.keep = false;
+  });
+  candidates.forEach((candidate, index) => {
+    const status = validateDraft(candidate, index);
+    if (status.code === "duplicate" || status.code === "error") candidate.keep = false;
+  });
+}
+
+async function refreshCanonicalEntryKeyExistence(candidate, index) {
+  const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+  if (!canonicalKey) return;
+  try {
+    await apiRequest(`/admin/lexical-entry/${encodeURIComponent(canonicalKey)}`);
+    existingEntryKeys.add(canonicalKey);
+  } catch (error) {
+    if (error.status !== 404) {
+      setMessage("error", `Vérification du doublon impossible : ${error.message}`);
+      return;
+    }
+  }
+  if (candidates[index] === candidate && canonicalKeyOrNull(candidate.entry_key) === canonicalKey) {
+    canonicalizeCandidateForReview(candidate, index);
+    renderCandidates();
+  }
 }
 
 function makeInput(value, field, index, ariaLabel) {
@@ -152,12 +299,14 @@ function renderCandidates() {
   candidates.forEach((candidate, index) => {
     const row = document.createElement("tr");
     row.dataset.index = String(index);
+    const status = validateDraft(candidate, index);
 
     const keepCell = document.createElement("td");
     keepCell.className = "keep-cell";
     const keep = document.createElement("input");
     keep.type = "checkbox";
     keep.checked = candidate.keep;
+    keep.disabled = status.code === "duplicate" || status.code === "error";
     keep.dataset.action = "keep";
     keep.dataset.index = String(index);
     keep.setAttribute("aria-label", `Garder ${candidate.entry_key || `la proposition ${index + 1}`}`);
@@ -209,7 +358,6 @@ function renderCandidates() {
     formsCell.appendChild(formsStack);
 
     const statusCell = document.createElement("td");
-    const status = validateDraft(candidate);
     const badge = document.createElement("span");
     badge.className = `status-badge status-${status.code}`;
     badge.textContent = status.label;
@@ -239,7 +387,7 @@ function updateCandidateIndicators(index) {
   const candidate = candidates[index];
   const row = candidateTableBody.querySelector(`tr[data-index="${index}"]`);
   if (candidate && row) {
-    const status = validateDraft(candidate);
+    const status = validateDraft(candidate, index);
     const badge = row.querySelector(".status-badge");
     badge.className = `status-badge status-${status.code}`;
     badge.textContent = status.label;
@@ -268,6 +416,19 @@ function renderWords(target, words, kind = "unknown") {
 
 async function analyzeCoverage(event) {
   event.preventDefault();
+  cancelLexicalGeneration({ showMessage: false });
+  reviewItems = [];
+  unknownWordValues = [];
+  inflectedCandidates = [];
+  inflectedBatchSession.reset([], sourceLanguage.value);
+  inflectedBatchSize.value = String(DEFAULT_BATCH_SIZE);
+  inflectedBatchLoading = false;
+  inflectedGenerationMeta.textContent = "Aucune génération.";
+  inflectedCreationReport.className = "creation-report";
+  inflectedCreationReport.textContent = "";
+  setInflectedMessage("", "");
+  renderInflectedCandidates();
+  updateInflectedBatchControls();
   analyzeButton.disabled = true;
   generateButton.disabled = true;
   generateInflectedButton.disabled = true;
@@ -292,19 +453,29 @@ async function analyzeCoverage(event) {
     renderWords(unknownList, data.forms_to_review, "unknown");
     conceptAbsentList.textContent = "Déterminés après la proposition morphologique.";
     reviewItems = data.forms_to_review;
-    unknownWordValues = [];
-    inflectedCandidates = [];
+    inflectedBatchSession.reset(reviewItems, sourceLanguage.value);
+    inflectedBatchSize.value = String(DEFAULT_BATCH_SIZE);
+    inflectedCandidates = inflectedBatchSession.candidates;
     renderInflectedCandidates();
     coverageResults.hidden = false;
-    generateInflectedButton.disabled = reviewItems.length === 0;
+    updateInflectedBatchControls();
     generateButton.disabled = true;
+    setInflectedMessage(
+      "info",
+      reviewItems.length
+        ? "Examinez les formes par lots successifs. Chaque lot reste déclenché manuellement."
+        : "Aucune forme ne nécessite d’examen morphologique."
+    );
     setCoverageMessage("success", reviewItems.length
       ? `${data.summary.known_lemmas} lemme(s), ${data.summary.known_inflected_forms} flexion(s) connue(s), ${data.summary.forms_to_review} forme(s) à examiner.`
       : "Toutes les formes uniques du texte sont déjà représentées dans Dico-IC.");
   } catch (error) {
     reviewItems = [];
     unknownWordValues = [];
+    inflectedBatchSession.reset([], sourceLanguage.value);
+    inflectedCandidates = inflectedBatchSession.candidates;
     coverageResults.hidden = true;
+    updateInflectedBatchControls();
     setCoverageMessage("error", `Analyse impossible : ${error.message}`);
   } finally {
     analyzeButton.disabled = false;
@@ -516,50 +687,63 @@ function renderInflectedCandidates() {
 }
 
 async function generateInflectedCandidates() {
-  if (!reviewItems.length || !sourceLanguage.value) {
+  if (!applySelectedInflectedBatchSize()) return;
+  const batch = inflectedBatchSession.nextBatch();
+  if (!batch.length || !sourceLanguage.value) {
     setInflectedMessage("error", "Analysez un texte et choisissez sa langue source.");
     return;
   }
-  generateInflectedButton.disabled = true;
+  inflectedBatchLoading = true;
+  updateInflectedBatchControls();
   setInflectedMessage("info", "Analyse morphologique en cours. Aucune donnée n’est écrite.");
   inflectedCreationReport.className = "creation-report";
   try {
     const data = await apiRequest("/admin/ai/inflected-form-candidates", {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
-      body: JSON.stringify({
-        items: reviewItems.map((item) => ({
-          surface_form: item.surface,
-          language: sourceLanguage.value,
-          context: item.contexts[0] || textInput.value.slice(0, 500),
-        })),
-      }),
+      body: JSON.stringify(buildInflectedBatchRequest(
+        batch,
+        sourceLanguage.value,
+        textInput.value
+      )),
     });
-    inflectedCandidates = data.candidates;
-    const returnedKeys = new Set(inflectedCandidates.map(
-      (candidate) => `${candidate.language}\u0000${normalizeLookup(candidate.surface_form)}`
+    inflectedBatchSession.completeBatch(batch, data.candidates);
+    inflectedCandidates = inflectedBatchSession.candidates;
+    const returnedKeys = new Set(data.candidates.map(
+      (candidate) => inflectedFormIdentity(candidate.language, candidate.normalized_surface)
     ));
-    const omitted = reviewItems.filter((item) => !returnedKeys.has(
-      `${sourceLanguage.value}\u0000${item.normalized}`
+    const omitted = batch.filter((item) => !returnedKeys.has(
+      inflectedFormIdentity(sourceLanguage.value, item.normalized)
     ));
-    unknownWordValues = [
-      ...inflectedCandidates
+    unknownWordValues = [...new Set([
+      ...unknownWordValues,
+      ...data.candidates
         .filter((candidate) => candidate.state === "LEMMA_NOT_FOUND")
         .map((candidate) => candidate.surface_form),
       ...omitted.map((item) => item.surface),
-    ];
+    ])];
     generateButton.disabled = unknownWordValues.length === 0;
     inflectedGenerationMeta.textContent =
-      `${data.generation.returned}/${data.generation.requested} · modèle ${data.generation.model}`;
+      `Dernier lot : ${data.generation.returned}/${data.generation.requested} · modèle ${data.generation.model}`;
+    const progress = inflectedBatchSession.progress();
+    const warningMessage = formatIgnoredProposalWarning(data.warnings, data.candidates.length);
     setInflectedMessage(
-      "success",
-      `${inflectedCandidates.length} proposition(s) reçue(s). Vérifiez les cibles avant création.`
+      warningMessage ? "warning" : "success",
+      warningMessage || (progress.complete
+        ? `${progress.total} formes examinées. Vérifiez les propositions avant toute création.`
+        : `${data.candidates.length} proposition(s) reçue(s). Le lot suivant attend votre action.`)
     );
     renderInflectedCandidates();
   } catch (error) {
-    setInflectedMessage("error", `Génération impossible : ${error.message}`);
+    setInflectedMessage(
+      "error",
+      error.code === "OPENAI_TIMEOUT" || error.status === 504
+        ? "La génération a dépassé le délai autorisé. Réduisez la taille du lot puis réessayez."
+        : `Génération impossible : ${error.message}`
+    );
   } finally {
-    generateInflectedButton.disabled = reviewItems.length === 0;
+    inflectedBatchLoading = false;
+    updateInflectedBatchControls();
   }
 }
 
@@ -644,24 +828,48 @@ async function generateCandidates() {
     return;
   }
 
-  generateButton.disabled = true;
-  setMessage("info", "Génération en cours. Aucun brouillon n’est encore écrit en base.");
+  const generation = lexicalGenerationSession.start(request.languages, elapsedSeconds => {
+    generationElapsed.textContent = `${elapsedSeconds} s`;
+  });
+  if (!generation) return;
+
+  setLexicalGenerationLoading(true, generation.languages);
+  setMessage("info", "La génération peut être annulée sans modifier les brouillons existants.");
   creationReport.className = "creation-report";
   try {
     const data = await apiRequest("/admin/ai/text-candidates", {
       method: "POST",
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(request),
+      signal: generation.signal,
     });
-    existingEntryKeys = new Set(data.existing_entry_keys || []);
-    candidates = data.candidates.map(candidate => ({ ...candidate, keep: true }));
+    if (!lexicalGenerationSession.isCurrent(generation.id)) return;
+    generationProgressLabel.textContent = "Affichage des brouillons…";
+    existingEntryKeys = new Set(
+      (data.existing_entry_keys || []).map(canonicalizeEntryKey)
+    );
+    candidates = data.candidates.map(candidate => ({
+      ...candidate,
+      entry_key: canonicalizeEntryKey(candidate.entry_key),
+      keep: true,
+    }));
+    canonicalizeAllCandidateKeys();
     generationMeta.textContent = `${data.generation.returned}/${data.generation.requested} · modèle ${data.generation.model}`;
     setMessage("success", `${candidates.length} proposition(s) reçue(s). Relisez-les avant création.`);
     renderCandidates();
   } catch (error) {
-    setMessage("error", `Génération impossible : ${error.message}`);
+    if (!lexicalGenerationSession.isCurrent(generation.id)) return;
+    if (isAbortError(error)) {
+      setMessage("info", "Génération annulée. Aucun nouveau brouillon n’a été créé.");
+    } else if (error.code === "OPENAI_TIMEOUT") {
+      setMessage("error", "La génération OpenAI a dépassé le délai autorisé. Réessayez.");
+    } else {
+      setMessage("error", `Génération impossible : ${error.message}`);
+    }
   } finally {
-    generateButton.disabled = unknownWordValues.length === 0;
+    if (lexicalGenerationSession.finish(generation.id)) {
+      setLexicalGenerationLoading(false);
+    }
   }
 }
 
@@ -671,9 +879,7 @@ function updateCandidateFromControl(target) {
   if (!candidate) return;
   if (target.dataset.action === "keep") candidate.keep = target.checked;
   if (target.dataset.field) {
-    candidate[target.dataset.field] = target.dataset.field === "entry_key"
-      ? target.value.toUpperCase()
-      : target.value;
+    candidate[target.dataset.field] = target.value;
   }
   if (target.dataset.formField) {
     const form = candidate.forms.find(item => item.language_code === target.dataset.formLanguage);
@@ -688,6 +894,17 @@ candidateTableBody.addEventListener("input", event => {
 candidateTableBody.addEventListener("change", event => {
   updateCandidateFromControl(event.target);
   updateCandidateIndicators(Number(event.target.dataset.index));
+});
+candidateTableBody.addEventListener("focusout", event => {
+  if (event.target.dataset.field !== "entry_key") return;
+  const index = Number(event.target.dataset.index);
+  const candidate = candidates[index];
+  if (!candidate) return;
+  if (canonicalizeCandidateForReview(candidate, index)) {
+    event.target.value = candidate.entry_key;
+    void refreshCanonicalEntryKeyExistence(candidate, index);
+  }
+  renderCandidates();
 });
 candidateTableBody.addEventListener("click", event => {
   if (event.target.dataset.action !== "delete") return;
@@ -764,6 +981,8 @@ function setAllSelected(value) {
 }
 
 async function createSelectedCandidates() {
+  canonicalizeAllCandidateKeys();
+  renderCandidates();
   const selected = candidates.filter(candidate => candidate.keep);
   const report = { created: [], duplicates: [], errors: [], ignored: candidates.length - selected.length };
   createSelectedButton.disabled = true;
@@ -771,8 +990,8 @@ async function createSelectedCandidates() {
   creationReport.textContent = `Création de ${selected.length} entrée(s) en cours…`;
 
   for (const candidate of selected) {
-    const status = validateDraft(candidate);
-    if (status.code === "error" || status.code === "incomplete") {
+    const status = validateDraft(candidate, candidates.indexOf(candidate));
+    if (status.code === "error" || status.code === "incomplete" || status.code === "duplicate") {
       report.ignored += 1;
       continue;
     }
@@ -812,19 +1031,30 @@ async function createSelectedCandidates() {
 
 coverageForm.addEventListener("submit", analyzeCoverage);
 sourceLanguage.addEventListener("change", () => {
+  cancelLexicalGeneration({ showMessage: false });
   reviewItems = [];
-  inflectedCandidates = [];
+  inflectedBatchSession.reset([], sourceLanguage.value);
+  inflectedBatchSize.value = String(DEFAULT_BATCH_SIZE);
+  inflectedCandidates = inflectedBatchSession.candidates;
   unknownWordValues = [];
   coverageResults.hidden = true;
-  generateInflectedButton.disabled = true;
+  inflectedBatchLoading = false;
+  inflectedGenerationMeta.textContent = "Aucune génération.";
+  inflectedCreationReport.className = "creation-report";
+  inflectedCreationReport.textContent = "";
+  setInflectedMessage("", "");
+  updateInflectedBatchControls();
   generateButton.disabled = true;
   renderInflectedCandidates();
 });
 generateInflectedButton.addEventListener("click", generateInflectedCandidates);
+inflectedBatchSize.addEventListener("change", applySelectedInflectedBatchSize);
 createInflectedButton.addEventListener("click", createSelectedInflectedMappings);
 generateButton.addEventListener("click", generateCandidates);
+cancelGenerationButton.addEventListener("click", () => cancelLexicalGeneration());
 selectAllButton.addEventListener("click", () => setAllSelected(true));
 selectNoneButton.addEventListener("click", () => setAllSelected(false));
 createSelectedButton.addEventListener("click", createSelectedCandidates);
+window.addEventListener("pagehide", () => cancelLexicalGeneration({ showMessage: false }));
 
 loadLanguages();

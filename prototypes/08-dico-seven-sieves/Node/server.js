@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("node:path");
+const { canonicalizeEntryKey } = require("../admin/js/entry-key-canonicalization-0.1.js");
 
 const { createPool, createRepository } = require("./src/repository");
 const {
@@ -50,6 +51,22 @@ function errorResponse(res, status, code, message, field) {
   return res.status(status).json({ contract_version: CONTRACT_VERSION, error });
 }
 
+function createClientAbortContext(req, res) {
+  const controller = new AbortController();
+  const abort = () => {
+    if (!res.writableEnded && !controller.signal.aborted) controller.abort();
+  };
+  req.once("aborted", abort);
+  res.once("close", abort);
+  return {
+    signal: controller.signal,
+    cleanup() {
+      req.removeListener("aborted", abort);
+      res.removeListener("close", abort);
+    },
+  };
+}
+
 function parsePositiveId(value) {
   const id = Number(value);
   return Number.isSafeInteger(id) && id > 0 ? id : null;
@@ -97,8 +114,9 @@ function connectorHelpError(res, error) {
   return null;
 }
 
-function createApp(repository) {
+function createApp(repository, options = {}) {
   const app = express();
+  const generateText = options.generateTextCandidates || generateTextCandidates;
 
   app.use(cors());
   app.use(express.json({ limit: "128kb" }));
@@ -404,7 +422,7 @@ function createApp(repository) {
 
   app.get("/admin/lexical-entry/:entryKey", async (req, res, next) => {
     try {
-      const entryKey = String(req.params.entryKey || "").toUpperCase();
+      const entryKey = canonicalizeEntryKey(req.params.entryKey);
       const entry = await repository.getAdminLexicalEntry(entryKey);
       if (!entry) {
         return errorResponse(res, 404, "ENTRY_NOT_FOUND", `L’entrée ${entryKey} n’existe pas.`, "entry_key");
@@ -423,7 +441,7 @@ function createApp(repository) {
       return errorResponse(res, 415, "UNSUPPORTED_MEDIA_TYPE", "Content-Type doit être application/json.");
     }
     try {
-      const entryKey = String(req.params.entryKey || "").toUpperCase();
+      const entryKey = canonicalizeEntryKey(req.params.entryKey);
       const languages = await repository.getDocumentableLanguages();
       const validation = validateAdminLexicalEntryUpdate(req.body, entryKey, languages);
       if (!validation.ok) {
@@ -702,11 +720,13 @@ function createApp(repository) {
       return res.json({
         contract_version: CONTRACT_VERSION,
         candidates,
+        ...(generated.warnings.length > 0 ? { warnings: generated.warnings } : {}),
         generation: {
           model: generated.model,
           response_id: generated.response_id,
           requested: request.count,
           returned: candidates.length,
+          ignored: generated.warnings.length,
         },
       });
     } catch (error) {
@@ -721,13 +741,16 @@ function createApp(repository) {
     if (!req.is("application/json")) {
       return errorResponse(res, 415, "UNSUPPORTED_MEDIA_TYPE", "Content-Type doit être application/json.");
     }
+    const cancellation = createClientAbortContext(req, res);
     try {
       const languages = await repository.getLanguages();
       const request = validateTextCandidateRequest(req.body, languages);
-      const generated = await generateTextCandidates(request);
+      const generated = await generateText(request, { signal: cancellation.signal });
+      if (cancellation.signal.aborted) return;
       const existingEntryKeys = await repository.findExistingEntryKeys(
         generated.candidates.map((candidate) => candidate.entry_key)
       );
+      if (cancellation.signal.aborted) return;
       return res.json({
         contract_version: CONTRACT_VERSION,
         candidates: generated.candidates,
@@ -740,10 +763,13 @@ function createApp(repository) {
         },
       });
     } catch (error) {
+      if (cancellation.signal.aborted || error?.code === "OPENAI_CANCELLED") return;
       if (error instanceof AdminAiError) {
         return errorResponse(res, error.status, error.code, error.message, error.field);
       }
       return next(error);
+    } finally {
+      cancellation.cleanup();
     }
   });
 

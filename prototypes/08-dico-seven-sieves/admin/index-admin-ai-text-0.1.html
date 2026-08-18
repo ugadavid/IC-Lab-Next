@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dico-IC Admin - Assistant texte V0</title>
+  <meta name="app-version" content="0.1.10">
+  <title>Dico-IC Admin - Assistant texte V0.1.10</title>
   <link rel="stylesheet" href="./css/admin-ai-text-0.1.css">
 </head>
 <body>
@@ -15,6 +16,7 @@
     </div>
     <div class="header-meta">
       <span class="experimental-label">Expérimental</span>
+      <span class="environment-label">V0.1.10 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Connexion…</span>
     </div>
   </header>
@@ -64,7 +66,19 @@
       <div class="generation-controls">
         <p class="lemma-note">Périmètre V0 : pluriels de noms et d’adjectifs en français, espagnol, italien et portugais.</p>
         <div id="inflectedGenerationMessage" class="message" role="status" aria-live="polite"></div>
-        <button id="generateInflectedButton" class="button primary" type="button" disabled>Proposer les mappings de pluriel</button>
+        <p id="inflectedBatchProgress" class="batch-progress" role="status" aria-live="polite">Analysez un texte pour préparer les formes à examiner.</p>
+        <div class="batch-actions">
+          <label for="inflectedBatchSize">Taille du prochain lot
+            <select id="inflectedBatchSize" disabled>
+              <option value="10">10 formes</option>
+              <option value="20">20 formes</option>
+              <option value="30" selected>30 formes</option>
+              <option value="50">50 formes</option>
+              <option value="100">100 formes</option>
+            </select>
+          </label>
+          <button id="generateInflectedButton" class="button primary" type="button" disabled>Examiner le prochain lot</button>
+        </div>
       </div>
       <div class="draft-summary">
         <span><strong id="inflectedCandidateTotal">0</strong> proposition(s)</span>
@@ -97,7 +111,16 @@
       <div class="generation-controls">
         <fieldset><legend>Langues cibles actives</legend><div id="languageChoices" class="choice-list" aria-live="polite">Chargement des langues…</div></fieldset>
         <div id="generationMessage" class="message" role="status" aria-live="polite"></div>
-        <button id="generateButton" class="button primary" type="button" disabled>Générer les concepts manquants</button>
+        <div id="generationProgress" class="generation-progress" role="status" aria-live="polite" aria-atomic="true" hidden>
+          <progress aria-label="Progression indéterminée de la génération OpenAI"></progress>
+          <p><strong id="generationProgressLabel">Génération OpenAI en cours…</strong> <span id="generationElapsed">0 s</span></p>
+          <p id="generationLanguages">Langues demandées : —</p>
+          <p>Aucun brouillon n’est encore écrit en base.</p>
+        </div>
+        <div class="generation-actions">
+          <button id="generateButton" class="button primary" type="button" disabled>Générer les concepts manquants</button>
+          <button id="cancelGenerationButton" class="button secondary cancel-generation" type="button" hidden>Annuler la génération</button>
+        </div>
       </div>
     </section>
 
@@ -116,6 +139,9 @@
       <div id="creationReport" class="creation-report" aria-live="polite"></div>
     </section>
   </main>
-  <script src="./js/admin-ai-text-0.1.js"></script>
+  <script src="./js/admin-ai-text-batches-0.1.js"></script>
+  <script src="./js/entry-key-canonicalization-0.1.js?v=0.1.10"></script>
+  <script src="./js/admin-ai-text-generation-0.1.js?v=0.1.9"></script>
+  <script src="./js/admin-ai-text-0.1.js?v=0.1.10"></script>
 </body>
 </html>

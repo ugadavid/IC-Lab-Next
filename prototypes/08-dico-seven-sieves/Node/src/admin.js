@@ -1,4 +1,5 @@
 const { normalizeClient, toLookupKey } = require("./analysis");
+const { canonicalizeEntryKey } = require("../../admin/js/entry-key-canonicalization-0.1.js");
 
 const MAX_FORMS = 20;
 const ALLOWED_RELATION_TYPES = new Set([
@@ -156,7 +157,14 @@ function validateAdminLexicalEntry(body, languages) {
     return invalid("INVALID_REQUEST", "Le corps doit être un objet JSON.");
   }
 
-  const entryKey = typeof body.entry_key === "string" ? body.entry_key.trim() : "";
+  let entryKey = "";
+  if (typeof body.entry_key === "string") {
+    try {
+      entryKey = canonicalizeEntryKey(body.entry_key);
+    } catch {
+      entryKey = "";
+    }
+  }
   if (!/^[A-Z][A-Z0-9_]{2,99}$/.test(entryKey)) {
     return invalid(
       "INVALID_ENTRY_KEY",
@@ -255,11 +263,25 @@ function validateAdminLexicalEntry(body, languages) {
 }
 
 function validateAdminLexicalEntryUpdate(body, entryKey, languages) {
-  if (!/^[A-Z][A-Z0-9_]{2,99}$/.test(entryKey)) {
+  let canonicalEntryKey = "";
+  try {
+    canonicalEntryKey = canonicalizeEntryKey(entryKey);
+  } catch {
+    canonicalEntryKey = "";
+  }
+  if (!/^[A-Z][A-Z0-9_]{2,99}$/.test(canonicalEntryKey)) {
     return invalid("INVALID_ENTRY_KEY", "La clé d’entrée demandée est invalide.", "entry_key");
   }
-  if (body?.entry_key && body.entry_key !== entryKey) {
-    return invalid("ENTRY_KEY_IMMUTABLE", "entry_key ne peut pas être modifié dans cette V0.", "entry_key");
+  if (body?.entry_key) {
+    let bodyEntryKey = "";
+    try {
+      bodyEntryKey = canonicalizeEntryKey(body.entry_key);
+    } catch {
+      bodyEntryKey = "";
+    }
+    if (bodyEntryKey !== canonicalEntryKey) {
+      return invalid("ENTRY_KEY_IMMUTABLE", "entry_key ne peut pas être modifié dans cette V0.", "entry_key");
+    }
   }
   if (!Array.isArray(body?.forms)) {
     return invalid("INVALID_FORMS", "forms doit contenir les formes existantes.", "forms");
@@ -285,7 +307,7 @@ function validateAdminLexicalEntryUpdate(body, entryKey, languages) {
     formIds.push(id);
   }
 
-  const result = validateAdminLexicalEntry({ ...body, entry_key: entryKey }, languages);
+  const result = validateAdminLexicalEntry({ ...body, entry_key: canonicalEntryKey }, languages);
   if (!result.ok) return result;
   result.value.notes = "Modification manuelle via Dico-IC Admin V0.";
   result.value.forms = result.value.forms.map((form, index) => {

@@ -136,17 +136,36 @@ function parseAndValidateInflectedCandidateJson(raw, request) {
   }
 
   const requestedByKey = new Map(request.items.map((item) => [
-    `${item.language}\u0000${toLookupKey(item.surface_form)}`,
+    `${item.language}\u0000${item.surface_form}`,
     item,
   ]));
+  const requestedSurfaces = new Set(request.items.map((item) => item.surface_form));
+  const requestedLanguages = new Set(request.items.map((item) => item.language));
   const seen = new Set();
-  const candidates = parsed.candidates.map((candidate, index) => {
+  const candidates = [];
+  const warnings = [];
+
+  function ignore(index, reason, candidate) {
+    const warning = {
+      code: "IGNORED_INFLECTED_PROPOSAL",
+      reason,
+      proposal_index: index + 1,
+    };
+    const surface = typeof candidate?.surface_form === "string"
+      ? candidate.surface_form.trim().slice(0, 255)
+      : "";
+    const language = typeof candidate?.language === "string"
+      ? candidate.language.trim().toLowerCase().slice(0, 5)
+      : "";
+    if (surface) warning.surface_form = surface;
+    if (language) warning.language = language;
+    warnings.push(warning);
+  }
+
+  parsed.candidates.forEach((candidate, index) => {
     if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) {
-      throw new AdminAiError(
-        502,
-        "OPENAI_INVALID_INFLECTED_CANDIDATE",
-        `Le candidat ${index + 1} est invalide.`
-      );
+      ignore(index, "INVALID_CONTRACT", candidate);
+      return;
     }
     const surfaceForm = typeof candidate.surface_form === "string"
       ? candidate.surface_form.trim()
@@ -154,68 +173,56 @@ function parseAndValidateInflectedCandidateJson(raw, request) {
     const language = typeof candidate.language === "string"
       ? candidate.language.trim().toLowerCase()
       : "";
-    const requestKey = `${language}\u0000${toLookupKey(surfaceForm)}`;
+    if (!surfaceForm || !language) {
+      ignore(index, "INVALID_CONTRACT", candidate);
+      return;
+    }
+    const requestKey = `${language}\u0000${surfaceForm}`;
     const requested = requestedByKey.get(requestKey);
     if (!requested) {
-      throw new AdminAiError(
-        502,
-        "OPENAI_UNREQUESTED_INFLECTED_FORM",
-        `OpenAI a renvoyé une forme ou une langue non demandée : ${surfaceForm}.`
-      );
+      const reason = !requestedSurfaces.has(surfaceForm)
+        ? "UNREQUESTED_SURFACE"
+        : !requestedLanguages.has(language)
+          ? "UNREQUESTED_LANGUAGE"
+          : "UNREQUESTED_COMBINATION";
+      ignore(index, reason, candidate);
+      return;
     }
     if (seen.has(requestKey)) {
-      throw new AdminAiError(
-        502,
-        "OPENAI_DUPLICATE_INFLECTED_CANDIDATE",
-        `OpenAI a répété la forme ${surfaceForm}.`
-      );
+      ignore(index, "DUPLICATE_PROPOSAL", candidate);
+      return;
     }
-    seen.add(requestKey);
 
     const lemmaCandidate = typeof candidate.lemma_candidate === "string"
       ? candidate.lemma_candidate.trim()
       : "";
     if (!lemmaCandidate || lemmaCandidate.length > 255) {
-      throw new AdminAiError(
-        502,
-        "OPENAI_INVALID_LEMMA_CANDIDATE",
-        `Le lemme du candidat ${index + 1} est invalide.`
-      );
+      ignore(index, "INVALID_CONTRACT", candidate);
+      return;
     }
     if (!ALLOWED_PARTS_OF_SPEECH.has(candidate.part_of_speech)) {
-      throw new AdminAiError(
-        502,
-        "OPENAI_INVALID_PART_OF_SPEECH",
-        `La catégorie du candidat ${index + 1} est hors périmètre.`
-      );
+      ignore(index, "INVALID_CONTRACT", candidate);
+      return;
     }
     if (candidate.grammatical_number !== "PLURAL") {
-      throw new AdminAiError(
-        502,
-        "OPENAI_INVALID_GRAMMATICAL_NUMBER",
-        `Le nombre du candidat ${index + 1} doit valoir PLURAL.`
-      );
+      ignore(index, "INVALID_CONTRACT", candidate);
+      return;
     }
     const confidenceScore = Number(candidate.confidence_score);
     if (!Number.isFinite(confidenceScore) || confidenceScore < 0 || confidenceScore > 1) {
-      throw new AdminAiError(
-        502,
-        "OPENAI_INVALID_CONFIDENCE_SCORE",
-        `La confiance du candidat ${index + 1} est invalide.`
-      );
+      ignore(index, "INVALID_CONTRACT", candidate);
+      return;
     }
     const reasonShort = typeof candidate.reason_short === "string"
       ? candidate.reason_short.trim()
       : "";
     if (!reasonShort || reasonShort.length > 300) {
-      throw new AdminAiError(
-        502,
-        "OPENAI_INVALID_REASON",
-        `La justification du candidat ${index + 1} est invalide.`
-      );
+      ignore(index, "INVALID_CONTRACT", candidate);
+      return;
     }
 
-    return {
+    seen.add(requestKey);
+    candidates.push({
       surface_form: requested.surface_form,
       normalized_surface: toLookupKey(requested.surface_form),
       language,
@@ -227,10 +234,10 @@ function parseAndValidateInflectedCandidateJson(raw, request) {
       confidence_score: confidenceScore,
       reason_short: reasonShort,
       source_label: "ai_text_inflection_v0",
-    };
+    });
   });
 
-  return { candidates };
+  return { candidates, warnings };
 }
 
 function buildInflectedPrompts(request) {
@@ -239,6 +246,10 @@ function buildInflectedPrompts(request) {
       "Tu proposes uniquement des mappings de formes fléchies pour Dico-IC.",
       "Le périmètre est strict : pluriels de noms et d’adjectifs en français, espagnol, italien ou portugais.",
       "Pour chaque surface, retrouve le lemme dictionnaire singulier canonique dans la même langue.",
+      "Recopie surface_form exactement, caractère par caractère, depuis la surface reçue.",
+      "Recopie language exactement depuis le code langue reçu pour cette surface.",
+      "N’invente aucune variante orthographique ou morphologique de surface_form.",
+      "Si aucune analyse conforme n’est possible pour une surface reçue, ne retourne aucune proposition pour cette surface.",
       "N’accepte ni verbe, ni temps, ni personne, ni genre complexe, ni comparatif, ni superlatif.",
       "Une surface hors périmètre ne doit pas apparaître dans la réponse.",
       "Exemples : organizaciones → organización (noun) ; internacionales → internacional (adjective) ; ES utiles → útil (adjective).",

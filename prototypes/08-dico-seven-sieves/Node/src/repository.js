@@ -1,4 +1,5 @@
 const mysql = require("mysql2/promise");
+const { canonicalizeEntryKey } = require("../../admin/js/entry-key-canonicalization-0.1.js");
 
 function createPool(overrides = {}) {
   return mysql.createPool({
@@ -691,15 +692,16 @@ function createRepository(pool) {
     },
 
     async createAdminLexicalEntry(entry) {
+      const entryKey = canonicalizeEntryKey(entry.entry_key);
       const connection = await pool.getConnection();
       try {
         await connection.beginTransaction();
         const [existing] = await connection.execute(
           "SELECT id FROM lexical_entry WHERE entry_key = ? FOR UPDATE",
-          [entry.entry_key]
+          [entryKey]
         );
         if (existing.length > 0) {
-          const error = new Error(`L’entrée ${entry.entry_key} existe déjà.`);
+          const error = new Error(`L’entrée ${entryKey} existe déjà.`);
           error.code = "DUPLICATE_ENTRY";
           throw error;
         }
@@ -709,7 +711,7 @@ function createRepository(pool) {
         }
 
         await connection.query("CALL sp_upsert_lexical_entry(?, ?, ?, ?, ?)", [
-          entry.entry_key,
+          entryKey,
           entry.gloss_fr,
           entry.gloss_en,
           entry.semantic_domain,
@@ -718,7 +720,7 @@ function createRepository(pool) {
 
         for (const form of entry.forms) {
           await connection.query("CALL sp_upsert_lexical_form(?, ?, ?, ?, ?, ?, ?)", [
-            entry.entry_key,
+            entryKey,
             form.language,
             form.lemma,
             form.normalized_lemma,
@@ -728,14 +730,14 @@ function createRepository(pool) {
           ]);
         }
 
-        const created = await readLexicalEntryByKey(connection, entry.entry_key);
+        const created = await readLexicalEntryByKey(connection, entryKey);
         await connection.commit();
         return created;
       } catch (error) {
         await connection.rollback();
         if (error.code === "ER_DUP_ENTRY") {
           error.code = "DUPLICATE_ENTRY";
-          error.message = `L’entrée ${entry.entry_key} ou l’une de ses formes existe déjà.`;
+          error.message = `L’entrée ${entryKey} ou l’une de ses formes existe déjà.`;
         }
         throw error;
       } finally {
@@ -1286,7 +1288,7 @@ function createRepository(pool) {
     },
 
     async findExistingEntryKeys(entryKeys) {
-      const uniqueKeys = [...new Set(entryKeys)].filter(Boolean);
+      const uniqueKeys = [...new Set(entryKeys.filter(Boolean).map(canonicalizeEntryKey))];
       if (uniqueKeys.length === 0) return [];
       const [rows] = await pool.execute(`
         SELECT entry_key
