@@ -343,6 +343,10 @@ test("consultation and workbench assets keep presentation and editing strictly s
   assert.match(consultationHtml, /Relations documentées/);
   assert.match(consultationHtml, /Aucun rapprochement explicite n’est encore documenté/);
   assert.match(consultationHtml, /Modifier et documenter cette entrée/);
+  assert.match(consultationHtml, /Comment lire les relations \?/);
+  assert.match(consultationHtml, /La confiance indique séparément le degré de certitude accordé à l’annotation/);
+  assert.match(consultationHtml, /Cette grille est provisoire\. Elle doit être discutée avec des spécialistes du domaine et confrontée aux usages/);
+  assert.doesNotMatch(consultationHtml, /<details[^>]*\sopen(?:\s|>)/);
   assert.doesNotMatch(consultationHtml, /relationPairsBody|Relation à documenter|Ajouter la relation|paires possibles/);
   assert.match(workbenchScript, /Code technique : \$\{form\.source_label\}/);
   assert.match(css, /\.entry-form-card\[data-language="en"\]/);
@@ -354,6 +358,14 @@ test("consultation and workbench assets keep presentation and editing strictly s
   assert.match(workbenchScript, /Ajouter la relation/);
   assert.match(workbenchHtml, /Enregistrer/);
   assert.match(workbenchHtml, /Annuler/);
+  assert.match(workbenchHtml, /\? Comprendre les types, les scores et la confiance/);
+  assert.match(workbenchHtml, /Le score est une estimation humaine provisoire de la transparence pédagogique, et non une probabilité/);
+  assert.match(workbenchHtml, /0,90 à 1,00 : relation presque transparente/);
+  assert.match(workbenchHtml, /Ces valeurs ne constituent ni des probabilités ni des résultats expérimentaux/);
+  assert.match(workbenchHtml, /Une relation peut donc être faiblement transparente mais annotée avec une forte confiance/);
+  assert.match(workbenchHtml, /Les relations sont modélisées comme symétriques/);
+  assert.doesNotMatch(workbenchHtml, /<details[^>]*\sopen(?:\s|>)/);
+  assert.doesNotMatch(`${consultationHtml}\n${workbenchHtml}`, /Christian Degache|Sylvain Hatier/);
   assert.match(workbenchScript, /paires entre les \$\{formCount\} formes actuellement documentées/);
   assert.match(adminScript, /viewLink\.href = `\.\/index-admin-entry-0\.1\.1\.html/);
   assert.match(adminScript, /editButton\.href = `\.\/index-admin-entry-workbench-0\.1\.html/);

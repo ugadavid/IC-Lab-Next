@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.4">
-  <title>Fiche conceptuelle — Dico-IC V0.1.4</title>
+  <meta name="app-version" content="0.1.5">
+  <title>Fiche conceptuelle — Dico-IC V0.1.5</title>
   <link rel="stylesheet" href="./css/admin-0.1.css">
   <link rel="stylesheet" href="./css/admin-entry-0.1.1.css">
 </head>
@@ -16,7 +16,7 @@
       <p>Lecture synthétique des connaissances actuellement documentées</p>
     </div>
     <div class="header-actions">
-      <span class="environment-label">V0.1.4 locale</span>
+      <span class="environment-label">V0.1.5 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Chargement…</span>
     </div>
   </header>
@@ -46,7 +46,13 @@
       </div>
       <details class="relation-help">
         <summary>? Comprendre les relations</summary>
-        <div>Une relation documentée rapproche deux formes selon un type, un score pédagogique, un niveau de confiance dans l’annotation et une provenance. Cette fiche ne présente que les connaissances effectivement enregistrées.</div>
+        <div class="relation-help-content">
+          <h4>Comment lire les relations ?</h4>
+          <p>Le type de relation indique la nature du rapprochement entre deux formes : cognat fort, cognat faible ou faux ami.</p>
+          <p>L’indice de transparence estime dans quelle mesure cette parenté peut être perçue et mobilisée par un apprenant. Il ne représente ni un pourcentage de parenté ni le résultat d’un test expérimental.</p>
+          <p>La confiance indique séparément le degré de certitude accordé à l’annotation.</p>
+          <p>Cette grille est provisoire. Elle doit être discutée avec des spécialistes du domaine et confrontée aux usages.</p>
+        </div>
       </details>
     </section>
 

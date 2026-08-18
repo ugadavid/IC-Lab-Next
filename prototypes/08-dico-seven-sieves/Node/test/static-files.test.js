@@ -51,11 +51,13 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(entryView.status, 200);
     const entryHtml = await entryView.text();
     assert.match(entryHtml, /Lecture synthétique/);
-    assert.match(entryHtml, /app-version" content="0\.1\.4"/);
+    assert.match(entryHtml, /app-version" content="0\.1\.5"/);
     assert.match(entryHtml, /Modifier et documenter cette entrée/);
     assert.match(entryHtml, /Relations documentées/);
     assert.doesNotMatch(entryHtml, /relationPairsBody|Relation à documenter/);
     assert.match(entryHtml, /\? Comprendre les relations/);
+    assert.match(entryHtml, /Il ne représente ni un pourcentage de parenté ni le résultat d’un test expérimental/);
+    assert.match(entryHtml, /Cette grille est provisoire/);
     assert.doesNotMatch(entryHtml, /class="model-limit"/);
     assert.doesNotMatch(entryHtml, /Supprimer/);
 
@@ -63,9 +65,11 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(workbench.status, 200);
     const workbenchHtml = await workbench.text();
     assert.match(workbenchHtml, /Atelier de l’entrée/);
-    assert.match(workbenchHtml, /app-version" content="0\.1\.0"/);
+    assert.match(workbenchHtml, /app-version" content="0\.1\.1"/);
     assert.match(workbenchHtml, /relationPairsBody/);
     assert.match(workbenchHtml, /Revenir à la fiche de consultation/);
+    assert.match(workbenchHtml, /\? Comprendre les types, les scores et la confiance/);
+    assert.match(workbenchHtml, /Le score est une estimation humaine provisoire de la transparence pédagogique, et non une probabilité/);
 
     const prototype = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/index-api-live-0.1.html`);
     assert.equal(prototype.status, 200);

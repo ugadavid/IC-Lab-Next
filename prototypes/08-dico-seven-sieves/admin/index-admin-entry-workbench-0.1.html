@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.0">
-  <title>Atelier de l’entrée — Dico-IC V0.1.0</title>
+  <meta name="app-version" content="0.1.1">
+  <title>Atelier de l’entrée — Dico-IC V0.1.1</title>
   <link rel="stylesheet" href="./css/admin-0.1.css">
   <link rel="stylesheet" href="./css/admin-entry-0.1.1.css">
 </head>
@@ -14,7 +14,7 @@
       <p class="entry-back"><a id="consultationLink" href="./index-admin-entry-0.1.1.html">← Revenir à la fiche de consultation</a></p>
       <h1>Atelier de l’entrée</h1><p>Modification explicite et documentation relationnelle</p>
     </div>
-    <div class="header-actions"><span class="environment-label">V0.1.0 locale</span><span id="apiStatus" class="api-status" data-state="loading">Chargement…</span></div>
+    <div class="header-actions"><span class="environment-label">V0.1.1 locale</span><span id="apiStatus" class="api-status" data-state="loading">Chargement…</span></div>
   </header>
 
   <main class="entry-workspace">
@@ -48,8 +48,49 @@
         <div><p class="eyebrow">Atelier relationnel</p><h3>Paires entre les formes documentées <span id="relationCount" class="count-badge"></span></h3></div>
         <p>Une seule relation symétrique par paire</p>
       </div>
+      <p class="relation-scoring-reminder">Le score est une estimation humaine provisoire de la transparence pédagogique, et non une probabilité.</p>
       <div class="relation-table-wrap"><table class="relation-pairs-table"><thead><tr><th>Paire linguistique</th><th>État</th><th>Relation</th><th>Score et confiance</th><th>Provenance</th><th>Action</th></tr></thead><tbody id="relationPairsBody"></tbody></table></div>
-      <details class="relation-help"><summary>? Comprendre les relations</summary><div>Le score exprime actuellement la force pédagogique attribuée manuellement à la relation ; la confiance porte sur l’annotation. La méthode numérique reste expérimentale.</div></details>
+      <details class="relation-help workbench-relation-help">
+        <summary>? Comprendre les types, les scores et la confiance</summary>
+        <div class="relation-help-content">
+          <h4>Grille provisoire d’estimation des relations</h4>
+          <p>Dico-IC distingue trois informations complémentaires.</p>
+
+          <h5>1. Nature de la relation</h5>
+          <p>Le type précise la nature du rapprochement :</p>
+          <ul>
+            <li><strong>Cognat fort :</strong> parenté et ressemblance immédiatement perceptibles.</li>
+            <li><strong>Cognat faible :</strong> parenté réelle, mais moins directement visible.</li>
+            <li><strong>Faux ami :</strong> ressemblance susceptible de conduire à une interprétation erronée.</li>
+          </ul>
+
+          <h5>2. Indice de transparence</h5>
+          <p>Le score estime la facilité avec laquelle un apprenant pourrait reconnaître ou exploiter la relation. Il repose actuellement sur une appréciation humaine prenant en compte :</p>
+          <ul>
+            <li>la proximité graphique ;</li>
+            <li>la proximité sonore probable ;</li>
+            <li>la stabilité du sens ;</li>
+            <li>la régularité des transformations entre les langues.</li>
+          </ul>
+          <p>Grille de lecture provisoire :</p>
+          <ul>
+            <li>0,90 à 1,00 : relation presque transparente ;</li>
+            <li>0,75 à 0,89 : relation facilement reconnaissable ;</li>
+            <li>0,55 à 0,74 : relation reconnaissable avec quelques indices ;</li>
+            <li>0,35 à 0,54 : parenté peu visible, nécessitant une explication ;</li>
+            <li>0,00 à 0,20 : rapprochement faible ou trompeur.</li>
+          </ul>
+          <p>Ces valeurs ne constituent ni des probabilités ni des résultats expérimentaux. La précision numérique sert actuellement à comparer et ordonner les annotations dans le prototype.</p>
+
+          <h5>3. Confiance dans l’annotation</h5>
+          <p>La confiance ne mesure pas la ressemblance des mots. Elle indique à quel point l’annotateur considère comme fiables le type de relation, son interprétation et son score.</p>
+          <p>Une relation peut donc être faiblement transparente mais annotée avec une forte confiance.</p>
+
+          <h5>Limite actuelle</h5>
+          <p>Les relations sont modélisées comme symétriques. Le score exprime donc une transparence mutuelle approximative, alors que la reconnaissance peut être plus facile dans un sens que dans l’autre.</p>
+          <p>Cette grille constitue une proposition de travail. Elle devra être discutée avec des spécialistes de l’intercompréhension et confrontée à des usages réels.</p>
+        </div>
+      </details>
     </section>
 
     <section id="entryError" class="entry-error" hidden><h2>Entrée indisponible</h2><p id="entryErrorMessage"></p><a class="button secondary" href="./index-admin-0.1.html#lexicon">Revenir au lexique</a></section>
