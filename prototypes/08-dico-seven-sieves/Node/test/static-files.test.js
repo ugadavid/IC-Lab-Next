@@ -34,7 +34,8 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.match(await admin.text(), /Dico-IC Admin/);
 
     const adminHtml = await (await fetch(`${server.baseUrl}/admin-app/index-admin-0.1.html`)).text();
-    assert.match(adminHtml, /app-version" content="0\.1\.5"/);
+    assert.match(adminHtml, /app-version" content="0\.1\.6"/);
+    assert.match(adminHtml, /Domaine en français naturel : minuscules, accents et espaces/);
     assert.match(adminHtml, /Catalogue des langues/);
     assert.match(adminHtml, /Dico-IC documente actuellement quatre langues romanes/);
     assert.match(adminHtml, /\? Comprendre le catalogue des langues/);

@@ -25,6 +25,11 @@ const FRENCH_CONCEPT_KEY_INSTRUCTIONS = [
   "Contre-exemples : pour souffrir, ne choisis pas l’anglais et ne copie pas une graphie italienne ou portugaise ; pour préoccupant, ne choisis pas l’anglais et n’ajoute pas systématiquement un suffixe grammatical.",
   "Pour un verbe pronominal français, conserve le pronom dans le nom conceptuel et sépare-le par un underscore : s’élever → S_ELEVER ; s'enfuir → S_ENFUIR ; se souvenir → SE_SOUVENIR ; se lever → SE_LEVER. Ne supprime pas simplement l’apostrophe ou l’espace. Ne produis pas SELEVER pour s’élever, SENFUIR pour s’enfuir, ni SESOUVENIR pour se souvenir. N’insère aucun underscore pronominal dans un verbe non pronominal : semer → SEMER ; servir → SERVIR ; serrer → SERRER.",
 ];
+const SEMANTIC_DOMAIN_INSTRUCTIONS = [
+  "Le domaine sémantique est un libellé humain bref, rédigé en français naturel, en minuscules et avec ses accents.",
+  "Utilise par exemple environnement, relations logiques ou production agricole, avec des espaces lorsque nécessaire.",
+  "N’utilise ni anglais, ni majuscules techniques, ni underscores, ni suffixe grammatical artificiel. Le champ reste libre et toute proposition demeure révisable humainement.",
+];
 
 class AdminAiError extends Error {
   constructor(status, code, message, field) {
@@ -231,6 +236,7 @@ function buildPrompts(request) {
     "Tu proposes des brouillons lexicaux pour une base d’intercompréhension romane.",
     "Retourne uniquement les données demandées par le schéma JSON.",
     ...FRENCH_CONCEPT_KEY_INSTRUCTIONS,
+    ...SEMANTIC_DOMAIN_INSTRUCTIONS,
     "Les formes doivent être usuelles, pédagogiquement pertinentes et distinctes.",
     ...DICTIONARY_LEMMA_INSTRUCTIONS,
     "N’invente pas de langues et n’ajoute aucune explication hors JSON.",
@@ -242,7 +248,7 @@ function buildPrompts(request) {
     `Langues demandées : ${request.languages.join(", ")}.`,
     `Catégories autorisées : ${request.parts_of_speech.join(", ")}.`,
     "Pour chaque concept, fournis si possible une forme dans chaque langue demandée.",
-    "semantic_domain doit reprendre un libellé cohérent avec le domaine fourni.",
+    "Le libellé sémantique doit rester cohérent avec le domaine pédagogique fourni.",
   ].join(" ");
   return { system, user };
 }
@@ -336,6 +342,7 @@ module.exports = {
   AdminAiError,
   DICTIONARY_LEMMA_INSTRUCTIONS,
   FRENCH_CONCEPT_KEY_INSTRUCTIONS,
+  SEMANTIC_DOMAIN_INSTRUCTIONS,
   buildPrompts,
   candidateSchema,
   generateDomainCandidates,

@@ -3,6 +3,7 @@ const {
   AdminAiError,
   DICTIONARY_LEMMA_INSTRUCTIONS,
   FRENCH_CONCEPT_KEY_INSTRUCTIONS,
+  SEMANTIC_DOMAIN_INSTRUCTIONS,
   generateStructuredCandidates,
 } = require("./admin-ai-domain");
 
@@ -213,6 +214,7 @@ function buildTextPrompts(request) {
       "Les mots fournis sont absents de la base Dico-IC : ne propose que ces concepts manquants.",
       "Retourne uniquement les données demandées par le schéma JSON.",
       ...FRENCH_CONCEPT_KEY_INSTRUCTIONS,
+      ...SEMANTIC_DOMAIN_INSTRUCTIONS,
       ...DICTIONARY_LEMMA_INSTRUCTIONS,
       "N’ajoute aucune explication hors JSON.",
     ].join(" "),
@@ -222,7 +224,7 @@ function buildTextPrompts(request) {
       "Une forme rencontrée dans le texte peut être fléchie : identifie son lemme dictionnaire avant de proposer les formes multilingues canoniques.",
       "Identifie le concept et la catégorie grammaticale de chaque forme dans un contexte général.",
       "Fournis si possible une forme usuelle dans chaque langue demandée.",
-      "Utilise un semantic_domain bref et une glose française utile à la révision humaine.",
+      "Fournis une glose française utile à la révision humaine.",
     ].join(" "),
   };
 }

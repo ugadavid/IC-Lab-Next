@@ -1,0 +1,558 @@
+{
+  "mission": 208,
+  "backup_version": 1,
+  "source_head": "e5ff42d77a5a01ece364f400098a248d2f4a4af2",
+  "source_database": "ic_dico",
+  "source_hashes": {
+    "reports/207_dico_ic_semantic_domain_audit.md": "f7d3d566f71325b534f9440774d4a61975d69ef93d43601321edb13f7a0c8130",
+    "reports/assets/207_dico_ic_semantic_domain_audit/semantic_domain_normalization_map.json": "cdca09967e039b5be82e88c4165eef09e667fd661d33a289d2078240f0b45429",
+    "reports/assets/207_dico_ic_semantic_domain_audit/semantic_domain_inventory.csv": "4faaeea542de206a44263da174b00d0323b7213bcc14f3c60e9bbb6b29e36071",
+    "reports/assets/207_dico_ic_semantic_domain_audit/semantic_domain_usage_audit.md": "1e363d5fa8f31cea6d5978698f41eb0eccc2ec558b65fc94638e374b4c68230d",
+    "reports/assets/207_dico_ic_semantic_domain_audit/semantic_domain_preflight_selects.sql": "a7b6efbb06c28e54ed9080305859a46b45f66cb419adcc2c87f536bdada91a36"
+  },
+  "counts": {
+    "language": 12,
+    "lexical_entry": 270,
+    "lexical_form": 1125,
+    "inflected_form": 41,
+    "connector_help": 12,
+    "form_relation": 70,
+    "pattern_rule": 1,
+    "ic_feature": 8
+  },
+  "table_hashes_before": {
+    "language": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff",
+    "lexical_entry": "d14f5e21eda3f4eaf0fb76c1eac758269cb73e8d5a2802ead6d721baedabcd78",
+    "lexical_form": "8b3d2cd9098213395ce9cc78ac257424adc13f22a5775472c536a773529ea4f5",
+    "inflected_form": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184",
+    "connector_help": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846",
+    "form_relation": "4d3f55cfe964bcba184d07d63eb05e631cc186aaf26da42974a1c17ac2ceaa43",
+    "pattern_rule": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d",
+    "ic_feature": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a"
+  },
+  "affected_ids": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    10,
+    13,
+    14,
+    17,
+    18,
+    19,
+    28,
+    29,
+    30,
+    32,
+    131,
+    136,
+    140,
+    227,
+    234,
+    236,
+    238,
+    254,
+    292,
+    293,
+    294,
+    296,
+    297,
+    298,
+    300,
+    301,
+    302,
+    303,
+    304,
+    307,
+    308,
+    330,
+    332
+  ],
+  "mappings": [
+    {
+      "category": "A",
+      "old_value": "Action",
+      "new_value": "action",
+      "ids": [
+        294,
+        308
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "Changement",
+      "new_value": "changement",
+      "ids": [
+        307
+      ]
+    },
+    {
+      "category": "B",
+      "old_value": "FOOD_NUTRITION",
+      "new_value": "alimentation",
+      "ids": [
+        330
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "GEOGRAPHY",
+      "new_value": "géographie",
+      "ids": [
+        332
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "Grammaire",
+      "new_value": "grammaire",
+      "ids": [
+        292,
+        293,
+        296,
+        297,
+        298,
+        300,
+        301,
+        303
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "Qualité",
+      "new_value": "qualité",
+      "ids": [
+        302,
+        304
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "biology",
+      "new_value": "biologie",
+      "ids": [
+        17
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "discourse",
+      "new_value": "discours",
+      "ids": [
+        227
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "economy",
+      "new_value": "économie",
+      "ids": [
+        28
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "education",
+      "new_value": "éducation",
+      "ids": [
+        5,
+        10,
+        29,
+        30
+      ]
+    },
+    {
+      "category": "B",
+      "old_value": "food",
+      "new_value": "alimentation",
+      "ids": [
+        14
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "health",
+      "new_value": "santé",
+      "ids": [
+        13
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "language",
+      "new_value": "langue",
+      "ids": [
+        32
+      ]
+    },
+    {
+      "category": "B",
+      "old_value": "liaison",
+      "new_value": "relations logiques",
+      "ids": [
+        131,
+        136,
+        140
+      ]
+    },
+    {
+      "category": "B",
+      "old_value": "météo",
+      "new_value": "météorologie",
+      "ids": [
+        234,
+        236,
+        238,
+        254
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "politics",
+      "new_value": "politique",
+      "ids": [
+        4,
+        19
+      ]
+    },
+    {
+      "category": "B",
+      "old_value": "social",
+      "new_value": "relations sociales",
+      "ids": [
+        6
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "society",
+      "new_value": "société",
+      "ids": [
+        18
+      ]
+    },
+    {
+      "category": "A",
+      "old_value": "time",
+      "new_value": "temps",
+      "ids": [
+        7,
+        8
+      ]
+    }
+  ],
+  "affected_rows": [
+    {
+      "id": 4,
+      "entry_key": "NATION_COUNTRY",
+      "gloss_fr": "nation, pays ou communauté politique",
+      "gloss_en": "nation, country or political community",
+      "semantic_domain": "politics",
+      "notes": null
+    },
+    {
+      "id": 5,
+      "entry_key": "UNIVERSITY_INSTITUTION",
+      "gloss_fr": "université, établissement d’enseignement supérieur",
+      "gloss_en": "university, higher education institution",
+      "semantic_domain": "education",
+      "notes": null
+    },
+    {
+      "id": 6,
+      "entry_key": "FAMILY_RELATION",
+      "gloss_fr": "famille, groupe familial",
+      "gloss_en": "family, kinship group",
+      "semantic_domain": "social",
+      "notes": null
+    },
+    {
+      "id": 7,
+      "entry_key": "CURRENTLY_NOW",
+      "gloss_fr": "actuellement, en ce moment",
+      "gloss_en": "currently, at present",
+      "semantic_domain": "time",
+      "notes": null
+    },
+    {
+      "id": 8,
+      "entry_key": "ACTUALLY_NOW_ES",
+      "gloss_fr": "actualmente, en ce moment",
+      "gloss_en": "currently, at present",
+      "semantic_domain": "time",
+      "notes": null
+    },
+    {
+      "id": 10,
+      "entry_key": "LIBRARY_PUBLIC",
+      "gloss_fr": "bibliothèque, lieu de prêt ou consultation de livres",
+      "gloss_en": "library, public or private book collection",
+      "semantic_domain": "education",
+      "notes": null
+    },
+    {
+      "id": 13,
+      "entry_key": "CONDOM_PROTECTION",
+      "gloss_fr": "préservatif, moyen de protection contraceptive",
+      "gloss_en": "condom, contraceptive protection",
+      "semantic_domain": "health",
+      "notes": null
+    },
+    {
+      "id": 14,
+      "entry_key": "PRESERVATIVE_ADDITIVE",
+      "gloss_fr": "conservateur, substance qui préserve un aliment",
+      "gloss_en": "preservative, food additive",
+      "semantic_domain": "food",
+      "notes": null
+    },
+    {
+      "id": 17,
+      "entry_key": "ANIMAL_CREATURE",
+      "gloss_fr": "animal, être vivant non humain",
+      "gloss_en": "animal, non-human living creature",
+      "semantic_domain": "biology",
+      "notes": null
+    },
+    {
+      "id": 18,
+      "entry_key": "CULTURE_HUMAN",
+      "gloss_fr": "culture, ensemble de pratiques et savoirs",
+      "gloss_en": "culture, set of practices and knowledge",
+      "semantic_domain": "society",
+      "notes": null
+    },
+    {
+      "id": 19,
+      "entry_key": "POLITICS_FIELD",
+      "gloss_fr": "politique, domaine de gouvernement",
+      "gloss_en": "politics, field of government",
+      "semantic_domain": "politics",
+      "notes": null
+    },
+    {
+      "id": 28,
+      "entry_key": "CURRENCY_MONEY",
+      "gloss_fr": "monnaie, argent ou devise",
+      "gloss_en": "money, currency",
+      "semantic_domain": "economy",
+      "notes": null
+    },
+    {
+      "id": 29,
+      "entry_key": "SECONDARY_SCHOOL_FR",
+      "gloss_fr": "collège, établissement scolaire intermédiaire",
+      "gloss_en": "middle school / junior high",
+      "semantic_domain": "education",
+      "notes": null
+    },
+    {
+      "id": 30,
+      "entry_key": "COLLEGE_HE",
+      "gloss_fr": "college, établissement d’enseignement supérieur",
+      "gloss_en": "college, higher education institution",
+      "semantic_domain": "education",
+      "notes": null
+    },
+    {
+      "id": 32,
+      "entry_key": "LANGUAGE_SYSTEM",
+      "gloss_fr": "langue, système de communication",
+      "gloss_en": "language, communication system",
+      "semantic_domain": "language",
+      "notes": "Entrée pan-romane minimale pour le mock API Seven Sieves V0."
+    },
+    {
+      "id": 131,
+      "entry_key": "CEPENDANT",
+      "gloss_fr": "indique une opposition ou une restriction",
+      "gloss_en": "indicates opposition or restriction",
+      "semantic_domain": "liaison",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 136,
+      "entry_key": "POR_TANTO",
+      "gloss_fr": "indique une conséquence",
+      "gloss_en": "indicates a consequence",
+      "semantic_domain": "liaison",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 140,
+      "entry_key": "PARCE_QUE",
+      "gloss_fr": "indique une cause ou une raison",
+      "gloss_en": "indicates cause or reason",
+      "semantic_domain": "liaison",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 227,
+      "entry_key": "DEUXIEMEMENT",
+      "gloss_fr": "indique le deuxième point d'un raisonnement",
+      "gloss_en": "indicates the second point in an argument",
+      "semantic_domain": "discourse",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 234,
+      "entry_key": "CYCLONE",
+      "gloss_fr": "Phénomène météorologique caractérisé par une tempête tropicale violente",
+      "gloss_en": "Meteorological phenomenon characterized by a violent tropical storm",
+      "semantic_domain": "météo",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 236,
+      "entry_key": "STORM",
+      "gloss_fr": "Phénomène atmosphérique avec vents forts et précipitations",
+      "gloss_en": "Atmospheric phenomenon with strong winds and precipitation",
+      "semantic_domain": "météo",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 238,
+      "entry_key": "PRECIPITATION",
+      "gloss_fr": "Eau qui tombe de l'atmosphère sous différentes formes",
+      "gloss_en": "Water falling from the atmosphere in various forms",
+      "semantic_domain": "météo",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 254,
+      "entry_key": "DROUGHT",
+      "gloss_fr": "Période prolongée sans précipitations",
+      "gloss_en": "Prolonged period without precipitation",
+      "semantic_domain": "météo",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 292,
+      "entry_key": "D_UNE",
+      "gloss_fr": "article partitif contracté (de + une) exprimant une partie indéfinie",
+      "gloss_en": "contracted partitive article (de + une) expressing an indefinite part",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 293,
+      "entry_key": "DES",
+      "gloss_fr": "article partitif/pluriel indéfini",
+      "gloss_en": "partitive/plural indefinite article",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 294,
+      "entry_key": "OBSERVEZ",
+      "gloss_fr": "voir ou remarquer attentivement",
+      "gloss_en": "to watch or notice carefully",
+      "semantic_domain": "Action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 296,
+      "entry_key": "PAR",
+      "gloss_fr": "préposition indiquant le moyen ou la cause",
+      "gloss_en": "preposition indicating means or cause",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 297,
+      "entry_key": "LE_ARTICLE",
+      "gloss_fr": "article défini masculin singulier",
+      "gloss_en": "definite article masculine singular",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 298,
+      "entry_key": "UNE_ARTICLE",
+      "gloss_fr": "article indéfini féminin singulier",
+      "gloss_en": "indefinite article feminine singular",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 300,
+      "entry_key": "DE_ARTICLE",
+      "gloss_fr": "préposition indiquant la possession ou la matière",
+      "gloss_en": "preposition indicating possession or material",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 301,
+      "entry_key": "DANS",
+      "gloss_fr": "préposition indiquant un lieu ou un temps",
+      "gloss_en": "preposition indicating place or time",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 302,
+      "entry_key": "AUTRE",
+      "gloss_fr": "quelque chose ou quelqu’un de différent",
+      "gloss_en": "something or someone different",
+      "semantic_domain": "Qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 303,
+      "entry_key": "CET",
+      "gloss_fr": "pronom démonstratif masculin singulier devant voyelle",
+      "gloss_en": "demonstrative pronoun masculine singular before vowel",
+      "semantic_domain": "Grammaire",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 304,
+      "entry_key": "CONTRAIRE",
+      "gloss_fr": "opposé, contraire",
+      "gloss_en": "opposite, contrary",
+      "semantic_domain": "Qualité",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 307,
+      "entry_key": "DEVENIR",
+      "gloss_fr": "changer d'état ou d'état d'être",
+      "gloss_en": "to change state or condition",
+      "semantic_domain": "Changement",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 308,
+      "entry_key": "RUINER",
+      "gloss_fr": "détruire, rendre inutilisable",
+      "gloss_en": "to destroy, to make unusable",
+      "semantic_domain": "Action",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 330,
+      "entry_key": "ALIMENTATION",
+      "gloss_fr": "Action de se nourrir ou système de nourriture",
+      "gloss_en": "Act or system of feeding or nutrition",
+      "semantic_domain": "FOOD_NUTRITION",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    },
+    {
+      "id": 332,
+      "entry_key": "TERRESTRE",
+      "gloss_fr": "Relatif à la terre, au sol",
+      "gloss_en": "Relating to the earth or land",
+      "semantic_domain": "GEOGRAPHY",
+      "notes": "Ajout manuel via Dico-IC Admin V0."
+    }
+  ],
+  "affected_static_hash": "98149525ba3343c7125f5ff95ef38128419951c289e00c8d0ac41b750f226fcc",
+  "untouched_lexical_entry_hash": "0b968e577667c93c751590a556e9e2e45e4227a3858c931f3c51b902c0fc8ee1",
+  "initial_lexical_entry_hash": "d14f5e21eda3f4eaf0fb76c1eac758269cb73e8d5a2802ead6d721baedabcd78",
+  "final_lexical_entry_hash": "0de59878ff98c0b6b6d4a6e49ac34c2754198a82d2803a4269a34ef1463ed787",
+  "plan_fingerprint": "ce2380342479877e9a1e8d7c75fa3ee7b03a74ad3fc64a5d175435a63dbfe063"
+}
+

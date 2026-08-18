@@ -1,0 +1,102 @@
+{
+  "mission": 208,
+  "fixture": "ic_dico_m208_fixture_e5ff42d",
+  "stages": {
+    "initial": {
+      "language": {
+        "count": 12,
+        "sha256": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff"
+      },
+      "lexical_entry": {
+        "count": 270,
+        "sha256": "d14f5e21eda3f4eaf0fb76c1eac758269cb73e8d5a2802ead6d721baedabcd78"
+      },
+      "lexical_form": {
+        "count": 1125,
+        "sha256": "8b3d2cd9098213395ce9cc78ac257424adc13f22a5775472c536a773529ea4f5"
+      },
+      "inflected_form": {
+        "count": 41,
+        "sha256": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184"
+      },
+      "connector_help": {
+        "count": 12,
+        "sha256": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846"
+      },
+      "form_relation": {
+        "count": 70,
+        "sha256": "4d3f55cfe964bcba184d07d63eb05e631cc186aaf26da42974a1c17ac2ceaa43"
+      },
+      "pattern_rule": {
+        "count": 1,
+        "sha256": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d"
+      },
+      "ic_feature": {
+        "count": 8,
+        "sha256": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a"
+      }
+    },
+    "check": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"check\",\n  \"state\": \"initial\",\n  \"scanned_ids\": 38,\n  \"counts\": {\n    \"language\": 12,\n    \"lexical_entry\": 270,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8\n  },\n  \"lexical_entry_hash\": \"d14f5e21eda3f4eaf0fb76c1eac758269cb73e8d5a2802ead6d721baedabcd78\"\n}",
+      "stderr": ""
+    },
+    "apply": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"apply\",\n  \"state\": \"applied\",\n  \"changed_rows\": 38,\n  \"counts\": {\n    \"language\": 12,\n    \"lexical_entry\": 270,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8\n  },\n  \"lexical_entry_hash\": \"0de59878ff98c0b6b6d4a6e49ac34c2754198a82d2803a4269a34ef1463ed787\"\n}",
+      "stderr": ""
+    },
+    "second_apply": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"apply\",\n  \"state\": \"already_applied\",\n  \"changed_rows\": 0,\n  \"counts\": {\n    \"language\": 12,\n    \"lexical_entry\": 270,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8\n  },\n  \"lexical_entry_hash\": \"0de59878ff98c0b6b6d4a6e49ac34c2754198a82d2803a4269a34ef1463ed787\"\n}",
+      "stderr": ""
+    },
+    "rollback": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"rollback\",\n  \"state\": \"restored\",\n  \"changed_rows\": 38,\n  \"counts\": {\n    \"language\": 12,\n    \"lexical_entry\": 270,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8\n  },\n  \"lexical_entry_hash\": \"d14f5e21eda3f4eaf0fb76c1eac758269cb73e8d5a2802ead6d721baedabcd78\"\n}",
+      "stderr": ""
+    },
+    "after_rollback": {
+      "language": {
+        "count": 12,
+        "sha256": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff"
+      },
+      "lexical_entry": {
+        "count": 270,
+        "sha256": "d14f5e21eda3f4eaf0fb76c1eac758269cb73e8d5a2802ead6d721baedabcd78"
+      },
+      "lexical_form": {
+        "count": 1125,
+        "sha256": "8b3d2cd9098213395ce9cc78ac257424adc13f22a5775472c536a773529ea4f5"
+      },
+      "inflected_form": {
+        "count": 41,
+        "sha256": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184"
+      },
+      "connector_help": {
+        "count": 12,
+        "sha256": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846"
+      },
+      "form_relation": {
+        "count": 70,
+        "sha256": "4d3f55cfe964bcba184d07d63eb05e631cc186aaf26da42974a1c17ac2ceaa43"
+      },
+      "pattern_rule": {
+        "count": 1,
+        "sha256": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d"
+      },
+      "ic_feature": {
+        "count": 8,
+        "sha256": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a"
+      }
+    },
+    "partial_apply_refusal": {
+      "status": 1,
+      "stdout": "",
+      "stderr": "État MariaDB partiel ou inconnu : aucune écriture autorisée."
+    },
+    "partial_state_unchanged": true
+  },
+  "status": "passed",
+  "fixture_dropped": true
+}
