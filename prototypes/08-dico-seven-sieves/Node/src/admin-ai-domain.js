@@ -1,6 +1,9 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { canonicalizeEntryKey } = require("../../admin/js/entry-key-canonicalization-0.1.js");
+const {
+  canonicalizeEntryKey,
+  reconcileFrenchPronominalConceptKey,
+} = require("../../admin/js/entry-key-canonicalization-0.1.js");
 
 const ALLOWED_COUNTS = new Set([10, 20, 30, 50]);
 const ALLOWED_LEVELS = new Set(["A1", "A2", "B1", "B2"]);
@@ -13,6 +16,14 @@ const DICTIONARY_LEMMA_INSTRUCTIONS = [
   "Exemples adjectivaux : FR utiles → utile ; ES útiles → útil ; IT utili → utile ; PT úteis → útil.",
   "Exemples nominaux : FR élèves → élève ; ES alumnos → alumno ; IT studenti → studente ; PT alunos → aluno.",
   "Exemples verbaux : FR mangent → manger ; ES comen → comer ; IT mangiano → mangiare ; PT comem → comer.",
+];
+const FRENCH_CONCEPT_KEY_INSTRUCTIONS = [
+  "Pour chaque nouveau concept, nomme entry_key en français à partir du sens visé. Utilise un nom conceptuel français naturel : infinitif pour un verbe, singulier pour un nom, forme dictionnaire pour un adjectif ou un adverbe.",
+  "La clé technique finale doit être canonicalisée en ASCII, en majuscules et avec des underscores. N’utilise pas l’anglais comme langue implicite de la clé : l’anglais reste une forme linguistique de comparaison. Ne déduis pas la clé d’une forme espagnole, italienne, portugaise ou d’une forme fléchie.",
+  "Si le terme est polysémique ou si un concept proche existe, ajoute si nécessaire un qualificatif sémantique français bref. N’ajoute pas systématiquement une catégorie grammaticale au nom. Toute clé incertaine doit rester un brouillon à vérifier humainement.",
+  "Exemples : souffrir → SOUFFRIR ; préoccupant → PREOCCUPANT ; augmenter → AUGMENTER ; banque au sens financier → BANQUE_FINANCE ; banque comme collection de données → BANQUE_DONNEES ; voler dans les airs → VOLER_DEPLACEMENT_AERIEN ; voler quelque chose → VOLER_DEROBER.",
+  "Contre-exemples : ne produis pas SUFFER pour souffrir, WORRISOME pour préoccupant, SOFFRIR à partir de l’italien ou du portugais, ni systématiquement PREOCCUPANT_ADJECTIVE.",
+  "Pour un verbe pronominal français, conserve le pronom dans le nom conceptuel et sépare-le par un underscore : s’élever → S_ELEVER ; s'enfuir → S_ENFUIR ; se souvenir → SE_SOUVENIR ; se lever → SE_LEVER. Ne supprime pas simplement l’apostrophe ou l’espace. Ne produis pas SELEVER pour s’élever, SENFUIR pour s’enfuir, ni SESOUVENIR pour se souvenir. N’insère aucun underscore pronominal dans un verbe non pronominal : semer → SEMER ; servir → SERVIR ; serrer → SERRER.",
 ];
 
 class AdminAiError extends Error {
@@ -201,8 +212,10 @@ function parseAndValidateCandidateJson(raw, request) {
         part_of_speech: form.part_of_speech,
       };
     });
+    const proposedEntryKey = canonicalizeCandidateEntryKey(candidate.entry_key, index);
+    const reconciledEntryKey = reconcileFrenchPronominalConceptKey(proposedEntryKey, forms);
     return {
-      entry_key: canonicalizeCandidateEntryKey(candidate.entry_key, index),
+      entry_key: reconciledEntryKey.entryKey,
       gloss_fr: candidate.gloss_fr.trim(),
       gloss_en: candidate.gloss_en.trim(),
       semantic_domain: candidate.semantic_domain.trim(),
@@ -217,7 +230,7 @@ function buildPrompts(request) {
   const system = [
     "Tu proposes des brouillons lexicaux pour une base d’intercompréhension romane.",
     "Retourne uniquement les données demandées par le schéma JSON.",
-    "Chaque entry_key est une clé conceptuelle ASCII stable contenant uniquement A-Z, 0-9 et des underscores, sans accent, apostrophe, espace ni trait d’union.",
+    ...FRENCH_CONCEPT_KEY_INSTRUCTIONS,
     "Les formes doivent être usuelles, pédagogiquement pertinentes et distinctes.",
     ...DICTIONARY_LEMMA_INSTRUCTIONS,
     "N’invente pas de langues et n’ajoute aucune explication hors JSON.",
@@ -322,6 +335,7 @@ async function generateDomainCandidates(request, options = {}) {
 module.exports = {
   AdminAiError,
   DICTIONARY_LEMMA_INSTRUCTIONS,
+  FRENCH_CONCEPT_KEY_INSTRUCTIONS,
   buildPrompts,
   candidateSchema,
   generateDomainCandidates,

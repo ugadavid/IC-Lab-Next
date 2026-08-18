@@ -17,6 +17,7 @@ const {
 const {
   canonicalizeEntryKey,
   findDuplicateCanonicalEntryKeys,
+  reconcileFrenchPronominalConceptKey,
 } = window.DicoEntryKey;
 
 let languages = [];
@@ -233,6 +234,10 @@ function validateDraft(candidate, candidateIndex = -1) {
   if (duplicateKeys.has(canonicalKey)) {
     return { code: "duplicate", label: "Doublon possible" };
   }
+  const pronominalCheck = reconcileFrenchPronominalConceptKey(canonicalKey, candidate.forms);
+  if (pronominalCheck.state === "ambiguous") {
+    return { code: "warning", label: "Structure à vérifier", title: pronominalCheck.warning };
+  }
   return { code: "ready", label: "Prêt" };
 }
 
@@ -241,7 +246,7 @@ function canonicalizeCandidateForReview(candidate, index) {
   if (!canonicalKey) return false;
   candidate.entry_key = canonicalKey;
   const status = validateDraft(candidate, index);
-  if (status.code === "duplicate" || status.code === "error") candidate.keep = false;
+  if (status.code === "duplicate" || status.code === "error" || status.code === "warning") candidate.keep = false;
   return true;
 }
 
@@ -253,7 +258,7 @@ function canonicalizeAllCandidateKeys() {
   });
   candidates.forEach((candidate, index) => {
     const status = validateDraft(candidate, index);
-    if (status.code === "duplicate" || status.code === "error") candidate.keep = false;
+    if (status.code === "duplicate" || status.code === "error" || status.code === "warning") candidate.keep = false;
   });
 }
 
@@ -361,6 +366,7 @@ function renderCandidates() {
     const badge = document.createElement("span");
     badge.className = `status-badge status-${status.code}`;
     badge.textContent = status.label;
+    if (status.title) badge.title = status.title;
     statusCell.appendChild(badge);
 
     const actionCell = document.createElement("td");
@@ -391,6 +397,7 @@ function updateCandidateIndicators(index) {
     const badge = row.querySelector(".status-badge");
     badge.className = `status-badge status-${status.code}`;
     badge.textContent = status.label;
+    badge.title = status.title || "";
   }
   selectedTotal.textContent = String(candidates.filter(item => item.keep).length);
   createSelectedButton.disabled = !candidates.some(item => item.keep);

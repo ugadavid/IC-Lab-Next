@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dico-IC Admin — Assistant domaine V0</title>
-  <link rel="stylesheet" href="./css/admin-ai-domain-0.1.css">
+  <meta name="app-version" content="0.1.2">
+  <title>Dico-IC Admin — Assistant domaine V0.1.2</title>
+  <link rel="stylesheet" href="./css/admin-ai-domain-0.1.css?v=0.1.2">
 </head>
 <body>
   <header class="app-header">
@@ -15,6 +16,7 @@
     </div>
     <div class="header-meta">
       <span class="experimental-label">Expérimental</span>
+      <span class="environment-label">V0.1.2 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Connexion…</span>
     </div>
   </header>
@@ -78,6 +80,14 @@
           </fieldset>
         </div>
 
+        <aside class="concept-key-policy" aria-label="Convention de nommage des nouveaux concepts">
+          <p><strong>Convention :</strong> les nouveaux concepts sont nommés en français. Les clés historiques peuvent conserver une autre langue.</p>
+          <details>
+            <summary>Préciser la convention</summary>
+            <p>Infinitif pour les verbes, singulier pour les noms et qualificatif sémantique français uniquement si nécessaire. Chaque proposition reste un brouillon soumis à validation humaine.</p>
+          </details>
+        </aside>
+
         <div id="generationMessage" class="message" role="status" aria-live="polite"></div>
         <button id="generateButton" class="button primary" type="submit">Générer des propositions</button>
       </form>
@@ -128,6 +138,7 @@
     </section>
   </main>
 
-  <script src="./js/admin-ai-domain-0.1.js"></script>
+  <script src="./js/entry-key-canonicalization-0.1.js?v=0.1.2"></script>
+  <script src="./js/admin-ai-domain-0.1.js?v=0.1.2"></script>
 </body>
 </html>

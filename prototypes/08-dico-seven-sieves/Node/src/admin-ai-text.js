@@ -2,6 +2,7 @@ const { MAX_TEXT_LENGTH, toLookupKey, tokenize } = require("./analysis");
 const {
   AdminAiError,
   DICTIONARY_LEMMA_INSTRUCTIONS,
+  FRENCH_CONCEPT_KEY_INSTRUCTIONS,
   generateStructuredCandidates,
 } = require("./admin-ai-domain");
 
@@ -211,7 +212,7 @@ function buildTextPrompts(request) {
       "Tu proposes des brouillons lexicaux pour une base d’intercompréhension romane.",
       "Les mots fournis sont absents de la base Dico-IC : ne propose que ces concepts manquants.",
       "Retourne uniquement les données demandées par le schéma JSON.",
-      "Chaque entry_key est une clé conceptuelle stable en MAJUSCULES_AVEC_UNDERSCORES.",
+      ...FRENCH_CONCEPT_KEY_INSTRUCTIONS,
       ...DICTIONARY_LEMMA_INSTRUCTIONS,
       "N’ajoute aucune explication hors JSON.",
     ].join(" "),

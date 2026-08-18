@@ -24,6 +24,7 @@ const vectors = [
   ["CŒUR", "COEUR"],
   ["ÆTHER", "AETHER"],
   ["QUALITÉ", "QUALITE"],
+  ["BANQUE_DONNÉES", "BANQUE_DONNEES"],
   ["déjà  vu", "DEJA_VU"],
   ["DEJA___VU", "DEJA_VU"],
   ["__LANGUAGE_SYSTEM__", "LANGUAGE_SYSTEM"],

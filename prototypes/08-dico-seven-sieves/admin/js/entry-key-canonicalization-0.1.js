@@ -46,9 +46,34 @@
       .map(([key]) => key));
   }
 
+  function reconcileFrenchPronominalConceptKey(proposedValue, forms = []) {
+    const entryKey = canonicalizeEntryKey(proposedValue);
+    const frenchVerb = forms.find(form =>
+      form?.language_code === "fr" && form?.part_of_speech === "verb" && typeof form?.lemma === "string"
+    );
+    if (!frenchVerb || !/^\s*(?:s['’]|se\s+)/iu.test(frenchVerb.lemma)) {
+      return { entryKey, state: "unchanged" };
+    }
+
+    const lemmaKey = canonicalizeEntryKey(frenchVerb.lemma);
+    if (entryKey.replaceAll("_", "") === lemmaKey.replaceAll("_", "")) {
+      return {
+        entryKey: lemmaKey,
+        state: entryKey === lemmaKey ? "unchanged" : "restored",
+      };
+    }
+
+    return {
+      entryKey,
+      state: "ambiguous",
+      warning: "Structure pronominale française à vérifier.",
+    };
+  }
+
   return {
     EntryKeyCanonicalizationError,
     canonicalizeEntryKey,
     findDuplicateCanonicalEntryKeys,
+    reconcileFrenchPronominalConceptKey,
   };
 });

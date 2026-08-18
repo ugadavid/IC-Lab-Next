@@ -3,6 +3,11 @@
 const API_BASE_URL = "http://localhost:3000";
 const DEFAULT_LANGUAGE_CODES = new Set(["fr", "es", "it", "pt"]);
 const PARTS_OF_SPEECH = ["noun", "verb", "adjective", "adverb"];
+const {
+  canonicalizeEntryKey,
+  findDuplicateCanonicalEntryKeys,
+  reconcileFrenchPronominalConceptKey,
+} = window.DicoEntryKey;
 
 let languages = [];
 let candidates = [];
@@ -76,16 +81,72 @@ async function loadLanguages() {
   }
 }
 
+function canonicalKeyOrNull(value) {
+  try {
+    return canonicalizeEntryKey(value);
+  } catch {
+    return null;
+  }
+}
+
 function validateDraft(candidate) {
-  if (!/^[A-Z][A-Z0-9_]{2,99}$/.test(candidate.entry_key)) return { code: "error", label: "Erreur" };
+  const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+  if (!canonicalKey || !/^[A-Z][A-Z0-9_]{2,99}$/.test(canonicalKey)) return { code: "error", label: "Erreur" };
   if (!candidate.gloss_fr.trim() || !candidate.semantic_domain.trim()) return { code: "incomplete", label: "Incomplet" };
   const requestedLanguages = checkedValues("targetLanguage");
   const complete = requestedLanguages.every(code =>
     candidate.forms.some(form => form.language_code === code && form.lemma.trim() && PARTS_OF_SPEECH.includes(form.part_of_speech))
   );
   if (!complete) return { code: "incomplete", label: "Incomplet" };
-  if (existingEntryKeys.has(candidate.entry_key)) return { code: "duplicate", label: "Doublon possible" };
+  const duplicateKeys = findDuplicateCanonicalEntryKeys(
+    candidates.map(item => item.entry_key),
+    [...existingEntryKeys]
+  );
+  if (duplicateKeys.has(canonicalKey)) return { code: "duplicate", label: "Doublon possible" };
+  const pronominalCheck = reconcileFrenchPronominalConceptKey(canonicalKey, candidate.forms);
+  if (pronominalCheck.state === "ambiguous") {
+    return { code: "warning", label: "Structure à vérifier", title: pronominalCheck.warning };
+  }
   return { code: "ready", label: "Prêt" };
+}
+
+function canonicalizeCandidateForReview(candidate) {
+  const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+  if (!canonicalKey) return false;
+  candidate.entry_key = canonicalKey;
+  const status = validateDraft(candidate);
+  if (status.code === "duplicate" || status.code === "error" || status.code === "warning") candidate.keep = false;
+  return true;
+}
+
+function canonicalizeAllCandidateKeys() {
+  candidates.forEach((candidate) => {
+    const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+    if (canonicalKey) candidate.entry_key = canonicalKey;
+    else candidate.keep = false;
+  });
+  candidates.forEach((candidate) => {
+    const status = validateDraft(candidate);
+    if (status.code === "duplicate" || status.code === "error" || status.code === "warning") candidate.keep = false;
+  });
+}
+
+async function refreshCanonicalEntryKeyExistence(candidate, index) {
+  const canonicalKey = canonicalKeyOrNull(candidate.entry_key);
+  if (!canonicalKey) return;
+  try {
+    await apiRequest(`/admin/lexical-entry/${encodeURIComponent(canonicalKey)}`);
+    existingEntryKeys.add(canonicalKey);
+  } catch (error) {
+    if (error.status !== 404) {
+      setMessage("error", `Vérification du doublon impossible : ${error.message}`);
+      return;
+    }
+  }
+  if (candidates[index] === candidate && canonicalKeyOrNull(candidate.entry_key) === canonicalKey) {
+    canonicalizeCandidateForReview(candidate);
+    renderCandidates();
+  }
 }
 
 function makeInput(value, field, index, ariaLabel) {
@@ -112,12 +173,14 @@ function renderCandidates() {
   candidates.forEach((candidate, index) => {
     const row = document.createElement("tr");
     row.dataset.index = String(index);
+    const status = validateDraft(candidate);
 
     const keepCell = document.createElement("td");
     keepCell.className = "keep-cell";
     const keep = document.createElement("input");
     keep.type = "checkbox";
     keep.checked = candidate.keep;
+    keep.disabled = status.code === "duplicate" || status.code === "error";
     keep.dataset.action = "keep";
     keep.dataset.index = String(index);
     keep.setAttribute("aria-label", `Garder ${candidate.entry_key || `la proposition ${index + 1}`}`);
@@ -169,10 +232,10 @@ function renderCandidates() {
     formsCell.appendChild(formsStack);
 
     const statusCell = document.createElement("td");
-    const status = validateDraft(candidate);
     const badge = document.createElement("span");
     badge.className = `status-badge status-${status.code}`;
     badge.textContent = status.label;
+    if (status.title) badge.title = status.title;
     statusCell.appendChild(badge);
 
     const actionCell = document.createElement("td");
@@ -203,6 +266,7 @@ function updateCandidateIndicators(index) {
     const badge = row.querySelector(".status-badge");
     badge.className = `status-badge status-${status.code}`;
     badge.textContent = status.label;
+    badge.title = status.title || "";
   }
   selectedTotal.textContent = String(candidates.filter(item => item.keep).length);
   createSelectedButton.disabled = !candidates.some(item => item.keep);
@@ -231,8 +295,9 @@ async function generateCandidates(event) {
       headers: { "Content-Type": "application/json; charset=utf-8" },
       body: JSON.stringify(request),
     });
-    existingEntryKeys = new Set(data.existing_entry_keys || []);
+    existingEntryKeys = new Set((data.existing_entry_keys || []).map(canonicalizeEntryKey));
     candidates = data.candidates.map(candidate => ({ ...candidate, keep: true }));
+    canonicalizeAllCandidateKeys();
     generationMeta.textContent = `${data.generation.returned}/${data.generation.requested} · modèle ${data.generation.model}`;
     setMessage("success", `${candidates.length} proposition(s) reçue(s). Relisez-les avant création.`);
     renderCandidates();
@@ -249,9 +314,7 @@ function updateCandidateFromControl(target) {
   if (!candidate) return;
   if (target.dataset.action === "keep") candidate.keep = target.checked;
   if (target.dataset.field) {
-    candidate[target.dataset.field] = target.dataset.field === "entry_key"
-      ? target.value.toUpperCase()
-      : target.value;
+    candidate[target.dataset.field] = target.value;
   }
   if (target.dataset.formField) {
     const form = candidate.forms.find(item => item.language_code === target.dataset.formLanguage);
@@ -267,6 +330,17 @@ candidateTableBody.addEventListener("change", event => {
   updateCandidateFromControl(event.target);
   updateCandidateIndicators(Number(event.target.dataset.index));
 });
+candidateTableBody.addEventListener("focusout", event => {
+  if (event.target.dataset.field !== "entry_key") return;
+  const index = Number(event.target.dataset.index);
+  const candidate = candidates[index];
+  if (!candidate) return;
+  if (canonicalizeCandidateForReview(candidate)) {
+    event.target.value = candidate.entry_key;
+    void refreshCanonicalEntryKeyExistence(candidate, index);
+  }
+  renderCandidates();
+});
 candidateTableBody.addEventListener("click", event => {
   if (event.target.dataset.action !== "delete") return;
   candidates.splice(Number(event.target.dataset.index), 1);
@@ -279,6 +353,8 @@ function setAllSelected(value) {
 }
 
 async function createSelectedCandidates() {
+  canonicalizeAllCandidateKeys();
+  renderCandidates();
   const selected = candidates.filter(candidate => candidate.keep);
   const report = { created: [], duplicates: [], errors: [], ignored: candidates.length - selected.length };
   createSelectedButton.disabled = true;
@@ -287,7 +363,7 @@ async function createSelectedCandidates() {
 
   for (const candidate of selected) {
     const status = validateDraft(candidate);
-    if (status.code === "error" || status.code === "incomplete") {
+    if (status.code === "error" || status.code === "incomplete" || status.code === "duplicate") {
       report.ignored += 1;
       continue;
     }

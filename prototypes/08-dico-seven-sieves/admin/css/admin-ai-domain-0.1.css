@@ -34,8 +34,9 @@ button, input, select { font: inherit; }
 .app-header h1 { margin: 0; font-size: 23px; letter-spacing: 0; }
 .app-header p { margin: 3px 0 0; color: #c9d5df; font-size: 13px; }
 .header-meta { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.experimental-label, .api-status { padding: 5px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; }
+.experimental-label, .environment-label, .api-status { padding: 5px 9px; border-radius: 4px; font-size: 12px; font-weight: 700; }
 .experimental-label { background: #745c25; }
+.environment-label { background: #3f596d; }
 .api-status { background: #526b7f; }
 .api-status[data-state="online"] { background: var(--green); }
 .api-status[data-state="error"] { background: var(--red); }
@@ -105,6 +106,12 @@ legend { padding: 0 5px; color: #46566c; font-size: 12px; font-weight: 700; }
 .message.error { display: block; background: var(--red-soft); color: var(--red); }
 .message.success { display: block; background: var(--green-soft); color: var(--green); }
 
+.concept-key-policy { margin: 12px 0; padding: 11px 13px; border-left: 3px solid #4f7f94; border-radius: 3px; background: #edf3f8; color: var(--navy); font-size: 13px; }
+.concept-key-policy p { margin: 0; }
+.concept-key-policy details { margin-top: 5px; color: #46566c; }
+.concept-key-policy summary { width: fit-content; cursor: pointer; font-weight: 700; }
+.concept-key-policy details p { margin-top: 6px; max-width: 880px; }
+
 .selection-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .draft-summary { display: flex; gap: 18px; flex-wrap: wrap; margin: -5px 0 12px; color: var(--muted); font-size: 12px; }
 .draft-summary strong { color: var(--ink); }
@@ -127,7 +134,7 @@ tbody tr:hover td { background: #fbfcfd; }
 .language-code { color: #44566d; font-family: Consolas, monospace; font-weight: 700; }
 .status-badge { display: inline-flex; padding: 4px 7px; border-radius: 4px; font-weight: 700; }
 .status-ready { background: var(--green-soft); color: var(--green); }
-.status-incomplete, .status-duplicate { background: var(--amber-soft); color: var(--amber); }
+.status-incomplete, .status-duplicate, .status-warning { background: var(--amber-soft); color: var(--amber); }
 .status-error { background: var(--red-soft); color: var(--red); }
 .delete-button { width: 34px; min-height: 34px; border: 1px solid #d4a4a4; border-radius: 4px; background: white; color: var(--red); cursor: pointer; font-size: 18px; }
 
