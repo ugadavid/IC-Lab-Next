@@ -1,0 +1,4772 @@
+{
+  "mission": 205,
+  "proposal_only": true,
+  "operation_count": 15,
+  "deleted_empty_entry_count": 23,
+  "retained_rekey_count": 15,
+  "rollback_rule": "aucun COMMIT avant validation de toutes les postconditions ; après COMMIT, inverse exact depuis la sauvegarde ciblée sous refus de collision",
+  "operations": [
+    {
+      "category": "C",
+      "source_id": 143,
+      "current_key": "TRAVAILLER",
+      "retained_id": 129,
+      "final_key": "TRAVAILLER",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "travailler",
+      "source_ids": [
+        143
+      ],
+      "entries_to_delete": [
+        {
+          "id": 143,
+          "entry_key": "TRAVAILLER",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 143,
+      "retained_current_key": "TRABAJAR",
+      "justification_linguistic": "TRAVAILLER reprend le lemme français naturel ; l'ID renseigné actuellement nommé TRABAJAR ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 129 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 143.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 143:TRAVAILLER qui occupe la cible",
+        "renommer l'ID renseigné 129 de TRABAJAR vers TRAVAILLER",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 129 porte encore TRABAJAR",
+        "la seule collision exacte sur TRAVAILLER est l'ID vide 143",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 129 porte uniquement TRAVAILLER",
+        "les IDs 143 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer TRABAJAR sur l'ID 129, puis réinsérer les lignes lexical_entry 143 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 129,
+          "entry_key": "TRABAJAR",
+          "gloss_fr": "exercer une activité professionnelle ou produire un effort",
+          "gloss_en": "to perform work; to exert effort",
+          "semantic_domain": "travail",
+          "forms": [
+            {
+              "id": 581,
+              "language": "en",
+              "lemma": "work",
+              "normalized_lemma": "work",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 580,
+              "language": "es",
+              "lemma": "trabajar",
+              "normalized_lemma": "trabajar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 582,
+              "language": "fr",
+              "lemma": "travailler",
+              "normalized_lemma": "travailler",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 583,
+              "language": "it",
+              "lemma": "lavorare",
+              "normalized_lemma": "lavorare",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 584,
+              "language": "pt",
+              "lemma": "trabalhar",
+              "normalized_lemma": "trabalhar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 143,
+            "entry_key": "TRAVAILLER",
+            "gloss_fr": "exécuter un travail",
+            "gloss_en": "to work",
+            "semantic_domain": "action",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 144,
+      "current_key": "BEAUCOUP",
+      "retained_id": 130,
+      "final_key": "BEAUCOUP",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "beaucoup",
+      "source_ids": [
+        144
+      ],
+      "entries_to_delete": [
+        {
+          "id": 144,
+          "entry_key": "BEAUCOUP",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 144,
+      "retained_current_key": "MUCHO",
+      "justification_linguistic": "BEAUCOUP reprend le lemme français naturel ; l'ID renseigné actuellement nommé MUCHO ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 130 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 144.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 144:BEAUCOUP qui occupe la cible",
+        "renommer l'ID renseigné 130 de MUCHO vers BEAUCOUP",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 130 porte encore MUCHO",
+        "la seule collision exacte sur BEAUCOUP est l'ID vide 144",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 130 porte uniquement BEAUCOUP",
+        "les IDs 144 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer MUCHO sur l'ID 130, puis réinsérer les lignes lexical_entry 144 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 130,
+          "entry_key": "MUCHO",
+          "gloss_fr": "en grande quantité ou intensité",
+          "gloss_en": "in great quantity or intensity",
+          "semantic_domain": "quantité",
+          "forms": [
+            {
+              "id": 586,
+              "language": "en",
+              "lemma": "much",
+              "normalized_lemma": "much",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 585,
+              "language": "es",
+              "lemma": "mucho",
+              "normalized_lemma": "mucho",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 587,
+              "language": "fr",
+              "lemma": "beaucoup",
+              "normalized_lemma": "beaucoup",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 588,
+              "language": "it",
+              "lemma": "molto",
+              "normalized_lemma": "molto",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 589,
+              "language": "pt",
+              "lemma": "muito",
+              "normalized_lemma": "muito",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 144,
+            "entry_key": "BEAUCOUP",
+            "gloss_fr": "en grande quantité, intensité",
+            "gloss_en": "a lot, much, many",
+            "semantic_domain": "quantité",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 146,
+      "current_key": "CEPENDANT",
+      "retained_id": 131,
+      "final_key": "CEPENDANT",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "cependant",
+      "source_ids": [
+        146
+      ],
+      "entries_to_delete": [
+        {
+          "id": 146,
+          "entry_key": "CEPENDANT",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 146,
+      "retained_current_key": "SIN_EMBARGO",
+      "justification_linguistic": "CEPENDANT reprend le lemme français naturel ; l'ID renseigné actuellement nommé SIN_EMBARGO ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 131 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 146.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 146:CEPENDANT qui occupe la cible",
+        "renommer l'ID renseigné 131 de SIN_EMBARGO vers CEPENDANT",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 131 porte encore SIN_EMBARGO",
+        "la seule collision exacte sur CEPENDANT est l'ID vide 146",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 131 porte uniquement CEPENDANT",
+        "les IDs 146 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer SIN_EMBARGO sur l'ID 131, puis réinsérer les lignes lexical_entry 146 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 131,
+          "entry_key": "SIN_EMBARGO",
+          "gloss_fr": "indique une opposition ou une restriction",
+          "gloss_en": "indicates opposition or restriction",
+          "semantic_domain": "liaison",
+          "forms": [
+            {
+              "id": 591,
+              "language": "en",
+              "lemma": "however",
+              "normalized_lemma": "however",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 590,
+              "language": "es",
+              "lemma": "sin embargo",
+              "normalized_lemma": "sin embargo",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 592,
+              "language": "fr",
+              "lemma": "cependant",
+              "normalized_lemma": "cependant",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 593,
+              "language": "it",
+              "lemma": "tuttavia",
+              "normalized_lemma": "tuttavia",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 594,
+              "language": "pt",
+              "lemma": "entretanto",
+              "normalized_lemma": "entretanto",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 146,
+            "entry_key": "CEPENDANT",
+            "gloss_fr": "marque une opposition ou restriction",
+            "gloss_en": "however, nevertheless",
+            "semantic_domain": "relation",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 150,
+      "current_key": "ABANDONNER",
+      "retained_id": 134,
+      "final_key": "ABANDONNER",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "abandonner",
+      "source_ids": [
+        150
+      ],
+      "entries_to_delete": [
+        {
+          "id": 150,
+          "entry_key": "ABANDONNER",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 150,
+      "retained_current_key": "ABANDONAR",
+      "justification_linguistic": "ABANDONNER reprend le lemme français naturel ; l'ID renseigné actuellement nommé ABANDONAR ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 134 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 150.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 150:ABANDONNER qui occupe la cible",
+        "renommer l'ID renseigné 134 de ABANDONAR vers ABANDONNER",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 134 porte encore ABANDONAR",
+        "la seule collision exacte sur ABANDONNER est l'ID vide 150",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 134 porte uniquement ABANDONNER",
+        "les IDs 150 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer ABANDONAR sur l'ID 134, puis réinsérer les lignes lexical_entry 150 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 134,
+          "entry_key": "ABANDONAR",
+          "gloss_fr": "quitter ou renoncer à quelque chose",
+          "gloss_en": "to leave or give up something",
+          "semantic_domain": "action",
+          "forms": [
+            {
+              "id": 606,
+              "language": "en",
+              "lemma": "abandon",
+              "normalized_lemma": "abandon",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 605,
+              "language": "es",
+              "lemma": "abandonar",
+              "normalized_lemma": "abandonar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 607,
+              "language": "fr",
+              "lemma": "abandonner",
+              "normalized_lemma": "abandonner",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 608,
+              "language": "it",
+              "lemma": "abbandonare",
+              "normalized_lemma": "abbandonare",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 609,
+              "language": "pt",
+              "lemma": "abandonar",
+              "normalized_lemma": "abandonar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 150,
+            "entry_key": "ABANDONNER",
+            "gloss_fr": "cesser, laisser quelque chose",
+            "gloss_en": "to abandon, give up",
+            "semantic_domain": "action",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 151,
+      "current_key": "PROJET",
+      "retained_id": 135,
+      "final_key": "PROJET",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 1,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "projet",
+      "source_ids": [
+        151
+      ],
+      "entries_to_delete": [
+        {
+          "id": 151,
+          "entry_key": "PROJET",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 151,
+      "retained_current_key": "PROYECTO",
+      "justification_linguistic": "PROJET reprend le lemme français naturel ; l'ID renseigné actuellement nommé PROYECTO ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 135 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 151.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 151:PROJET qui occupe la cible",
+        "renommer l'ID renseigné 135 de PROYECTO vers PROJET",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 135 porte encore PROYECTO",
+        "la seule collision exacte sur PROJET est l'ID vide 151",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 135 porte uniquement PROJET",
+        "les IDs 151 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer PROYECTO sur l'ID 135, puis réinsérer les lignes lexical_entry 151 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 135,
+          "entry_key": "PROYECTO",
+          "gloss_fr": "plan ou programme pour réaliser quelque chose",
+          "gloss_en": "plan or program to achieve something",
+          "semantic_domain": "planification",
+          "forms": [
+            {
+              "id": 611,
+              "language": "en",
+              "lemma": "project",
+              "normalized_lemma": "project",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 610,
+              "language": "es",
+              "lemma": "proyecto",
+              "normalized_lemma": "proyecto",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 612,
+              "language": "fr",
+              "lemma": "projet",
+              "normalized_lemma": "projet",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 613,
+              "language": "it",
+              "lemma": "progetto",
+              "normalized_lemma": "progetto",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 614,
+              "language": "pt",
+              "lemma": "projeto",
+              "normalized_lemma": "projeto",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [
+            {
+              "id": 14,
+              "lexical_form_id": 610,
+              "surface": "proyectos",
+              "number": "PLURAL",
+              "status": "VALIDATED",
+              "provenance": "ai_text_inflection_v0",
+              "confidence": 0.99
+            }
+          ],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 1,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 151,
+            "entry_key": "PROJET",
+            "gloss_fr": "plan pour réaliser quelque chose",
+            "gloss_en": "project, plan",
+            "semantic_domain": "organisation",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 153,
+      "current_key": "ADAPTER",
+      "retained_id": 138,
+      "final_key": "ADAPTER",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "adapter",
+      "source_ids": [
+        153
+      ],
+      "entries_to_delete": [
+        {
+          "id": 153,
+          "entry_key": "ADAPTER",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 153,
+      "retained_current_key": "ADAPTAR",
+      "justification_linguistic": "ADAPTER reprend le lemme français naturel ; l'ID renseigné actuellement nommé ADAPTAR ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 138 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 153.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 153:ADAPTER qui occupe la cible",
+        "renommer l'ID renseigné 138 de ADAPTAR vers ADAPTER",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 138 porte encore ADAPTAR",
+        "la seule collision exacte sur ADAPTER est l'ID vide 153",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 138 porte uniquement ADAPTER",
+        "les IDs 153 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer ADAPTAR sur l'ID 138, puis réinsérer les lignes lexical_entry 153 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 138,
+          "entry_key": "ADAPTAR",
+          "gloss_fr": "ajuster pour convenir à un nouvel usage ou condition",
+          "gloss_en": "to adjust to suit a new use or condition",
+          "semantic_domain": "action",
+          "forms": [
+            {
+              "id": 626,
+              "language": "en",
+              "lemma": "adapt",
+              "normalized_lemma": "adapt",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 625,
+              "language": "es",
+              "lemma": "adaptar",
+              "normalized_lemma": "adaptar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 627,
+              "language": "fr",
+              "lemma": "adapter",
+              "normalized_lemma": "adapter",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 628,
+              "language": "it",
+              "lemma": "adattare",
+              "normalized_lemma": "adattare",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 629,
+              "language": "pt",
+              "lemma": "adaptar",
+              "normalized_lemma": "adaptar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 153,
+            "entry_key": "ADAPTER",
+            "gloss_fr": "modifier pour convenir",
+            "gloss_en": "to adapt, modify",
+            "semantic_domain": "action",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 154,
+      "current_key": "CONTINUER",
+      "retained_id": 139,
+      "final_key": "CONTINUER",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "continuer",
+      "source_ids": [
+        154,
+        281
+      ],
+      "entries_to_delete": [
+        {
+          "id": 154,
+          "entry_key": "CONTINUER",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 281,
+          "entry_key": "CONTINUER_VERB",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 154,
+      "retained_current_key": "CONTINUAR",
+      "justification_linguistic": "CONTINUER reprend le lemme français naturel ; l'ID renseigné actuellement nommé CONTINUAR ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 2 entrées supprimées sont sans dépendance directe ; l'ID 139 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 154.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 154:CONTINUER qui occupe la cible",
+        "renommer l'ID renseigné 139 de CONTINUAR vers CONTINUER",
+        "supprimer l'entrée vide résiduelle 281:CONTINUER_VERB",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 139 porte encore CONTINUAR",
+        "la seule collision exacte sur CONTINUER est l'ID vide 154",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 139 porte uniquement CONTINUER",
+        "les IDs 154, 281 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer CONTINUAR sur l'ID 139, puis réinsérer les lignes lexical_entry 154, 281 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 139,
+          "entry_key": "CONTINUAR",
+          "gloss_fr": "poursuivre une action ou un état",
+          "gloss_en": "to continue an action or state",
+          "semantic_domain": "action",
+          "forms": [
+            {
+              "id": 631,
+              "language": "en",
+              "lemma": "continue",
+              "normalized_lemma": "continue",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 630,
+              "language": "es",
+              "lemma": "continuar",
+              "normalized_lemma": "continuar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 632,
+              "language": "fr",
+              "lemma": "continuer",
+              "normalized_lemma": "continuer",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 633,
+              "language": "it",
+              "lemma": "continuare",
+              "normalized_lemma": "continuare",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 634,
+              "language": "pt",
+              "lemma": "continuar",
+              "normalized_lemma": "continuar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 154,
+            "entry_key": "CONTINUER",
+            "gloss_fr": "poursuivre une action",
+            "gloss_en": "to continue",
+            "semantic_domain": "action",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 281,
+            "entry_key": "CONTINUER_VERB",
+            "gloss_fr": "poursuivre une action sans interruption",
+            "gloss_en": "to continue without interruption",
+            "semantic_domain": "changement",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 155,
+      "current_key": "PARCE_QUE",
+      "retained_id": 140,
+      "final_key": "PARCE_QUE",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "parce_que",
+      "source_ids": [
+        155
+      ],
+      "entries_to_delete": [
+        {
+          "id": 155,
+          "entry_key": "PARCE_QUE",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 155,
+      "retained_current_key": "PORQUE",
+      "justification_linguistic": "PARCE_QUE reprend le lemme français naturel ; l'ID renseigné actuellement nommé PORQUE ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 140 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 155.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 155:PARCE_QUE qui occupe la cible",
+        "renommer l'ID renseigné 140 de PORQUE vers PARCE_QUE",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 140 porte encore PORQUE",
+        "la seule collision exacte sur PARCE_QUE est l'ID vide 155",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 140 porte uniquement PARCE_QUE",
+        "les IDs 155 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer PORQUE sur l'ID 140, puis réinsérer les lignes lexical_entry 155 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 140,
+          "entry_key": "PORQUE",
+          "gloss_fr": "indique une cause ou une raison",
+          "gloss_en": "indicates cause or reason",
+          "semantic_domain": "liaison",
+          "forms": [
+            {
+              "id": 636,
+              "language": "en",
+              "lemma": "because",
+              "normalized_lemma": "because",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 635,
+              "language": "es",
+              "lemma": "porque",
+              "normalized_lemma": "porque",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 637,
+              "language": "fr",
+              "lemma": "parce que",
+              "normalized_lemma": "parce que",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 638,
+              "language": "it",
+              "lemma": "perché",
+              "normalized_lemma": "perche",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 639,
+              "language": "pt",
+              "lemma": "porque",
+              "normalized_lemma": "porque",
+              "part_of_speech": "adverb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 155,
+            "entry_key": "PARCE_QUE",
+            "gloss_fr": "cause, raison",
+            "gloss_en": "because",
+            "semantic_domain": "relation",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 156,
+      "current_key": "TROUVER",
+      "retained_id": 141,
+      "final_key": "TROUVER",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "trouver",
+      "source_ids": [
+        156
+      ],
+      "entries_to_delete": [
+        {
+          "id": 156,
+          "entry_key": "TROUVER",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+              ],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 156,
+      "retained_current_key": "ENCONTRAR",
+      "justification_linguistic": "TROUVER reprend le lemme français naturel ; l'ID renseigné actuellement nommé ENCONTRAR ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 141 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 156.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 156:TROUVER qui occupe la cible",
+        "renommer l'ID renseigné 141 de ENCONTRAR vers TROUVER",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 141 porte encore ENCONTRAR",
+        "la seule collision exacte sur TROUVER est l'ID vide 156",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 141 porte uniquement TROUVER",
+        "les IDs 156 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer ENCONTRAR sur l'ID 141, puis réinsérer les lignes lexical_entry 156 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 141,
+          "entry_key": "ENCONTRAR",
+          "gloss_fr": "découvrir ou localiser quelque chose ou quelqu’un",
+          "gloss_en": "to find or locate something or someone",
+          "semantic_domain": "action",
+          "forms": [
+            {
+              "id": 641,
+              "language": "en",
+              "lemma": "find",
+              "normalized_lemma": "find",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 640,
+              "language": "es",
+              "lemma": "encontrar",
+              "normalized_lemma": "encontrar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 642,
+              "language": "fr",
+              "lemma": "trouver",
+              "normalized_lemma": "trouver",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 643,
+              "language": "it",
+              "lemma": "trovare",
+              "normalized_lemma": "trovare",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 644,
+              "language": "pt",
+              "lemma": "encontrar",
+              "normalized_lemma": "encontrar",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 156,
+            "entry_key": "TROUVER",
+            "gloss_fr": "découvrir, localiser",
+            "gloss_en": "to find",
+            "semantic_domain": "action",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md",
+                "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [
+                  "prototypes/08-dico-seven-sieves/docs/dico-deduplication-v0-diagnostic.md"
+                ],
+                "reports": [
+                  "reports/188_dico_ic_pre_stabilization_deep_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 220,
+      "current_key": "GLOBAL",
+      "retained_id": 169,
+      "final_key": "GLOBAL",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "global",
+      "source_ids": [
+        206,
+        220,
+        261,
+        315
+      ],
+      "entries_to_delete": [
+        {
+          "id": 206,
+          "entry_key": "GLOBAL_ADJ",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 220,
+          "entry_key": "GLOBAL",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 261,
+          "entry_key": "GLOBALE_ADJECTIVE",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 315,
+          "entry_key": "GLOBAL_ADJECTIF",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 220,
+      "retained_current_key": "GLOBALE",
+      "justification_linguistic": "GLOBAL reprend le lemme français naturel ; l'ID renseigné actuellement nommé GLOBALE ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 4 entrées supprimées sont sans dépendance directe ; l'ID 169 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 220.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 220:GLOBAL qui occupe la cible",
+        "renommer l'ID renseigné 169 de GLOBALE vers GLOBAL",
+        "supprimer l'entrée vide résiduelle 206:GLOBAL_ADJ",
+        "supprimer l'entrée vide résiduelle 261:GLOBALE_ADJECTIVE",
+        "supprimer l'entrée vide résiduelle 315:GLOBAL_ADJECTIF",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 169 porte encore GLOBALE",
+        "la seule collision exacte sur GLOBAL est l'ID vide 220",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 169 porte uniquement GLOBAL",
+        "les IDs 206, 220, 261, 315 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer GLOBALE sur l'ID 169, puis réinsérer les lignes lexical_entry 206, 220, 261, 315 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 169,
+          "entry_key": "GLOBALE",
+          "gloss_fr": "qui concerne l’ensemble",
+          "gloss_en": "concerning the whole",
+          "semantic_domain": "qualité",
+          "forms": [
+            {
+              "id": 784,
+              "language": "en",
+              "lemma": "global",
+              "normalized_lemma": "global",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 781,
+              "language": "es",
+              "lemma": "global",
+              "normalized_lemma": "global",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 780,
+              "language": "fr",
+              "lemma": "global",
+              "normalized_lemma": "global",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 782,
+              "language": "it",
+              "lemma": "globale",
+              "normalized_lemma": "globale",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 783,
+              "language": "pt",
+              "lemma": "global",
+              "normalized_lemma": "global",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 206,
+            "entry_key": "GLOBAL_ADJ",
+            "gloss_fr": "qui concerne le monde entier ou tout un ensemble",
+            "gloss_en": "relating to the whole world or entire set",
+            "semantic_domain": "qualité",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 220,
+            "entry_key": "GLOBAL",
+            "gloss_fr": "relatif à l'ensemble, total",
+            "gloss_en": "relating to the whole, total",
+            "semantic_domain": "caractéristique",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 261,
+            "entry_key": "GLOBALE_ADJECTIVE",
+            "gloss_fr": "Qui englobe tout ou est total",
+            "gloss_en": "Encompassing all, total",
+            "semantic_domain": "qualité",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 315,
+            "entry_key": "GLOBAL_ADJECTIF",
+            "gloss_fr": "Qui concerne l'ensemble, totalité",
+            "gloss_en": "Relating to the whole or entirety",
+            "semantic_domain": "description",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 295,
+      "current_key": "ACCELERE",
+      "retained_id": 214,
+      "final_key": "ACCELERE",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "prototypes/08-dico-seven-sieves/Node/test/entry-key-canonicalization.test.js",
+          "reports/200_dico_ic_ai_entry_key_canonicalization_report.md",
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json"
+        ],
+        "retained": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "accelere",
+      "source_ids": [
+        248,
+        265,
+        295
+      ],
+      "entries_to_delete": [
+        {
+          "id": 248,
+          "entry_key": "ACCELERATED",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 265,
+          "entry_key": "ACCELERE_ADJECTIVE",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 295,
+          "entry_key": "ACCELERE",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "prototypes/08-dico-seven-sieves/Node/test/entry-key-canonicalization.test.js",
+              "reports/200_dico_ic_ai_entry_key_canonicalization_report.md",
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [
+                "prototypes/08-dico-seven-sieves/Node/test/entry-key-canonicalization.test.js"
+              ],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/200_dico_ic_ai_entry_key_canonicalization_report.md",
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 295,
+      "retained_current_key": "ACCELERE_ADJ",
+      "justification_linguistic": "ACCELERE reprend le lemme français naturel ; l'ID renseigné actuellement nommé ACCELERE_ADJ ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 3 entrées supprimées sont sans dépendance directe ; l'ID 214 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 295.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 295:ACCELERE qui occupe la cible",
+        "renommer l'ID renseigné 214 de ACCELERE_ADJ vers ACCELERE",
+        "supprimer l'entrée vide résiduelle 248:ACCELERATED",
+        "supprimer l'entrée vide résiduelle 265:ACCELERE_ADJECTIVE",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 214 porte encore ACCELERE_ADJ",
+        "la seule collision exacte sur ACCELERE est l'ID vide 295",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 214 porte uniquement ACCELERE",
+        "les IDs 248, 265, 295 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer ACCELERE_ADJ sur l'ID 214, puis réinsérer les lignes lexical_entry 248, 265, 295 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 214,
+          "entry_key": "ACCELERE_ADJ",
+          "gloss_fr": "qui s'accélère, devient plus rapide",
+          "gloss_en": "that accelerates, becomes faster",
+          "semantic_domain": "qualité",
+          "forms": [
+            {
+              "id": 1009,
+              "language": "en",
+              "lemma": "accelerated",
+              "normalized_lemma": "accelerated",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1006,
+              "language": "es",
+              "lemma": "acelerado",
+              "normalized_lemma": "acelerado",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1005,
+              "language": "fr",
+              "lemma": "accéléré",
+              "normalized_lemma": "accelere",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1007,
+              "language": "it",
+              "lemma": "accelerato",
+              "normalized_lemma": "accelerato",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1008,
+              "language": "pt",
+              "lemma": "acelerado",
+              "normalized_lemma": "acelerado",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 248,
+            "entry_key": "ACCELERATED",
+            "gloss_fr": "Qui s'est accru ou intensifié rapidement",
+            "gloss_en": "That has increased or intensified quickly",
+            "semantic_domain": "qualité",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 265,
+            "entry_key": "ACCELERE_ADJECTIVE",
+            "gloss_fr": "Qui se fait plus rapidement",
+            "gloss_en": "Made more rapidly",
+            "semantic_domain": "qualité",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 295,
+            "entry_key": "ACCELERE",
+            "gloss_fr": "qui va plus vite que d'habitude",
+            "gloss_en": "faster than usual",
+            "semantic_domain": "Qualité",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "prototypes/08-dico-seven-sieves/Node/test/entry-key-canonicalization.test.js",
+                "reports/200_dico_ic_ai_entry_key_canonicalization_report.md",
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [
+                  "prototypes/08-dico-seven-sieves/Node/test/entry-key-canonicalization.test.js"
+                ],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/200_dico_ic_ai_entry_key_canonicalization_report.md",
+                  "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 312,
+      "current_key": "HUMAIN",
+      "retained_id": 280,
+      "final_key": "HUMAIN",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "reports/201_dico_ic_concept_key_language_policy_audit.md",
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "humain",
+      "source_ids": [
+        287,
+        312,
+        324
+      ],
+      "entries_to_delete": [
+        {
+          "id": 287,
+          "entry_key": "HUMAIN_ADJ",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 312,
+          "entry_key": "HUMAIN",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/201_dico_ic_concept_key_language_policy_audit.md",
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        {
+          "id": 324,
+          "entry_key": "HUMAIN_ADJECTIF",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 312,
+      "retained_current_key": "HUMAIN_ADJECTIVE",
+      "justification_linguistic": "HUMAIN reprend le lemme français naturel ; l'ID renseigné actuellement nommé HUMAIN_ADJECTIVE ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 3 entrées supprimées sont sans dépendance directe ; l'ID 280 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 312.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 312:HUMAIN qui occupe la cible",
+        "renommer l'ID renseigné 280 de HUMAIN_ADJECTIVE vers HUMAIN",
+        "supprimer l'entrée vide résiduelle 287:HUMAIN_ADJ",
+        "supprimer l'entrée vide résiduelle 324:HUMAIN_ADJECTIF",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 280 porte encore HUMAIN_ADJECTIVE",
+        "la seule collision exacte sur HUMAIN est l'ID vide 312",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 280 porte uniquement HUMAIN",
+        "les IDs 287, 312, 324 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer HUMAIN_ADJECTIVE sur l'ID 280, puis réinsérer les lignes lexical_entry 287, 312, 324 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 280,
+          "entry_key": "HUMAIN_ADJECTIVE",
+          "gloss_fr": "Relatif à l'être humain",
+          "gloss_en": "Relating to human beings",
+          "semantic_domain": "qualité",
+          "forms": [
+            {
+              "id": 1324,
+              "language": "en",
+              "lemma": "human",
+              "normalized_lemma": "human",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1321,
+              "language": "es",
+              "lemma": "humano",
+              "normalized_lemma": "humano",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1320,
+              "language": "fr",
+              "lemma": "humain",
+              "normalized_lemma": "humain",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1322,
+              "language": "it",
+              "lemma": "umano",
+              "normalized_lemma": "umano",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1323,
+              "language": "pt",
+              "lemma": "humano",
+              "normalized_lemma": "humano",
+              "part_of_speech": "adjective",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 287,
+            "entry_key": "HUMAIN_ADJ",
+            "gloss_fr": "relatif à l'homme",
+            "gloss_en": "related to humans",
+            "semantic_domain": "être vivant",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 312,
+            "entry_key": "HUMAIN",
+            "gloss_fr": "relatif à l'homme",
+            "gloss_en": "relating to humans",
+            "semantic_domain": "qualité",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/201_dico_ic_concept_key_language_policy_audit.md",
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          },
+          {
+            "id": 324,
+            "entry_key": "HUMAIN_ADJECTIF",
+            "gloss_fr": "Relatif à l'homme ou aux humains",
+            "gloss_en": "Relating to humans",
+            "semantic_domain": "description",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 305,
+      "current_key": "ABSENCE",
+      "retained_id": 271,
+      "final_key": "ABSENCE",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "absence",
+      "source_ids": [
+        305
+      ],
+      "entries_to_delete": [
+        {
+          "id": 305,
+          "entry_key": "ABSENCE",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 305,
+      "retained_current_key": "ABSENCE_NOUN",
+      "justification_linguistic": "ABSENCE reprend le lemme français naturel ; l'ID renseigné actuellement nommé ABSENCE_NOUN ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 271 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 305.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 305:ABSENCE qui occupe la cible",
+        "renommer l'ID renseigné 271 de ABSENCE_NOUN vers ABSENCE",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 271 porte encore ABSENCE_NOUN",
+        "la seule collision exacte sur ABSENCE est l'ID vide 305",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 271 porte uniquement ABSENCE",
+        "les IDs 305 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer ABSENCE_NOUN sur l'ID 271, puis réinsérer les lignes lexical_entry 305 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 271,
+          "entry_key": "ABSENCE_NOUN",
+          "gloss_fr": "Manque ou absence de quelque chose",
+          "gloss_en": "Lack or absence of something",
+          "semantic_domain": "état",
+          "forms": [
+            {
+              "id": 1279,
+              "language": "en",
+              "lemma": "absence",
+              "normalized_lemma": "absence",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1276,
+              "language": "es",
+              "lemma": "ausencia",
+              "normalized_lemma": "ausencia",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1275,
+              "language": "fr",
+              "lemma": "absence",
+              "normalized_lemma": "absence",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1277,
+              "language": "it",
+              "lemma": "assenza",
+              "normalized_lemma": "assenza",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1278,
+              "language": "pt",
+              "lemma": "ausência",
+              "normalized_lemma": "ausencia",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 305,
+            "entry_key": "ABSENCE",
+            "gloss_fr": "fait de ne pas être présent",
+            "gloss_en": "state of not being present",
+            "semantic_domain": "État",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 306,
+      "current_key": "EAU",
+      "retained_id": 272,
+      "final_key": "EAU",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "eau",
+      "source_ids": [
+        306
+      ],
+      "entries_to_delete": [
+        {
+          "id": 306,
+          "entry_key": "EAU",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 306,
+      "retained_current_key": "EAU_NOUN",
+      "justification_linguistic": "EAU reprend le lemme français naturel ; l'ID renseigné actuellement nommé EAU_NOUN ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 272 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 306.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 306:EAU qui occupe la cible",
+        "renommer l'ID renseigné 272 de EAU_NOUN vers EAU",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 272 porte encore EAU_NOUN",
+        "la seule collision exacte sur EAU est l'ID vide 306",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 272 porte uniquement EAU",
+        "les IDs 306 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer EAU_NOUN sur l'ID 272, puis réinsérer les lignes lexical_entry 306 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 272,
+          "entry_key": "EAU_NOUN",
+          "gloss_fr": "Substance liquide essentielle à la vie",
+          "gloss_en": "Liquid substance essential for life",
+          "semantic_domain": "nature",
+          "forms": [
+            {
+              "id": 1284,
+              "language": "en",
+              "lemma": "water",
+              "normalized_lemma": "water",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1281,
+              "language": "es",
+              "lemma": "agua",
+              "normalized_lemma": "agua",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1280,
+              "language": "fr",
+              "lemma": "eau",
+              "normalized_lemma": "eau",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1282,
+              "language": "it",
+              "lemma": "acqua",
+              "normalized_lemma": "acqua",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1283,
+              "language": "pt",
+              "lemma": "água",
+              "normalized_lemma": "agua",
+              "part_of_speech": "noun",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 306,
+            "entry_key": "EAU",
+            "gloss_fr": "substance liquide vitale",
+            "gloss_en": "vital liquid substance",
+            "semantic_domain": "Nature",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "category": "C",
+      "source_id": 313,
+      "current_key": "PERDRE",
+      "retained_id": 290,
+      "final_key": "PERDRE",
+      "dependencies_observed": {
+        "source": {
+          "forms": 0,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 0
+        },
+        "retained": {
+          "forms": 5,
+          "inflected_forms": 0,
+          "outgoing_relations": 0,
+          "incoming_relations": 0,
+          "connector_helps": 0,
+          "ic_features": 0,
+          "indirect_pattern_rules": 1
+        }
+      },
+      "functional_references": {
+        "source": [],
+        "retained": []
+      },
+      "non_functional_references": {
+        "source": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ],
+        "retained": [
+          "reports/204_dico_ic_concept_cleanup_audit.md",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+          "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+        ]
+      },
+      "operation_type": "atomic_delete_collision_then_rekey",
+      "family": "perdre",
+      "source_ids": [
+        313
+      ],
+      "entries_to_delete": [
+        {
+          "id": 313,
+          "entry_key": "PERDRE",
+          "dependencies": {
+            "forms": 0,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 0
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        }
+      ],
+      "collision_entry_id": 313,
+      "retained_current_key": "PERDRE_VERB",
+      "justification_linguistic": "PERDRE reprend le lemme français naturel ; l'ID renseigné actuellement nommé PERDRE_VERB ne doit pas être sacrifié au profit d'une coquille vide.",
+      "justification_technical": "Les 1 entrées supprimées sont sans dépendance directe ; l'ID 290 conserve ses formes et dépendances. La collision exacte est limitée à l'ID 313.",
+      "transaction_order": [
+        "ouvrir une transaction et vérifier le snapshot de toutes les lignes concernées",
+        "supprimer d'abord l'entrée vide 313:PERDRE qui occupe la cible",
+        "renommer l'ID renseigné 290 de PERDRE_VERB vers PERDRE",
+        "vérifier la clé finale, les IDs supprimés, les dépendances et les compteurs avant COMMIT"
+      ],
+      "preconditions": [
+        "l'ID 290 porte encore PERDRE_VERB",
+        "la seule collision exacte sur PERDRE est l'ID vide 313",
+        "toutes les entrées à supprimer ont zéro dépendance directe",
+        "aucune référence fonctionnelle nouvelle ne vise les clés supprimées ou renommées",
+        "les contenus et dépendances de l'ID conservé correspondent au snapshot"
+      ],
+      "post_checks": [
+        "l'ID 290 porte uniquement PERDRE",
+        "les IDs 313 sont absents",
+        "toutes les formes, flexions, relations, aides et traits de l'ID conservé sont inchangés",
+        "les compteurs baissent seulement du nombre d'entrées supprimées"
+      ],
+      "rollback_strategy": "dans la même transaction, restaurer PERDRE_VERB sur l'ID 290, puis réinsérer les lignes lexical_entry 313 depuis la sauvegarde ; après COMMIT, appliquer exactement l'inverse sous les mêmes contrôles de collision",
+      "execution_order": 20,
+      "inventory": {
+        "retained": {
+          "id": 290,
+          "entry_key": "PERDRE_VERB",
+          "gloss_fr": "cesser d'avoir, égarer",
+          "gloss_en": "to cease to have, to lose",
+          "semantic_domain": "changement",
+          "forms": [
+            {
+              "id": 1374,
+              "language": "en",
+              "lemma": "lose",
+              "normalized_lemma": "lose",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1371,
+              "language": "es",
+              "lemma": "perder",
+              "normalized_lemma": "perder",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1370,
+              "language": "fr",
+              "lemma": "perdre",
+              "normalized_lemma": "perdre",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1372,
+              "language": "it",
+              "lemma": "perdere",
+              "normalized_lemma": "perdere",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            },
+            {
+              "id": 1373,
+              "language": "pt",
+              "lemma": "perder",
+              "normalized_lemma": "perder",
+              "part_of_speech": "verb",
+              "confidence": 1,
+              "provenance": null
+            }
+          ],
+          "inflected_forms": [],
+          "outgoing_relations": [],
+          "incoming_relations": [],
+          "connector_helps": [],
+          "ic_features": [],
+          "indirect_pattern_rules": [
+            {
+              "id": 1,
+              "source_language": "es",
+              "target_language": "fr",
+              "pattern_type": "SUFFIX_TRANSFORM",
+              "source_pattern": "ción",
+              "target_pattern": "tion"
+            }
+          ],
+          "dependencies": {
+            "forms": 5,
+            "inflected_forms": 0,
+            "outgoing_relations": 0,
+            "incoming_relations": 0,
+            "connector_helps": 0,
+            "ic_features": 0,
+            "indirect_pattern_rules": 1
+          },
+          "references": {
+            "functional": [],
+            "non_functional": [
+              "reports/204_dico_ic_concept_cleanup_audit.md",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+              "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+            ],
+            "classified": {
+              "functional": [],
+              "prompt": [],
+              "tests": [],
+              "seeds": [],
+              "scripts": [],
+              "docs": [],
+              "reports": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/review_required.csv",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "other": []
+            }
+          }
+        },
+        "deletions": [
+          {
+            "id": 313,
+            "entry_key": "PERDRE",
+            "gloss_fr": "ne plus avoir, subir une perte",
+            "gloss_en": "to lose, suffer loss",
+            "semantic_domain": "action",
+            "forms": [],
+            "inflected_forms": [],
+            "outgoing_relations": [],
+            "incoming_relations": [],
+            "connector_helps": [],
+            "ic_features": [],
+            "indirect_pattern_rules": [],
+            "dependencies": {
+              "forms": 0,
+              "inflected_forms": 0,
+              "outgoing_relations": 0,
+              "incoming_relations": 0,
+              "connector_helps": 0,
+              "ic_features": 0,
+              "indirect_pattern_rules": 0
+            },
+            "references": {
+              "functional": [],
+              "non_functional": [
+                "reports/204_dico_ic_concept_cleanup_audit.md",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+              ],
+              "classified": {
+                "functional": [],
+                "prompt": [],
+                "tests": [],
+                "seeds": [],
+                "scripts": [],
+                "docs": [],
+                "reports": [
+                  "reports/204_dico_ic_concept_cleanup_audit.md",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/candidate_families.json",
+                  "reports/assets/204_dico_ic_concept_cleanup_audit/safe_actions.json"
+                ],
+                "other": []
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
