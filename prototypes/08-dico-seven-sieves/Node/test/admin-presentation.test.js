@@ -10,11 +10,16 @@ const {
 } = require("../src/repository");
 const { createApp } = require("../server");
 const {
+  buildFormPairs,
   confidenceLabel,
+  createEntryEditSession,
   entryPublicLabel,
   provenanceLabel,
+  relationCoverage,
+  relationPairKey,
   sortEntryForms,
-} = require("../../admin/js/admin-entry-0.1.1.js");
+} = require("../../admin/js/admin-entry-workbench-0.1.js");
+const { documentedRelationModels } = require("../../admin/js/admin-entry-0.1.1.js");
 const {
   CANONICAL_SOURCE_LABEL,
   EXPECTED_FORMS,
@@ -255,6 +260,64 @@ test("entry presentation enforces FR ES IT PT EN and keeps English last", () => 
   assert.equal(sortEntryForms(forms).at(-1).language, "en");
 });
 
+test("pair calculation covers 0, 1, 2 and exactly 10 pairs for 5 ordered forms", () => {
+  const forms = ["en", "it", "fr", "pt", "es"].map((language, index) => ({ id: index + 1, language, lemma: language }));
+  assert.equal(buildFormPairs([], []).length, 0);
+  assert.equal(buildFormPairs(forms.slice(0, 1), []).length, 0);
+  assert.equal(buildFormPairs(forms.slice(0, 2), []).length, 1);
+  const pairs = buildFormPairs(forms, []);
+  assert.equal(pairs.length, 10);
+  assert.deepEqual(pairs.map((pair) => `${pair.source.language}-${pair.target.language}`), [
+    "fr-es", "fr-it", "fr-pt", "fr-en", "es-it", "es-pt", "es-en", "it-pt", "it-en", "pt-en",
+  ]);
+});
+
+test("relation detection is symmetric, unique per pair and reports present over total", () => {
+  const forms = ["fr", "es", "it", "pt", "en"].map((language, index) => ({ id: index + 10, language, lemma: language }));
+  const relations = [
+    { id: 1, source_form_id: 11, target_form_id: 10 },
+    { id: 2, source_form_id: 10, target_form_id: 12 },
+  ];
+  const pairs = buildFormPairs(forms, relations);
+  assert.equal(relationPairKey(10, 11), relationPairKey(11, 10));
+  assert.equal(pairs.filter((pair) => pair.relation).length, 2);
+  assert.deepEqual(relationCoverage(pairs), { present: 2, total: 10 });
+});
+
+test("consultation exposes only documented relations and supports a calm empty state", () => {
+  const entry = { forms: [
+    { id: 1, language: "fr", lemma: "information" },
+    { id: 2, language: "es", lemma: "información" },
+    { id: 3, language: "it", lemma: "informazione" },
+  ] };
+  assert.deepEqual(documentedRelationModels(entry, []).map((item) => item.relation.id), []);
+  const models = documentedRelationModels(entry, [
+    { id: 8, source_form_id: 2, target_form_id: 1, relation_type: "COGNATE_STRONG" },
+  ]);
+  assert.equal(models.length, 1);
+  assert.equal(models[0].source.lemma, "información");
+  assert.equal(models[0].target.lemma, "information");
+});
+
+test("entry edit session restores cancel, keeps server errors and adopts a saved state", () => {
+  const entry = {
+    entry_key: "NUIT", gloss_fr: "nuit", gloss_en: "night", semantic_domain: "temps",
+    forms: [{ id: 1, language: "fr", lemma: "nuit", part_of_speech: "noun" }],
+  };
+  const session = createEntryEditSession(entry);
+  session.replace({ ...session.draft, gloss_fr: "nuit modifiée" });
+  assert.equal(session.dirty, true);
+  assert.equal(session.cancel().gloss_fr, "nuit");
+  assert.equal(session.dirty, false);
+  session.replace({ ...session.draft, gloss_fr: "erreur" });
+  session.fail("Serveur indisponible");
+  assert.equal(session.error, "Serveur indisponible");
+  assert.equal(session.draft.gloss_fr, "erreur");
+  const saved = session.saved({ ...entry, gloss_fr: "enregistrée" });
+  assert.equal(saved.draft.gloss_fr, "enregistrée");
+  assert.equal(saved.dirty, false);
+});
+
 test("corrective script accepts only the five exact INFORMATION_DATA forms", () => {
   const rows = EXPECTED_FORMS.map((form, index) => ({
     id: index + 6,
@@ -267,13 +330,31 @@ test("corrective script accepts only the five exact INFORMATION_DATA forms", () 
   assert.throws(() => validateTargetForms(rows.slice(0, 4)), /5 formes attendues/);
 });
 
-test("entry assets distinguish non-Romance English and keep validation details collapsed", () => {
-  const script = fs.readFileSync(path.join(__dirname, "../../admin/js/admin-entry-0.1.1.js"), "utf8");
+test("consultation and workbench assets keep presentation and editing strictly separated", () => {
+  const consultationScript = fs.readFileSync(path.join(__dirname, "../../admin/js/admin-entry-0.1.1.js"), "utf8");
+  const workbenchScript = fs.readFileSync(path.join(__dirname, "../../admin/js/admin-entry-workbench-0.1.js"), "utf8");
   const css = fs.readFileSync(path.join(__dirname, "../../admin/css/admin-entry-0.1.1.css"), "utf8");
-  const html = fs.readFileSync(path.join(__dirname, "../../admin/index-admin-entry-0.1.1.html"), "utf8");
-  assert.match(script, /Langue de comparaison — non romane/);
-  assert.match(script, /Code technique : \$\{form\.source_label\}/);
+  const consultationHtml = fs.readFileSync(path.join(__dirname, "../../admin/index-admin-entry-0.1.1.html"), "utf8");
+  const workbenchHtml = fs.readFileSync(path.join(__dirname, "../../admin/index-admin-entry-workbench-0.1.html"), "utf8");
+  const adminScript = fs.readFileSync(path.join(__dirname, "../../admin/js/admin-0.1.js"), "utf8");
+  assert.match(consultationScript, /Langue de comparaison — non romane/);
+  assert.match(consultationScript, /documentedRelationModels/);
+  assert.doesNotMatch(consultationScript, /Ajouter la relation|Relation à documenter|method: "PUT"|method: "POST"/);
+  assert.match(consultationHtml, /Relations documentées/);
+  assert.match(consultationHtml, /Aucun rapprochement explicite n’est encore documenté/);
+  assert.match(consultationHtml, /Modifier et documenter cette entrée/);
+  assert.doesNotMatch(consultationHtml, /relationPairsBody|Relation à documenter|Ajouter la relation|paires possibles/);
+  assert.match(workbenchScript, /Code technique : \$\{form\.source_label\}/);
   assert.match(css, /\.entry-form-card\[data-language="en"\]/);
-  assert.doesNotMatch(html, /class="model-limit"/);
-  assert.match(html, /<details class="relation-help">/);
+  assert.match(css, /\.relation-pairs-table/);
+  assert.match(css, /\.documented-relations-grid/);
+  assert.match(workbenchHtml, /← Revenir à la fiche de consultation/);
+  assert.match(workbenchHtml, /Modifier l’entrée/);
+  assert.match(workbenchHtml, /Domaine en français naturel : minuscules, accents et espaces/);
+  assert.match(workbenchScript, /Ajouter la relation/);
+  assert.match(workbenchHtml, /Enregistrer/);
+  assert.match(workbenchHtml, /Annuler/);
+  assert.match(workbenchScript, /paires entre les \$\{formCount\} formes actuellement documentées/);
+  assert.match(adminScript, /viewLink\.href = `\.\/index-admin-entry-0\.1\.1\.html/);
+  assert.match(adminScript, /editButton\.href = `\.\/index-admin-entry-workbench-0\.1\.html/);
 });

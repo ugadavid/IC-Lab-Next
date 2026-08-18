@@ -300,11 +300,10 @@ function renderEntries(entries, page) {
     const actionCell = document.createElement("td");
     const actions = document.createElement("div");
     actions.className = "entry-actions";
-    const editButton = document.createElement("button");
-    editButton.type = "button";
+    const editButton = document.createElement("a");
     editButton.className = "button secondary compact-button";
     editButton.textContent = "Modifier";
-    editButton.dataset.entryKey = entry.entry_key;
+    editButton.href = `./index-admin-entry-workbench-0.1.html?entry_key=${encodeURIComponent(entry.entry_key)}`;
     const aiRelationsLink = document.createElement("a");
     aiRelationsLink.className = "button secondary compact-button";
     aiRelationsLink.href = `./index-admin-ai-relations-0.1.html?entry_key=${encodeURIComponent(entry.entry_key)}`;

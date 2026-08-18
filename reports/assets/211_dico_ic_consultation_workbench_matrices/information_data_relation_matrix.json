@@ -1,0 +1,62 @@
+{
+  "mission": 211,
+  "entry": { "id": 2, "entry_key": "INFORMATION_DATA", "forms_count": 5 },
+  "scoring_status": "manual_values_for_human_arbitration",
+  "proposed_source_label": "human_review_mission212",
+  "pairs": [
+    {
+      "pair": "6:7", "forms": [{"id":6,"language":"fr","lemma":"information"},{"id":7,"language":"es","lemma":"información"}],
+      "current_relation": {"id":5,"type":"COGNATE_STRONG","score":0.98,"confidence":0.98,"provenance":"manual_seed","is_symmetric":true},
+      "proposed_type":"COGNATE_STRONG","proposed_score":0.98,"proposed_confidence":0.98,"proposed_provenance":"manual_seed","status":"existing",
+      "justification":"Même famille savante latine ; graphie presque identique ; transfert d’intercompréhension immédiat.","uncertainty":"low","human_validation_required":false
+    },
+    {
+      "pair": "6:8", "forms": [{"id":6,"language":"fr","lemma":"information"},{"id":8,"language":"it","lemma":"informazione"}],
+      "current_relation": {"id":6,"type":"COGNATE_STRONG","score":0.96,"confidence":0.98,"provenance":"manual_seed","is_symmetric":true},
+      "proposed_type":"COGNATE_STRONG","proposed_score":0.96,"proposed_confidence":0.98,"proposed_provenance":"manual_seed","status":"existing",
+      "justification":"Même famille savante latine ; correspondance -tion/-zione visible ; forte valeur pédagogique.","uncertainty":"low","human_validation_required":false
+    },
+    {
+      "pair": "6:9", "forms": [{"id":6,"language":"fr","lemma":"information"},{"id":9,"language":"pt","lemma":"informação"}],
+      "current_relation": {"id":7,"type":"COGNATE_STRONG","score":0.95,"confidence":0.98,"provenance":"manual_seed","is_symmetric":true},
+      "proposed_type":"COGNATE_STRONG","proposed_score":0.95,"proposed_confidence":0.98,"proposed_provenance":"manual_seed","status":"existing",
+      "justification":"Même famille savante latine ; base informa- stable et finale régulière -ção ; transfert fort.","uncertainty":"low","human_validation_required":false
+    },
+    {
+      "pair": "6:10", "forms": [{"id":6,"language":"fr","lemma":"information"},{"id":10,"language":"en","lemma":"information"}],
+      "current_relation": {"id":8,"type":"COGNATE_STRONG","score":0.99,"confidence":0.98,"provenance":"manual_seed","is_symmetric":true},
+      "proposed_type":"COGNATE_STRONG","proposed_score":0.99,"proposed_confidence":0.98,"proposed_provenance":"manual_seed","status":"existing",
+      "justification":"Formes graphiquement identiques, sens partagé et parenté savante ; transparence maximale malgré l’anglais non roman.","uncertainty":"low","human_validation_required":false
+    },
+    {
+      "pair": "7:8", "forms": [{"id":7,"language":"es","lemma":"información"},{"id":8,"language":"it","lemma":"informazione"}],
+      "current_relation": null,"proposed_type":"COGNATE_STRONG","proposed_score":0.94,"proposed_confidence":0.90,"proposed_provenance":"human_review_mission212","status":"proposed",
+      "justification":"Même famille savante ; informa- est identique et -ción/-zione reste aisément rapprochable ; intérêt élevé.","uncertainty":"medium","human_validation_required":true
+    },
+    {
+      "pair": "7:9", "forms": [{"id":7,"language":"es","lemma":"información"},{"id":9,"language":"pt","lemma":"informação"}],
+      "current_relation": null,"proposed_type":"COGNATE_STRONG","proposed_score":0.96,"proposed_confidence":0.90,"proposed_provenance":"human_review_mission212","status":"proposed",
+      "justification":"Parenté commune et graphies très proches ; la correspondance -ción/-ção est fortement exploitable.","uncertainty":"medium","human_validation_required":true
+    },
+    {
+      "pair": "7:10", "forms": [{"id":7,"language":"es","lemma":"información"},{"id":10,"language":"en","lemma":"information"}],
+      "current_relation": null,"proposed_type":"COGNATE_STRONG","proposed_score":0.97,"proposed_confidence":0.90,"proposed_provenance":"human_review_mission212","status":"proposed",
+      "justification":"Parenté savante et quasi-identité graphique hors accent ; forte transparence pour l’intercompréhension.","uncertainty":"medium","human_validation_required":true
+    },
+    {
+      "pair": "8:9", "forms": [{"id":8,"language":"it","lemma":"informazione"},{"id":9,"language":"pt","lemma":"informação"}],
+      "current_relation": null,"proposed_type":"COGNATE_STRONG","proposed_score":0.93,"proposed_confidence":0.90,"proposed_provenance":"human_review_mission212","status":"proposed",
+      "justification":"Même famille ; base identique et finales différentes mais régulières ; rapprochement pédagogique clair.","uncertainty":"medium","human_validation_required":true
+    },
+    {
+      "pair": "8:10", "forms": [{"id":8,"language":"it","lemma":"informazione"},{"id":10,"language":"en","lemma":"information"}],
+      "current_relation": null,"proposed_type":"COGNATE_STRONG","proposed_score":0.96,"proposed_confidence":0.90,"proposed_provenance":"human_review_mission212","status":"proposed",
+      "justification":"Parenté savante, longue séquence informa- commune et correspondance finale transparente ; forte utilité.","uncertainty":"medium","human_validation_required":true
+    },
+    {
+      "pair": "9:10", "forms": [{"id":9,"language":"pt","lemma":"informação"},{"id":10,"language":"en","lemma":"information"}],
+      "current_relation": null,"proposed_type":"COGNATE_STRONG","proposed_score":0.95,"proposed_confidence":0.90,"proposed_provenance":"human_review_mission212","status":"proposed",
+      "justification":"Même famille savante ; base informa- très visible et finales systématiquement rapprochables ; intérêt élevé.","uncertainty":"medium","human_validation_required":true
+    }
+  ]
+}

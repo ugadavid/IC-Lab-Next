@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="app-version" content="0.1.0">
+  <title>Atelier de l’entrée — Dico-IC V0.1.0</title>
+  <link rel="stylesheet" href="./css/admin-0.1.css">
+  <link rel="stylesheet" href="./css/admin-entry-0.1.1.css">
+</head>
+<body class="workbench-page">
+  <header class="app-header entry-header">
+    <div>
+      <p class="entry-back"><a id="consultationLink" href="./index-admin-entry-0.1.1.html">← Revenir à la fiche de consultation</a></p>
+      <h1>Atelier de l’entrée</h1><p>Modification explicite et documentation relationnelle</p>
+    </div>
+    <div class="header-actions"><span class="environment-label">V0.1.0 locale</span><span id="apiStatus" class="api-status" data-state="loading">Chargement…</span></div>
+  </header>
+
+  <main class="entry-workspace">
+    <section id="entryContent" hidden>
+      <div class="entry-identity">
+        <div><p id="entryKey" class="entry-key"></p><h2 id="glossFr"></h2><p id="glossEn" class="entry-gloss-en"></p></div>
+        <div class="identity-meta"><span>Domaine sémantique</span><strong id="semanticDomain"></strong></div>
+        <div class="identity-actions"><button id="editEntryButton" class="button secondary" type="button">Modifier l’entrée</button></div>
+      </div>
+      <div id="entryPageMessage" class="form-message" role="status" aria-live="polite"></div>
+
+      <form id="entryEditForm" class="entry-edit-panel" hidden novalidate>
+        <div class="entry-edit-heading"><div><p class="eyebrow">Modification explicite</p><h3>Modifier l’entrée <span id="editEntryKey"></span></h3></div><p>La clé conceptuelle et les provenances restent inchangées.</p></div>
+        <div class="entry-edit-fields">
+          <div class="field"><label for="editGlossFr">Glose française *</label><input id="editGlossFr" required maxlength="1000"></div>
+          <div class="field"><label for="editGlossEn">Glose anglaise</label><input id="editGlossEn" maxlength="1000"></div>
+          <div class="field"><label for="editSemanticDomain">Domaine sémantique</label><input id="editSemanticDomain" maxlength="100"><small>Domaine en français naturel : minuscules, accents et espaces.</small></div>
+        </div>
+        <div class="table-wrap entry-edit-table-wrap"><table class="entry-edit-table"><thead><tr><th>Langue</th><th>Lemme *</th><th>Catégorie grammaticale *</th><th>Provenance préservée</th></tr></thead><tbody id="entryEditForms"></tbody></table></div>
+        <div id="entryEditMessage" class="form-message" role="status" aria-live="polite"></div>
+        <div class="form-actions"><button id="saveEntryButton" class="button primary" type="submit">Enregistrer</button><button id="cancelEntryButton" class="button secondary" type="button">Annuler</button></div>
+      </form>
+
+      <div class="entry-section-heading">
+        <div><p class="eyebrow">Formes de cette entrée</p><h3>Formes actuellement documentées <span id="formCount" class="count-badge"></span></h3></div>
+        <p>Le catalogue Dico-IC référence douze langues</p>
+      </div>
+      <div id="formsGrid" class="entry-forms-grid"></div>
+
+      <div class="entry-section-heading relation-heading">
+        <div><p class="eyebrow">Atelier relationnel</p><h3>Paires entre les formes documentées <span id="relationCount" class="count-badge"></span></h3></div>
+        <p>Une seule relation symétrique par paire</p>
+      </div>
+      <div class="relation-table-wrap"><table class="relation-pairs-table"><thead><tr><th>Paire linguistique</th><th>État</th><th>Relation</th><th>Score et confiance</th><th>Provenance</th><th>Action</th></tr></thead><tbody id="relationPairsBody"></tbody></table></div>
+      <details class="relation-help"><summary>? Comprendre les relations</summary><div>Le score exprime actuellement la force pédagogique attribuée manuellement à la relation ; la confiance porte sur l’annotation. La méthode numérique reste expérimentale.</div></details>
+    </section>
+
+    <section id="entryError" class="entry-error" hidden><h2>Entrée indisponible</h2><p id="entryErrorMessage"></p><a class="button secondary" href="./index-admin-0.1.html#lexicon">Revenir au lexique</a></section>
+  </main>
+
+  <dialog id="relationDialog" class="relation-dialog" aria-labelledby="relationDialogTitle">
+    <form id="relationForm" method="dialog" novalidate>
+      <div class="relation-dialog-heading"><div><p class="eyebrow">Relation symétrique</p><h2 id="relationDialogTitle">Documenter la paire</h2></div><button id="closeRelationButton" class="dialog-close" type="button" aria-label="Fermer">×</button></div>
+      <p id="relationPairLabel" class="relation-pair-label"></p>
+      <div class="relation-editor-fields">
+        <div class="field"><label for="relationType">Type *</label><select id="relationType"><option value="COGNATE_STRONG">Cognat fort</option><option value="COGNATE_WEAK">Cognat possible</option><option value="FALSE_FRIEND">Faux ami</option><option value="RELATED_FORM">Forme apparentée</option></select></div>
+        <div class="field"><label for="relationScore">Score *</label><input id="relationScore" type="number" min="0" max="1" step="0.01" required></div>
+        <div class="field"><label for="relationSourceLabel">Provenance</label><input id="relationSourceLabel" maxlength="100"></div>
+      </div>
+      <p class="relation-dialog-note">Une seule relation symétrique est conservée pour cette paire, quel que soit l’ordre des formes.</p>
+      <div id="relationMessage" class="form-message" role="status" aria-live="polite"></div>
+      <div class="form-actions"><button id="saveRelationButton" class="button primary" type="submit">Enregistrer la relation</button><button id="cancelRelationButton" class="button secondary" type="button">Annuler</button></div>
+    </form>
+  </dialog>
+  <script src="./js/admin-entry-workbench-0.1.js"></script>
+</body>
+</html>

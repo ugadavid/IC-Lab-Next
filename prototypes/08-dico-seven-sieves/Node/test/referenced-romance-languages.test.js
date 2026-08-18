@@ -184,6 +184,6 @@ test("manual authoring UI exposes the 12 documentable languages in readable grou
   assert.match(script, /Langues romanes documentées/);
   assert.match(script, /Langues romanes prêtes à documenter/);
   assert.match(script, /Langue non romane de comparaison/);
-  assert.match(html, /app-version" content="0\.1\.6"/);
+  assert.match(html, /app-version" content="0\.1\.7"/);
   assert.match(html, /Une langue prête à documenter peut déjà recevoir des formes linguistiques dans l’atelier manuel\. Elle ne devient analysable qu’après constitution, vérification et activation de son contenu\./);
 });

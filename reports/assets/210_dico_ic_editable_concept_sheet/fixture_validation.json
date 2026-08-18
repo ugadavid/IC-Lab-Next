@@ -1,0 +1,41 @@
+{
+  "mission": 210,
+  "fixture": "ic_dico_m210_fixture_15f4452",
+  "result": "passed_and_removed",
+  "entry_edit": {
+    "entry_key": "INFORMATION_DATA",
+    "temporary_gloss_marker": "[fixture]",
+    "preserved_form_provenance_count": 5,
+    "restored_original_gloss": true
+  },
+  "relation_create": {
+    "relation_id": 71,
+    "pair": [7, 8],
+    "initial_type": "COGNATE_STRONG",
+    "initial_score": 0.91,
+    "source_label": "mission210_fixture"
+  },
+  "inverse_duplicate": {
+    "pair": [8, 7],
+    "different_type": "FALSE_FRIEND",
+    "http_status": 409
+  },
+  "relation_update": {
+    "relation_id": 71,
+    "final_type": "COGNATE_WEAK",
+    "final_score": 0.73
+  },
+  "browser_relation_create": {
+    "relation_id": 72,
+    "pair": [7, 9],
+    "type": "RELATED_FORM",
+    "score": 0.62,
+    "source_label": "mission210_visual_fixture",
+    "coverage_after_save": "6/10"
+  },
+  "cleanup": {
+    "privilege_revoked": true,
+    "fixture_schema_count": 0,
+    "fixture_server_port_3001_active": false
+  }
+}

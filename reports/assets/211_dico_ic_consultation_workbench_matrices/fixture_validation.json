@@ -1,0 +1,27 @@
+{
+  "mission": 211,
+  "fixture": "ic_dico_m211_fixture_15f4452",
+  "result": "passed_and_removed",
+  "visual_validation": {
+    "consultation_information_data": { "viewport": "1440x900", "forms": 5, "relation_cards": 4, "missing_pairs_visible": 0, "global_horizontal_overflow": false },
+    "consultation_nuit": { "viewport": "1366x768", "forms": 5, "relation_cards": 0, "calm_empty_state": true, "global_horizontal_overflow": false },
+    "workbench_information_data": { "viewport": "1440x900", "pairs": 10, "present": 4, "missing": 6, "global_horizontal_overflow": false },
+    "workbench_nuit": { "viewport": "1440x900", "pairs": 10, "present": 0, "missing": 10, "edit_cancelled": true, "global_horizontal_overflow": false },
+    "console_errors_or_warnings": 0
+  },
+  "fixture_writes": {
+    "created_pair": "7:8",
+    "created_type": "COGNATE_STRONG",
+    "created_score": 0.94,
+    "updated_type": "COGNATE_WEAK",
+    "updated_score": 0.80,
+    "source_label": "mission211_fixture",
+    "counter_after_create": "5 present / 5 missing"
+  },
+  "cleanup": {
+    "server_pid": 72760,
+    "port_3001_active": false,
+    "privileges_revoked": true,
+    "fixture_schema_count": 0
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "mission": 210,
+  "database": "ic_dico",
+  "comparison": "before_and_after_identical",
+  "tables": {
+    "language": { "count": 12, "sha256": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff" },
+    "lexical_entry": { "count": 305, "sha256": "34e32bd46e20d5bbc3b45f1171edecc54895eafc0b93a417e6c2e78d9e56d7ec" },
+    "lexical_form": { "count": 1286, "sha256": "a13665b8b26c4994bd0d491160fd93c7698dfb08b18bb909383f2e3781bb1c41" },
+    "inflected_form": { "count": 41, "sha256": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184" },
+    "connector_help": { "count": 12, "sha256": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846" },
+    "form_relation": { "count": 70, "sha256": "4d3f55cfe964bcba184d07d63eb05e631cc186aaf26da42974a1c17ac2ceaa43" },
+    "pattern_rule": { "count": 1, "sha256": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d" },
+    "ic_feature": { "count": 8, "sha256": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a" }
+  },
+  "real_entry_recipes": {
+    "NUIT": { "id": 341, "forms": 5, "relations": 0, "writes": 0 },
+    "INFORMATION_DATA": { "id": 2, "forms": 5, "relations": 4, "writes": 0 }
+  }
+}

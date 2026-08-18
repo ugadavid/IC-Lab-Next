@@ -778,22 +778,21 @@ function createRepository(pool) {
 
         await connection.execute(`
           UPDATE lexical_entry
-          SET gloss_fr = ?, gloss_en = ?, semantic_domain = ?, notes = ?
+          SET gloss_fr = ?, gloss_en = ?, semantic_domain = ?
           WHERE id = ?
-        `, [entry.gloss_fr, entry.gloss_en, entry.semantic_domain, entry.notes, entryId]);
+        `, [entry.gloss_fr, entry.gloss_en, entry.semantic_domain, entryId]);
 
         for (const form of existingFormUpdates) {
           const language = await resolveDocumentableLanguage(connection, form.language);
           await connection.execute(`
             UPDATE lexical_form
-            SET language_id = ?, lemma = ?, normalized_lemma = ?, part_of_speech = ?, notes = ?
+            SET language_id = ?, lemma = ?, normalized_lemma = ?, part_of_speech = ?
             WHERE id = ? AND entry_id = ?
           `, [
             language.id,
             form.lemma,
             form.normalized_lemma,
             form.part_of_speech,
-            form.notes,
             form.id,
             entryId,
           ]);
@@ -1245,12 +1244,10 @@ function createRepository(pool) {
         const [duplicates] = await connection.execute(`
           SELECT id
           FROM form_relation
-          WHERE relation_type = ?
-            AND ((source_form_id = ? AND target_form_id = ?)
+          WHERE ((source_form_id = ? AND target_form_id = ?)
               OR (source_form_id = ? AND target_form_id = ?))
           FOR UPDATE
         `, [
-          relation.relation_type,
           relation.source_form_id,
           relation.target_form_id,
           relation.target_form_id,
@@ -1279,6 +1276,54 @@ function createRepository(pool) {
         ]);
         await connection.commit();
         return { id: result.insertId, ...relation };
+      } catch (error) {
+        await connection.rollback();
+        throw error;
+      } finally {
+        connection.release();
+      }
+    },
+
+    async updateAdminFormRelation(relationId, relation) {
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+        const [existingRows] = await connection.execute(`
+          SELECT id, source_form_id, target_form_id
+          FROM form_relation
+          WHERE id = ?
+          FOR UPDATE
+        `, [relationId]);
+        if (existingRows.length === 0) {
+          const error = new Error(`La relation ${relationId} n’existe pas.`);
+          error.code = "RELATION_NOT_FOUND";
+          throw error;
+        }
+        const existing = existingRows[0];
+        const sameOrder = Number(existing.source_form_id) === relation.source_form_id
+          && Number(existing.target_form_id) === relation.target_form_id;
+        const reverseOrder = Number(existing.source_form_id) === relation.target_form_id
+          && Number(existing.target_form_id) === relation.source_form_id;
+        if (!sameOrder && !reverseOrder) {
+          const error = new Error("La paire de formes d’une relation ne peut pas être modifiée.");
+          error.code = "RELATION_PAIR_IMMUTABLE";
+          throw error;
+        }
+        const [result] = await connection.execute(`
+          UPDATE form_relation
+          SET relation_type = ?, score = ?, is_symmetric = 1,
+              source_label = ?, confidence_score = ?, notes = ?
+          WHERE id = ?
+        `, [
+          relation.relation_type,
+          relation.score,
+          relation.source_label,
+          relation.confidence_score,
+          relation.notes,
+          relationId,
+        ]);
+        await connection.commit();
+        return { id: relationId, ...relation, affected_rows: result.affectedRows };
       } catch (error) {
         await connection.rollback();
         throw error;

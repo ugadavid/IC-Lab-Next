@@ -209,6 +209,66 @@ test("form relation endpoint reports a duplicate relation", async () => {
   });
 });
 
+test("form relation endpoint updates an existing relation", async () => {
+  let updated;
+  await withServer({
+    async updateAdminFormRelation(id, relation) {
+      updated = { id, relation };
+      return { id, ...relation };
+    },
+  }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/admin/form-relation/17`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source_form_id: 121, target_form_id: 120, relation_type: "COGNATE_WEAK", score: 0.72, source_label: "manual_admin_v0" }),
+    });
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.relation.relation_type, "COGNATE_WEAK");
+  });
+  assert.equal(updated.id, 17);
+  assert.equal(updated.relation.is_symmetric, true);
+});
+
+test("form relation update reports an immutable pair without partial response", async () => {
+  await withServer({
+    async updateAdminFormRelation() {
+      const error = new Error("La paire de formes d’une relation ne peut pas être modifiée.");
+      error.code = "RELATION_PAIR_IMMUTABLE";
+      throw error;
+    },
+  }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/admin/form-relation/17`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ source_form_id: 1, target_form_id: 2, relation_type: "RELATED_FORM", score: 0.5 }),
+    });
+    const data = await response.json();
+    assert.equal(response.status, 409);
+    assert.equal(data.error.code, "RELATION_PAIR_IMMUTABLE");
+  });
+});
+
+test("generic entry consultation supports NUIT without write calls", async () => {
+  let writes = 0;
+  await withServer({
+    async getAdminLexicalEntry(entryKey) {
+      assert.equal(entryKey, "NUIT");
+      return { entry_key: "NUIT", gloss_fr: "nuit", forms: [{ id: 1, language: "fr", lemma: "nuit" }] };
+    },
+    async getAdminRelationsForFormIds() { return []; },
+    async updateAdminLexicalEntry() { writes += 1; },
+    async createAdminFormRelation() { writes += 1; },
+    async updateAdminFormRelation() { writes += 1; },
+  }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/admin/lexical-entry/NUIT`);
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(data.entry.entry_key, "NUIT");
+  });
+  assert.equal(writes, 0);
+});
+
 test("inflected forms endpoint lists paginated mappings", async () => {
   let received;
   await withServer({

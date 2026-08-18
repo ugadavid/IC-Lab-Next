@@ -600,6 +600,36 @@ function createApp(repository, options = {}) {
     }
   });
 
+  app.put("/admin/form-relation/:relationId", async (req, res, next) => {
+    if (!req.is("application/json")) {
+      return errorResponse(res, 415, "UNSUPPORTED_MEDIA_TYPE", "Content-Type doit être application/json.");
+    }
+    const relationId = parsePositiveId(req.params.relationId);
+    if (!relationId) {
+      return errorResponse(res, 400, "INVALID_RELATION_ID", "L’identifiant de relation est invalide.", "relation_id");
+    }
+    try {
+      const validation = validateAdminFormRelation(req.body);
+      if (!validation.ok) {
+        return errorResponse(res, validation.status, validation.code, validation.message, validation.field);
+      }
+      const relation = await repository.updateAdminFormRelation(relationId, validation.value);
+      return res.json({
+        contract_version: CONTRACT_VERSION,
+        message: `Relation ${relationId} mise à jour.`,
+        relation,
+      });
+    } catch (error) {
+      if (error.code === "RELATION_NOT_FOUND") {
+        return errorResponse(res, 404, error.code, error.message, "relation_id");
+      }
+      if (error.code === "RELATION_PAIR_IMMUTABLE") {
+        return errorResponse(res, 409, error.code, error.message, "relation_id");
+      }
+      return next(error);
+    }
+  });
+
   app.post("/admin/lexical-entry", async (req, res, next) => {
     if (!req.is("application/json")) {
       return errorResponse(
