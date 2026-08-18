@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="app-version" content="0.1.2">
+  <title>Entrée conceptuelle — Dico-IC V0.1.2</title>
+  <link rel="stylesheet" href="./css/admin-0.1.css">
+  <link rel="stylesheet" href="./css/admin-entry-0.1.1.css">
+</head>
+<body>
+  <header class="app-header entry-header">
+    <div>
+      <p class="entry-back"><a href="./index-admin-0.1.html#lexicon">← Retour au lexique</a></p>
+      <h1>Entrée conceptuelle</h1>
+      <p>Vue de consultation — aucune modification possible</p>
+    </div>
+    <div class="header-actions">
+      <span class="environment-label">V0.1.2 locale</span>
+      <span id="apiStatus" class="api-status" data-state="loading">Chargement…</span>
+    </div>
+  </header>
+
+  <main class="entry-workspace">
+    <section id="entryContent" hidden>
+      <div class="entry-identity">
+        <div>
+          <p id="entryKey" class="entry-key"></p>
+          <h2 id="glossFr"></h2>
+          <p id="glossEn" class="entry-gloss-en"></p>
+        </div>
+        <div class="identity-meta">
+          <span>Domaine sémantique</span>
+          <strong id="semanticDomain"></strong>
+        </div>
+      </div>
+
+      <div class="entry-section-heading">
+        <div>
+          <p class="eyebrow">Couverture multilingue</p>
+          <h3>Formes linguistiques <span id="formCount" class="count-badge"></span></h3>
+        </div>
+        <p>Quatre langues romanes centrales · anglais de comparaison</p>
+      </div>
+      <div id="formsGrid" class="entry-forms-grid"></div>
+
+      <div class="entry-section-heading relation-heading">
+        <div>
+          <p class="eyebrow">Rapprochements explicites</p>
+          <h3>Relations entre formes <span id="relationCount" class="count-badge"></span></h3>
+        </div>
+        <p>Scores, confiance et provenance issus de Dico-IC</p>
+      </div>
+      <div id="relationsGrid" class="entry-relations-grid"></div>
+      <details class="relation-help">
+        <summary>? Comprendre les relations</summary>
+        <div>Dans la V0, les relations comportent un type, un score, une confiance et une provenance. La gestion d’un statut de validation distinct est prévue dans une évolution ultérieure.</div>
+      </details>
+    </section>
+
+    <section id="entryError" class="entry-error" hidden>
+      <h2>Entrée indisponible</h2>
+      <p id="entryErrorMessage"></p>
+      <a class="button secondary" href="./index-admin-0.1.html#lexicon">Revenir au lexique</a>
+    </section>
+  </main>
+
+  <script src="./js/admin-entry-0.1.1.js"></script>
+</body>
+</html>

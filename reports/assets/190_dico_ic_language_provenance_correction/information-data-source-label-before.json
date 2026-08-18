@@ -1,0 +1,62 @@
+{
+  "correction": "INFORMATION_DATA lexical_form source_label",
+  "created_at": "2026-08-18T08:41:05.339Z",
+  "canonical_source_label": "manual_seed",
+  "rows": [
+    {
+      "id": 6,
+      "entry_key": "INFORMATION_DATA",
+      "language": "fr",
+      "lemma": "information",
+      "normalized_lemma": "information",
+      "part_of_speech": "noun",
+      "source_label": null,
+      "confidence_score": 0.98
+    },
+    {
+      "id": 7,
+      "entry_key": "INFORMATION_DATA",
+      "language": "es",
+      "lemma": "información",
+      "normalized_lemma": "informacion",
+      "part_of_speech": "noun",
+      "source_label": null,
+      "confidence_score": 0.98
+    },
+    {
+      "id": 8,
+      "entry_key": "INFORMATION_DATA",
+      "language": "it",
+      "lemma": "informazione",
+      "normalized_lemma": "informazione",
+      "part_of_speech": "noun",
+      "source_label": null,
+      "confidence_score": 0.98
+    },
+    {
+      "id": 9,
+      "entry_key": "INFORMATION_DATA",
+      "language": "pt",
+      "lemma": "informação",
+      "normalized_lemma": "informacao",
+      "part_of_speech": "noun",
+      "source_label": null,
+      "confidence_score": 0.98
+    },
+    {
+      "id": 10,
+      "entry_key": "INFORMATION_DATA",
+      "language": "en",
+      "lemma": "information",
+      "normalized_lemma": "information",
+      "part_of_speech": "noun",
+      "source_label": null,
+      "confidence_score": 0.98
+    }
+  ],
+  "database_totals": {
+    "lexical_forms": 597,
+    "null_sources": 597,
+    "manual_seed_sources": null
+  }
+}

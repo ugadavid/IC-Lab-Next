@@ -1,6 +1,6 @@
 "use strict";
 
-const API_BASE_URL = "http://localhost:3000";
+const API_BASE_URL = window.location.origin;
 const DEFAULT_FORM_LANGUAGES = ["fr", "es", "it", "pt"];
 const PAGE_LIMIT = 30;
 
@@ -17,6 +17,7 @@ let editingConnectorHelpId = null;
 
 const apiStatus = document.getElementById("apiStatus");
 const modelCounts = document.getElementById("modelCounts");
+const coverageCounts = document.getElementById("coverageCounts");
 const modelTableBody = document.getElementById("modelTableBody");
 const languagesTableBody = document.getElementById("languagesTableBody");
 const languageCount = document.getElementById("languageCount");
@@ -73,6 +74,37 @@ const connectorNextButton = document.getElementById("connectorNextButton");
 const connectorPaginationLabel = document.getElementById("connectorPaginationLabel");
 const connectorFunctionReference = document.getElementById("connectorFunctionReference");
 
+const PUBLIC_LABELS = {
+  language: "Langue référencée",
+  lexical_entry: "Entrée conceptuelle",
+  lexical_form: "Forme linguistique",
+  inflected_form: "Forme fléchie attestée",
+  connector_help: "Aide discursive",
+  form_relation: "Relation entre formes",
+  pattern_rule: "Règle de correspondance",
+  ic_feature: "Trait d’intercompréhension",
+  noun: "Nom", verb: "Verbe", adjective: "Adjectif", adverb: "Adverbe",
+  connector: "Connecteur", other: "Autre",
+  COGNATE_STRONG: "Cognat fort", COGNATE_WEAK: "Cognat possible",
+  FALSE_FRIEND: "Faux ami", RELATED_FORM: "Forme apparentée",
+  VALIDATED: "Vérifié", PROPOSED: "Proposé", REJECTED: "Écarté", ARCHIVED: "Archivé",
+  PLURAL: "Pluriel",
+  manual_admin_v0: "Saisie manuelle dans l’administration",
+  manual_seed: "Corpus initial renseigné manuellement",
+  manual_seed_v2: "Corpus manuel enrichi",
+  connector_help_v0_seed: "Corpus initial d’aides discursives",
+  api_mock_support_v0: "Support historique du prototype API",
+};
+
+function publicLabel(value) {
+  return PUBLIC_LABELS[value] || value || "Non renseigné";
+}
+
+function labelWithCode(value) {
+  const label = publicLabel(value);
+  return label === value ? label : `${label} · ${value}`;
+}
+
 function setApiState(state, message) {
   apiStatus.dataset.state = state;
   apiStatus.textContent = message;
@@ -124,9 +156,9 @@ function appendCell(row, value, className = "") {
 function renderModel(model) {
   const labels = {
     languages: "Langues",
-    lexical_entries: "Entrées lexicales",
-    lexical_forms: "Formes lexicales",
-    inflected_forms: "Formes fléchies",
+    lexical_entries: "Entrées conceptuelles",
+    lexical_forms: "Formes linguistiques",
+    inflected_forms: "Formes fléchies attestées",
     connector_helps: "Aides discursives",
     form_relations: "Relations",
     pattern_rules: "Règles",
@@ -144,10 +176,32 @@ function renderModel(model) {
     modelCounts.appendChild(metric);
   }
 
+  const coverageMetrics = [
+    [model.counts.lexical_entries, "Concepts au total"],
+    [model.coverage?.central_romance_entries, "Concepts avec FR · ES · IT · PT"],
+    [model.coverage?.comparison_english_entries, "Concepts avec FR · ES · IT · PT · EN"],
+    [model.counts.lexical_forms, "Formes linguistiques documentées"],
+  ];
+  coverageCounts.replaceChildren();
+  for (const [count, captionText] of coverageMetrics) {
+    const metric = document.createElement("div");
+    metric.className = "coverage-metric";
+    const value = document.createElement("strong");
+    value.textContent = String(count ?? 0);
+    const caption = document.createElement("span");
+    caption.textContent = captionText;
+    metric.append(value, caption);
+    coverageCounts.appendChild(metric);
+  }
+
   modelTableBody.replaceChildren();
   for (const table of model.tables) {
     const row = document.createElement("tr");
-    appendCell(row, table.name, "code-value");
+    const objectCell = appendCell(row, publicLabel(table.name));
+    const technicalName = document.createElement("small");
+    technicalName.className = "technical-detail";
+    technicalName.textContent = table.name;
+    objectCell.appendChild(technicalName);
     appendCell(row, table.role);
     modelTableBody.appendChild(row);
   }
@@ -199,7 +253,7 @@ function renderEntries(entries, page) {
     for (const form of entry.forms) {
       const tag = document.createElement("span");
       tag.className = "form-tag";
-      tag.textContent = `${form.language.toUpperCase()} · ${form.lemma} · ${form.part_of_speech || "?"}`;
+      tag.textContent = `${form.language.toUpperCase()} · ${form.lemma} · ${publicLabel(form.part_of_speech)}`;
       tag.title = `Normalisé : ${form.normalized_lemma || "non renseigné"}`;
       list.appendChild(tag);
     }
@@ -219,7 +273,11 @@ function renderEntries(entries, page) {
     aiRelationsLink.className = "button secondary compact-button";
     aiRelationsLink.href = `./index-admin-ai-relations-0.1.html?entry_key=${encodeURIComponent(entry.entry_key)}`;
     aiRelationsLink.textContent = "Relations IA";
-    actions.append(editButton, aiRelationsLink);
+    const viewLink = document.createElement("a");
+    viewLink.className = "button primary compact-button";
+    viewLink.href = `./index-admin-entry-0.1.1.html?entry_key=${encodeURIComponent(entry.entry_key)}`;
+    viewLink.textContent = "Voir";
+    actions.append(viewLink, editButton, aiRelationsLink);
     actionCell.appendChild(actions);
     row.appendChild(actionCell);
     entriesTableBody.appendChild(row);
@@ -481,17 +539,17 @@ function renderInflectedForms(items) {
     surfaceCell.title = `Normalisée : ${mapping.normalized_surface}`;
     appendCell(
       row,
-      `${mapping.language.toUpperCase()} · ${mapping.lemma}\n${mapping.entry_key} · ${mapping.part_of_speech}`,
+      `${mapping.language.toUpperCase()} · ${mapping.lemma}\n${mapping.entry_key} · ${publicLabel(mapping.part_of_speech)}`,
       "relation-form-cell"
     );
-    appendCell(row, mapping.grammatical_number, "code-value");
-    const statusCell = appendCell(row, mapping.status, "inflected-status");
+    appendCell(row, labelWithCode(mapping.grammatical_number), "code-value");
+    const statusCell = appendCell(row, labelWithCode(mapping.status), "inflected-status");
     statusCell.dataset.status = mapping.status;
     appendCell(
       row,
       mapping.confidence_score === null ? "—" : Number(mapping.confidence_score).toFixed(3)
     );
-    appendCell(row, mapping.source_label);
+    appendCell(row, labelWithCode(mapping.source_label));
     appendCell(row, mapping.created_at ? new Date(mapping.created_at).toLocaleString("fr-FR") : "—");
     inflectedTableBody.appendChild(row);
   }
@@ -583,11 +641,11 @@ function renderConnectorHelps(items, data) {
     const row = document.createElement("tr");
     appendCell(row, item.expression);
     appendCell(row, item.language.toUpperCase(), "code-value");
-    appendCell(row, item.discourse_function, "code-value");
+    appendCell(row, labelWithCode(item.discourse_function), "code-value");
     appendCell(row, item.pedagogical_hint);
-    const statusCell = appendCell(row, item.status, "connector-status");
+    const statusCell = appendCell(row, labelWithCode(item.status), "connector-status");
     statusCell.dataset.status = item.status;
-    appendCell(row, item.source_label);
+    appendCell(row, labelWithCode(item.source_label));
 
     const actions = document.createElement("td");
     actions.className = "table-actions";
@@ -736,10 +794,10 @@ function renderRelations(items) {
   for (const relation of items) {
     const row = document.createElement("tr");
     appendCell(row, `${relation.source_language.toUpperCase()} · ${relation.source_lemma}\n${relation.source_entry_key}`, "relation-form-cell");
-    appendCell(row, relation.relation_type, "code-value");
+    appendCell(row, labelWithCode(relation.relation_type), "code-value");
     appendCell(row, `${relation.target_language.toUpperCase()} · ${relation.target_lemma}\n${relation.target_entry_key}`, "relation-form-cell");
     appendCell(row, relation.score === null ? "—" : Number(relation.score).toFixed(3));
-    appendCell(row, relation.source_label);
+    appendCell(row, labelWithCode(relation.source_label));
     relationsTableBody.appendChild(row);
   }
 }

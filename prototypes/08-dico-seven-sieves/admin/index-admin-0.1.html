@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Dico-IC Admin V0</title>
+  <meta name="app-version" content="0.1.1">
+  <title>Dico-IC Admin V0.1.1</title>
   <link rel="stylesheet" href="./css/admin-0.1.css">
 </head>
 <body>
@@ -13,7 +14,7 @@
       <p>Consultation et enrichissement local de la base de connaissances</p>
     </div>
     <div class="header-actions">
-      <span class="environment-label">V0 locale</span>
+      <span class="environment-label">V0.1.1 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Connexion à l’API…</span>
     </div>
   </header>
@@ -43,12 +44,34 @@
           <p class="eyebrow">État actuel</p>
           <h2 id="modelTitle">Résumé du modèle</h2>
         </div>
-        <button id="refreshButton" class="button secondary" type="button">Actualiser</button>
+        <div class="heading-actions">
+          <a class="button secondary" href="./index-admin-entry-0.1.1.html?entry_key=INFORMATION_DATA">Voir l’exemple INFORMATION_DATA</a>
+          <button id="refreshButton" class="button secondary" type="button">Actualiser</button>
+        </div>
       </div>
+      <p class="model-introduction">Dico-IC sépare les connaissances linguistiques des applications qui les utilisent. Il organise des concepts, leurs formes dans plusieurs langues, leurs relations et les informations nécessaires à leur réutilisation.</p>
+      <ol class="model-flow" aria-label="Chemin général des connaissances Dico-IC">
+        <li>Concept</li>
+        <li>Formes linguistiques</li>
+        <li>Relations et aides</li>
+        <li>Applications clientes</li>
+      </ol>
       <div id="modelCounts" class="metric-grid" aria-live="polite"></div>
+      <div class="coverage-block" aria-labelledby="coverageTitle">
+        <div>
+          <p class="eyebrow">Couverture réelle</p>
+          <h3 id="coverageTitle">Quatre langues romanes au cœur du socle</h3>
+          <p>Français, espagnol, italien et portugais constituent le noyau central. L’anglais sert de langue de comparaison ; sa couverture n’est pas présentée comme équivalente.</p>
+        </div>
+        <div id="coverageCounts" class="coverage-grid" aria-live="polite"></div>
+      </div>
+      <details class="context-help">
+        <summary>? Comprendre</summary>
+        <div><strong>Le modèle</strong> décrit les objets conservés par Dico-IC. Les équipes les produisent et les vérifient ; les applications comme Seven Sieves les lisent. Exemple : une entrée conceptuelle relie « información » à ses formes parentes.</div>
+      </details>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Table</th><th>Rôle actuel</th></tr></thead>
+          <thead><tr><th>Objet</th><th>Rôle actuel</th></tr></thead>
           <tbody id="modelTableBody">
             <tr><td colspan="2" class="empty-cell">Chargement du modèle…</td></tr>
           </tbody>
@@ -64,6 +87,10 @@
         </div>
         <span id="languageCount" class="section-count">0 langue</span>
       </div>
+      <details class="context-help">
+        <summary>? Comprendre</summary>
+        <div><strong>Les langues</strong> indiquent dans quels systèmes linguistiques les formes sont décrites. Le français, l’espagnol, l’italien et le portugais sont centraux ; l’anglais sert ici de comparaison. Les responsables du corpus les documentent, puis les clients les utilisent selon leurs capacités.</div>
+      </details>
       <div class="table-wrap">
         <table>
           <thead>
@@ -88,6 +115,10 @@
           <button class="button secondary" type="submit">Rechercher</button>
         </form>
       </div>
+      <details class="context-help">
+        <summary>? Comprendre</summary>
+        <div><strong>Le lexique</strong> regroupe chaque idée sous une entrée conceptuelle, puis lui rattache ses formes multilingues. Il est enrichi et vérifié dans l’administration, puis consulté par les applications. Exemple : INFORMATION_DATA rassemble cinq formes de « information ».</div>
+      </details>
       <p id="lexiconMeta" class="section-note" aria-live="polite"></p>
       <div class="table-wrap">
         <table class="lexicon-table">
@@ -167,6 +198,10 @@
         </div>
       </div>
       <p class="section-note">Reliez un pluriel observé à un lemme canonique existant. Cette V0 accepte uniquement les noms et adjectifs FR, ES, IT et PT.</p>
+      <details class="context-help">
+        <summary>? Comprendre</summary>
+        <div><strong>Une forme fléchie attestée</strong> relie une surface réellement observée à son lemme. Elle est proposée ou saisie, puis vérifiée avant utilisation par l’analyse. Exemple : « organizaciones » peut être relié au lemme espagnol « organización ».</div>
+      </details>
 
       <form id="inflectedForm" class="relation-form" novalidate>
         <div class="inflected-editor">
@@ -182,15 +217,15 @@
             </div>
             <div class="field">
               <label for="inflectedNumber">Nombre</label>
-              <select id="inflectedNumber"><option value="PLURAL">PLURAL</option></select>
+              <select id="inflectedNumber"><option value="PLURAL">Pluriel — PLURAL</option></select>
             </div>
             <div class="field">
               <label for="inflectedStatus">Statut</label>
               <select id="inflectedStatus">
-                <option value="VALIDATED" selected>VALIDATED</option>
-                <option value="PROPOSED">PROPOSED</option>
-                <option value="REJECTED">REJECTED</option>
-                <option value="ARCHIVED">ARCHIVED</option>
+                <option value="VALIDATED" selected>Vérifié — VALIDATED</option>
+                <option value="PROPOSED">Proposé — PROPOSED</option>
+                <option value="REJECTED">Écarté — REJECTED</option>
+                <option value="ARCHIVED">Archivé — ARCHIVED</option>
               </select>
             </div>
             <div class="field">
@@ -214,10 +249,10 @@
           <input id="inflectedSearchInput" type="search" maxlength="100" placeholder="Surface, lemme ou entrée">
           <select id="inflectedStatusFilter" aria-label="Filtrer par statut">
             <option value="">Tous les statuts</option>
-            <option value="VALIDATED">VALIDATED</option>
-            <option value="PROPOSED">PROPOSED</option>
-            <option value="REJECTED">REJECTED</option>
-            <option value="ARCHIVED">ARCHIVED</option>
+            <option value="VALIDATED">Vérifié — VALIDATED</option>
+            <option value="PROPOSED">Proposé — PROPOSED</option>
+            <option value="REJECTED">Écarté — REJECTED</option>
+            <option value="ARCHIVED">Archivé — ARCHIVED</option>
           </select>
           <button class="button secondary" type="submit">Rechercher</button>
         </form>
@@ -239,6 +274,10 @@
         </div>
       </div>
       <p class="section-note">Associez une expression discursive ES ou FR à une aide de lecture validée. Seven Sieves les reçoit par <code>/analysis</code>, indépendamment des sept tamis.</p>
+      <details class="context-help">
+        <summary>? Comprendre</summary>
+        <div><strong>Une aide discursive</strong> explique le rôle probable d’une expression qui organise le texte. Elle est rédigée puis vérifiée dans Dico-IC et peut guider la lecture dans Seven Sieves. Exemple : « sin embargo » signale une opposition.</div>
+      </details>
 
       <div class="connector-layout">
         <form id="connectorHelpForm" class="relation-form" novalidate>
@@ -262,10 +301,10 @@
             <div class="field">
               <label for="connectorStatus">Statut *</label>
               <select id="connectorStatus">
-                <option value="PROPOSED">PROPOSED</option>
-                <option value="VALIDATED">VALIDATED</option>
-                <option value="REJECTED">REJECTED</option>
-                <option value="ARCHIVED">ARCHIVED</option>
+                <option value="PROPOSED">Proposé — PROPOSED</option>
+                <option value="VALIDATED">Vérifié — VALIDATED</option>
+                <option value="REJECTED">Écarté — REJECTED</option>
+                <option value="ARCHIVED">Archivé — ARCHIVED</option>
               </select>
             </div>
             <div class="field connector-wide">
@@ -325,10 +364,10 @@
           </select>
           <select id="connectorStatusFilter" aria-label="Filtrer par statut">
             <option value="">Tous les statuts</option>
-            <option value="VALIDATED">VALIDATED</option>
-            <option value="PROPOSED">PROPOSED</option>
-            <option value="REJECTED">REJECTED</option>
-            <option value="ARCHIVED">ARCHIVED</option>
+            <option value="VALIDATED">Vérifié — VALIDATED</option>
+            <option value="PROPOSED">Proposé — PROPOSED</option>
+            <option value="REJECTED">Écarté — REJECTED</option>
+            <option value="ARCHIVED">Archivé — ARCHIVED</option>
           </select>
           <button class="button secondary" type="submit">Rechercher</button>
         </form>
@@ -355,6 +394,10 @@
         </div>
       </div>
       <p class="section-note">Sélectionnez deux formes existantes. La relation créée est symétrique dans cette V0.</p>
+      <details class="context-help">
+        <summary>? Comprendre</summary>
+        <div><strong>Une relation entre formes</strong> explicite un rapprochement ou un risque entre deux lemmes. Elle est produite manuellement ou proposée, puis utilisée par les clients avec son score, sa confiance et sa provenance. Exemple : « información » et « information » forment un cognat fort.</div>
+      </details>
 
       <form id="relationForm" class="relation-form" novalidate>
         <div class="relation-pair">
@@ -375,10 +418,10 @@
           <div class="field">
             <label for="relationType">Type *</label>
             <select id="relationType">
-              <option value="COGNATE_STRONG">COGNATE_STRONG</option>
-              <option value="COGNATE_WEAK">COGNATE_WEAK</option>
-              <option value="FALSE_FRIEND">FALSE_FRIEND</option>
-              <option value="RELATED_FORM">RELATED_FORM</option>
+              <option value="COGNATE_STRONG">Cognat fort — COGNATE_STRONG</option>
+              <option value="COGNATE_WEAK">Cognat possible — COGNATE_WEAK</option>
+              <option value="FALSE_FRIEND">Faux ami — FALSE_FRIEND</option>
+              <option value="RELATED_FORM">Forme apparentée — RELATED_FORM</option>
             </select>
           </div>
           <div class="field">

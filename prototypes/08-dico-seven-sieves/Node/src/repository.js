@@ -33,6 +33,7 @@ function createRepository(pool) {
         lf.lemma,
         lf.normalized_lemma,
         lf.part_of_speech,
+        lf.source_label,
         lf.confidence_score
       FROM lexical_entry le
       LEFT JOIN lexical_form lf ON lf.entry_id = le.id
@@ -55,6 +56,7 @@ function createRepository(pool) {
         lemma: row.lemma,
         normalized_lemma: row.normalized_lemma,
         part_of_speech: row.part_of_speech,
+        source_label: row.source_label,
         confidence_score: row.confidence_score,
       })),
     };
@@ -445,10 +447,32 @@ function createRepository(pool) {
           (SELECT COUNT(*) FROM pattern_rule) AS pattern_rules,
           (SELECT COUNT(*) FROM ic_feature) AS ic_features
       `);
+      const [coverageRows] = await pool.query(`
+        SELECT
+          SUM(has_fr AND has_es AND has_it AND has_pt) AS central_romance_entries,
+          SUM(has_fr AND has_es AND has_it AND has_pt AND has_en) AS comparison_english_entries
+        FROM (
+          SELECT
+            le.id,
+            MAX(l.code = 'fr') AS has_fr,
+            MAX(l.code = 'es') AS has_es,
+            MAX(l.code = 'it') AS has_it,
+            MAX(l.code = 'pt') AS has_pt,
+            MAX(l.code = 'en') AS has_en
+          FROM lexical_entry le
+          LEFT JOIN lexical_form lf ON lf.entry_id = le.id
+          LEFT JOIN language l ON l.id = lf.language_id
+          GROUP BY le.id
+        ) coverage
+      `);
 
       return {
         database: "ic_dico",
         counts: rows[0],
+        coverage: {
+          central_romance_entries: Number(coverageRows[0].central_romance_entries || 0),
+          comparison_english_entries: Number(coverageRows[0].comparison_english_entries || 0),
+        },
         tables: [
           { name: "language", role: "Langues disponibles et propriétés générales." },
           { name: "lexical_entry", role: "Concept lexical mutualisé entre plusieurs langues." },
@@ -477,7 +501,8 @@ function createRepository(pool) {
           relation.relation_type,
           relation.score,
           relation.is_symmetric,
-          relation.source_label
+          relation.source_label,
+          relation.confidence_score
         FROM form_relation relation
         WHERE relation.source_form_id IN (${placeholders(uniqueIds)})
           AND relation.target_form_id IN (${placeholders(uniqueIds)})

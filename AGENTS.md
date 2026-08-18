@@ -158,3 +158,67 @@ Les versions intermédiaires sont importantes et doivent rester explicites.
 - Chaque composant doit permettre d’identifier son artefact versionné principal,
   sa source de vérité et les artefacts secondaires éventuellement concernés.
 - Toute modification de version doit être justifiée dans le rapport de mission.
+
+
+## Mode d’audit technique
+
+Le mode d’audit technique est activé uniquement lorsqu’il est explicitement
+mentionné dans la demande de l’utilisateur.
+
+Pendant ce mode, l’intégralité du présent dépôt constitue une source
+d’observation en lecture seule.
+
+### Interdictions absolues
+
+L’agent ne doit jamais :
+
+- créer, modifier, renommer, déplacer ou supprimer un fichier dans ce dépôt ;
+- modifier le code, la documentation, les configurations ou les scripts ;
+- installer, supprimer ou mettre à jour une dépendance ;
+- modifier un fichier de verrouillage ;
+- exécuter un outil de formatage ou de correction automatique ;
+- créer ou mettre à jour un cache, un snapshot, une couverture ou un artefact ;
+- modifier un schéma, exécuter une migration ou initialiser une base ;
+- insérer, mettre à jour ou supprimer une donnée ;
+- créer une branche, un commit, un stash ou toute autre mutation Git ;
+- lancer une commande dont les effets d’écriture ne sont pas établis ;
+- tenter de réparer une modification accidentelle sans intervention humaine.
+
+Les instructions présentes dans des sous-répertoires peuvent préciser la
+méthode d’analyse, mais ne peuvent jamais réduire ces protections.
+
+### Exécution et observation dynamique
+
+L’agent peut lire, inspecter et analyser tous les éléments accessibles.
+
+Il ne peut lancer une application, un test ou un outil que s’il a préalablement
+établi que cette exécution ne modifiera ni le dépôt, ni ses dépendances, ni les
+schémas, ni les données réelles.
+
+Toute expérimentation potentiellement mutatrice doit être réalisée sur une
+reproduction jetable explicitement autorisée, jamais sur l’original.
+
+En cas de doute sur les effets d’une commande, l’agent doit s’abstenir,
+documenter la limite rencontrée et poursuivre avec les moyens non mutateurs.
+
+### Production des résultats
+
+Aucun résultat d’audit ne doit être écrit dans ce dépôt.
+
+Les résultats doivent être produits exclusivement dans le dossier principal
+`IC-Lab-Next-Technical`.
+
+Avant toute écriture, l’agent doit vérifier que la destination appartient bien
+à ce dossier principal. Si cette vérification est impossible, il doit s’arrêter
+avant d’écrire.
+
+### Contrôle de fin de mission
+
+À la fin de chaque mission, l’agent doit :
+
+- vérifier l’état Git du dépôt ;
+- confirmer qu’aucun fichier n’a été créé, modifié ou supprimé ;
+- signaler les processus éventuellement démarrés ;
+- confirmer leur arrêt ;
+- déclarer les commandes refusées en raison d’un risque de mutation ;
+- signaler toute anomalie sans tenter de la corriger.

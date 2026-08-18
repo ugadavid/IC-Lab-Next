@@ -28,6 +28,15 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(admin.status, 200);
     assert.match(await admin.text(), /Dico-IC Admin/);
 
+    const entryView = await fetch(`${server.baseUrl}/admin-app/index-admin-entry-0.1.1.html?entry_key=INFORMATION_DATA`);
+    assert.equal(entryView.status, 200);
+    const entryHtml = await entryView.text();
+    assert.match(entryHtml, /Vue de consultation — aucune modification possible/);
+    assert.match(entryHtml, /\? Comprendre les relations/);
+    assert.match(entryHtml, /gestion d’un statut de validation distinct est prévue/);
+    assert.doesNotMatch(entryHtml, /class="model-limit"/);
+    assert.doesNotMatch(entryHtml, /<form\b|Créer|Modifier|Supprimer/);
+
     const prototype = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/index-api-live-0.1.html`);
     assert.equal(prototype.status, 200);
     const html = await prototype.text();
