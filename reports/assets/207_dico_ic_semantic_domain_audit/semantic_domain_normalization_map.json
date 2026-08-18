@@ -1,0 +1,4397 @@
+{
+  "mission": 207,
+  "generated_from_head": "07b231e8396eeb4301581759cac957d8c7d39ea6",
+  "entry_count": 270,
+  "exact_binary_distinct_count": 84,
+  "ordinary_collation_distinct_count": 79,
+  "policy_assumption": "libellé humain français, minuscules usuelles, accents et espaces conservés",
+  "class_counts": {
+    "A": 14,
+    "C": 19,
+    "B": 5,
+    "D": 46
+  },
+  "class_entry_counts": {
+    "A": 28,
+    "C": 123,
+    "B": 10,
+    "D": 109
+  },
+  "mappings": [
+    {
+      "current_value_exact": "Action",
+      "proposed_french_value": "action",
+      "category": "A",
+      "entry_count": 2,
+      "entry_ids": [
+        294,
+        308
+      ],
+      "entry_keys": [
+        "OBSERVEZ",
+        "RUINER"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "Même groupe que « action » ; seule la casse change.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 294,
+          "entry_key": "OBSERVEZ",
+          "french_lemma": null,
+          "gloss_fr": "voir ou remarquer attentivement"
+        },
+        {
+          "id": 308,
+          "entry_key": "RUINER",
+          "french_lemma": null,
+          "gloss_fr": "détruire, rendre inutilisable"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "Changement",
+      "proposed_french_value": "changement",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        307
+      ],
+      "entry_keys": [
+        "DEVENIR"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "DEVENIR relève du changement ; seule la casse change.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 307,
+          "entry_key": "DEVENIR",
+          "french_lemma": null,
+          "gloss_fr": "changer d'état ou d'état d'être"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "ENVIRONMENT_BIODIVERSITY",
+      "proposed_french_value": "environnement : biodiversité",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        331
+      ],
+      "entry_keys": [
+        "BIODIVERSITE"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "BIODIVERSITE relève de l’environnement et de la biodiversité ; le format hiérarchique reste à décider.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 331,
+          "entry_key": "BIODIVERSITE",
+          "french_lemma": "biodiversité",
+          "gloss_fr": "Diversité des formes de vie dans un milieu"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "ENVIRONMENT_FIRE",
+      "proposed_french_value": "environnement : incendies",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        328
+      ],
+      "entry_keys": [
+        "INCENDIE"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "INCENDIE peut relever de l’environnement, des risques ou des incendies.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 328,
+          "entry_key": "INCENDIE",
+          "french_lemma": "incendie",
+          "gloss_fr": "Feu de grande ampleur dans la nature ou en milieu bâti"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "FOOD_NUTRITION",
+      "proposed_french_value": "alimentation",
+      "category": "B",
+      "entry_count": 1,
+      "entry_ids": [
+        330
+      ],
+      "entry_keys": [
+        "ALIMENTATION"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Francisation ou reformulation française fortement étayée par les entrées.",
+      "semantic_justification": "L’unique entrée ALIMENTATION correspond directement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible à moyen",
+      "confidence": 0.88,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 330,
+          "entry_key": "ALIMENTATION",
+          "french_lemma": null,
+          "gloss_fr": "Action de se nourrir ou système de nourriture"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "GEOGRAPHY",
+      "proposed_french_value": "géographie",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        332
+      ],
+      "entry_keys": [
+        "TERRESTRE"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "TERRESTRE relève bien de la géographie.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 332,
+          "entry_key": "TERRESTRE",
+          "french_lemma": "terrestre",
+          "gloss_fr": "Relatif à la terre, au sol"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "Grammaire",
+      "proposed_french_value": "grammaire",
+      "category": "A",
+      "entry_count": 8,
+      "entry_ids": [
+        292,
+        293,
+        296,
+        297,
+        298,
+        300,
+        301,
+        303
+      ],
+      "entry_keys": [
+        "D_UNE",
+        "DES",
+        "PAR",
+        "LE_ARTICLE",
+        "UNE_ARTICLE",
+        "DE_ARTICLE",
+        "DANS",
+        "CET"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "Les huit entrées sont grammaticales ; seule la casse change.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 292,
+          "entry_key": "D_UNE",
+          "french_lemma": "d'une",
+          "gloss_fr": "article partitif contracté (de + une) exprimant une partie indéfinie"
+        },
+        {
+          "id": 293,
+          "entry_key": "DES",
+          "french_lemma": "des",
+          "gloss_fr": "article partitif/pluriel indéfini"
+        },
+        {
+          "id": 296,
+          "entry_key": "PAR",
+          "french_lemma": "par",
+          "gloss_fr": "préposition indiquant le moyen ou la cause"
+        },
+        {
+          "id": 297,
+          "entry_key": "LE_ARTICLE",
+          "french_lemma": "le",
+          "gloss_fr": "article défini masculin singulier"
+        },
+        {
+          "id": 298,
+          "entry_key": "UNE_ARTICLE",
+          "french_lemma": "une",
+          "gloss_fr": "article indéfini féminin singulier"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "Qualité",
+      "proposed_french_value": "qualité",
+      "category": "A",
+      "entry_count": 2,
+      "entry_ids": [
+        302,
+        304
+      ],
+      "entry_keys": [
+        "AUTRE",
+        "CONTRAIRE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "AUTRE et CONTRAIRE rejoignent le groupe existant ; seule la casse change.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 302,
+          "entry_key": "AUTRE",
+          "french_lemma": "autre",
+          "gloss_fr": "quelque chose ou quelqu’un de différent"
+        },
+        {
+          "id": 304,
+          "entry_key": "CONTRAIRE",
+          "french_lemma": "contraire",
+          "gloss_fr": "opposé, contraire"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "VERB_TO_BE",
+      "proposed_french_value": "grammaire",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        329
+      ],
+      "entry_keys": [
+        "ETRE"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "ETRE peut relever de la grammaire, de l’existence ou des verbes auxiliaires.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 329,
+          "entry_key": "ETRE",
+          "french_lemma": null,
+          "gloss_fr": "Verbe servant à exprimer l'existence ou l'état"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "action",
+      "proposed_french_value": "action",
+      "category": "C",
+      "entry_count": 32,
+      "entry_ids": [
+        11,
+        12,
+        52,
+        70,
+        73,
+        76,
+        82,
+        83,
+        85,
+        86,
+        122,
+        134,
+        138,
+        139,
+        141,
+        142,
+        147,
+        175,
+        181,
+        183,
+        194,
+        197,
+        204,
+        207,
+        210,
+        213,
+        216,
+        222,
+        223,
+        256,
+        267,
+        270
+      ],
+      "entry_keys": [
+        "ATTEND_BE_PRESENT",
+        "HELP_ASSIST",
+        "OBSERVE",
+        "IDENTIFY",
+        "RECOGNIZE",
+        "BUILD",
+        "OBSERVATION",
+        "COMPARISON",
+        "ALLOW",
+        "DEVELOP",
+        "PERMITIR_VERB_TO_ALLOW",
+        "ABANDONNER",
+        "ADAPTER",
+        "CONTINUER",
+        "TROUVER",
+        "FUIR",
+        "ALLER",
+        "PRODUIRE",
+        "OBSERVER",
+        "ACCELERER",
+        "S_ELEVER",
+        "MENACER",
+        "SOUFFRIR_VERB",
+        "AUGMENTER_VERB",
+        "PRODUIRE_VERB",
+        "OBSERVER_VERB",
+        "S_ELEVER_VERB",
+        "ELEVER",
+        "RISQUER",
+        "RUIN",
+        "RISQUER_VERB",
+        "SUBIR_VERB"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "Les 32 entrées mêlent verbes, noms d’action, mouvement, souffrance et risque.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 11,
+          "entry_key": "ATTEND_BE_PRESENT",
+          "french_lemma": "assister",
+          "gloss_fr": "assister à, être présent à"
+        },
+        {
+          "id": 12,
+          "entry_key": "HELP_ASSIST",
+          "french_lemma": null,
+          "gloss_fr": "aider, porter assistance"
+        },
+        {
+          "id": 52,
+          "entry_key": "OBSERVE",
+          "french_lemma": "observer",
+          "gloss_fr": "Regarder attentivement"
+        },
+        {
+          "id": 70,
+          "entry_key": "IDENTIFY",
+          "french_lemma": "identifier",
+          "gloss_fr": "Reconnaître et nommer"
+        },
+        {
+          "id": 73,
+          "entry_key": "RECOGNIZE",
+          "french_lemma": "reconnaître",
+          "gloss_fr": "Identifier par la mémoire ou l'examen"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "activité",
+      "proposed_french_value": "activité",
+      "category": "C",
+      "entry_count": 2,
+      "entry_ids": [
+        285,
+        286
+      ],
+      "entry_keys": [
+        "AGRICOLE",
+        "PRODUCTION"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "AGRICOLE est une propriété et PRODUCTION un processus ou résultat.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 285,
+          "entry_key": "AGRICOLE",
+          "french_lemma": "agricole",
+          "gloss_fr": "relatif à l'agriculture"
+        },
+        {
+          "id": 286,
+          "entry_key": "PRODUCTION",
+          "french_lemma": "production",
+          "gloss_fr": "action de produire ou résultat produit"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "addition",
+      "proposed_french_value": "addition",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        148
+      ],
+      "entry_keys": [
+        "AUSSI"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "AUSSI marque bien une relation additive.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 148,
+          "entry_key": "AUSSI",
+          "french_lemma": "aussi",
+          "gloss_fr": "indique une addition, également"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "adverbe",
+      "proposed_french_value": "grammaire",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        165
+      ],
+      "entry_keys": [
+        "TRES"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "TRES est un adverbe d’intensité ; il faut choisir entre grammaire et sémantique.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 165,
+          "entry_key": "TRES",
+          "french_lemma": "très",
+          "gloss_fr": "adverbe d’intensité"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "agir",
+      "proposed_french_value": "action",
+      "category": "C",
+      "entry_count": 2,
+      "entry_ids": [
+        232,
+        233
+      ],
+      "entry_keys": [
+        "PROVOQUER",
+        "SUBIR"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "PROVOQUER et SUBIR sont des procès opposés ; la catégorie reste générale.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 232,
+          "entry_key": "PROVOQUER",
+          "french_lemma": "provoquer",
+          "gloss_fr": "causer ou déclencher"
+        },
+        {
+          "id": 233,
+          "entry_key": "SUBIR",
+          "french_lemma": "subir",
+          "gloss_fr": "endurer, supporter un effet ou une action"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "agriculture",
+      "proposed_french_value": "agriculture",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        278
+      ],
+      "entry_keys": [
+        "PRODUCTION_NOURRICIERE_NOUN"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "PRODUCTION_NOURRICIERE relève de l’agriculture.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 278,
+          "entry_key": "PRODUCTION_NOURRICIERE_NOUN",
+          "french_lemma": null,
+          "gloss_fr": "Fabrication ou culture d'aliments"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "art",
+      "proposed_french_value": "art",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        21
+      ],
+      "entry_keys": [
+        "MUSIC_ART"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "MUSIC_ART relève directement de l’art.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 21,
+          "entry_key": "MUSIC_ART",
+          "french_lemma": "musique",
+          "gloss_fr": "musique, art des sons"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "biology",
+      "proposed_french_value": "biologie",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        17
+      ],
+      "entry_keys": [
+        "ANIMAL_CREATURE"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "ANIMAL_CREATURE relève de la biologie.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 17,
+          "entry_key": "ANIMAL_CREATURE",
+          "french_lemma": "animal",
+          "gloss_fr": "animal, être vivant non humain"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "but",
+      "proposed_french_value": "but",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        67
+      ],
+      "entry_keys": [
+        "OBJECTIVE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "OBJECTIVE correspond exactement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 67,
+          "entry_key": "OBJECTIVE",
+          "french_lemma": "objectif",
+          "gloss_fr": "But à atteindre"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "caractéristique",
+      "proposed_french_value": "caractéristique",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        219,
+        225
+      ],
+      "entry_keys": [
+        "VULNERABLE",
+        "TOTAL"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "VULNERABLE et TOTAL décrivent des caractéristiques.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 219,
+          "entry_key": "VULNERABLE",
+          "french_lemma": "vulnérable",
+          "gloss_fr": "qui peut être facilement blessé ou affecté"
+        },
+        {
+          "id": 225,
+          "entry_key": "TOTAL",
+          "french_lemma": "total",
+          "gloss_fr": "complet, entier"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "catastrophe",
+      "proposed_french_value": "catastrophe",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        158
+      ],
+      "entry_keys": [
+        "DESASTRE"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "DESASTRE relève directement de la catastrophe.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 158,
+          "entry_key": "DESASTRE",
+          "french_lemma": "désastre",
+          "gloss_fr": "événement catastrophique"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "causalité",
+      "proposed_french_value": "causalité",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        102,
+        157
+      ],
+      "entry_keys": [
+        "RESULTER",
+        "CONSEQUENCE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "RESULTER et CONSEQUENCE relèvent de la causalité.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 102,
+          "entry_key": "RESULTER",
+          "french_lemma": "résulter",
+          "gloss_fr": "être le résultat de quelque chose"
+        },
+        {
+          "id": 157,
+          "entry_key": "CONSEQUENCE",
+          "french_lemma": "conséquence",
+          "gloss_fr": "effet produisant un résultat"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "changement",
+      "proposed_french_value": "changement",
+      "category": "D",
+      "entry_count": 6,
+      "entry_ids": [
+        163,
+        170,
+        228,
+        276,
+        282,
+        290
+      ],
+      "entry_keys": [
+        "ALTERATION",
+        "AUGMENTER",
+        "VARIATION",
+        "DEVENIR_VERB",
+        "ACCELERER_VERB",
+        "PERDRE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Altération, augmentation, variation, devenir, accélération et perte forment un ensemble défendable.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 163,
+          "entry_key": "ALTERATION",
+          "french_lemma": "altération",
+          "gloss_fr": "modification ou dégradation"
+        },
+        {
+          "id": 170,
+          "entry_key": "AUGMENTER",
+          "french_lemma": "augmenter",
+          "gloss_fr": "devenir plus grand"
+        },
+        {
+          "id": 228,
+          "entry_key": "VARIATION",
+          "french_lemma": "variation",
+          "gloss_fr": "changement ou différence entre plusieurs états"
+        },
+        {
+          "id": 276,
+          "entry_key": "DEVENIR_VERB",
+          "french_lemma": "devenir",
+          "gloss_fr": "Se transformer en quelque chose d'autre"
+        },
+        {
+          "id": 282,
+          "entry_key": "ACCELERER_VERB",
+          "french_lemma": null,
+          "gloss_fr": "augmenter la vitesse ou l'intensité"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "cognition",
+      "proposed_french_value": "cognition",
+      "category": "D",
+      "entry_count": 4,
+      "entry_ids": [
+        56,
+        61,
+        84,
+        106
+      ],
+      "entry_keys": [
+        "IMAGINE",
+        "COMPREHENSION",
+        "REFLECTION",
+        "IMAGINAR_VERB_TO_IMAGINE"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Imaginer, comprendre et réfléchir relèvent de la cognition.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 56,
+          "entry_key": "IMAGINE",
+          "french_lemma": "imaginer",
+          "gloss_fr": "Se représenter mentalement"
+        },
+        {
+          "id": 61,
+          "entry_key": "COMPREHENSION",
+          "french_lemma": "compréhension",
+          "gloss_fr": "Action de comprendre"
+        },
+        {
+          "id": 84,
+          "entry_key": "REFLECTION",
+          "french_lemma": "réflexion",
+          "gloss_fr": "Action de réfléchir"
+        },
+        {
+          "id": 106,
+          "entry_key": "IMAGINAR_VERB_TO_IMAGINE",
+          "french_lemma": null,
+          "gloss_fr": "se former une image mentale"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "commerce",
+      "proposed_french_value": "commerce",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        9
+      ],
+      "entry_keys": [
+        "BOOKSHOP_STORE"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "LIBRAIRIE relève du commerce.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 9,
+          "entry_key": "BOOKSHOP_STORE",
+          "french_lemma": "librairie",
+          "gloss_fr": "librairie, magasin de livres"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "communication",
+      "proposed_french_value": "communication",
+      "category": "D",
+      "entry_count": 4,
+      "entry_ids": [
+        2,
+        24,
+        25,
+        53
+      ],
+      "entry_keys": [
+        "INFORMATION_DATA",
+        "ASK_REQUEST",
+        "DEMAND_REQUIRE",
+        "COMMUNICATION"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Information, demande et échange d’informations sont cohérents.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 2,
+          "entry_key": "INFORMATION_DATA",
+          "french_lemma": "information",
+          "gloss_fr": "information, donnée communiquée"
+        },
+        {
+          "id": 24,
+          "entry_key": "ASK_REQUEST",
+          "french_lemma": "demander",
+          "gloss_fr": "demander, poser une requête"
+        },
+        {
+          "id": 25,
+          "entry_key": "DEMAND_REQUIRE",
+          "french_lemma": null,
+          "gloss_fr": "exiger, réclamer"
+        },
+        {
+          "id": 53,
+          "entry_key": "COMMUNICATION",
+          "french_lemma": "communication",
+          "gloss_fr": "Action d'échanger des informations"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "culture",
+      "proposed_french_value": "culture",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        49
+      ],
+      "entry_keys": [
+        "CULTURAL"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "CULTURAL relève directement de la culture.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 49,
+          "entry_key": "CULTURAL",
+          "french_lemma": "culturel",
+          "gloss_fr": "Relatif à la culture"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "danger",
+      "proposed_french_value": "danger",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        217
+      ],
+      "entry_keys": [
+        "MENACE"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "MENACE relève du danger ; la distinction avec risque peut rester utile.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 217,
+          "entry_key": "MENACE",
+          "french_lemma": "menace",
+          "gloss_fr": "danger ou risque potentiel"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "description",
+      "proposed_french_value": "description",
+      "category": "C",
+      "entry_count": 5,
+      "entry_ids": [
+        15,
+        16,
+        26,
+        27,
+        326
+      ],
+      "entry_keys": [
+        "WIDE_BROAD",
+        "LONG_LENGTHY",
+        "REASONABLE_SENSIBLE",
+        "SENSITIVE_EMOTIONAL",
+        "NATUREL"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "Large, long, sensible et naturel n’ont pas de domaine thématique commun.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 15,
+          "entry_key": "WIDE_BROAD",
+          "french_lemma": "large",
+          "gloss_fr": "large, de grande largeur"
+        },
+        {
+          "id": 16,
+          "entry_key": "LONG_LENGTHY",
+          "french_lemma": "long",
+          "gloss_fr": "long, de grande longueur"
+        },
+        {
+          "id": 26,
+          "entry_key": "REASONABLE_SENSIBLE",
+          "french_lemma": "sensible",
+          "gloss_fr": "sensible, raisonnable"
+        },
+        {
+          "id": 27,
+          "entry_key": "SENSITIVE_EMOTIONAL",
+          "french_lemma": null,
+          "gloss_fr": "sensible, qui ressent facilement / sensitive"
+        },
+        {
+          "id": 326,
+          "entry_key": "NATUREL",
+          "french_lemma": "naturel",
+          "gloss_fr": "Qui appartient ou provient de la nature"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "destruction",
+      "proposed_french_value": "destruction",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        182
+      ],
+      "entry_keys": [
+        "DESTRUCTION"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "DESTRUCTION correspond exactement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 182,
+          "entry_key": "DESTRUCTION",
+          "french_lemma": "destruction",
+          "gloss_fr": "action de détruire"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "discourse",
+      "proposed_french_value": "discours",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        227
+      ],
+      "entry_keys": [
+        "DEUXIEMEMENT"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "DEUXIEMEMENT organise le discours.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 227,
+          "entry_key": "DEUXIEMEMENT",
+          "french_lemma": "deuxièmement",
+          "gloss_fr": "indique le deuxième point d'un raisonnement"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "economy",
+      "proposed_french_value": "économie",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        28
+      ],
+      "entry_keys": [
+        "CURRENCY_MONEY"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "MONNAIE relève de l’économie.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 28,
+          "entry_key": "CURRENCY_MONEY",
+          "french_lemma": "monnaie",
+          "gloss_fr": "monnaie, argent ou devise"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "education",
+      "proposed_french_value": "éducation",
+      "category": "A",
+      "entry_count": 4,
+      "entry_ids": [
+        5,
+        10,
+        29,
+        30
+      ],
+      "entry_keys": [
+        "UNIVERSITY_INSTITUTION",
+        "LIBRARY_PUBLIC",
+        "SECONDARY_SCHOOL_FR",
+        "COLLEGE_HE"
+      ],
+      "current_language_or_nature": "indéterminable",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "Université, bibliothèque et collège relèvent de l’éducation ; l’accent français est certain.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 5,
+          "entry_key": "UNIVERSITY_INSTITUTION",
+          "french_lemma": "université",
+          "gloss_fr": "université, établissement d’enseignement supérieur"
+        },
+        {
+          "id": 10,
+          "entry_key": "LIBRARY_PUBLIC",
+          "french_lemma": null,
+          "gloss_fr": "bibliothèque, lieu de prêt ou consultation de livres"
+        },
+        {
+          "id": 29,
+          "entry_key": "SECONDARY_SCHOOL_FR",
+          "french_lemma": "collège",
+          "gloss_fr": "collège, établissement scolaire intermédiaire"
+        },
+        {
+          "id": 30,
+          "entry_key": "COLLEGE_HE",
+          "french_lemma": null,
+          "gloss_fr": "college, établissement d’enseignement supérieur"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "espace",
+      "proposed_french_value": "espace",
+      "category": "D",
+      "entry_count": 9,
+      "entry_ids": [
+        38,
+        39,
+        40,
+        41,
+        42,
+        43,
+        44,
+        45,
+        46
+      ],
+      "entry_keys": [
+        "SPACE_PLANET",
+        "SPACE_STAR",
+        "SPACE_MOON",
+        "SPACE_SATELLITE",
+        "SPACE_ASTRONAUT",
+        "SPACE_ORBIT",
+        "SPACE_TO_EXPLORE",
+        "SPACE_VAST",
+        "SPACE_TO_LAUNCH"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Les neuf entrées portent sur l’espace astronomique.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 38,
+          "entry_key": "SPACE_PLANET",
+          "french_lemma": "planète",
+          "gloss_fr": "Une planète, un corps céleste qui tourne autour d'une étoile"
+        },
+        {
+          "id": 39,
+          "entry_key": "SPACE_STAR",
+          "french_lemma": "étoile",
+          "gloss_fr": "Une étoile dans l’espace, un astre lumineux"
+        },
+        {
+          "id": 40,
+          "entry_key": "SPACE_MOON",
+          "french_lemma": "lune",
+          "gloss_fr": "Un satellite naturel, la lune autour d’une planète"
+        },
+        {
+          "id": 41,
+          "entry_key": "SPACE_SATELLITE",
+          "french_lemma": "satellite",
+          "gloss_fr": "Un objet artificiel qui orbite autour de la Terre ou d’autres corps"
+        },
+        {
+          "id": 42,
+          "entry_key": "SPACE_ASTRONAUT",
+          "french_lemma": "astronaute",
+          "gloss_fr": "Une personne qui voyage dans l’espace"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "existence",
+      "proposed_french_value": "existence",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        59,
+        109
+      ],
+      "entry_keys": [
+        "EXIST",
+        "EXISTIR_VERB_TO_EXIST"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Les deux entrées EXISTER sont cohérentes.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 59,
+          "entry_key": "EXIST",
+          "french_lemma": "exister",
+          "gloss_fr": "Être réel ou présent"
+        },
+        {
+          "id": 109,
+          "entry_key": "EXISTIR_VERB_TO_EXIST",
+          "french_lemma": null,
+          "gloss_fr": "avoir une réalité, être présent"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "food",
+      "proposed_french_value": "alimentation",
+      "category": "B",
+      "entry_count": 1,
+      "entry_ids": [
+        14
+      ],
+      "entry_keys": [
+        "PRESERVATIVE_ADDITIVE"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Francisation ou reformulation française fortement étayée par les entrées.",
+      "semantic_justification": "Le conservateur est une substance alimentaire.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible à moyen",
+      "confidence": 0.88,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 14,
+          "entry_key": "PRESERVATIVE_ADDITIVE",
+          "french_lemma": null,
+          "gloss_fr": "conservateur, substance qui préserve un aliment"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "general",
+      "proposed_french_value": "général",
+      "category": "C",
+      "entry_count": 8,
+      "entry_ids": [
+        3,
+        20,
+        22,
+        23,
+        31,
+        33,
+        34,
+        35
+      ],
+      "entry_keys": [
+        "IMPORTANT_SIGNIFICANT",
+        "PROBLEM_DIFFICULTY",
+        "GENERAL_COMMON",
+        "DIFFERENT_NOT_SAME",
+        "ORGANIZATION_ENTITY",
+        "SCIENTIFIC_PROPERTY",
+        "PROMOTE_ACTION",
+        "UNDERSTAND_COMPREHEND"
+      ],
+      "current_language_or_nature": "anglais probable",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "Important, problème, différent, organisation, scientifique, promouvoir et comprendre sont hétérogènes.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 3,
+          "entry_key": "IMPORTANT_SIGNIFICANT",
+          "french_lemma": "important",
+          "gloss_fr": "important, significatif"
+        },
+        {
+          "id": 20,
+          "entry_key": "PROBLEM_DIFFICULTY",
+          "french_lemma": "problème",
+          "gloss_fr": "problème, difficulté ou question à résoudre"
+        },
+        {
+          "id": 22,
+          "entry_key": "GENERAL_COMMON",
+          "french_lemma": "général",
+          "gloss_fr": "général, commun ou global"
+        },
+        {
+          "id": 23,
+          "entry_key": "DIFFERENT_NOT_SAME",
+          "french_lemma": "différent",
+          "gloss_fr": "différent, pas identique"
+        },
+        {
+          "id": 31,
+          "entry_key": "ORGANIZATION_ENTITY",
+          "french_lemma": "organisation",
+          "gloss_fr": "organisation, structure organisée"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "grammaire",
+      "proposed_french_value": "grammaire",
+      "category": "D",
+      "entry_count": 19,
+      "entry_ids": [
+        92,
+        93,
+        99,
+        101,
+        104,
+        105,
+        110,
+        112,
+        113,
+        114,
+        115,
+        117,
+        124,
+        160,
+        172,
+        180,
+        251,
+        320,
+        321
+      ],
+      "entry_keys": [
+        "LA_DEFINITE_ARTICLE_FEMININE",
+        "Y_CONJUNCTION_AND",
+        "QUE_CONJUNCTION_THAT",
+        "EN_PREPOSITION_IN_ON_AT",
+        "DE_PREPOSITION_OF_FROM",
+        "LO_DEFINITE_ARTICLE_NEUTER",
+        "UNO_DETERMINER_INDEFINITE_ONE_A",
+        "ESTE_DEMONSTRATIVE_THIS",
+        "EL_DEFINITE_ARTICLE_MASCULINE",
+        "NO_ADVERB_NEGATION",
+        "SER_VERB_TO_BE",
+        "SINO_CONJUNCTION_BUT_RATHER",
+        "PARA_PREPOSITION_FOR_TO",
+        "DETERMINANT_POSSESSIF_1PLURAL",
+        "CETTE",
+        "NOUS_PRONOM_PERSONNEL",
+        "THEIR",
+        "AUTRE_DETERMINANT",
+        "ETRE_VERBE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Les 19 entrées sont des mots ou fonctions grammaticales.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 92,
+          "entry_key": "LA_DEFINITE_ARTICLE_FEMININE",
+          "french_lemma": "la",
+          "gloss_fr": "article défini féminin singulier"
+        },
+        {
+          "id": 93,
+          "entry_key": "Y_CONJUNCTION_AND",
+          "french_lemma": "et",
+          "gloss_fr": "conjonction de coordination signifiant 'et'"
+        },
+        {
+          "id": 99,
+          "entry_key": "QUE_CONJUNCTION_THAT",
+          "french_lemma": "que",
+          "gloss_fr": "conjonction ou pronom relatif introduisant une proposition"
+        },
+        {
+          "id": 101,
+          "entry_key": "EN_PREPOSITION_IN_ON_AT",
+          "french_lemma": "en",
+          "gloss_fr": "préposition de lieu ou temps fréquente"
+        },
+        {
+          "id": 104,
+          "entry_key": "DE_PREPOSITION_OF_FROM",
+          "french_lemma": "de",
+          "gloss_fr": "préposition exprimant la possession ou origine"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "grammaire/déterminant",
+      "proposed_french_value": "grammaire",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        311
+      ],
+      "entry_keys": [
+        "PRONOM_DEFINI_MAS_SING"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "DU est décrit comme article malgré une clé PRONOM ; le sous-niveau reste à décider.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 311,
+          "entry_key": "PRONOM_DEFINI_MAS_SING",
+          "french_lemma": "du",
+          "gloss_fr": "article défini masculin singulier"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "grammaire/pronom",
+      "proposed_french_value": "grammaire",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        310
+      ],
+      "entry_keys": [
+        "PRONOM_DEFINI_PLURIEL"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "LES est décrit comme pronom ; la cohérence du sous-niveau reste à décider.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 310,
+          "entry_key": "PRONOM_DEFINI_PLURIEL",
+          "french_lemma": "les",
+          "gloss_fr": "pronom défini pluriel, sujet"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "géographie",
+      "proposed_french_value": "géographie",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        187,
+        188
+      ],
+      "entry_keys": [
+        "ZONE",
+        "COTIER"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "ZONE et COTIER relèvent de la géographie.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 187,
+          "entry_key": "ZONE",
+          "french_lemma": "zone",
+          "gloss_fr": "espace délimité, région"
+        },
+        {
+          "id": 188,
+          "entry_key": "COTIER",
+          "french_lemma": "côtier",
+          "gloss_fr": "relatif à la côte"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "health",
+      "proposed_french_value": "santé",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        13
+      ],
+      "entry_keys": [
+        "CONDOM_PROTECTION"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "PRESERVATIF relève de la santé ou protection.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 13,
+          "entry_key": "CONDOM_PROTECTION",
+          "french_lemma": "préservatif",
+          "gloss_fr": "préservatif, moyen de protection contraceptive"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "international",
+      "proposed_french_value": "international",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        37
+      ],
+      "entry_keys": [
+        "INTERNATIONAL"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "L’entrée correspond exactement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 37,
+          "entry_key": "INTERNATIONAL",
+          "french_lemma": "international",
+          "gloss_fr": "international"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "language",
+      "proposed_french_value": "langue",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        32
+      ],
+      "entry_keys": [
+        "LANGUAGE_SYSTEM"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "LANGUAGE_SYSTEM désigne une langue.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 32,
+          "entry_key": "LANGUAGE_SYSTEM",
+          "french_lemma": "langues",
+          "gloss_fr": "langue, système de communication"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "langue",
+      "proposed_french_value": "langue",
+      "category": "D",
+      "entry_count": 6,
+      "entry_ids": [
+        54,
+        68,
+        69,
+        74,
+        77,
+        90
+      ],
+      "entry_keys": [
+        "ROMANCE_LANGUAGE",
+        "TRANSLATE",
+        "WORD",
+        "ENDING",
+        "MEANING",
+        "TEXT"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Langue romane, traduction, mot, terminaison, sens et texte sont cohérents.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 54,
+          "entry_key": "ROMANCE_LANGUAGE",
+          "french_lemma": "romanesque",
+          "gloss_fr": "Langue issue du latin"
+        },
+        {
+          "id": 68,
+          "entry_key": "TRANSLATE",
+          "french_lemma": "traduire",
+          "gloss_fr": "Rendre un texte d'une langue en une autre"
+        },
+        {
+          "id": 69,
+          "entry_key": "WORD",
+          "french_lemma": "mot",
+          "gloss_fr": "Unité de langage écrite ou orale"
+        },
+        {
+          "id": 74,
+          "entry_key": "ENDING",
+          "french_lemma": "terminaison",
+          "gloss_fr": "Terminaison d'un mot"
+        },
+        {
+          "id": 77,
+          "entry_key": "MEANING",
+          "french_lemma": "sens",
+          "gloss_fr": "Sens d'un mot ou d'une phrase"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "liaison",
+      "proposed_french_value": "relations logiques",
+      "category": "B",
+      "entry_count": 3,
+      "entry_ids": [
+        131,
+        136,
+        140
+      ],
+      "entry_keys": [
+        "CEPENDANT",
+        "POR_TANTO",
+        "PARCE_QUE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Francisation ou reformulation française fortement étayée par les entrées.",
+      "semantic_justification": "CEPENDANT, PAR CONSEQUENT et PARCE QUE marquent opposition, conséquence et cause.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible à moyen",
+      "confidence": 0.88,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 131,
+          "entry_key": "CEPENDANT",
+          "french_lemma": "cependant",
+          "gloss_fr": "indique une opposition ou une restriction"
+        },
+        {
+          "id": 136,
+          "entry_key": "POR_TANTO",
+          "french_lemma": "par conséquent",
+          "gloss_fr": "indique une conséquence"
+        },
+        {
+          "id": 140,
+          "entry_key": "PARCE_QUE",
+          "french_lemma": "parce que",
+          "gloss_fr": "indique une cause ou une raison"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "lieu",
+      "proposed_french_value": "lieu",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        226,
+        240
+      ],
+      "entry_keys": [
+        "HABITATION",
+        "REGION"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "HABITATION et REGION sont des lieux.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 226,
+          "entry_key": "HABITATION",
+          "french_lemma": "habitation",
+          "gloss_fr": "lieu où l'on habite"
+        },
+        {
+          "id": 240,
+          "entry_key": "REGION",
+          "french_lemma": "région",
+          "gloss_fr": "Territoire délimité partageant des caractéristiques communes"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "localisation",
+      "proposed_french_value": "localisation",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        201
+      ],
+      "entry_keys": [
+        "PROCHE"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "PROCHE exprime une localisation relative.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 201,
+          "entry_key": "PROCHE",
+          "french_lemma": "proche",
+          "gloss_fr": "qui est situé à une faible distance"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "manière",
+      "proposed_french_value": "manière",
+      "category": "D",
+      "entry_count": 3,
+      "entry_ids": [
+        78,
+        111,
+        198
+      ],
+      "entry_keys": [
+        "WAY",
+        "ESPECIALMENTE_ADVERB_ESPECIALLY",
+        "DIRECTEMENT"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "MANIERE, SURTOUT et DIRECTEMENT expriment une manière ou modalité.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 78,
+          "entry_key": "WAY",
+          "french_lemma": "manière",
+          "gloss_fr": "Manière de faire"
+        },
+        {
+          "id": 111,
+          "entry_key": "ESPECIALMENTE_ADVERB_ESPECIALLY",
+          "french_lemma": "surtout",
+          "gloss_fr": "adverbe marquant une intensité ou une exception"
+        },
+        {
+          "id": 198,
+          "entry_key": "DIRECTEMENT",
+          "french_lemma": "directement",
+          "gloss_fr": "de manière immédiate, sans intermédiaire"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "mouvement",
+      "proposed_french_value": "mouvement",
+      "category": "D",
+      "entry_count": 3,
+      "entry_ids": [
+        57,
+        107,
+        318
+      ],
+      "entry_keys": [
+        "CIRCULATE",
+        "CIRCULAR_VERB_TO_CIRCULATE",
+        "SE_LEVER_VERBE_PRONOMINAL"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "CIRCULER et SE LEVER relèvent du mouvement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 57,
+          "entry_key": "CIRCULATE",
+          "french_lemma": "circuler",
+          "gloss_fr": "Se déplacer autour ou parmi"
+        },
+        {
+          "id": 107,
+          "entry_key": "CIRCULAR_VERB_TO_CIRCULATE",
+          "french_lemma": null,
+          "gloss_fr": "se déplacer en cercle ou se répandre"
+        },
+        {
+          "id": 318,
+          "entry_key": "SE_LEVER_VERBE_PRONOMINAL",
+          "french_lemma": "se lever",
+          "gloss_fr": "S'élever, monter (ex : le niveau, la voix)"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "météo",
+      "proposed_french_value": "météorologie",
+      "category": "B",
+      "entry_count": 4,
+      "entry_ids": [
+        234,
+        236,
+        238,
+        254
+      ],
+      "entry_keys": [
+        "CYCLONE",
+        "STORM",
+        "PRECIPITATION",
+        "DROUGHT"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Francisation ou reformulation française fortement étayée par les entrées.",
+      "semantic_justification": "Cyclone, tempête, précipitation et aridité relèvent de la météorologie.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible à moyen",
+      "confidence": 0.88,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 234,
+          "entry_key": "CYCLONE",
+          "french_lemma": "cyclone",
+          "gloss_fr": "Phénomène météorologique caractérisé par une tempête tropicale violente"
+        },
+        {
+          "id": 236,
+          "entry_key": "STORM",
+          "french_lemma": "tempête",
+          "gloss_fr": "Phénomène atmosphérique avec vents forts et précipitations"
+        },
+        {
+          "id": 238,
+          "entry_key": "PRECIPITATION",
+          "french_lemma": "précipitation",
+          "gloss_fr": "Eau qui tombe de l'atmosphère sous différentes formes"
+        },
+        {
+          "id": 254,
+          "entry_key": "DROUGHT",
+          "french_lemma": "aridité",
+          "gloss_fr": "Période prolongée sans précipitations"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "météorologie",
+      "proposed_french_value": "météorologie",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        168
+      ],
+      "entry_keys": [
+        "TEMPERATURE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "TEMPERATURE relève de la météorologie dans ce corpus.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 168,
+          "entry_key": "TEMPERATURE",
+          "french_lemma": "température",
+          "gloss_fr": "degré de chaleur ou de froid"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "nature",
+      "proposed_french_value": "nature",
+      "category": "C",
+      "entry_count": 16,
+      "entry_ids": [
+        159,
+        161,
+        164,
+        176,
+        185,
+        186,
+        196,
+        218,
+        230,
+        252,
+        272,
+        273,
+        274,
+        291,
+        325,
+        327
+      ],
+      "entry_keys": [
+        "GLACIER",
+        "PLANETE_TERRE",
+        "CLIMATIQUE",
+        "NATURE",
+        "POLAIRE",
+        "OCEAN",
+        "MARITIME",
+        "MER",
+        "METEOROLOGIQUE",
+        "CLIMATE",
+        "EAU",
+        "FAUNE",
+        "FLORE",
+        "HABITAT_NATUREL",
+        "HABITAT",
+        "DEFORESTATION"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "Glacier, Terre, climat, mer, habitat, faune, flore et déforestation pourraient justifier des sous-domaines.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 159,
+          "entry_key": "GLACIER",
+          "french_lemma": "glacier",
+          "gloss_fr": "masse de glace en mouvement"
+        },
+        {
+          "id": 161,
+          "entry_key": "PLANETE_TERRE",
+          "french_lemma": "Terre",
+          "gloss_fr": "planète habitée par l'humanité"
+        },
+        {
+          "id": 164,
+          "entry_key": "CLIMATIQUE",
+          "french_lemma": "climatique",
+          "gloss_fr": "relatif au climat"
+        },
+        {
+          "id": 176,
+          "entry_key": "NATURE",
+          "french_lemma": "nature",
+          "gloss_fr": "monde naturel, environnement"
+        },
+        {
+          "id": 185,
+          "entry_key": "POLAIRE",
+          "french_lemma": "polaire",
+          "gloss_fr": "relatif aux pôles terrestres"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "nourriture",
+      "proposed_french_value": "nourriture",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        279,
+        323
+      ],
+      "entry_keys": [
+        "ALIMENTATION_NOUN",
+        "ALIMENTATION_HUMAINE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Les deux entrées concernent la nourriture humaine.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 279,
+          "entry_key": "ALIMENTATION_NOUN",
+          "french_lemma": null,
+          "gloss_fr": "Action de se nourrir ou nourriture"
+        },
+        {
+          "id": 323,
+          "entry_key": "ALIMENTATION_HUMAINE",
+          "french_lemma": "alimentation humaine",
+          "gloss_fr": "Nourriture destinée aux humains"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "objet",
+      "proposed_french_value": "objet",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        71
+      ],
+      "entry_keys": [
+        "ELEMENT"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "ELEMENT désigne un objet ou composant.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 71,
+          "entry_key": "ELEMENT",
+          "french_lemma": "élément",
+          "gloss_fr": "Composant ou partie d'un tout"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "perception",
+      "proposed_french_value": "perception",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        98
+      ],
+      "entry_keys": [
+        "OBSERVAR_VERB_TO_OBSERVE"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "OBSERVER relève de la perception.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 98,
+          "entry_key": "OBSERVAR_VERB_TO_OBSERVE",
+          "french_lemma": null,
+          "gloss_fr": "regarder attentivement"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "personne",
+      "proposed_french_value": "personne",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        128
+      ],
+      "entry_keys": [
+        "PARTICIPANT"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "PARTICIPANT est une personne.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 128,
+          "entry_key": "PARTICIPANT",
+          "french_lemma": "participant",
+          "gloss_fr": "personne qui prend part à une activité ou un événement"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "physique",
+      "proposed_french_value": "physique",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        174
+      ],
+      "entry_keys": [
+        "THERMIQUE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "THERMIQUE relève de la physique.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 174,
+          "entry_key": "THERMIQUE",
+          "french_lemma": "thermique",
+          "gloss_fr": "relatif à la chaleur"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "planification",
+      "proposed_french_value": "planification",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        87,
+        135
+      ],
+      "entry_keys": [
+        "STRATEGY",
+        "PROJET"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "STRATEGIE et PROJET relèvent de la planification.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 87,
+          "entry_key": "STRATEGY",
+          "french_lemma": "stratégie",
+          "gloss_fr": "Plan d'action pour atteindre un but"
+        },
+        {
+          "id": 135,
+          "entry_key": "PROJET",
+          "french_lemma": "projet",
+          "gloss_fr": "plan ou programme pour réaliser quelque chose"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "politics",
+      "proposed_french_value": "politique",
+      "category": "A",
+      "entry_count": 2,
+      "entry_ids": [
+        4,
+        19
+      ],
+      "entry_keys": [
+        "NATION_COUNTRY",
+        "POLITICS_FIELD"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "NATION et POLITIQUE relèvent du champ politique.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 4,
+          "entry_key": "NATION_COUNTRY",
+          "french_lemma": "nation",
+          "gloss_fr": "nation, pays ou communauté politique"
+        },
+        {
+          "id": 19,
+          "entry_key": "POLITICS_FIELD",
+          "french_lemma": "politique",
+          "gloss_fr": "politique, domaine de gouvernement"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "qualité",
+      "proposed_french_value": "qualité",
+      "category": "C",
+      "entry_count": 28,
+      "entry_ids": [
+        55,
+        60,
+        72,
+        75,
+        79,
+        81,
+        88,
+        89,
+        91,
+        127,
+        137,
+        166,
+        167,
+        169,
+        171,
+        178,
+        184,
+        191,
+        214,
+        231,
+        235,
+        237,
+        239,
+        255,
+        259,
+        268,
+        280,
+        288
+      ],
+      "entry_keys": [
+        "ACCESSIBLE",
+        "COMMON",
+        "FAMILIAR",
+        "USEFUL",
+        "PROGRESSIVE",
+        "BASED",
+        "LASTING",
+        "BETTER",
+        "UNKNOWN",
+        "MODESTE",
+        "NECESSAIRE",
+        "GRAVE",
+        "PREOCCUPANT",
+        "GLOBAL",
+        "CONSTANT",
+        "ENTIER",
+        "DESASTREUX",
+        "CONTINU",
+        "ACCELERE",
+        "EXTREME",
+        "VIOLENT",
+        "DEVASTATING",
+        "INTENSE",
+        "ARID",
+        "CONSEQUENT",
+        "TOTAL_ADJECTIVE",
+        "HUMAIN",
+        "GRAND"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "Les 28 adjectifs couvrent accessibilité, durée, intensité, humanité, climat et logique.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 55,
+          "entry_key": "ACCESSIBLE",
+          "french_lemma": "accessible",
+          "gloss_fr": "Facile d'accès"
+        },
+        {
+          "id": 60,
+          "entry_key": "COMMON",
+          "french_lemma": "commun",
+          "gloss_fr": "Partagé par plusieurs"
+        },
+        {
+          "id": 72,
+          "entry_key": "FAMILIAR",
+          "french_lemma": "familier",
+          "gloss_fr": "Bien connu, habituel"
+        },
+        {
+          "id": 75,
+          "entry_key": "USEFUL",
+          "french_lemma": "utile",
+          "gloss_fr": "Qui sert à quelque chose"
+        },
+        {
+          "id": 79,
+          "entry_key": "PROGRESSIVE",
+          "french_lemma": "progressif",
+          "gloss_fr": "Qui avance par étapes"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "quantité",
+      "proposed_french_value": "quantité",
+      "category": "C",
+      "entry_count": 10,
+      "entry_ids": [
+        96,
+        103,
+        116,
+        130,
+        133,
+        149,
+        193,
+        195,
+        202,
+        247
+      ],
+      "entry_keys": [
+        "BEAUCOUP_DE",
+        "MAS_ADVERB_MORE",
+        "CADA_DETERMINER_EACH_EVERY",
+        "BEAUCOUP",
+        "ALGUNO",
+        "QUELQUES",
+        "NIVEAU",
+        "ELEVATION",
+        "MILLION",
+        "WHOLE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "Quantificateurs, niveau, élévation et million mêlent grammaire, mesure et changement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 96,
+          "entry_key": "BEAUCOUP_DE",
+          "french_lemma": "beaucoup de",
+          "gloss_fr": "quantificateur exprimant une grande quantité"
+        },
+        {
+          "id": 103,
+          "entry_key": "MAS_ADVERB_MORE",
+          "french_lemma": "plus",
+          "gloss_fr": "adverbe de degré signifiant 'plus'"
+        },
+        {
+          "id": 116,
+          "entry_key": "CADA_DETERMINER_EACH_EVERY",
+          "french_lemma": "chaque",
+          "gloss_fr": "déterminant indiquant une unité dans un ensemble"
+        },
+        {
+          "id": 130,
+          "entry_key": "BEAUCOUP",
+          "french_lemma": "beaucoup",
+          "gloss_fr": "en grande quantité ou intensité"
+        },
+        {
+          "id": 133,
+          "entry_key": "ALGUNO",
+          "french_lemma": "quelque",
+          "gloss_fr": "quantificateur indéfini, désigne une ou plusieurs entités"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "relation",
+      "proposed_french_value": "relations logiques",
+      "category": "C",
+      "entry_count": 5,
+      "entry_ids": [
+        145,
+        152,
+        192,
+        253,
+        275
+      ],
+      "entry_keys": [
+        "SANS",
+        "DONC",
+        "PAR_CONSEQUENT",
+        "CAUSE",
+        "CAUSE_NOM"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "SANS, DONC et PAR CONSEQUENT relèvent du discours, mais CAUSE relève aussi de la causalité.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 145,
+          "entry_key": "SANS",
+          "french_lemma": "sans",
+          "gloss_fr": "indiquant l'absence de quelque chose"
+        },
+        {
+          "id": 152,
+          "entry_key": "DONC",
+          "french_lemma": "donc",
+          "gloss_fr": "conclusion ou conséquence"
+        },
+        {
+          "id": 192,
+          "entry_key": "PAR_CONSEQUENT",
+          "french_lemma": null,
+          "gloss_fr": "indique une conséquence"
+        },
+        {
+          "id": 253,
+          "entry_key": "CAUSE",
+          "french_lemma": "causer",
+          "gloss_fr": "Être l'origine de quelque chose"
+        },
+        {
+          "id": 275,
+          "entry_key": "CAUSE_NOM",
+          "french_lemma": "cause",
+          "gloss_fr": "Raison ou motif d'un événement"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "relations sociales",
+      "proposed_french_value": "relations sociales",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        48
+      ],
+      "entry_keys": [
+        "COOPERATION"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "COOPERATION relève directement des relations sociales.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 48,
+          "entry_key": "COOPERATION",
+          "french_lemma": "coopération",
+          "gloss_fr": "Action de travailler ensemble vers un but commun"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "relations spatiales",
+      "proposed_french_value": "relations spatiales",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        94
+      ],
+      "entry_keys": [
+        "ENTRE_PREPOSITION_AMONG_BETWEEN"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "ENTRE exprime une relation spatiale.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 94,
+          "entry_key": "ENTRE_PREPOSITION_AMONG_BETWEEN",
+          "french_lemma": "entre",
+          "gloss_fr": "préposition exprimant une relation entre plusieurs entités"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "ressenti",
+      "proposed_french_value": "ressenti",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        162
+      ],
+      "entry_keys": [
+        "SOUFFRIR"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "SOUFFRIR relève directement du ressenti.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 162,
+          "entry_key": "SOUFFRIR",
+          "french_lemma": "souffrir",
+          "gloss_fr": "éprouver une douleur ou un mal"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "risque",
+      "proposed_french_value": "risque",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        250,
+        289
+      ],
+      "entry_keys": [
+        "RISQUE",
+        "DANGER"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "RISQUE et DANGER forment un groupe cohérent.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 250,
+          "entry_key": "RISQUE",
+          "french_lemma": "risque",
+          "gloss_fr": "Possibilité de dommage ou de danger"
+        },
+        {
+          "id": 289,
+          "entry_key": "DANGER",
+          "french_lemma": "danger",
+          "gloss_fr": "risque de mal ou de préjudice"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "science",
+      "proposed_french_value": "science",
+      "category": "D",
+      "entry_count": 3,
+      "entry_ids": [
+        1,
+        64,
+        80
+      ],
+      "entry_keys": [
+        "PHENOMENON_OBSERVABLE",
+        "RESEARCH",
+        "METHODOLOGY"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Phénomène, recherche et méthodologie relèvent de la science.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 1,
+          "entry_key": "PHENOMENON_OBSERVABLE",
+          "french_lemma": "phénomène",
+          "gloss_fr": "phénomène observable"
+        },
+        {
+          "id": 64,
+          "entry_key": "RESEARCH",
+          "french_lemma": "recherche",
+          "gloss_fr": "Travail pour découvrir ou étudier"
+        },
+        {
+          "id": 80,
+          "entry_key": "METHODOLOGY",
+          "french_lemma": "méthodologie",
+          "gloss_fr": "Ensemble de méthodes"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "situation",
+      "proposed_french_value": "situation",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        62
+      ],
+      "entry_keys": [
+        "CONTEXT"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "CONTEXTE décrit une situation.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 62,
+          "entry_key": "CONTEXT",
+          "french_lemma": "contexte",
+          "gloss_fr": "Ensemble des circonstances d'une situation"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "social",
+      "proposed_french_value": "relations sociales",
+      "category": "B",
+      "entry_count": 1,
+      "entry_ids": [
+        6
+      ],
+      "entry_keys": [
+        "FAMILY_RELATION"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Francisation ou reformulation française fortement étayée par les entrées.",
+      "semantic_justification": "FAMILLE relève des relations sociales ; société reste une alternative.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible à moyen",
+      "confidence": 0.88,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 6,
+          "entry_key": "FAMILY_RELATION",
+          "french_lemma": "famille",
+          "gloss_fr": "famille, groupe familial"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "society",
+      "proposed_french_value": "société",
+      "category": "A",
+      "entry_count": 1,
+      "entry_ids": [
+        18
+      ],
+      "entry_keys": [
+        "CULTURE_HUMAN"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "CULTURE_HUMAN relève de la société.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 18,
+          "entry_key": "CULTURE_HUMAN",
+          "french_lemma": "culture",
+          "gloss_fr": "culture, ensemble de pratiques et savoirs"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "société",
+      "proposed_french_value": "société",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        177,
+        189
+      ],
+      "entry_keys": [
+        "HUMANITE",
+        "CITE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "HUMANITE et CITE relèvent de la société.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 177,
+          "entry_key": "HUMANITE",
+          "french_lemma": "humanité",
+          "gloss_fr": "ensemble des humains"
+        },
+        {
+          "id": 189,
+          "entry_key": "CITE",
+          "french_lemma": "cité",
+          "gloss_fr": "ville, grande agglomération"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "technologie",
+      "proposed_french_value": "technologie",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        65
+      ],
+      "entry_keys": [
+        "INNOVATION"
+      ],
+      "current_language_or_nature": "international ou partagé",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "INNOVATION relève de la technologie.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 65,
+          "entry_key": "INNOVATION",
+          "french_lemma": "innovation",
+          "gloss_fr": "Introduction de nouveautés"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "temps",
+      "proposed_french_value": "temps",
+      "category": "C",
+      "entry_count": 4,
+      "entry_ids": [
+        58,
+        108,
+        179,
+        229
+      ],
+      "entry_keys": [
+        "QUICKLY",
+        "CUANDO_CONJUNCTION_WHEN",
+        "PREMIEREMENT",
+        "EVENEMENT"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "RAPIDEMENT, QUAND, PREMIEREMENT et EVENEMENT mêlent temps, manière et discours.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 58,
+          "entry_key": "QUICKLY",
+          "french_lemma": "rapidement",
+          "gloss_fr": "D'une manière rapide"
+        },
+        {
+          "id": 108,
+          "entry_key": "CUANDO_CONJUNCTION_WHEN",
+          "french_lemma": "quand",
+          "gloss_fr": "conjonction de temps signifiant 'quand'"
+        },
+        {
+          "id": 179,
+          "entry_key": "PREMIEREMENT",
+          "french_lemma": "premièrement",
+          "gloss_fr": "adverbe indiquant le premier point"
+        },
+        {
+          "id": 229,
+          "entry_key": "EVENEMENT",
+          "french_lemma": "événement",
+          "gloss_fr": "fait marquant ou incidence survenant un moment donné"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "temps_manière",
+      "proposed_french_value": "relations logiques",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        221
+      ],
+      "entry_keys": [
+        "CONSEQUEMMENT"
+      ],
+      "current_language_or_nature": "technique",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "CONSEQUEMMENT marque surtout une conséquence logique.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 221,
+          "entry_key": "CONSEQUEMMENT",
+          "french_lemma": "conséquemment",
+          "gloss_fr": "en conséquence, par suite"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "time",
+      "proposed_french_value": "temps",
+      "category": "A",
+      "entry_count": 2,
+      "entry_ids": [
+        7,
+        8
+      ],
+      "entry_keys": [
+        "CURRENTLY_NOW",
+        "ACTUALLY_NOW_ES"
+      ],
+      "current_language_or_nature": "anglais",
+      "linguistic_justification": "Correction univoque de casse, accent ou traduction vers un libellé français naturel.",
+      "semantic_justification": "ACTUELLEMENT et ACTUALMENTE expriment le temps présent.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.98,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 7,
+          "entry_key": "CURRENTLY_NOW",
+          "french_lemma": "actuellement",
+          "gloss_fr": "actuellement, en ce moment"
+        },
+        {
+          "id": 8,
+          "entry_key": "ACTUALLY_NOW_ES",
+          "french_lemma": null,
+          "gloss_fr": "actualmente, en ce moment"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "travail",
+      "proposed_french_value": "travail",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        129
+      ],
+      "entry_keys": [
+        "TRAVAILLER"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "TRAVAILLER relève directement du travail.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 129,
+          "entry_key": "TRAVAILLER",
+          "french_lemma": "travailler",
+          "gloss_fr": "exercer une activité professionnelle ou produire un effort"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "verbe auxiliaire",
+      "proposed_french_value": "verbe auxiliaire",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        132
+      ],
+      "entry_keys": [
+        "SER"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "SER est traité comme verbe d’état ou auxiliaire.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 132,
+          "entry_key": "SER",
+          "french_lemma": null,
+          "gloss_fr": "exister ou avoir une certaine qualité"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "vie",
+      "proposed_french_value": "vie",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        66
+      ],
+      "entry_keys": [
+        "EXPERIENCE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "EXPERIENCE relève de la vie vécue.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 66,
+          "entry_key": "EXPERIENCE",
+          "french_lemma": "expérience",
+          "gloss_fr": "Connaissance acquise par la pratique"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "école",
+      "proposed_french_value": "école",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        36
+      ],
+      "entry_keys": [
+        "SCHOOL_PLACE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "SCHOOL_PLACE correspond exactement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 36,
+          "entry_key": "SCHOOL_PLACE",
+          "french_lemma": "école",
+          "gloss_fr": "école"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "économie",
+      "proposed_french_value": "économie",
+      "category": "C",
+      "entry_count": 3,
+      "entry_ids": [
+        126,
+        257,
+        258
+      ],
+      "entry_keys": [
+        "RESULTAT",
+        "PRODUCTION_AGRICOLE",
+        "FOOD_SUPPLY"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "PRODUCTION_AGRICOLE est économique, mais RESULTAT et ALIMENTATION ne le sont pas nécessairement.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 126,
+          "entry_key": "RESULTAT",
+          "french_lemma": "résultat",
+          "gloss_fr": "résultat d'une action ou d'un événement"
+        },
+        {
+          "id": 257,
+          "entry_key": "PRODUCTION_AGRICOLE",
+          "french_lemma": "production agricole",
+          "gloss_fr": "Production liée à l'agriculture"
+        },
+        {
+          "id": 258,
+          "entry_key": "FOOD_SUPPLY",
+          "french_lemma": "alimentation",
+          "gloss_fr": "Ensemble des aliments disponibles pour une population"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "éducation",
+      "proposed_french_value": "éducation",
+      "category": "D",
+      "entry_count": 6,
+      "entry_ids": [
+        47,
+        50,
+        51,
+        63,
+        95,
+        100
+      ],
+      "entry_keys": [
+        "EDUCATION",
+        "UNIVERSITY",
+        "ETUDIANT",
+        "TRAINING",
+        "UNIVERSIDAD_NOUN_UNIVERSITY",
+        "ACADEMIQUE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "Éducation, université, étudiant, formation et académique sont cohérents.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 47,
+          "entry_key": "EDUCATION",
+          "french_lemma": "éducation",
+          "gloss_fr": "Processus d'apprentissage et d'instruction"
+        },
+        {
+          "id": 50,
+          "entry_key": "UNIVERSITY",
+          "french_lemma": null,
+          "gloss_fr": "Institution d'enseignement supérieur"
+        },
+        {
+          "id": 51,
+          "entry_key": "ETUDIANT",
+          "french_lemma": "étudiant",
+          "gloss_fr": "Personne qui étudie"
+        },
+        {
+          "id": 63,
+          "entry_key": "TRAINING",
+          "french_lemma": "formation",
+          "gloss_fr": "Processus d'enseignement ou de préparation"
+        },
+        {
+          "id": 95,
+          "entry_key": "UNIVERSIDAD_NOUN_UNIVERSITY",
+          "french_lemma": null,
+          "gloss_fr": "établissement d'enseignement supérieur"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "état",
+      "proposed_french_value": "état",
+      "category": "D",
+      "entry_count": 1,
+      "entry_ids": [
+        271
+      ],
+      "entry_keys": [
+        "ABSENCE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "ABSENCE décrit un état.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 271,
+          "entry_key": "ABSENCE",
+          "french_lemma": "absence",
+          "gloss_fr": "Manque ou absence de quelque chose"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "événement",
+      "proposed_french_value": "événement",
+      "category": "D",
+      "entry_count": 2,
+      "entry_ids": [
+        173,
+        224
+      ],
+      "entry_keys": [
+        "AUGMENTATION",
+        "PERTE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Libellé français ou partagé, naturel et sans anomalie graphique.",
+      "semantic_justification": "AUGMENTATION et PERTE peuvent être conceptualisées comme événements.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "faible",
+      "confidence": 0.95,
+      "requires_human_arbitration": false,
+      "examples": [
+        {
+          "id": 173,
+          "entry_key": "AUGMENTATION",
+          "french_lemma": "augmentation",
+          "gloss_fr": "action d’augmenter"
+        },
+        {
+          "id": 224,
+          "entry_key": "PERTE",
+          "french_lemma": "perte",
+          "gloss_fr": "action de perdre quelque chose"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    },
+    {
+      "current_value_exact": "être",
+      "proposed_french_value": "personne",
+      "category": "C",
+      "entry_count": 1,
+      "entry_ids": [
+        203
+      ],
+      "entry_keys": [
+        "PERSONNE"
+      ],
+      "current_language_or_nature": "français",
+      "linguistic_justification": "Graphie corrigeable, mais le choix de catégorie ne peut pas être automatisé.",
+      "semantic_justification": "PERSONNE désigne un être humain ; personne ou société serait plus explicite.",
+      "functional_consumers": [
+        "MariaDB VARCHAR(100) libre et upsert",
+        "repository/API : lecture et écriture",
+        "admin : affichage, édition libre et recherche LIKE",
+        "assistants Domaine/Texte : génération libre puis trim",
+        "vue conceptuelle/Relations : affichage, absent du prompt Relations",
+        "Seven Sieves : transport incident, sans consommation directe"
+      ],
+      "risk": "moyen",
+      "confidence": 0.6,
+      "requires_human_arbitration": true,
+      "examples": [
+        {
+          "id": 203,
+          "entry_key": "PERSONNE",
+          "french_lemma": "personne",
+          "gloss_fr": "être humain"
+        }
+      ],
+      "preconditions_for_future_change": [
+        "sauvegarde ciblée et empreinte des 270 entrées",
+        "nouveau scan des comparaisons exactes",
+        "validation humaine des catégories C",
+        "transaction unique et contrôles postérieurs",
+        "alignement futur des prompts et de l’interface"
+      ]
+    }
+  ]
+}
+
