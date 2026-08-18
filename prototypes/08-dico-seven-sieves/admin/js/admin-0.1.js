@@ -4,7 +4,7 @@ const API_BASE_URL = window.location.origin;
 const DEFAULT_FORM_LANGUAGES = ["fr", "es", "it", "pt"];
 const PAGE_LIMIT = 30;
 
-let languages = [];
+let documentableLanguages = [];
 let currentEntries = [];
 let currentSearch = "";
 let currentOffset = 0;
@@ -326,11 +326,11 @@ async function loadModelSummary() {
 }
 
 async function loadLanguages() {
-  const [operational, catalog] = await Promise.all([
-    apiRequest("/languages"),
+  const [documentable, catalog] = await Promise.all([
+    apiRequest("/admin/documentable-languages"),
     apiRequest("/language-catalog"),
   ]);
-  languages = operational.languages;
+  documentableLanguages = documentable.languages;
   renderLanguageCatalog(catalog.languages, catalog.summary);
 }
 
@@ -370,18 +370,29 @@ function createLanguageSelect(selectedCode) {
   const select = document.createElement("select");
   select.className = "form-language";
   select.setAttribute("aria-label", "Langue de la forme");
-  for (const language of languages) {
-    const option = document.createElement("option");
-    option.value = language.code;
-    option.textContent = `${language.code.toUpperCase()} — ${language.name}`;
-    option.selected = language.code === selectedCode;
-    select.appendChild(option);
+  const groups = [
+    ["Langues romanes documentées", "Langue romane documentée"],
+    ["Langues romanes prêtes à documenter", "Langue romane référencée — prête à documenter"],
+    ["Langue non romane de comparaison", "Langue de comparaison — non romane"],
+  ];
+  for (const [label, classification] of groups) {
+    const group = document.createElement("optgroup");
+    group.label = label;
+    for (const language of documentableLanguages.filter((item) => item.public_classification === classification)) {
+      const option = document.createElement("option");
+      option.value = language.code;
+      const readiness = classification.includes("prête à documenter") ? " · prête à documenter" : "";
+      option.textContent = `${language.code.toUpperCase()} — ${language.name}${readiness}`;
+      option.selected = language.code === selectedCode;
+      group.appendChild(option);
+    }
+    if (group.children.length > 0) select.appendChild(group);
   }
   return select;
 }
 
 function addFormRow(
-  selectedCode = languages[0]?.code || "fr",
+  selectedCode = documentableLanguages[0]?.code || "fr",
   lemma = "",
   partOfSpeech = "noun",
   formId = null,
@@ -443,9 +454,9 @@ function addFormRow(
 function resetFormRows() {
   formsTableBody.replaceChildren();
   const availableDefaults = DEFAULT_FORM_LANGUAGES.filter(code =>
-    languages.some(language => language.code === code)
+    documentableLanguages.some(language => language.code === code)
   );
-  for (const code of availableDefaults.length ? availableDefaults : [languages[0]?.code]) {
+  for (const code of availableDefaults.length ? availableDefaults : [documentableLanguages[0]?.code]) {
     if (code) addFormRow(code);
   }
 }

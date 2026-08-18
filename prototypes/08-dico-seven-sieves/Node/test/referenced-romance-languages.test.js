@@ -74,12 +74,15 @@ test("functional volumes stay fixed and rollback is blocked by any dependency", 
   }), /1 dépendance/);
 });
 
-test("all seven forged analyses and lexical writes are rejected before repository writes", async () => {
+test("all seven forged analyses stay rejected while manual lexical writes are accepted", async () => {
   let writes = 0;
   const repository = {
     async getLanguages() { return OPERATIONAL_CODES.map((code) => ({ code })); },
+    async getDocumentableLanguages() {
+      return [...OPERATIONAL_CODES, ...TARGET_CODES].map((code) => ({ code }));
+    },
     async loadAnalysisResources() { throw new Error("analysis resources must not be loaded"); },
-    async createAdminLexicalEntry() { writes += 1; },
+    async createAdminLexicalEntry(entry) { writes += 1; return entry; },
   };
   await withServer(repository, async (baseUrl) => {
     for (const code of TARGET_CODES) {
@@ -107,11 +110,23 @@ test("all seven forged analyses and lexical writes are rejected before repositor
           forms: [{ language: code, lemma: "contrôle", part_of_speech: "noun" }],
         }),
       });
-      assert.equal(writeResponse.status, 400, code);
-      assert.equal((await writeResponse.json()).error.code, "INVALID_LANGUAGE", code);
+      assert.equal(writeResponse.status, 201, code);
+      assert.equal((await writeResponse.json()).entry.forms[0].language, code);
     }
+
+    const unknownResponse = await fetch(`${baseUrl}/admin/lexical-entry`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        entry_key: "FORGED_UNKNOWN_ENTRY",
+        gloss_fr: "contrôle",
+        forms: [{ language: "xx", lemma: "contrôle", part_of_speech: "noun" }],
+      }),
+    });
+    assert.equal(unknownResponse.status, 400);
+    assert.equal((await unknownResponse.json()).error.code, "INVALID_LANGUAGE");
   });
-  assert.equal(writes, 0);
+  assert.equal(writes, 7);
 });
 
 test("AI domain and text requests reject all seven referenced codes before generation", async () => {
@@ -158,4 +173,17 @@ test("the retained fresh seed writes explicit REFERENCED statuses without changi
   assert.equal((seed.match(/'REFERENCED'/gu) || []).length, 7);
   assert.match(procedures, /sp_upsert_language\s*\([\s\S]*p_is_active/u);
   assert.doesNotMatch(procedures, /p_documentation_status/u);
+});
+
+test("manual authoring UI exposes the 12 documentable languages in readable groups", () => {
+  const root = path.resolve(__dirname, "../..");
+  const script = fs.readFileSync(path.join(root, "admin/js/admin-0.1.js"), "utf8");
+  const html = fs.readFileSync(path.join(root, "admin/index-admin-0.1.html"), "utf8");
+  assert.match(script, /DEFAULT_FORM_LANGUAGES = \["fr", "es", "it", "pt"\]/);
+  assert.match(script, /apiRequest\("\/admin\/documentable-languages"\)/);
+  assert.match(script, /Langues romanes documentées/);
+  assert.match(script, /Langues romanes prêtes à documenter/);
+  assert.match(script, /Langue non romane de comparaison/);
+  assert.match(html, /app-version" content="0\.1\.5"/);
+  assert.match(html, /Une langue prête à documenter peut déjà recevoir des formes linguistiques dans l’atelier manuel\. Elle ne devient analysable qu’après constitution, vérification et activation de son contenu\./);
 });

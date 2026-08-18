@@ -256,6 +256,22 @@ function createRepository(pool) {
     return error;
   }
 
+  async function resolveDocumentableLanguage(connection, code) {
+    const [rows] = await connection.execute(`
+      SELECT id
+      FROM language
+      WHERE code = ?
+        AND documentation_status IN ('DOCUMENTED', 'REFERENCED')
+      FOR UPDATE
+    `, [code]);
+    if (rows.length === 0) {
+      const error = new Error(`La langue ${code} n’est pas disponible dans le catalogue documentaire.`);
+      error.code = "INVALID_LANGUAGE";
+      throw error;
+    }
+    return rows[0];
+  }
+
   return {
     async getLanguages() {
       const [rows] = await pool.execute(`
@@ -271,6 +287,25 @@ function createRepository(pool) {
         family: row.family,
         is_romance: Boolean(row.is_romance),
         is_active: Boolean(row.is_active),
+      }));
+    },
+
+    async getDocumentableLanguages() {
+      const [rows] = await pool.execute(`
+        SELECT code, name, family, is_romance, is_active, documentation_status
+        FROM language
+        WHERE documentation_status IN ('DOCUMENTED', 'REFERENCED')
+        ORDER BY FIELD(code, 'fr', 'es', 'it', 'pt', 'ca', 'gl', 'oc', 'ro', 'co', 'sc', 'rm', 'en'), code
+      `);
+      return rows.map((row) => ({
+        code: row.code,
+        name: row.name,
+        family: row.family,
+        is_romance: Boolean(row.is_romance),
+        public_classification: languageClassification({
+          is_romance: Boolean(row.is_romance),
+          documentation_status: row.documentation_status,
+        }),
       }));
     },
 
@@ -669,6 +704,10 @@ function createRepository(pool) {
           throw error;
         }
 
+        for (const languageCode of new Set(entry.forms.map((form) => form.language))) {
+          await resolveDocumentableLanguage(connection, languageCode);
+        }
+
         await connection.query("CALL sp_upsert_lexical_entry(?, ?, ?, ?, ?)", [
           entry.entry_key,
           entry.gloss_fr,
@@ -742,21 +781,13 @@ function createRepository(pool) {
         `, [entry.gloss_fr, entry.gloss_en, entry.semantic_domain, entry.notes, entryId]);
 
         for (const form of existingFormUpdates) {
-          const [languageRows] = await connection.execute(
-            "SELECT id FROM language WHERE code = ? AND is_active = 1 AND documentation_status = 'DOCUMENTED'",
-            [form.language]
-          );
-          if (languageRows.length === 0) {
-            const error = new Error(`La langue ${form.language} n’est pas active.`);
-            error.code = "INVALID_LANGUAGE";
-            throw error;
-          }
+          const language = await resolveDocumentableLanguage(connection, form.language);
           await connection.execute(`
             UPDATE lexical_form
             SET language_id = ?, lemma = ?, normalized_lemma = ?, part_of_speech = ?, notes = ?
             WHERE id = ? AND entry_id = ?
           `, [
-            languageRows[0].id,
+            language.id,
             form.lemma,
             form.normalized_lemma,
             form.part_of_speech,
@@ -767,15 +798,7 @@ function createRepository(pool) {
         }
 
         for (const form of newForms) {
-          const [languageRows] = await connection.execute(
-            "SELECT id FROM language WHERE code = ? AND is_active = 1 AND documentation_status = 'DOCUMENTED'",
-            [form.language]
-          );
-          if (languageRows.length === 0) {
-            const error = new Error(`La langue ${form.language} n’est pas active.`);
-            error.code = "INVALID_LANGUAGE";
-            throw error;
-          }
+          const language = await resolveDocumentableLanguage(connection, form.language);
           await connection.execute(`
             INSERT INTO lexical_form (
               entry_id, language_id, lemma, normalized_lemma,
@@ -784,7 +807,7 @@ function createRepository(pool) {
             VALUES (?, ?, ?, ?, ?, ?, ?)
           `, [
             entryId,
-            languageRows[0].id,
+            language.id,
             form.lemma,
             form.normalized_lemma,
             form.part_of_speech,

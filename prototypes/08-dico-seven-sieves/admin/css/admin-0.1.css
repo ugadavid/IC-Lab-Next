@@ -508,9 +508,9 @@ select:focus {
 
 .forms-table select,
 .forms-table input { width: 100%; }
-.forms-table th:first-child { width: 18%; }
-.forms-table th:nth-child(2) { width: 48%; }
-.forms-table th:nth-child(3) { width: 26%; }
+.forms-table th:first-child { width: 32%; }
+.forms-table th:nth-child(2) { width: 40%; }
+.forms-table th:nth-child(3) { width: 22%; }
 .forms-table th:last-child { width: 48px; }
 
 .form-row[data-form-state="new"] td {

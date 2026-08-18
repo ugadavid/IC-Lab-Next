@@ -129,6 +129,15 @@ function createApp(repository) {
     }
   });
 
+  app.get("/admin/documentable-languages", async (_req, res, next) => {
+    try {
+      const languages = await repository.getDocumentableLanguages();
+      res.json({ contract_version: CONTRACT_VERSION, languages });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/connector-helps", async (req, res, next) => {
     try {
       const language = typeof req.query.language === "string" ? req.query.language.toLowerCase() : "";
@@ -415,7 +424,7 @@ function createApp(repository) {
     }
     try {
       const entryKey = String(req.params.entryKey || "").toUpperCase();
-      const languages = await repository.getLanguages();
+      const languages = await repository.getDocumentableLanguages();
       const validation = validateAdminLexicalEntryUpdate(req.body, entryKey, languages);
       if (!validation.ok) {
         return errorResponse(
@@ -584,7 +593,7 @@ function createApp(repository) {
     }
 
     try {
-      const languages = await repository.getLanguages();
+      const languages = await repository.getDocumentableLanguages();
       const validation = validateAdminLexicalEntry(req.body, languages);
       if (!validation.ok) {
         return errorResponse(
@@ -605,6 +614,9 @@ function createApp(repository) {
     } catch (error) {
       if (error.code === "DUPLICATE_ENTRY") {
         return errorResponse(res, 409, "DUPLICATE_ENTRY", error.message, "entry_key");
+      }
+      if (error.code === "INVALID_LANGUAGE") {
+        return errorResponse(res, 400, error.code, error.message, "forms");
       }
       return next(error);
     }

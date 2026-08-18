@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.4">
-  <title>Dico-IC Admin V0.1.4</title>
+  <meta name="app-version" content="0.1.5">
+  <title>Dico-IC Admin V0.1.5</title>
   <link rel="stylesheet" href="./css/admin-0.1.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
       <p>Consultation et enrichissement local de la base de connaissances</p>
     </div>
     <div class="header-actions">
-      <span class="environment-label">V0.1.4 locale</span>
+      <span class="environment-label">V0.1.5 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Connexion à l’API…</span>
     </div>
   </header>
@@ -91,7 +91,7 @@
       <div id="languageCatalogSummary" class="language-summary" aria-live="polite"></div>
       <details class="context-help">
         <summary>? Comprendre le catalogue des langues</summary>
-        <div><strong>Le catalogue</strong> distingue les langues déjà documentées, la langue non romane utilisée pour la comparaison et les langues prêtes à accueillir de futurs contenus validés. Une langue prête à documenter ne comporte pas encore de contenu validé et n’est donc pas proposée à l’analyse.</div>
+        <div><strong>Le catalogue</strong> distingue les langues déjà documentées, la langue non romane utilisée pour la comparaison et les langues prêtes à accueillir de futurs contenus validés. Une langue prête à documenter peut déjà recevoir des formes linguistiques dans l’atelier manuel. Elle ne devient analysable qu’après constitution, vérification et activation de son contenu.</div>
       </details>
       <div class="table-wrap">
         <table>
@@ -172,7 +172,7 @@
         <div class="forms-heading">
           <div>
             <h3>Formes linguistiques</h3>
-            <p>La forme normalisée sera calculée par l’API.</p>
+            <p>Les 12 langues du catalogue sont disponibles ; une langue prête à documenter reste inactive pour l’analyse.</p>
           </div>
           <button id="addFormButton" class="icon-text-button" type="button" title="Ajouter une forme">+ Ajouter une forme</button>
         </div>

@@ -90,14 +90,20 @@ test("language repository separates the operational list from the documentary ca
   const pool = {
     async execute(sql) {
       queries.push(sql);
-      return [queries.length === 1 ? operationalRows : catalogRows];
+      if (queries.length === 1) return [operationalRows];
+      return [catalogRows];
     },
   };
   const repository = createRepository(pool);
   const operational = await repository.getLanguages();
+  const documentable = await repository.getDocumentableLanguages();
   const catalog = await repository.getLanguageCatalog();
 
   assert.deepEqual(operational.map((language) => language.code), ["fr", "es", "it", "pt", "en"]);
+  assert.deepEqual(documentable.map((language) => language.code), [
+    "fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en",
+  ]);
+  assert.equal(documentable.some((language) => Object.hasOwn(language, "documentation_status")), false);
   assert.deepEqual(catalog.summary, {
     total: 12,
     romance_documented: 4,
@@ -106,8 +112,10 @@ test("language repository separates the operational list from the documentary ca
   });
   assert.match(queries[0], /is_active = 1[\s\S]*documentation_status = 'DOCUMENTED'/);
   assert.match(queries[0], /FIELD\(code, 'fr', 'es', 'it', 'pt', 'en'\)/);
-  assert.match(queries[1], /FROM language l/);
-  assert.match(queries[1], /'ca', 'gl', 'oc', 'ro', 'co', 'sc', 'rm', 'en'/);
+  assert.match(queries[1], /documentation_status IN \('DOCUMENTED', 'REFERENCED'\)/);
+  assert.doesNotMatch(queries[1], /is_active = 1/);
+  assert.match(queries[2], /FROM language l/);
+  assert.match(queries[2], /'ca', 'gl', 'oc', 'ro', 'co', 'sc', 'rm', 'en'/);
   assert.deepEqual(catalog.languages.map((language) => language.code), [
     "fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en",
   ]);
@@ -167,12 +175,20 @@ test("language routes preserve the operational response and expose a distinct ca
   const summary = { total: 12, romance_documented: 4, non_romance_comparison: 1, romance_referenced: 7 };
   await withServer({
     async getLanguages() { return languages; },
+    async getDocumentableLanguages() { return catalogLanguages; },
     async getLanguageCatalog() { return { languages: catalogLanguages, summary }; },
   }, async (baseUrl) => {
     const operationalResponse = await fetch(`${baseUrl}/languages`);
     const operational = await operationalResponse.json();
     assert.equal(operational.contract_version, "0.1");
     assert.deepEqual(operational.languages.map((language) => language.code), ["fr", "es", "it", "pt", "en"]);
+
+    const documentableResponse = await fetch(`${baseUrl}/admin/documentable-languages`);
+    const documentable = await documentableResponse.json();
+    assert.equal(documentableResponse.status, 200);
+    assert.deepEqual(documentable.languages.map((language) => language.code), [
+      "fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en",
+    ]);
 
     const catalogResponse = await fetch(`${baseUrl}/language-catalog`);
     const catalog = await catalogResponse.json();

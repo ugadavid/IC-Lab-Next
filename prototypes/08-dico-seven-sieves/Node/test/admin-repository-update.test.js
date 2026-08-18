@@ -10,7 +10,7 @@ function normalizedSql(sql) {
 function createUpdateHarness({ existingIds = [539, 540, 541, 542], failInsert = false } = {}) {
   const calls = [];
   const state = { committed: false, rolledBack: false, released: false };
-  const languageIds = { es: 2, fr: 1, it: 3, pt: 4, en: 5 };
+  const languageIds = { es: 2, fr: 1, it: 3, pt: 4, en: 5, ca: 6 };
   const connection = {
     async beginTransaction() { calls.push({ type: "begin" }); },
     async commit() { state.committed = true; calls.push({ type: "commit" }); },
@@ -141,4 +141,34 @@ test("repository keeps the historical update-only behavior", async () => {
     false
   );
   assert.equal(harness.state.committed, true);
+});
+
+test("repository resolves referenced languages without requiring activation", async () => {
+  const harness = createUpdateHarness();
+  const entry = usefulEntry();
+  entry.forms.at(-1).language = "ca";
+  entry.forms.at(-1).lemma = "útil";
+  entry.forms.at(-1).normalized_lemma = "util";
+  await harness.repository.updateAdminLexicalEntry("UTIL_ADJECTIVE_USEFUL", entry);
+
+  const languageLookup = harness.calls.find((call) => (
+    call.statement?.startsWith("SELECT id FROM language") && call.parameters[0] === "ca"
+  ));
+  const insert = harness.calls.find((call) => call.statement?.startsWith("INSERT INTO lexical_form"));
+  assert.match(languageLookup.statement, /documentation_status IN \('DOCUMENTED', 'REFERENCED'\)/);
+  assert.doesNotMatch(languageLookup.statement, /is_active/);
+  assert.equal(insert.parameters[1], 6);
+  assert.equal(harness.state.committed, true);
+});
+
+test("repository rejects a language absent from the documentary catalog", async () => {
+  const harness = createUpdateHarness();
+  const entry = usefulEntry();
+  entry.forms.at(-1).language = "xx";
+  await assert.rejects(
+    harness.repository.updateAdminLexicalEntry("UTIL_ADJECTIVE_USEFUL", entry),
+    (error) => error.code === "INVALID_LANGUAGE"
+  );
+  assert.equal(harness.state.committed, false);
+  assert.equal(harness.state.rolledBack, true);
 });

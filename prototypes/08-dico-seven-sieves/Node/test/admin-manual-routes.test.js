@@ -3,7 +3,8 @@ const assert = require("node:assert/strict");
 
 const { createApp } = require("../server");
 
-const languages = ["fr", "es", "it", "pt", "en"].map((code) => ({ code }));
+const languages = ["fr", "es", "it", "pt", "ca", "gl", "oc", "ro", "co", "sc", "rm", "en"]
+  .map((code) => ({ code }));
 
 async function withServer(repository, callback) {
   const server = createApp(repository).listen(0, "127.0.0.1");
@@ -51,7 +52,7 @@ test("lexical entries endpoint keeps search with pagination", async () => {
 test("lexical entry endpoint updates a validated existing entry", async () => {
   let updated;
   const repository = {
-    async getLanguages() { return languages; },
+    async getDocumentableLanguages() { return languages; },
     async updateAdminLexicalEntry(entryKey, entry) {
       updated = { entryKey, entry };
       return { ...entry, entry_key: entryKey };
@@ -78,7 +79,7 @@ test("lexical entry endpoint updates a validated existing entry", async () => {
 test("lexical entry endpoint accepts a new form without id", async () => {
   let updated;
   const repository = {
-    async getLanguages() { return languages; },
+    async getDocumentableLanguages() { return languages; },
     async updateAdminLexicalEntry(entryKey, entry) {
       updated = entry;
       return { ...entry, entry_key: entryKey };
@@ -103,10 +104,35 @@ test("lexical entry endpoint accepts a new form without id", async () => {
   assert.equal(updated.forms[1].normalized_lemma, "useful");
 });
 
+test("lexical entry update accepts a referenced Catalan form", async () => {
+  let updated;
+  await withServer({
+    async getDocumentableLanguages() { return languages; },
+    async updateAdminLexicalEntry(entryKey, entry) {
+      updated = { entryKey, entry };
+      return { ...entry, entry_key: entryKey };
+    },
+  }, async (baseUrl) => {
+    const response = await fetch(`${baseUrl}/admin/lexical-entry/SCHOOL_PLACE`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        gloss_fr: "école",
+        forms: [
+          { id: 42, language: "fr", lemma: "école", part_of_speech: "noun" },
+          { language: "ca", lemma: "escola", part_of_speech: "noun" },
+        ],
+      }),
+    });
+    assert.equal(response.status, 200);
+  });
+  assert.equal(updated.entry.forms[1].language, "ca");
+});
+
 test("lexical entry endpoint refuses an invalid update", async () => {
   let called = false;
   await withServer({
-    async getLanguages() { return languages; },
+    async getDocumentableLanguages() { return languages; },
     async updateAdminLexicalEntry() { called = true; },
   }, async (baseUrl) => {
     const response = await fetch(`${baseUrl}/admin/lexical-entry/SCHOOL_PLACE`, {
