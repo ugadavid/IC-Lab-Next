@@ -1,0 +1,74 @@
+{
+  "mission": 206,
+  "fixture": "ic_dico_m206_fixture_0a7b472",
+  "created_from": "ic_dico",
+  "stages": {
+    "initial": {
+      "entry_hash": "fc3081d330f116a8438bc1b077d0b047b0d2c09bf845e81d654203543a6d1c75",
+      "counts": {
+        "language": 12,
+        "lexical_entry": 326,
+        "lexical_form": 1125,
+        "inflected_form": 41,
+        "connector_help": 12,
+        "form_relation": 70,
+        "pattern_rule": 1,
+        "ic_feature": 8
+      }
+    },
+    "check": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"check\",\n  \"scanned_keys\": 97,\n  \"state\": \"initial\",\n  \"text_state\": \"final\",\n  \"counts\": {\n    \"lexical_entry\": 326,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8,\n    \"language\": 12\n  },\n  \"mutation_rows_present\": 97,\n  \"plan_fingerprint\": \"cf1a6ebfe9654277f9b84d304f4e5c2d6250ae602daceb80d1ca9c272ceb90c0\"\n}",
+      "stderr": ""
+    },
+    "apply": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"apply\",\n  \"state\": \"applied\",\n  \"changed_rows\": 97,\n  \"deleted_rows\": 56,\n  \"renamed_rows\": 41,\n  \"counts\": {\n    \"lexical_entry\": 270,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8,\n    \"language\": 12\n  }\n}",
+      "stderr": ""
+    },
+    "after_apply": {
+      "entry_hash": "d14f5e21eda3f4eaf0fb76c1eac758269cb73e8d5a2802ead6d721baedabcd78",
+      "counts": {
+        "language": 12,
+        "lexical_entry": 270,
+        "lexical_form": 1125,
+        "inflected_form": 41,
+        "connector_help": 12,
+        "form_relation": 70,
+        "pattern_rule": 1,
+        "ic_feature": 8
+      }
+    },
+    "second_apply": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"apply\",\n  \"state\": \"already_applied\",\n  \"changed_rows\": 0,\n  \"counts\": {\n    \"lexical_entry\": 270,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8,\n    \"language\": 12\n  }\n}",
+      "stderr": ""
+    },
+    "rollback": {
+      "status": 0,
+      "stdout": "{\n  \"mode\": \"rollback\",\n  \"state\": \"restored\",\n  \"changed_rows\": 97,\n  \"counts\": {\n    \"lexical_entry\": 326,\n    \"lexical_form\": 1125,\n    \"inflected_form\": 41,\n    \"connector_help\": 12,\n    \"form_relation\": 70,\n    \"pattern_rule\": 1,\n    \"ic_feature\": 8,\n    \"language\": 12\n  },\n  \"text_files_restored\": false,\n  \"text_files_skipped_fixture\": true\n}",
+      "stderr": ""
+    },
+    "after_rollback": {
+      "entry_hash": "fc3081d330f116a8438bc1b077d0b047b0d2c09bf845e81d654203543a6d1c75",
+      "counts": {
+        "language": 12,
+        "lexical_entry": 326,
+        "lexical_form": 1125,
+        "inflected_form": 41,
+        "connector_help": 12,
+        "form_relation": 70,
+        "pattern_rule": 1,
+        "ic_feature": 8
+      }
+    },
+    "partial_apply_refusal": {
+      "status": 1,
+      "stdout": "",
+      "stderr": "État MariaDB partiel ou inconnu : aucune écriture autorisée."
+    },
+    "partial_state_unchanged": true
+  },
+  "status": "passed",
+  "fixture_dropped": true
+}

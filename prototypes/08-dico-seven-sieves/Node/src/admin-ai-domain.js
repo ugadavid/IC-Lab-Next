@@ -22,7 +22,7 @@ const FRENCH_CONCEPT_KEY_INSTRUCTIONS = [
   "La clé technique finale doit être canonicalisée en ASCII, en majuscules et avec des underscores. N’utilise pas l’anglais comme langue implicite de la clé : l’anglais reste une forme linguistique de comparaison. Ne déduis pas la clé d’une forme espagnole, italienne, portugaise ou d’une forme fléchie.",
   "Si le terme est polysémique ou si un concept proche existe, ajoute si nécessaire un qualificatif sémantique français bref. N’ajoute pas systématiquement une catégorie grammaticale au nom. Toute clé incertaine doit rester un brouillon à vérifier humainement.",
   "Exemples : souffrir → SOUFFRIR ; préoccupant → PREOCCUPANT ; augmenter → AUGMENTER ; banque au sens financier → BANQUE_FINANCE ; banque comme collection de données → BANQUE_DONNEES ; voler dans les airs → VOLER_DEPLACEMENT_AERIEN ; voler quelque chose → VOLER_DEROBER.",
-  "Contre-exemples : ne produis pas SUFFER pour souffrir, WORRISOME pour préoccupant, SOFFRIR à partir de l’italien ou du portugais, ni systématiquement PREOCCUPANT_ADJECTIVE.",
+  "Contre-exemples : pour souffrir, ne choisis pas l’anglais et ne copie pas une graphie italienne ou portugaise ; pour préoccupant, ne choisis pas l’anglais et n’ajoute pas systématiquement un suffixe grammatical.",
   "Pour un verbe pronominal français, conserve le pronom dans le nom conceptuel et sépare-le par un underscore : s’élever → S_ELEVER ; s'enfuir → S_ENFUIR ; se souvenir → SE_SOUVENIR ; se lever → SE_LEVER. Ne supprime pas simplement l’apostrophe ou l’espace. Ne produis pas SELEVER pour s’élever, SENFUIR pour s’enfuir, ni SESOUVENIR pour se souvenir. N’insère aucun underscore pronominal dans un verbe non pronominal : semer → SEMER ; servir → SERVIR ; serrer → SERRER.",
 ];
 

@@ -63,10 +63,10 @@ test("l’instruction contient les exemples et contre-exemples essentiels sans a
     "banque comme collection de données → BANQUE_DONNEES",
     "voler dans les airs → VOLER_DEPLACEMENT_AERIEN",
     "voler quelque chose → VOLER_DEROBER",
-    "SUFFER pour souffrir",
-    "WORRISOME pour préoccupant",
-    "SOFFRIR à partir de l’italien ou du portugais",
-    "PREOCCUPANT_ADJECTIVE",
+    "pour souffrir, ne choisis pas l’anglais",
+    "ne copie pas une graphie italienne ou portugaise",
+    "pour préoccupant, ne choisis pas l’anglais",
+    "n’ajoute pas systématiquement un suffixe grammatical",
   ]) {
     assert.ok(prompt.includes(expected), expected);
   }
