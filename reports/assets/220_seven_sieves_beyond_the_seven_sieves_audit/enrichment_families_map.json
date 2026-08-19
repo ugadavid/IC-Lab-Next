@@ -1,0 +1,87 @@
+{
+  "artifact": "enrichment_families_map",
+  "mission": 220,
+  "status": "OBSERVED_CURRENT_STATE_WITH_EXPLICIT_PROPOSALS",
+  "flow": {
+    "sources": [
+      "lexical_form",
+      "form_relation",
+      "pattern_rule",
+      "inflected_form",
+      "connector_help",
+      "ic_feature",
+      "in_memory_heuristics"
+    ],
+    "processor": "POST /analysis",
+    "outputs": [
+      "tokens[].enrichments with sieve_id",
+      "pedagogical_enrichments without sieve_id",
+      "no current complementary-enrichment channel"
+    ]
+  },
+  "families": [
+    {
+      "family": "SEVEN_SIEVES",
+      "current_state": "ACTIVE",
+      "transport": "tokens[].enrichments",
+      "has_sieve_id": true,
+      "sources_actually_emitted": ["form_relation", "lexical_form", "pattern_rule", "inflected_form", "heuristic"],
+      "boundary": "Historical pedagogical core; exactly seven numbered filters."
+    },
+    {
+      "family": "READING_AIDS",
+      "current_state": "ACTIVE_HIDDEN_BY_DEFAULT",
+      "transport": "pedagogical_enrichments",
+      "has_sieve_id": false,
+      "sources_actually_emitted": ["connector_help"],
+      "boundary": "Cross-token discourse aids, independent from the active sieve."
+    },
+    {
+      "family": "LEXICAL_RELATIONS",
+      "current_state": "PARTIALLY_ACTIVE",
+      "transport": "form_relation is loaded; only relation_type beginning with COGNATE can produce sieve 1 output",
+      "has_sieve_id": "Only after transformation into a sieve enrichment",
+      "sources_actually_emitted": ["COGNATE_STRONG", "COGNATE_WEAK"],
+      "sources_present_but_not_emitted": ["FALSE_FRIEND"],
+      "boundary": "A relation is data, not automatically a learner-facing alert."
+    },
+    {
+      "family": "IC_FEATURE",
+      "current_state": "STORED_NOT_CONSUMED",
+      "transport": null,
+      "has_sieve_id": false,
+      "sources_present_but_not_emitted": ["GRAPHIC_SIMILARITY", "TRANSPARENCY_SCORE", "FALSE_FRIEND_RISK"],
+      "boundary": "Experimental form-level traits without controlled semantics or validation status."
+    },
+    {
+      "family": "HISTORICAL_LOCAL_HINTS",
+      "current_state": "ISOLATED_EXPERIMENTAL_VARIANT_ONLY",
+      "transport": "Merged at rendering time in index-api-live-pedagogical-hints-0.1.html",
+      "has_sieve_id": true,
+      "sources_present_but_not_emitted": ["Four Spanish local sieve-4 rules"],
+      "boundary": "Explicitly labelled heuristic/local; absent from the official teacher/student path."
+    },
+    {
+      "family": "BEYOND_THE_SEVEN_SIEVES",
+      "current_state": "PROPOSAL_ONLY",
+      "transport": null,
+      "has_sieve_id": false,
+      "sources_present_but_not_emitted": [],
+      "boundary": "Would need a distinct, optional, provenance-aware model and must not duplicate reading aids."
+    }
+  ],
+  "current_contract_capabilities": {
+    "plain_text": "AVAILABLE_EXACT_COPY",
+    "case": "AVAILABLE_IN_TOKEN_SURFACE",
+    "punctuation": "AVAILABLE_AS_TOKENS",
+    "whitespace_and_line_breaks": "PRESERVED_IN_TEXT_AND_OFFSETS_BUT_NOT_ALWAYS_TOKENS",
+    "semantic_context": "TEXT_AVAILABLE_BUT_NO_GENERAL_CONTEXT_MODEL",
+    "rich_typography": "NOT_TRANSPORTED",
+    "images": "NOT_TRANSPORTED",
+    "audio": "NOT_TRANSPORTED",
+    "video": "NOT_TRANSPORTED",
+    "gestures": "NOT_TRANSPORTED",
+    "prosody": "NOT_TRANSPORTED",
+    "cultural_context": "NO_STRUCTURED_FIELD_OR_MODEL"
+  }
+}

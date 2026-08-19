@@ -1,0 +1,80 @@
+{
+  "artifact": "mission_221_candidate_plan",
+  "based_on_mission": 220,
+  "recommendation": "DO_NOT_IMPLEMENT_BEFORE_DEFENSE",
+  "reason": "The only complementary data not already presented are either unconsumed and semantically underspecified (ic_feature), context-sensitive and not emitted (FALSE_FRIEND), or absent from the plain-text contract (visual and multimodal evidence). A new panel would add surface area without a sufficiently trustworthy payload.",
+  "recommended_mission_221_before_defense": {
+    "nature": "DOCUMENTATION_AND_ORAL_REHEARSAL_ONLY",
+    "scope": [
+      "Prepare one 20-second oral formulation describing the extension as a research perspective.",
+      "Prepare one static architecture slide only if already useful to the defense deck.",
+      "Do not modify Seven Sieves, Dico-IC, MariaDB, contracts or versions."
+    ],
+    "acceptance_criteria": [
+      "The seven sieves remain exactly seven.",
+      "The existing reading-aid demonstration remains under 30 seconds.",
+      "No non-functional control appears in the learner interface.",
+      "The wording separates observed field needs from implemented capabilities."
+    ]
+  },
+  "post_defense_candidate": {
+    "objective": "Design and validate a provenance-aware complementary-enrichment contract before any interface work.",
+    "phase_0_human_decisions": [
+      "Christian: validate whether false-friend alerts are transversal complements and define contextual caution.",
+      "Sylvain: validate learner load, vocabulary and voluntary disclosure behavior.",
+      "Relevant field specialists: validate image, gesture, oral and cultural categories and ethical constraints.",
+      "David: choose one family only for the first experiment."
+    ],
+    "preferred_first_family": "FALSE_FRIEND_ALERTS_AFTER_HUMAN_REVIEW",
+    "why_this_family": "Eight explicit relations already exist and are more informative than ic_feature risk flags, but they still require context and an API representation.",
+    "exact_minimal_scope_if_authorized": {
+      "data": "Use a human-approved subset of existing FALSE_FRIEND relations only; create no new relation automatically.",
+      "backend": "Add a distinct, typed complementary enrichment emitted by POST /analysis; do not assign sieve_id and do not overload pedagogical_enrichments without an explicit contract decision.",
+      "session": "Transport the new optional array without changing existing sieve results or reading aids.",
+      "student_surface": "One collapsed section, hidden by default, visually separate from both the seven sieves and Aides à la lecture.",
+      "teacher_surface": "Optional count and explicit enablement for the activity; no hidden activation.",
+      "admin_surface": "No new authoring workflow in the first demonstrator; use only approved existing relations."
+    },
+    "proposed_public_vocabulary": {
+      "space_title": "Au-delà des sept tamis",
+      "intro": "D’autres repères documentés peuvent compléter l’exploration, sans appartenir aux sept tamis.",
+      "button": "Voir les repères complémentaires",
+      "reading_aids_distinction": "Les Aides à la lecture expliquent les connecteurs du texte ; les repères complémentaires signaleraient d’autres phénomènes validés.",
+      "sieves_distinction": "Ces repères ne sont ni un tamis supplémentaire ni une étape obligatoire."
+    },
+    "tests_required": [
+      "No eighth sieve and unchanged sieve catalogue 1..7.",
+      "Existing token enrichments and pedagogical_enrichments remain byte-compatible for old clients.",
+      "FALSE_FRIEND is never converted to a learner alert without exact source-language occurrence, mediation-language counterpart and approved relation.",
+      "No alert from ic_feature alone.",
+      "Contextual caution, provenance and confidence are present.",
+      "Panel hidden by default and absent when no valid complement exists.",
+      "Reading-aid toggle and complementary toggle are independent.",
+      "Teacher/student session transfer preserves the new optional payload.",
+      "Escaping and offset validation reject malformed payloads.",
+      "Regression suite for analysis lifecycle and role separation."
+    ],
+    "human_recipe": [
+      "Prepare one sentence containing an approved false-friend occurrence and one negative/contextual control.",
+      "Run the teacher analysis and open the learner activity.",
+      "Confirm seven sieves and Aides à la lecture behave unchanged.",
+      "Open the complementary section deliberately.",
+      "Verify the pair, explanation, caution and provenance with Christian or a designated reviewer.",
+      "Confirm the negative control shows no alert."
+    ],
+    "versions_if_implemented": [
+      "analysis contract or additive capability marker",
+      "teacher page",
+      "student page",
+      "session format only if backward-compatible optional transport is insufficient"
+    ],
+    "abort_criteria": [
+      "No recorded human approval of the selected relations and wording.",
+      "Need to infer alerts from ic_feature or spelling alone.",
+      "False-positive control cannot be expressed or tested.",
+      "UI cannot distinguish the panel from Aides à la lecture and the seven sieves.",
+      "Demo exceeds 30 seconds or distracts from the stabilized core.",
+      "Implementation requires multimodal input or a new data model before the research question is narrowed."
+    ]
+  }
+}
