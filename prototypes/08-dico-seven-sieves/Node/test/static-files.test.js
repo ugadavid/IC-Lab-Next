@@ -74,12 +74,32 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     const prototype = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/index-api-live-0.1.html`);
     assert.equal(prototype.status, 200);
     const html = await prototype.text();
-    assert.match(html, /Seven Sieves Explorer/);
-    assert.match(html, /\.\/js\/seven-sieves-api-live-v0\.js/);
+    assert.match(html, /Entrée de compatibilité/);
+    assert.match(html, /index-teacher-0\.1\.html/);
 
-    const script = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-api-live-v0.js`);
-    assert.equal(script.status, 200);
-    assert.match(await script.text(), /http:\/\/localhost:3000\/analysis/);
+    const teacher = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/index-teacher-0.1.html`);
+    assert.equal(teacher.status, 200);
+    const teacherHtml = await teacher.text();
+    assert.match(teacherHtml, /Interface enseignant/);
+    assert.match(teacherHtml, /app-version" content="0\.1\.1"/);
+    assert.match(teacherHtml, /Sin embargo, la información circula durante la noche\./);
+    assert.match(teacherHtml, /Ouvrir l’activité en vue apprenant/);
+
+    const student = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/index-student-0.1.html`);
+    assert.equal(student.status, 200);
+    const studentHtml = await student.text();
+    assert.match(studentHtml, /Activité apprenante/);
+    assert.match(studentHtml, /app-version" content="0\.1\.1"/);
+    assert.match(studentHtml, /Aucune activité n’a encore été préparée/);
+    assert.equal((studentHtml.match(/class="sieve-btn"/g) || []).length, 7);
+
+    const teacherScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-teacher-v0.js`);
+    assert.equal(teacherScript.status, 200);
+    assert.match(await teacherScript.text(), /const ANALYSIS_API_URL = "\/analysis"/);
+
+    const sessionScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-session-v0.js`);
+    assert.equal(sessionScript.status, 200);
+    assert.match(await sessionScript.text(), /seven-sieves\.activity\.v/);
 
     const mock = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/mock/analysis-response-v0.json`);
     assert.equal(mock.status, 200);

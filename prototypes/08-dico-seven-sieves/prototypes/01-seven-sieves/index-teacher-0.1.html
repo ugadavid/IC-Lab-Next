@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="app-version" content="0.1.1">
+  <title>Préparer une exploration Seven Sieves — Enseignant V0.1.1</title>
+  <link rel="stylesheet" href="./css/seven-sieves-roles-0.1.css">
+</head>
+<body data-seven-sieves-role="teacher">
+  <header class="topbar">
+    <div>
+      <p class="brand-kicker">🌈 Seven Sieves · Interface enseignant</p>
+      <h1>Préparer une exploration Seven Sieves</h1>
+      <p>Choisir un court texte et les langues avant de transmettre l’activité à l’apprenant.</p>
+    </div>
+    <div class="topbar-actions">
+      <span class="version-chip">Enseignant V0.1.1</span>
+      <span id="apiStatus" class="api-status" data-state="idle">Prête pour une analyse</span>
+    </div>
+  </header>
+
+  <main class="teacher-page">
+    <p class="teacher-intro">Dico-IC analyse le texte avec les sept tamis. Cette page prépare le paquet ; l’exploration se déroule ensuite dans une vue apprenant distincte.</p>
+    <div class="teacher-grid">
+      <section class="card" aria-labelledby="preparationTitle">
+        <h2 id="preparationTitle">Paramètres de l’activité</h2>
+        <div class="field">
+          <label for="sourceTextInput">Texte à explorer</label>
+          <textarea id="sourceTextInput" class="analysis-textarea">Sin embargo, la información circula durante la noche.</textarea>
+        </div>
+
+        <div class="language-controls">
+          <div class="field">
+            <label for="sourceLanguage">Langue source</label>
+            <select id="sourceLanguage" class="language-select">
+              <option value="es" selected>Espagnol</option>
+              <option value="fr">Français</option>
+              <option value="it">Italien</option>
+              <option value="pt">Portugais</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="mediationLanguage">Langue de médiation</label>
+            <select id="mediationLanguage" class="language-select">
+              <option value="es">Espagnol</option>
+              <option value="fr" selected>Français</option>
+              <option value="it">Italien</option>
+              <option value="pt">Portugais</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <span class="field-label">Langues de comparaison</span>
+          <div class="comparison-options">
+            <label><input type="checkbox" name="comparisonLanguage" value="es"> Espagnol</label>
+            <label><input type="checkbox" name="comparisonLanguage" value="fr"> Français</label>
+            <label><input type="checkbox" name="comparisonLanguage" value="it" checked> Italien</label>
+            <label><input type="checkbox" name="comparisonLanguage" value="pt" checked> Portugais</label>
+          </div>
+        </div>
+
+        <div class="teacher-actions">
+          <button id="analyzeButton" class="button" type="button">Lancer l’analyse Dico-IC</button>
+          <button id="openStudentButton" class="button secondary" type="button" disabled>Ouvrir l’activité en vue apprenant</button>
+        </div>
+        <p id="teacherFeedback" class="feedback" aria-live="polite">Les choix sont modifiables jusqu’au lancement de l’analyse.</p>
+      </section>
+
+      <aside class="card" aria-labelledby="summaryTitle">
+        <h2 id="summaryTitle">Résumé de préparation</h2>
+        <p class="teacher-note">Le bouton apprenant devient disponible uniquement après validation et stockage du paquet complet.</p>
+        <div id="resultSummary" class="summary-grid" hidden>
+          <div class="metric"><span>Tokens</span><strong id="summaryTokens">0</strong></div>
+          <div class="metric"><span>Enrichissements</span><strong id="summaryEnrichments">0</strong></div>
+          <div class="metric"><span>Tamis mobilisés</span><strong id="summarySieves">—</strong></div>
+          <div class="metric"><span>Avertissements</span><strong id="summaryWarnings">0</strong></div>
+        </div>
+        <div id="warningList" class="warnings-box" hidden></div>
+        <p class="teacher-note">Le transfert utilise uniquement le stockage de session de cet onglet. Rien n’est enregistré dans Dico-IC ou MariaDB.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script src="./js/seven-sieves-session-v0.js"></script>
+  <script src="./js/seven-sieves-teacher-v0.js"></script>
+</body>
+</html>

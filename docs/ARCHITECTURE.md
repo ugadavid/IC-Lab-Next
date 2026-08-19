@@ -52,7 +52,7 @@ IC-Lab-Next/
 | **05 — Vidéo augmentée** | Lecture et observation d’une vidéo IC, vues étudiant/enseignant et ateliers d’auteur | Serveur Node autonome, port `8791` | MariaDB `ic_augmented_video`; médias physiques dans les espaces locaux du prototype |
 | **06 — Agent vocal IC** | Bibliothèque, composition et exécution locale d’activités orales plurilingues | Serveur Node autonome, port `8788` | `server/data/activities.json`; fixtures de manifestes dans `data/proto06-manifests/` |
 | **07 — Informaticaire** | Mémoire, documentation et retrouvabilité des ressources IC | Application statique servie par IC-Hub | Corpus de démonstration suivi dans `data.js`; exports produits côté navigateur |
-| **08 — Dico-IC / Seven Sieves** | Service de connaissances plurilingues, administration et client de lecture guidée | Serveur Node/Express, port `3000`, connecté à MariaDB `3306` | Base `ic_dico` dans le volume Docker externe; état d’interface Seven Sieves local au navigateur |
+| **08 — Dico-IC / Seven Sieves** | Service de connaissances plurilingues, administration et parcours séparés de préparation enseignant et d’exploration apprenant | Serveur Node/Express, port `3000`, connecté à MariaDB `3306` | Base `ic_dico` dans le volume Docker externe; paquet d’activité et état d’exploration Seven Sieves limités à la session navigateur |
 
 ### IC-Hub et launcher : deux responsabilités distinctes
 
@@ -141,7 +141,7 @@ d’arrêt. Le détail opérationnel reste dans
 | Agent vocal | Lien direct vers le service autonome `8788` |
 | Informaticaire | Le Hub sert directement les fichiers du prototype sous `/demos/informaticaire/` |
 | Dico-IC | Lien direct vers l’administration servie sur `3000` |
-| Seven Sieves | Lien direct vers la page live servie sur `3000`, laquelle appelle l’API Dico-IC du même serveur |
+| Seven Sieves | Lien vers la préparation enseignant servie sur `3000` ; après `POST /analysis`, le paquet complet est transmis dans la session du même onglet à la vue apprenant distincte |
 
 Le portail est donc un point d’entrée, pas un reverse proxy général et pas un
 bus de données entre tous les prototypes.

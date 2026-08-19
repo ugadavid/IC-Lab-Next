@@ -197,8 +197,14 @@ du dépôt.
 - **Serveur Node/Express** : `3000`.
 - **Administration Dico-IC** :
   <http://127.0.0.1:3000/admin-app/index-admin-0.1.html>.
-- **Seven Sieves live** :
-  <http://127.0.0.1:3000/prototypes/01-seven-sieves/index-api-live-0.1.html>.
+- **Seven Sieves — préparation enseignant** :
+  <http://127.0.0.1:3000/prototypes/01-seven-sieves/index-teacher-0.1.html>.
+- **Seven Sieves — activité apprenant** :
+  <http://127.0.0.1:3000/prototypes/01-seven-sieves/index-student-0.1.html>
+  (nécessite un paquet préparé dans le même onglet).
+- **Ancienne entrée de compatibilité** :
+  <http://127.0.0.1:3000/prototypes/01-seven-sieves/index-api-live-0.1.html>,
+  redirigée vers la préparation enseignant.
 - **Guide** :
   [démarrage local](prototypes/08-dico-seven-sieves/docs/dico-local-development-startup.md).
 

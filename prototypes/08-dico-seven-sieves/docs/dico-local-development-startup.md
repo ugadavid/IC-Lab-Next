@@ -28,7 +28,17 @@ npm start
 ```text
 http://localhost:3000/admin-app/index-admin-0.1.html
 
-http://localhost:3000/prototypes/01-seven-sieves/index-api-live-0.1.html
+http://localhost:3000/prototypes/01-seven-sieves/index-teacher-0.1.html
+
+La préparation enseignant transmet le paquet complet dans le stockage de
+session du même onglet, puis ouvre l’activité apprenant :
+
+```text
+http://localhost:3000/prototypes/01-seven-sieves/index-student-0.1.html
+```
+
+L’ancienne URL `index-api-live-0.1.html` reste une entrée de compatibilité et
+redirige vers la page enseignant.
 ```
 
 ## Notes

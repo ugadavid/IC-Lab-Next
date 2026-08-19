@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="app-version" content="0.1.1">
+  <title>Explorer avec les sept tamis — Apprenant V0.1.1</title>
+  <link rel="stylesheet" href="./css/seven-sieves-roles-0.1.css">
+</head>
+<body data-seven-sieves-role="student">
+  <header class="topbar">
+    <div>
+      <p class="brand-kicker">🌈 Seven Sieves</p>
+      <h1>Explorer avec les sept tamis</h1>
+      <p id="microGuide">Repère, compare et construis progressivement le sens.</p>
+    </div>
+    <div class="topbar-actions">
+      <span class="learning-badge">🎒 Activité apprenante · V0.1.1</span>
+      <a class="help-button" href="#studentHelp">❓ Aide</a>
+      <a class="teacher-return" href="./index-teacher-0.1.html">← Retour à la préparation</a>
+    </div>
+  </header>
+
+  <div id="activityContext" class="student-context"><strong>Activité préparée</strong></div>
+
+  <section id="emptyState" class="card empty-state" hidden>
+    <h2>Aucune activité n’a encore été préparée.</h2>
+    <p id="emptyReason">Demande à l’enseignant de préparer l’exploration dans cet onglet.</p>
+    <a class="button" href="./index-teacher-0.1.html">Revenir à la page enseignant</a>
+  </section>
+
+  <main id="studentWorkspace" class="student-app" hidden>
+    <aside class="panel" aria-labelledby="sievesTitle">
+      <h2 id="sievesTitle">🧠 Les 7 tamis</h2>
+      <p class="small">Choisis un tamis pour guider ton observation.</p>
+      <div class="sieve-list">
+        <button class="sieve-btn" id="btn-sieve-1" data-sieve="1">1. Lexique international</button>
+        <button class="sieve-btn" id="btn-sieve-2" data-sieve="2">2. Lexique pan-roman</button>
+        <button class="sieve-btn" id="btn-sieve-3" data-sieve="3">3. Correspondances phonétiques</button>
+        <button class="sieve-btn" id="btn-sieve-4" data-sieve="4">4. Graphies / prononciations</button>
+        <button class="sieve-btn" id="btn-sieve-5" data-sieve="5">5. Syntaxe pan-romane</button>
+        <button class="sieve-btn" id="btn-sieve-6" data-sieve="6">6. Morphosyntaxe</button>
+        <button class="sieve-btn" id="btn-sieve-7" data-sieve="7">7. Préfixes / suffixes</button>
+      </div>
+      <div class="active-sieve-card">
+        <span class="tag">Tamis actif</span>
+        <h3 id="sieve-title">1. Lexique international</h3>
+        <p id="sieve-description" class="small"></p>
+        <div id="legendBox" class="legend-mini"></div>
+      </div>
+    </aside>
+
+    <section class="panel panel-main" aria-labelledby="explorationTitle">
+      <h2 id="explorationTitle">🔎 Le texte à explorer</h2>
+      <p class="small">Clique sur un mot pour l’inspecter. Double-clique pour l’ajouter ou le retirer de ta sélection.</p>
+      <div class="toolbar">
+        <button id="showHintsButton" class="activity-action hints-action" type="button">💡 Montrer les indices</button>
+        <button id="compareButton" class="activity-action compare-action" type="button">📊 Comparer la sélection</button>
+        <button id="resetButton" class="activity-action reset-action" type="button">↻ Recommencer</button>
+      </div>
+      <div id="text" class="text-box"></div>
+      <details id="studentHelp" class="help-details">
+        <summary>Comment explorer ?</summary>
+        <p class="small">Ne cherche pas à tout traduire. Repère les ressemblances, compare les formes et utilise les indices du tamis actif.</p>
+      </details>
+    </section>
+
+    <aside class="panel" aria-labelledby="observationTitle">
+      <h2 id="observationTitle">📈 Mon observation</h2>
+      <div class="top-stats-line">
+        <div class="mini-stat"><div class="mini-stat-label">Tamis</div><div id="activeSieveLabel" class="mini-stat-value">1</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Sélection</div><div id="selectedCount" class="mini-stat-value">0</div></div>
+        <div class="mini-stat"><div class="mini-stat-label">Avec indice</div><div id="correctCount" class="mini-stat-value">0</div></div>
+      </div>
+      <p id="globalFeedback" class="feedback" aria-live="polite"></p>
+      <h3>🔎 Inspection du mot</h3>
+      <div id="inspectionBox" class="inspect-box"></div>
+      <h3>✨ Ma sélection</h3>
+      <div id="selectedWords" class="list-box">Aucun mot sélectionné.</div>
+      <h3>💡 Le tamis actif</h3>
+      <div id="currentHints" class="list-box"></div>
+      <h3>🧩 Indices et transformations</h3>
+      <div id="transformationsBox" class="list-box"></div>
+    </aside>
+  </main>
+
+  <script src="./js/seven-sieves-session-v0.js"></script>
+  <script src="./js/seven-sieves-student-v0.js"></script>
+</body>
+</html>
