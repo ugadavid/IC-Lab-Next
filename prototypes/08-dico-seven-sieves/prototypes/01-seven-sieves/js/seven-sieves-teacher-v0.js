@@ -51,6 +51,7 @@ function renderSummary(activity) {
   const summary = sessionContract.summarizeAnalysis(activity.analysis);
   document.getElementById("summaryTokens").textContent = String(summary.tokens);
   document.getElementById("summaryEnrichments").textContent = String(summary.enrichments);
+  document.getElementById("summaryReadingAids").textContent = String(summary.pedagogical_enrichments);
   document.getElementById("summarySieves").textContent = summary.sieve_ids.length
     ? summary.sieve_ids.join(", ")
     : "Aucun";

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.1">
-  <title>Explorer avec les sept tamis — Apprenant V0.1.1</title>
+  <meta name="app-version" content="0.1.3">
+  <title>Explorer avec les sept tamis — Apprenant V0.1.3</title>
   <link rel="stylesheet" href="./css/seven-sieves-roles-0.1.css">
 </head>
 <body data-seven-sieves-role="student">
@@ -15,7 +15,7 @@
       <p id="microGuide">Repère, compare et construis progressivement le sens.</p>
     </div>
     <div class="topbar-actions">
-      <span class="learning-badge">🎒 Activité apprenante · V0.1.1</span>
+      <span class="learning-badge">🎒 Activité apprenante · V0.1.3</span>
       <a class="help-button" href="#studentHelp">❓ Aide</a>
       <a class="teacher-return" href="./index-teacher-0.1.html">← Retour à la préparation</a>
     </div>
@@ -56,9 +56,20 @@
       <div class="toolbar">
         <button id="showHintsButton" class="activity-action hints-action" type="button">💡 Montrer les indices</button>
         <button id="compareButton" class="activity-action compare-action" type="button">📊 Comparer la sélection</button>
+        <button id="toggleReadingAidsButton" class="activity-action reading-aids-action" type="button" aria-pressed="false" hidden>📚 Afficher les aides à la lecture (0)</button>
         <button id="resetButton" class="activity-action reset-action" type="button">↻ Recommencer</button>
       </div>
       <div id="text" class="text-box"></div>
+      <section id="readingAidsSection" class="reading-aids" aria-labelledby="readingAidsTitle" hidden>
+        <div class="reading-aids-heading">
+          <div>
+            <h3 id="readingAidsTitle">📚 Aides à la lecture</h3>
+            <p class="small">Ces repères accompagnent tout le texte, quel que soit le tamis choisi.</p>
+          </div>
+          <span id="readingAidsCount" class="reading-aids-count">0</span>
+        </div>
+        <div id="readingAidsList" class="reading-aids-list"></div>
+      </section>
       <details id="studentHelp" class="help-details">
         <summary>Comment explorer ?</summary>
         <p class="small">Ne cherche pas à tout traduire. Repère les ressemblances, compare les formes et utilise les indices du tamis actif.</p>

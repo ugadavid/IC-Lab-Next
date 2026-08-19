@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.1">
-  <title>Préparer une exploration Seven Sieves — Enseignant V0.1.1</title>
+  <meta name="app-version" content="0.1.2">
+  <title>Préparer une exploration Seven Sieves — Enseignant V0.1.2</title>
   <link rel="stylesheet" href="./css/seven-sieves-roles-0.1.css">
 </head>
 <body data-seven-sieves-role="teacher">
@@ -15,7 +15,7 @@
       <p>Choisir un court texte et les langues avant de transmettre l’activité à l’apprenant.</p>
     </div>
     <div class="topbar-actions">
-      <span class="version-chip">Enseignant V0.1.1</span>
+      <span class="version-chip">Enseignant V0.1.2</span>
       <span id="apiStatus" class="api-status" data-state="idle">Prête pour une analyse</span>
     </div>
   </header>
@@ -27,7 +27,7 @@
         <h2 id="preparationTitle">Paramètres de l’activité</h2>
         <div class="field">
           <label for="sourceTextInput">Texte à explorer</label>
-          <textarea id="sourceTextInput" class="analysis-textarea">Sin embargo, la información circula durante la noche.</textarea>
+          <textarea id="sourceTextInput" class="analysis-textarea">Durante el día, los estudiantes observan los efectos del cambio climático y comparten sus resultados. Sin embargo, durante la noche la información sigue circulando entre universidades de distintos países. Cada lector compara las palabras, reconoce algunas terminaciones y construye progresivamente el sentido del texto.</textarea>
         </div>
 
         <div class="language-controls">
@@ -74,6 +74,7 @@
         <div id="resultSummary" class="summary-grid" hidden>
           <div class="metric"><span>Tokens</span><strong id="summaryTokens">0</strong></div>
           <div class="metric"><span>Enrichissements</span><strong id="summaryEnrichments">0</strong></div>
+          <div class="metric"><span>Aides à la lecture</span><strong id="summaryReadingAids">0</strong></div>
           <div class="metric"><span>Tamis mobilisés</span><strong id="summarySieves">—</strong></div>
           <div class="metric"><span>Avertissements</span><strong id="summaryWarnings">0</strong></div>
         </div>

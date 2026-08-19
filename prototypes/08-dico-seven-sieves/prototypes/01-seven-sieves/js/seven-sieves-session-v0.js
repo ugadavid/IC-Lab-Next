@@ -10,6 +10,15 @@
   const TEACHER_PAGE = "./index-teacher-0.1.html";
   const STUDENT_PAGE = "./index-student-0.1.html";
 
+  function escapeHtml(value) {
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
   function assertLanguageCode(value, label) {
     if (typeof value !== "string" || !/^[a-z]{2,5}$/.test(value)) {
       throw new Error(`${label} invalide.`);
@@ -132,7 +141,70 @@
       enrichments: enrichments.length,
       sieve_ids: sieveIds,
       warnings: analysis.warnings.length,
-      pedagogical_enrichments: analysis.pedagogical_enrichments?.length || 0,
+      pedagogical_enrichments: normalizeReadingAids(analysis).length,
+    };
+  }
+
+  const READING_AID_FUNCTION_LABELS = Object.freeze({
+    OPPOSITION: "Opposition",
+    CAUSE: "Cause",
+    CONSEQUENCE: "Conséquence",
+    ADDITION: "Addition",
+    CHRONOLOGY: "Chronologie",
+  });
+
+  function readingAidFunctionLabel(value) {
+    if (typeof value !== "string" || !value.trim()) return "Repère dans le discours";
+    return READING_AID_FUNCTION_LABELS[value] || "Repère dans le discours";
+  }
+
+  function normalizeReadingAids(analysis) {
+    validateAnalysisPackage(analysis);
+    const items = analysis.pedagogical_enrichments || [];
+    return items.flatMap((item, position) => {
+      if (!item || item.type !== "connector_help" || item.source?.kind !== "connector_help") return [];
+      if (!Number.isInteger(item.start) || !Number.isInteger(item.end)
+        || item.start < 0 || item.end <= item.start || item.end > analysis.text.length) return [];
+
+      const expression = analysis.text.slice(item.start, item.end);
+      if (typeof item.expression !== "string" || item.expression !== expression) return [];
+      const coveredTokens = analysis.tokens.filter((token) => token.kind === "word"
+        && token.start >= item.start && token.end <= item.end);
+      if (!coveredTokens.length
+        || coveredTokens[0].start !== item.start
+        || coveredTokens.at(-1).end !== item.end) return [];
+
+      const tokenIndexes = coveredTokens.map((token) => token.index);
+      if (item.token_indexes !== undefined
+        && (!Array.isArray(item.token_indexes)
+          || item.token_indexes.length !== tokenIndexes.length
+          || item.token_indexes.some((value, index) => value !== tokenIndexes[index]))) return [];
+
+      return [{
+        id: typeof item.id === "string" && item.id ? item.id : `reading-aid-${position + 1}`,
+        expression,
+        functionLabel: readingAidFunctionLabel(item.function),
+        pedagogicalHint: typeof item.pedagogical_hint === "string" ? item.pedagogical_hint : "",
+        example: typeof item.example === "string" ? item.example : "",
+        caution: typeof item.caution === "string" ? item.caution : "",
+        start: item.start,
+        end: item.end,
+        tokenIndexes,
+      }];
+    });
+  }
+
+  function readingAidsViewModel(readingAids, explorationState) {
+    const count = Array.isArray(readingAids) ? readingAids.length : 0;
+    const visible = count > 0 && explorationState?.readingAidsVisible === true;
+    return {
+      count,
+      buttonHidden: count === 0,
+      sectionHidden: !visible,
+      ariaPressed: visible ? "true" : "false",
+      buttonLabel: visible
+        ? "📚 Masquer les aides à la lecture"
+        : `📚 Afficher les aides à la lecture (${count})`,
     };
   }
 
@@ -140,11 +212,20 @@
     return {
       activeSieve: 1,
       inspectedTokenIndex: null,
+      activeReadingAidId: null,
+      readingAidsVisible: false,
       hintsVisible: false,
       selectedTokenIndexes: new Set(),
       tokenStatuses: Object.create(null),
       inspect(tokenIndex) {
         this.inspectedTokenIndex = tokenIndex;
+      },
+      activateReadingAid(readingAidId) {
+        this.activeReadingAidId = readingAidId;
+      },
+      setReadingAidsVisible(visible) {
+        this.readingAidsVisible = Boolean(visible);
+        if (!this.readingAidsVisible) this.activeReadingAidId = null;
       },
       toggleSelection(tokenIndex) {
         if (this.selectedTokenIndexes.has(tokenIndex)) this.selectedTokenIndexes.delete(tokenIndex);
@@ -159,6 +240,8 @@
       reset() {
         this.activeSieve = 1;
         this.inspectedTokenIndex = null;
+        this.activeReadingAidId = null;
+        this.readingAidsVisible = false;
         this.hintsVisible = false;
         this.selectedTokenIndexes.clear();
         Object.keys(this.tokenStatuses).forEach((key) => delete this.tokenStatuses[key]);
@@ -173,7 +256,11 @@
     STUDENT_PAGE,
     createActivity,
     createExplorationState,
+    escapeHtml,
     readActivity,
+    normalizeReadingAids,
+    readingAidFunctionLabel,
+    readingAidsViewModel,
     summarizeAnalysis,
     validateActivity,
     validateAnalysisPackage,

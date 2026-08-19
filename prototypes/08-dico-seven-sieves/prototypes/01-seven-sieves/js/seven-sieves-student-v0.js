@@ -1,7 +1,9 @@
 "use strict";
 
 const sessionContract = window.SevenSievesSession;
+const escapeHtml = sessionContract.escapeHtml;
 let analysisPackage = null;
+let readingAids = [];
 const explorationState = sessionContract.createExplorationState();
 const textContainer = document.getElementById("text");
 const sieveTitle = document.getElementById("sieve-title");
@@ -15,15 +17,10 @@ const transformationsBox = document.getElementById("transformationsBox");
 const inspectionBox = document.getElementById("inspectionBox");
 const legendBox = document.getElementById("legendBox");
 const globalFeedback = document.getElementById("globalFeedback");
-
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+const readingAidsList = document.getElementById("readingAidsList");
+const readingAidsCount = document.getElementById("readingAidsCount");
+const readingAidsSection = document.getElementById("readingAidsSection");
+const toggleReadingAidsButton = document.getElementById("toggleReadingAidsButton");
 
 function getSieve(sieveId) {
   return analysisPackage?.sieves.find((sieve) => sieve.id === sieveId) || null;
@@ -39,6 +36,76 @@ function getTokenEnrichments(tokenIndex, sieveId = null) {
   return sieveId === null
     ? token.enrichments
     : token.enrichments.filter((item) => item.sieve_id === sieveId);
+}
+
+function getReadingAidsForToken(tokenIndex) {
+  return readingAids.filter((aid) => aid.tokenIndexes.includes(tokenIndex));
+}
+
+function renderReadingAids() {
+  const view = sessionContract.readingAidsViewModel(readingAids, explorationState);
+  readingAidsCount.textContent = String(view.count);
+  toggleReadingAidsButton.hidden = view.buttonHidden;
+  toggleReadingAidsButton.setAttribute("aria-pressed", view.ariaPressed);
+  toggleReadingAidsButton.textContent = view.buttonLabel;
+  readingAidsSection.hidden = view.sectionHidden;
+  if (view.sectionHidden) {
+    readingAidsList.innerHTML = "";
+    return;
+  }
+  readingAidsList.innerHTML = readingAids.map((aid) => {
+    const isActive = explorationState.activeReadingAidId === aid.id;
+    return `<button type="button" class="reading-aid-card${isActive ? " active" : ""}" data-reading-aid-id="${escapeHtml(aid.id)}" aria-pressed="${isActive}">
+      <span class="reading-aid-expression">${escapeHtml(aid.expression)}</span>
+      <span class="reading-aid-function">${escapeHtml(aid.functionLabel)}</span>
+      ${aid.pedagogicalHint ? `<span class="reading-aid-hint">${escapeHtml(aid.pedagogicalHint)}</span>` : ""}
+      ${aid.example ? `<span class="reading-aid-detail"><strong>Exemple :</strong> ${escapeHtml(aid.example)}</span>` : ""}
+      ${aid.caution ? `<span class="reading-aid-caution"><strong>À nuancer :</strong> ${escapeHtml(aid.caution)}</span>` : ""}
+    </button>`;
+  }).join("");
+}
+
+function applyReadingAidVisuals() {
+  document.querySelectorAll(".word[data-token-index]").forEach((element) => {
+    element.classList.remove("reading-aid-token", "reading-aid-start", "reading-aid-middle", "reading-aid-end", "reading-aid-continues", "reading-aid-active");
+    delete element.dataset.readingAidIds;
+  });
+  if (!explorationState.readingAidsVisible) return;
+  readingAids.forEach((aid) => {
+    aid.tokenIndexes.forEach((tokenIndex, position) => {
+      const element = document.querySelector(`.word[data-token-index="${tokenIndex}"]`);
+      if (!element) return;
+      const existingIds = element.dataset.readingAidIds ? JSON.parse(element.dataset.readingAidIds) : [];
+      element.dataset.readingAidIds = JSON.stringify([...existingIds, aid.id]);
+      element.classList.add("reading-aid-token");
+      if (position === 0) element.classList.add("reading-aid-start");
+      if (position === aid.tokenIndexes.length - 1) element.classList.add("reading-aid-end");
+      if (position < aid.tokenIndexes.length - 1) element.classList.add("reading-aid-continues");
+      if (position > 0 && position < aid.tokenIndexes.length - 1) element.classList.add("reading-aid-middle");
+      if (explorationState.activeReadingAidId === aid.id) element.classList.add("reading-aid-active");
+    });
+  });
+}
+
+function activateReadingAid(readingAidId) {
+  if (!explorationState.readingAidsVisible) return;
+  explorationState.activateReadingAid(readingAidId);
+  renderReadingAids();
+  applyReadingAidVisuals();
+}
+
+function activateReadingAidForToken(tokenIndex) {
+  if (!explorationState.readingAidsVisible) return;
+  const matches = getReadingAidsForToken(tokenIndex);
+  if (!matches.length) return;
+  const currentIndex = matches.findIndex((aid) => aid.id === explorationState.activeReadingAidId);
+  activateReadingAid(matches[(currentIndex + 1) % matches.length].id);
+}
+
+function toggleReadingAids() {
+  explorationState.setReadingAidsVisible(!explorationState.readingAidsVisible);
+  renderReadingAids();
+  applyReadingAidVisuals();
 }
 
 function clearLocalExplorationState() {
@@ -85,6 +152,7 @@ function createInteractiveToken(token) {
 
   span.addEventListener("click", () => {
     explorationState.inspect(token.index);
+    activateReadingAidForToken(token.index);
     refreshTokenStates();
   });
   span.addEventListener("dblclick", (event) => {
@@ -116,6 +184,8 @@ function buildTextFromTokens() {
   }
   updateSidebar();
   renderInspectionBox();
+  renderReadingAids();
+  applyReadingAidVisuals();
 }
 
 function toggleTokenSelection(tokenIndex) {
@@ -186,6 +256,7 @@ function refreshTokenStates() {
     element.classList.toggle("status-unknown", status === "unknown");
   });
   if (explorationState.hintsVisible) applyHintVisuals();
+  applyReadingAidVisuals();
   renderInspectionBox();
 }
 
@@ -343,6 +414,7 @@ function resetExploration() {
 
 function renderActivity(activity) {
   analysisPackage = activity.analysis;
+  readingAids = sessionContract.normalizeReadingAids(analysisPackage);
   clearLocalExplorationState();
   const preparation = activity.preparation;
   document.getElementById("activityContext").innerHTML = `
@@ -377,8 +449,13 @@ inspectionBox.addEventListener("click", (event) => {
     refreshTokenStates();
   }
 });
+readingAidsList.addEventListener("click", (event) => {
+  const card = event.target.closest("[data-reading-aid-id]");
+  if (card) activateReadingAid(card.dataset.readingAidId);
+});
 document.getElementById("showHintsButton").addEventListener("click", showHints);
 document.getElementById("compareButton").addEventListener("click", compareSelection);
+toggleReadingAidsButton.addEventListener("click", toggleReadingAids);
 document.getElementById("resetButton").addEventListener("click", resetExploration);
 document.querySelectorAll(".sieve-btn[data-sieve]").forEach((button) => {
   button.addEventListener("click", () => setSieve(Number(button.dataset.sieve)));

@@ -81,15 +81,18 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(teacher.status, 200);
     const teacherHtml = await teacher.text();
     assert.match(teacherHtml, /Interface enseignant/);
-    assert.match(teacherHtml, /app-version" content="0\.1\.1"/);
-    assert.match(teacherHtml, /Sin embargo, la información circula durante la noche\./);
+    assert.match(teacherHtml, /app-version" content="0\.1\.2"/);
+    assert.match(teacherHtml, /Durante el día, los estudiantes observan los efectos del cambio climático/);
+    assert.match(teacherHtml, /Sin embargo, durante la noche la información sigue circulando/);
     assert.match(teacherHtml, /Ouvrir l’activité en vue apprenant/);
 
     const student = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/index-student-0.1.html`);
     assert.equal(student.status, 200);
     const studentHtml = await student.text();
     assert.match(studentHtml, /Activité apprenante/);
-    assert.match(studentHtml, /app-version" content="0\.1\.1"/);
+    assert.match(studentHtml, /app-version" content="0\.1\.3"/);
+    assert.match(studentHtml, /Aides à la lecture/);
+    assert.match(studentHtml, /Afficher les aides à la lecture \(0\)/);
     assert.match(studentHtml, /Aucune activité n’a encore été préparée/);
     assert.equal((studentHtml.match(/class="sieve-btn"/g) || []).length, 7);
 

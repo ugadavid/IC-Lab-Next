@@ -13,8 +13,8 @@ function fixtureAnalysis() {
     languages: { source: "es", mediation: "fr", comparison: ["it", "pt"] },
     tokens: [
       { index: 0, surface: "Sin", normalized: "sin", kind: "word", start: 0, end: 3, enrichments: [{ sieve_id: 2, label: "Famille" }] },
-      { index: 1, surface: " ", normalized: " ", kind: "space", start: 3, end: 4, enrichments: [] },
-      { index: 2, surface: "embargo", normalized: "embargo", kind: "word", start: 4, end: 11, enrichments: [] },
+      { index: 1, surface: "embargo", normalized: "embargo", kind: "word", start: 4, end: 11, enrichments: [] },
+      { index: 2, surface: ",", normalized: ",", kind: "punctuation", start: 11, end: 12, enrichments: [] },
     ],
     sieves: Array.from({ length: 7 }, (_, index) => ({
       id: index + 1,
@@ -23,7 +23,11 @@ function fixtureAnalysis() {
       status: index === 3 ? "experimental" : "supported",
     })),
     warnings: [{ code: "SIEVE_EXPERIMENTAL", message: "Traitement expérimental" }],
-    pedagogical_enrichments: [{ source: { kind: "connector_help" }, explanation: "Aide discursive" }],
+    pedagogical_enrichments: [{
+      id: "p-0001", type: "connector_help", source: { kind: "connector_help", id: 1, label: "Dico-IC" },
+      function: "OPPOSITION", expression: "Sin embargo", token_indexes: [0, 1], start: 0, end: 11,
+      pedagogical_hint: "L’auteur introduit un contraste.", example: "sin embargo / cependant", caution: "Selon le contexte.",
+    }],
     extra_future_field: { preserved: true },
   };
 }
@@ -82,6 +86,7 @@ test("student exploration state supports selection, statuses and reset without t
   state.toggleSelection(2);
   state.setStatus(2, "known");
   state.activeSieve = 4;
+  state.activateReadingAid("p-0001");
   state.hintsVisible = true;
   assert.equal(state.selectedTokenIndexes.has(2), true);
   assert.equal(state.tokenStatuses[2], "known");
@@ -94,8 +99,185 @@ test("student exploration state supports selection, statuses and reset without t
   assert.deepEqual(Object.keys(state.tokenStatuses), []);
   assert.equal(state.activeSieve, 1);
   assert.equal(state.inspectedTokenIndex, null);
+  assert.equal(state.activeReadingAidId, null);
+  assert.equal(state.readingAidsVisible, false);
   assert.equal(activity.analysis.text, fixturePreparation().text);
   assert.equal(activity.analysis.pedagogical_enrichments.length, 1);
+});
+
+function analysisWith(text, tokens, pedagogicalEnrichments) {
+  return {
+    contract_version: "0.1",
+    text,
+    languages: { source: "es", mediation: "fr", comparison: ["it", "pt"] },
+    tokens: tokens.map((token, index) => ({
+      index,
+      normalized: token.surface.toLocaleLowerCase("es"),
+      kind: token.kind || "word",
+      enrichments: [],
+      ...token,
+    })),
+    sieves: Array.from({ length: 7 }, (_, index) => ({ id: index + 1, label: `Tamis ${index + 1}`, status: "supported" })),
+    warnings: [],
+    pedagogical_enrichments: pedagogicalEnrichments,
+  };
+}
+
+function connectorAid(id, expression, start, end, tokenIndexes, extra = {}) {
+  return {
+    id,
+    type: "connector_help",
+    source: { kind: "connector_help", id: 1, label: "Dico-IC" },
+    function: "OPPOSITION",
+    expression,
+    start,
+    end,
+    token_indexes: tokenIndexes,
+    pedagogical_hint: "Une aide de lecture.",
+    ...extra,
+  };
+}
+
+test("reading aids map single and multi-token expressions from exact offsets", () => {
+  const analysis = analysisWith("Además. Sin embargo.", [
+    { surface: "Además", start: 0, end: 6 },
+    { surface: ".", kind: "punctuation", start: 6, end: 7 },
+    { surface: "Sin", start: 8, end: 11 },
+    { surface: "embargo", start: 12, end: 19 },
+    { surface: ".", kind: "punctuation", start: 19, end: 20 },
+  ], [
+    connectorAid("single", "Además", 0, 6, [0], { function: "ADDITION" }),
+    connectorAid("multi", "Sin embargo", 8, 19, [2, 3]),
+  ]);
+
+  const aids = sessionContract.normalizeReadingAids(analysis);
+  assert.deepEqual(aids.map((aid) => aid.tokenIndexes), [[0], [2, 3]]);
+  assert.deepEqual(aids.map((aid) => aid.expression), ["Además", "Sin embargo"]);
+  assert.deepEqual(aids.map((aid) => aid.functionLabel), ["Addition", "Opposition"]);
+});
+
+test("reading aids distinguish identical occurrences by offsets and preserve Unicode ranges", () => {
+  const analysis = analysisWith("😀 Sin embargo. Sin embargo.", [
+    { surface: "😀", kind: "symbol", start: 0, end: 2 },
+    { surface: "Sin", start: 3, end: 6 },
+    { surface: "embargo", start: 7, end: 14 },
+    { surface: ".", kind: "punctuation", start: 14, end: 15 },
+    { surface: "Sin", start: 16, end: 19 },
+    { surface: "embargo", start: 20, end: 27 },
+    { surface: ".", kind: "punctuation", start: 27, end: 28 },
+  ], [
+    connectorAid("first", "Sin embargo", 3, 14, [1, 2]),
+    connectorAid("second", "Sin embargo", 16, 27, [4, 5]),
+  ]);
+
+  const aids = sessionContract.normalizeReadingAids(analysis);
+  assert.deepEqual(aids.map((aid) => [aid.start, aid.end, aid.tokenIndexes]), [
+    [3, 14, [1, 2]],
+    [16, 27, [4, 5]],
+  ]);
+});
+
+test("reading aids ignore absent, malformed or inconsistent ranges without guessing", () => {
+  const tokens = [
+    { surface: "Sin", start: 0, end: 3 },
+    { surface: "embargo", start: 4, end: 11 },
+  ];
+  assert.deepEqual(sessionContract.normalizeReadingAids(analysisWith("Sin embargo", tokens, [])), []);
+  const invalid = [
+    connectorAid("bad-type", "Sin embargo", "0", 11, [0, 1]),
+    connectorAid("outside", "Sin embargo", 0, 99, [0, 1]),
+    connectorAid("mismatch", "Autre chose", 0, 11, [0, 1]),
+    connectorAid("partial", "in em", 1, 6, []),
+    connectorAid("wrong-tokens", "Sin embargo", 0, 11, [1, 0]),
+    { ...connectorAid("wrong-source", "Sin embargo", 0, 11, [0, 1]), source: { kind: "heuristic" } },
+  ];
+  assert.deepEqual(sessionContract.normalizeReadingAids(analysisWith("Sin embargo", tokens, invalid)), []);
+  assert.equal(sessionContract.summarizeAnalysis(analysisWith("Sin embargo", tokens, invalid)).pedagogical_enrichments, 0);
+});
+
+test("overlapping reading aids coexist and exploration changes do not mutate them", () => {
+  const analysis = analysisWith("por tanto", [
+    { surface: "por", start: 0, end: 3 },
+    { surface: "tanto", start: 4, end: 9 },
+  ], [
+    connectorAid("short", "por", 0, 3, [0]),
+    connectorAid("long", "por tanto", 0, 9, [0, 1], { function: "CONSEQUENCE" }),
+  ]);
+  const before = sessionContract.normalizeReadingAids(analysis);
+  const state = sessionContract.createExplorationState();
+  state.toggleSelection(0);
+  state.setStatus(0, "doubt");
+  state.activeSieve = 7;
+  state.activateReadingAid("long");
+  assert.equal(before.length, 2);
+  assert.deepEqual(before[0].tokenIndexes, [0]);
+  assert.deepEqual(before[1].tokenIndexes, [0, 1]);
+  state.reset();
+  assert.deepEqual(sessionContract.normalizeReadingAids(analysis), before);
+});
+
+test("reading aid content is escaped before HTML rendering", () => {
+  const unsafe = `<img src=x onerror="alert('x')"> & suite`;
+  assert.equal(
+    sessionContract.escapeHtml(unsafe),
+    "&lt;img src=x onerror=&quot;alert(&#039;x&#039;)&quot;&gt; &amp; suite",
+  );
+});
+
+test("reading aids are hidden by default and toggle without changing exploration or storage", () => {
+  let storageWrites = 0;
+  const storage = {
+    getItem() { return null; },
+    setItem() { storageWrites += 1; },
+    removeItem() { storageWrites += 1; },
+  };
+  const aids = sessionContract.normalizeReadingAids(fixtureAnalysis());
+  const state = sessionContract.createExplorationState();
+  state.activeSieve = 4;
+  state.inspect(0);
+  state.toggleSelection(0);
+  state.setStatus(0, "known");
+
+  assert.deepEqual(sessionContract.readingAidsViewModel(aids, state), {
+    count: 1,
+    buttonHidden: false,
+    sectionHidden: true,
+    ariaPressed: "false",
+    buttonLabel: "📚 Afficher les aides à la lecture (1)",
+  });
+  state.setReadingAidsVisible(true);
+  state.activateReadingAid("p-0001");
+  assert.deepEqual(sessionContract.readingAidsViewModel(aids, state), {
+    count: 1,
+    buttonHidden: false,
+    sectionHidden: false,
+    ariaPressed: "true",
+    buttonLabel: "📚 Masquer les aides à la lecture",
+  });
+  state.setReadingAidsVisible(false);
+  assert.equal(state.activeReadingAidId, null);
+  assert.equal(state.activeSieve, 4);
+  assert.equal(state.inspectedTokenIndex, 0);
+  assert.equal(state.selectedTokenIndexes.has(0), true);
+  assert.equal(state.tokenStatuses[0], "known");
+  assert.equal(aids.length, 1);
+  assert.equal(storageWrites, 0);
+  assert.equal(storage.getItem(sessionContract.STORAGE_KEY), null);
+  state.setReadingAidsVisible(true);
+  state.activateReadingAid("p-0001");
+  state.reset();
+  assert.equal(state.readingAidsVisible, false);
+  assert.equal(state.activeReadingAidId, null);
+});
+
+test("zero valid reading aids hide both control and section", () => {
+  assert.deepEqual(sessionContract.readingAidsViewModel([], sessionContract.createExplorationState()), {
+    count: 0,
+    buttonHidden: true,
+    sectionHidden: true,
+    ariaPressed: "false",
+    buttonLabel: "📚 Afficher les aides à la lecture (0)",
+  });
 });
 
 test("session validation refuses a mismatched text or malformed token without mutating storage", () => {
@@ -115,10 +297,13 @@ test("teacher and student pages enforce role separation and keep one student eng
   const teacher = fs.readFileSync(path.join(root, "index-teacher-0.1.html"), "utf8");
   const student = fs.readFileSync(path.join(root, "index-student-0.1.html"), "utf8");
   const studentScript = fs.readFileSync(path.join(root, "js/seven-sieves-student-v0.js"), "utf8");
+  const teacherScript = fs.readFileSync(path.join(root, "js/seven-sieves-teacher-v0.js"), "utf8");
 
   assert.match(teacher, /Texte à explorer/);
   assert.match(teacher, /Langue source/);
   assert.match(teacher, /Lancer l’analyse Dico-IC/);
+  assert.match(teacher, /Aides à la lecture[^<]*<\/span><strong id="summaryReadingAids">0/);
+  assert.match(teacherScript, /summaryReadingAids[\s\S]*summary\.pedagogical_enrichments/);
   assert.doesNotMatch(teacher, /inspectionBox|selectedWords|Compris|Doute|Inconnu/);
 
   assert.match(student, /Les 7 tamis/);
@@ -129,6 +314,13 @@ test("teacher and student pages enforce role separation and keep one student eng
   assert.equal((student.match(/class="sieve-btn"/g) || []).length, 7);
   assert.match(studentScript, /sessionContract\.readActivity\(window\.sessionStorage\)/);
   assert.match(studentScript, /L’activité préparée est conservée/);
+  assert.match(student, /📚 Aides à la lecture/);
+  assert.match(student, /id="toggleReadingAidsButton"[\s\S]*aria-pressed="false" hidden/);
+  assert.match(studentScript, /setReadingAidsVisible\(!explorationState\.readingAidsVisible\)/);
+  assert.doesNotMatch(studentScript.match(/function toggleReadingAids\(\)[\s\S]*?\n}/)?.[0] || "", /sessionStorage/);
+  assert.match(studentScript, /sessionContract\.normalizeReadingAids\(analysisPackage\)/);
+  assert.match(studentScript, /escapeHtml\(aid\.expression\)|escapeHtml\(aid\.pedagogicalHint\)/);
+  assert.doesNotMatch(studentScript, /pedagogicalHints|matchMode|normalized_expression|source\.label/);
 });
 
 test("student visual identity restores the historical pedagogical palette without changing roles", () => {

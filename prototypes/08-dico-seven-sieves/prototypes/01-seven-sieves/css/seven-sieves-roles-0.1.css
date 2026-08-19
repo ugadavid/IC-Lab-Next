@@ -97,6 +97,21 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 .empty-state p { color: var(--muted); font-size: 17px; }
 .help-details { margin-top: 15px; border-top: 1px solid var(--line); }
 .help-details summary { padding: 12px 0 2px; color: var(--navy); cursor: pointer; font-weight: 800; }
+.reading-aids { margin-top: 18px; padding: 15px; border: 1px solid #d9e8f7; border-radius: 14px; background: #f7fbff; }
+.reading-aids-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.reading-aids-heading h3 { margin: 0; color: #285d96; }
+.reading-aids-heading p { margin: 4px 0 0; }
+.reading-aids-count { display: inline-flex; min-width: 32px; min-height: 32px; align-items: center; justify-content: center; border-radius: 999px; background: #e3f0ff; color: #285d96; font-weight: 850; }
+.reading-aids-list { display: grid; gap: 10px; margin-top: 12px; }
+.reading-aid-card { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; width: 100%; padding: 12px 14px; border: 1px solid #c9dcf1; border-radius: 12px; background: white; color: #243654; text-align: left; }
+.reading-aid-card:hover { border-color: #4A90E2; box-shadow: 0 4px 12px rgba(74, 144, 226, .12); }
+.reading-aid-card.active { border-color: #F5A623; box-shadow: inset 4px 0 #F5A623, 0 4px 12px rgba(36, 54, 84, .12); }
+.reading-aid-expression { color: #285d96; font-size: 17px; font-weight: 850; }
+.reading-aid-function { align-self: center; justify-self: end; padding: 3px 8px; border-radius: 999px; background: #fff0d4; color: #7a4d00; font-size: 12px; font-weight: 850; }
+.reading-aid-hint, .reading-aid-detail, .reading-aid-caution { grid-column: 1 / -1; line-height: 1.45; }
+.reading-aid-detail { color: #52677e; font-size: 13px; }
+.reading-aid-caution { padding-top: 4px; border-top: 1px dashed #e1c98f; color: #75500c; font-size: 13px; }
+.reading-aids-empty { margin: 0; color: var(--muted); font-size: 14px; }
 
 @media (max-width: 1200px) {
   .student-app { grid-template-columns: 230px minmax(390px, 1fr) 300px; gap: 10px; padding: 10px; }
@@ -324,6 +339,8 @@ body[data-seven-sieves-role="student"] .activity-action:hover {
 
 body[data-seven-sieves-role="student"] .hints-action { background: #243654; }
 body[data-seven-sieves-role="student"] .compare-action { background: #F5A623; color: #243654; }
+body[data-seven-sieves-role="student"] .reading-aids-action { border: 1px solid #9fb8d2; background: #eaf2fa; color: #285d96; box-shadow: none; }
+body[data-seven-sieves-role="student"] .reading-aids-action[aria-pressed="true"] { border-color: #6f91b4; background: #dceaf8; }
 body[data-seven-sieves-role="student"] .reset-action { background: #D94A5B; }
 
 body[data-seven-sieves-role="student"] .text-box {
@@ -369,6 +386,27 @@ body[data-seven-sieves-role="student"] .word.selected {
 body[data-seven-sieves-role="student"] .word.status-known:not(.selected) { box-shadow: inset 0 0 0 2px #65b91c; }
 body[data-seven-sieves-role="student"] .word.status-doubt:not(.selected) { box-shadow: inset 0 0 0 2px #F5A623; }
 body[data-seven-sieves-role="student"] .word.status-unknown:not(.selected) { box-shadow: inset 0 0 0 2px #D0021B; }
+body[data-seven-sieves-role="student"] .word.reading-aid-token {
+  text-decoration-line: underline;
+  text-decoration-style: dotted;
+  text-decoration-color: #4A90E2;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 6px;
+}
+body[data-seven-sieves-role="student"] .word.reading-aid-continues::after {
+  content: "";
+  position: absolute;
+  right: -8px;
+  bottom: -1px;
+  width: 10px;
+  height: 2px;
+  background: #4A90E2;
+}
+body[data-seven-sieves-role="student"] .word.reading-aid-active {
+  text-decoration-style: solid;
+  text-decoration-color: #F5A623;
+}
+body[data-seven-sieves-role="student"] .word.reading-aid-active.reading-aid-continues::after { background: #F5A623; }
 body[data-seven-sieves-role="student"] .word.hint { outline: 2px solid rgba(74, 144, 226, .28); }
 body[data-seven-sieves-role="student"] .word.pan-roman-match { border-bottom: 3px solid #2E7D32; background: rgba(46, 125, 50, .12); }
 body[data-seven-sieves-role="student"] .word.transform-strong { border-bottom: 3px solid #9b59b6; background: rgba(155, 89, 182, .12); }
@@ -461,6 +499,7 @@ body[data-seven-sieves-role="teacher"] .metric:nth-child(1) { background: #eef6f
 body[data-seven-sieves-role="teacher"] .metric:nth-child(2) { background: #edf8e5; }
 body[data-seven-sieves-role="teacher"] .metric:nth-child(3) { background: #fff4df; }
 body[data-seven-sieves-role="teacher"] .metric:nth-child(4) { background: #fff0f1; }
+body[data-seven-sieves-role="teacher"] .metric:nth-child(5) { background: #f4efff; }
 
 @media (max-width: 1200px) {
   body[data-seven-sieves-role="student"] .student-app {
