@@ -22,6 +22,13 @@ const readingAidsList = document.getElementById("readingAidsList");
 const readingAidsCount = document.getElementById("readingAidsCount");
 const readingAidsSection = document.getElementById("readingAidsSection");
 const toggleReadingAidsButton = document.getElementById("toggleReadingAidsButton");
+window.SevenSievesHelpDialog.createController({
+  button: document.getElementById("helpButton"),
+  layer: document.getElementById("learnerHelpLayer"),
+  dialog: document.getElementById("learnerHelpDialog"),
+  closeButtons: [document.getElementById("helpCloseIcon"), document.getElementById("helpCloseButton")],
+  documentRef: document,
+});
 const GENERIC_SIEVE_CAUTIONS = Object.freeze({
   1: ["Cette ressemblance est un indice et non une traduction automatique."],
   2: ["Les formes comparées sont des aides à l’inférence, pas une traduction automatique."],

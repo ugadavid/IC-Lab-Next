@@ -357,7 +357,7 @@ test("student microcopy classifies all seven sieves without repeating generic pr
     "Prudence : un affixe isolé ne détermine pas le sens complet.",
   ];
 
-  assert.match(student, /app-version" content="0\.1\.4"/);
+  assert.match(student, /app-version" content="0\.1\.5"/);
   assert.match(student, /id="sievePrincipleCaution"[^>]*hidden/);
   for (const principle of principles) {
     assert.equal(script.split(principle).length - 1, 1, `single principle rendering: ${principle}`);

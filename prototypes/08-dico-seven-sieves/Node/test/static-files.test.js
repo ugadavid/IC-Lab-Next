@@ -94,7 +94,7 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(student.status, 200);
     const studentHtml = await student.text();
     assert.match(studentHtml, /Activité apprenante/);
-    assert.match(studentHtml, /app-version" content="0\.1\.4"/);
+    assert.match(studentHtml, /app-version" content="0\.1\.5"/);
     assert.match(studentHtml, /Aides à la lecture/);
     assert.match(studentHtml, /Afficher les aides à la lecture \(0\)/);
     assert.match(studentHtml, /Aucune activité n’a encore été préparée/);
@@ -107,6 +107,10 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     const sessionScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-session-v0.js`);
     assert.equal(sessionScript.status, 200);
     assert.match(await sessionScript.text(), /seven-sieves\.activity\.v/);
+
+    const helpDialogScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-help-dialog-v0.js`);
+    assert.equal(helpDialogScript.status, 200);
+    assert.match(await helpDialogScript.text(), /createController/);
 
     const lifecycleScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-analysis-lifecycle-v0.js`);
     assert.equal(lifecycleScript.status, 200);

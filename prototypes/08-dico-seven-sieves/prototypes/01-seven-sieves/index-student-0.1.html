@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.4">
-  <title>Explorer avec les sept tamis — Apprenant V0.1.4</title>
+  <meta name="app-version" content="0.1.5">
+  <title>Explorer avec les sept tamis — Apprenant V0.1.5</title>
   <link rel="stylesheet" href="./css/seven-sieves-roles-0.1.css">
 </head>
 <body data-seven-sieves-role="student">
@@ -15,8 +15,8 @@
       <p id="microGuide">Repère, compare et construis progressivement le sens.</p>
     </div>
     <div class="topbar-actions">
-      <span class="learning-badge">🎒 Activité apprenante · V0.1.4</span>
-      <a class="help-button" href="#studentHelp">❓ Aide</a>
+      <span class="learning-badge">🎒 Activité apprenante · V0.1.5</span>
+      <button id="helpButton" class="help-button" type="button" aria-haspopup="dialog" aria-controls="learnerHelpDialog" aria-expanded="false">❓ Aide</button>
       <a class="teacher-return" href="./index-teacher-0.1.html">← Retour à la préparation</a>
     </div>
   </header>
@@ -71,10 +71,6 @@
         </div>
         <div id="readingAidsList" class="reading-aids-list"></div>
       </section>
-      <details id="studentHelp" class="help-details">
-        <summary>Comment explorer ?</summary>
-        <p class="small">Ne cherche pas à tout traduire. Repère les ressemblances, compare les formes et utilise les indices du tamis actif.</p>
-      </details>
     </section>
 
     <aside class="panel" aria-labelledby="observationTitle">
@@ -96,7 +92,51 @@
     </aside>
   </main>
 
+  <div id="learnerHelpLayer" class="learner-help-layer" aria-hidden="true" hidden>
+    <section id="learnerHelpDialog" class="learner-help-dialog" role="dialog" aria-modal="true" aria-labelledby="learnerHelpTitle" tabindex="-1">
+      <header class="learner-help-header">
+        <div>
+          <p class="brand-kicker">🌈 Guide apprenant</p>
+          <h2 id="learnerHelpTitle">Explorer avec Seven Sieves</h2>
+        </div>
+        <button id="helpCloseIcon" class="learner-help-close-icon" type="button" aria-label="Fermer le guide">×</button>
+      </header>
+
+      <div class="learner-help-content">
+        <section class="learner-help-block">
+          <h3>🧭 À quoi sert Seven Sieves ?</h3>
+          <p>Seven Sieves aide à comprendre un texte dans une langue romane en s’appuyant sur ce qui est déjà reconnaissable : mots transparents, ressemblances entre langues, correspondances de sons et de graphies, structures grammaticales, préfixes et suffixes.</p>
+          <p>L’objectif n’est pas de traduire chaque mot, mais de construire progressivement le sens du texte à partir de plusieurs indices.</p>
+        </section>
+
+        <section class="learner-help-block learner-help-steps">
+          <h3>🔎 Comment explorer ?</h3>
+          <ol>
+            <li>Choisis l’un des sept tamis.</li>
+            <li>Clique sur un mot pour examiner ses indices.</li>
+            <li>Double-clique sur les mots utiles pour constituer ta sélection.</li>
+            <li>Utilise « Montrer les indices » pour observer les repères proposés.</li>
+            <li>Compare ta sélection avec les indices du tamis.</li>
+            <li>Indique si le mot est compris, incertain ou inconnu.</li>
+          </ol>
+        </section>
+
+        <section class="learner-help-block learner-help-complement">
+          <h3>📚 En complément</h3>
+          <p>Les « Aides à la lecture » signalent certaines expressions qui structurent le texte, par exemple une opposition, une cause ou une conséquence.</p>
+          <p>Elles sont indépendantes des sept tamis et restent masquées tant que tu ne demandes pas à les afficher.</p>
+        </section>
+      </div>
+
+      <footer class="learner-help-footer">
+        <p><strong>Les indices sont des pistes de compréhension :</strong> croise-les et vérifie-les toujours dans le contexte.</p>
+        <button id="helpCloseButton" class="activity-action hints-action" type="button">Fermer</button>
+      </footer>
+    </section>
+  </div>
+
   <script src="./js/seven-sieves-session-v0.js"></script>
+  <script src="./js/seven-sieves-help-dialog-v0.js"></script>
   <script src="./js/seven-sieves-student-v0.js"></script>
 </body>
 </html>

@@ -373,7 +373,7 @@ test("teacher UI exposes accessible lifecycle controls while preserving the stud
   assert.match(teacherScript, /console\.error/);
   assert.doesNotMatch(teacherScript, /teacherFeedback\.textContent\s*=.*error\.message/);
 
-  assert.match(student, /app-version" content="0\.1\.4"/);
+  assert.match(student, /app-version" content="0\.1\.5"/);
   assert.equal((student.match(/class="sieve-btn"/g) || []).length, 7);
   assert.match(studentScript, /readActivity\(window\.sessionStorage\)/);
   assert.match(studentScript, /showEmptyState\(storedActivity\.status\)/);

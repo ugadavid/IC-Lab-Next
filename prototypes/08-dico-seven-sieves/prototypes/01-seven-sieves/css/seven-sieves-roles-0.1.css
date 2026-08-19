@@ -99,8 +99,6 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 .empty-state { width: min(780px, calc(100% - 36px)); margin: 48px auto; padding: 34px; text-align: center; }
 .empty-state h2 { font-size: 28px; }
 .empty-state p { color: var(--muted); font-size: 17px; }
-.help-details { margin-top: 15px; border-top: 1px solid var(--line); }
-.help-details summary { padding: 12px 0 2px; color: var(--navy); cursor: pointer; font-weight: 800; }
 .reading-aids { margin-top: 18px; padding: 15px; border: 1px solid #d9e8f7; border-radius: 14px; background: #f7fbff; }
 .reading-aids-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .reading-aids-heading h3 { margin: 0; color: #285d96; }
@@ -116,6 +114,88 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 .reading-aid-detail { color: #52677e; font-size: 13px; }
 .reading-aid-caution { padding-top: 4px; border-top: 1px dashed #e1c98f; color: #75500c; font-size: 13px; }
 .reading-aids-empty { margin: 0; color: var(--muted); font-size: 14px; }
+
+.learner-help-layer {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(16, 40, 65, .58);
+}
+
+.learner-help-dialog {
+  width: min(820px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border: 1px solid #c9dcf4;
+  border-radius: 20px;
+  background: #fafdff;
+  color: #243654;
+  box-shadow: 0 24px 70px rgba(16, 40, 65, .34);
+}
+
+.learner-help-header,
+.learner-help-footer {
+  position: sticky;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 20px;
+  background: #fafdff;
+}
+
+.learner-help-header {
+  top: 0;
+  border-bottom: 1px solid #dbe8f7;
+}
+
+.learner-help-header h2 { margin: 2px 0 0; color: #285d96; font-size: 24px; }
+.learner-help-header .brand-kicker { color: #7a4d00; }
+.learner-help-close-icon {
+  flex: 0 0 auto;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #c9dcf4;
+  border-radius: 999px;
+  background: white;
+  color: #285d96;
+  font-size: 27px;
+  line-height: 1;
+}
+
+.learner-help-content {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.learner-help-block {
+  padding: 14px 15px;
+  border: 1px solid #dbe8f7;
+  border-radius: 14px;
+  background: white;
+}
+
+.learner-help-block:nth-child(2) { background: #fff8e8; }
+.learner-help-block:nth-child(3) { grid-column: 1 / -1; background: #eef6ff; }
+.learner-help-block h3 { margin: 0 0 8px; color: #285d96; font-size: 17px; }
+.learner-help-block p { margin: 7px 0 0; font-size: 14px; line-height: 1.5; }
+.learner-help-block ol { margin: 7px 0 0; padding-left: 22px; font-size: 14px; line-height: 1.45; }
+.learner-help-block li + li { margin-top: 3px; }
+
+.learner-help-footer {
+  bottom: 0;
+  border-top: 1px solid #dbe8f7;
+}
+
+.learner-help-footer p { margin: 0; color: #52677e; font-size: 14px; line-height: 1.45; }
+.learner-help-footer .activity-action { flex: 0 0 auto; min-width: 100px; }
+.learner-help-dialog :focus-visible { outline: 3px solid #F5A623; outline-offset: 2px; }
 
 @media (max-width: 1200px) {
   .student-app { grid-template-columns: 230px minmax(390px, 1fr) 300px; gap: 10px; padding: 10px; }
@@ -486,14 +566,6 @@ body[data-seven-sieves-role="student"] #selectedWords { background: #f1faeb; }
 body[data-seven-sieves-role="student"] #currentHints { background: #fff8e8; }
 body[data-seven-sieves-role="student"] #transformationsBox { background: #f4efff; }
 
-body[data-seven-sieves-role="student"] .help-details {
-  border-top-color: #dbe8ff;
-}
-
-body[data-seven-sieves-role="student"] .help-details summary {
-  color: #9a650d;
-}
-
 body[data-seven-sieves-role="teacher"] .teacher-intro {
   color: #52677e;
 }
@@ -522,4 +594,10 @@ body[data-seven-sieves-role="teacher"] .metric:nth-child(5) { background: #f4eff
 @media (max-width: 680px) {
   body[data-seven-sieves-role] .topbar { padding: 13px 16px; }
   body[data-seven-sieves-role="student"] .student-context { padding: 8px 14px; }
+  .learner-help-layer { padding: 10px; }
+  .learner-help-dialog { max-height: calc(100vh - 20px); }
+  .learner-help-content { grid-template-columns: 1fr; padding: 12px; }
+  .learner-help-block:nth-child(3) { grid-column: auto; }
+  .learner-help-header, .learner-help-footer { padding: 13px 14px; }
+  .learner-help-footer { align-items: stretch; flex-direction: column; }
 }
