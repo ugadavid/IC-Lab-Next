@@ -1,0 +1,135 @@
+{
+  "artifact": "mission_217_candidate_plan",
+  "based_on_mission": 216,
+  "status": "PROPOSAL_REQUIRING_HUMAN_ARBITRATION",
+  "objective": "Extend connector reading aids from the current validated FR/ES catalogue to a cautious FR/ES/IT/PT/EN core without data loss or silent activation.",
+  "decisions_required_before_execution": [
+    {
+      "owner": "David",
+      "decision": "Authorize IT/PT/EN as supported connector-help languages and accept that Mission 217 includes application capability changes, not only data."
+    },
+    {
+      "owner": "Christian",
+      "decision": "Validate expressions, functions, register, polysemy, examples and cautions for the 25-cell core matrix."
+    },
+    {
+      "owner": "Sylvain",
+      "decision": "Validate learner-facing titles, hints, examples and cautions."
+    },
+    {
+      "owner": "David",
+      "decision": "Retain the existing secondary variants « mais » and « pero » (recommended) and decide whether « por lo tanto » is added beside « por tanto »."
+    },
+    {
+      "owner": "David",
+      "decision": "Choose whether optional lexical links are introduced now or deferred (recommended: defer unless exact-form and semantic policy are both approved)."
+    }
+  ],
+  "preconditions": [
+    "Cleanly identify and preserve all pre-existing repository changes.",
+    "Capture a canonical connector_help snapshot, table definition, row count and deterministic hash before any write.",
+    "Confirm backup destination, restoration procedure and authenticated ownership of any inserted row.",
+    "Run no schema migration: the current table can already reference all documented languages.",
+    "Refuse execution if the database state is neither the expected initial state nor a recognized idempotent final state."
+  ],
+  "phases": [
+    {
+      "order": 0,
+      "name": "Human catalogue freeze",
+      "actions": [
+        "Review proposed_multilingual_matrix.json field by field.",
+        "Record approvals and unresolved variants without changing the database.",
+        "Freeze a machine-readable approved plan with its own SHA-256."
+      ],
+      "rollback": "Not applicable; documentation only."
+    },
+    {
+      "order": 1,
+      "name": "Capability before data",
+      "actions": [
+        "Replace the scattered ES/FR allow-lists with one explicit five-language connector-help capability source.",
+        "Keep the generic language catalogue unchanged.",
+        "Update public/admin validation, repository lookup and analysis consistently.",
+        "Update the connector-help contract and tests without changing Seven Sieves."
+      ],
+      "rollback": "Revert only the isolated capability commit; no data will yet have changed."
+    },
+    {
+      "order": 2,
+      "name": "Transactional proposed-row insertion",
+      "actions": [
+        "Insert only approved missing IT/PT/EN rows, initially PROPOSED.",
+        "Use explicit language lookup, normalized expression, function and source label; never rely on auto-increment ranges alone.",
+        "Keep the existing 12 rows and their identifiers; delete nothing.",
+        "Mirror the repository's stricter conflict rule: no second VALIDATED row with the same normalized expression in one language, even under another function.",
+        "Commit only after count, field coverage, uniqueness and exact inserted-set reconciliation pass."
+      ],
+      "expected_default_delta": {
+        "rows_before": 12,
+        "new_proposed_rows": 15,
+        "rows_after": 27,
+        "existing_secondary_rows_preserved": ["FR mais", "ES pero"]
+      },
+      "rollback": "Within the transaction on failure; after commit, delete only rows matching the frozen plan fingerprint and source label, then reconcile the original snapshot exactly."
+    },
+    {
+      "order": 3,
+      "name": "Validation workflow",
+      "actions": [
+        "Expose and review PROPOSED rows through the existing administration workflow.",
+        "Promote rows to VALIDATED only after recorded linguistic and pedagogical approval.",
+        "Keep rejected or unresolved candidates non-public."
+      ],
+      "rollback": "Return only Mission 217 rows to PROPOSED using the authenticated frozen set."
+    },
+    {
+      "order": 4,
+      "name": "Canonical seed alignment",
+      "actions": [
+        "After successful canonical reconciliation, update the current draft seed so fresh environments do not diverge.",
+        "Keep insertion idempotent and preserve human-review status semantics."
+      ],
+      "rollback": "Revert the isolated seed change; canonical database rollback remains independent."
+    },
+    {
+      "order": 5,
+      "name": "End-to-end verification",
+      "actions": [
+        "Run static syntax and targeted automated tests.",
+        "Exercise public/admin HTTP filters for all five languages.",
+        "Exercise POST /analysis with one candidate per language and all multi-token candidates.",
+        "Verify the learner toggle remains hidden by default and independent from Seven Sieves.",
+        "Perform a human Chromium recipe and record it separately from Codex checks."
+      ],
+      "rollback": "No mutation during recipe; on failure, stop activation and keep new rows PROPOSED."
+    }
+  ],
+  "idempotence_contract": {
+    "initial_state": "Exact expected count/hash and no Mission 217 source rows.",
+    "final_state": "Every frozen candidate exists once with the expected fields and no unexpected source rows.",
+    "partial_state": "Some, but not all, frozen candidates exist or fields differ; refuse automatic repair and report a reconciliation diff.",
+    "unknown_state": "Unexpected duplicates, source ownership ambiguity or initial hash mismatch; abort before write.",
+    "rerun_expected_change_count": 0
+  },
+  "minimum_test_matrix": [
+    "Case-insensitive matching for each language.",
+    "Accent-sensitive negative cases.",
+    "Leading/trailing punctuation accepted; punctuation inside a multi-token expression rejected.",
+    "Collapsed spaces, repeated spaces and newlines inside multi-token expressions.",
+    "Two-token candidates: sin embargo, no entanto, de plus, parce que, além disso.",
+    "Optional three-token candidate if approved: por lo tanto.",
+    "Longest-match and token-overlap collision behavior.",
+    "All five discourse-function labels in the learner view.",
+    "Public data excludes PROPOSED rows until explicit validation.",
+    "Teacher view consumes only the count; learner view consumes details.",
+    "No eighth sieve and no change to Seven Sieves results."
+  ],
+  "demo_30_to_45_seconds": [
+    "Open a prepared learner session containing five short sentences, one per language.",
+    "Show that Seven Sieves results are already visible while reading aids remain hidden.",
+    "Click « Afficher les aides à la lecture ».",
+    "Point out one multi-token match (« Sin embargo » or « Além disso »), its human function label, hint, contextual example and caution.",
+    "Hide the aids again and state that this is optional scaffolding, not an eighth sieve."
+  ],
+  "versioning": "To be decided per affected component during Mission 217; Mission 216 is documentary and changes no application version."
+}
