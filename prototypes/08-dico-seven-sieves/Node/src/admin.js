@@ -1,5 +1,6 @@
 const { normalizeClient, toLookupKey } = require("./analysis");
 const { canonicalizeEntryKey } = require("../../admin/js/entry-key-canonicalization-0.1.js");
+const { connectorHelpCapableLanguages } = require("./connector-help-capability");
 
 const MAX_FORMS = 20;
 const ALLOWED_RELATION_TYPES = new Set([
@@ -14,7 +15,6 @@ const ALLOWED_INFLECTED_FORM_STATUSES = new Set([
   "REJECTED",
   "ARCHIVED",
 ]);
-const ALLOWED_CONNECTOR_HELP_LANGUAGES = new Set(["es", "fr"]);
 const ALLOWED_CONNECTOR_HELP_STATUSES = new Set([
   "PROPOSED",
   "VALIDATED",
@@ -52,14 +52,12 @@ function validateAdminConnectorHelp(body, languages) {
   }
 
   const language = typeof body.language === "string" ? body.language.trim().toLowerCase() : "";
-  const available = new Set(languages
-    .filter((item) => item.is_active !== false)
-    .map((item) => item.code));
-  if (!available.has(language) || !ALLOWED_CONNECTOR_HELP_LANGUAGES.has(language)) {
+  const available = new Set(connectorHelpCapableLanguages(languages).map((item) => item.code));
+  if (!available.has(language)) {
     return {
       ...invalid(
       "UNSUPPORTED_CONNECTOR_LANGUAGE",
-      "La langue doit être une langue active parmi es ou fr.",
+      "La langue doit être active et documentée pour les aides à la lecture.",
       "language"
       ),
       status: 422,
@@ -446,7 +444,6 @@ function validateAdminInflectedForm(body) {
 }
 
 module.exports = {
-  ALLOWED_CONNECTOR_HELP_LANGUAGES,
   ALLOWED_CONNECTOR_HELP_STATUSES,
   ALLOWED_DISCOURSE_FUNCTIONS,
   ALLOWED_INFLECTED_FORM_STATUSES,

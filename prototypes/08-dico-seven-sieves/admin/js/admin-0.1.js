@@ -14,6 +14,7 @@ let connectorHelpItems = [];
 let connectorHelpOffset = 0;
 let connectorHelpTotal = 0;
 let editingConnectorHelpId = null;
+let connectorHelpLanguages = [];
 
 const apiStatus = document.getElementById("apiStatus");
 const modelCounts = document.getElementById("modelCounts");
@@ -74,6 +75,7 @@ const connectorPreviousButton = document.getElementById("connectorPreviousButton
 const connectorNextButton = document.getElementById("connectorNextButton");
 const connectorPaginationLabel = document.getElementById("connectorPaginationLabel");
 const connectorFunctionReference = document.getElementById("connectorFunctionReference");
+const connectorLanguage = document.getElementById("connectorLanguage");
 
 const PUBLIC_LABELS = {
   language: "Langue référencée",
@@ -353,6 +355,7 @@ async function loadDashboard() {
       loadRelations(),
       loadInflectedForms(),
       loadConnectorHelpFunctions(),
+      loadConnectorHelpLanguages(),
       loadConnectorHelps(),
     ]);
     setApiState("online", "API connectée");
@@ -676,6 +679,45 @@ async function loadConnectorHelpFunctions() {
   renderConnectorHelpFunctions(data.items);
 }
 
+function connectorLanguageOption(language) {
+  const option = document.createElement("option");
+  option.value = language.code;
+  option.textContent = `${language.name} — ${language.code.toUpperCase()}`;
+  return option;
+}
+
+function appendConnectorLanguageGroup(select, label, languages) {
+  if (!languages.length) return;
+  const group = document.createElement("optgroup");
+  group.label = label;
+  languages.forEach((language) => group.appendChild(connectorLanguageOption(language)));
+  select.appendChild(group);
+}
+
+function renderConnectorHelpLanguages(languages) {
+  connectorHelpLanguages = languages;
+  const romanceLanguages = connectorHelpLanguages.filter((language) => language.is_romance);
+  const comparisonLanguages = connectorHelpLanguages.filter((language) => !language.is_romance);
+  connectorLanguage.replaceChildren();
+  connectorLanguageFilter.replaceChildren();
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "Toutes les langues";
+  connectorLanguageFilter.appendChild(allOption);
+  for (const select of [connectorLanguage, connectorLanguageFilter]) {
+    appendConnectorLanguageGroup(select, "Langues romanes documentées", romanceLanguages);
+    appendConnectorLanguageGroup(select, "Langue de comparaison — non romane", comparisonLanguages);
+  }
+  connectorLanguage.value = connectorHelpLanguages.some((language) => language.code === "es")
+    ? "es"
+    : connectorHelpLanguages[0]?.code || "";
+}
+
+async function loadConnectorHelpLanguages() {
+  const data = await apiRequest("/connector-help-languages");
+  renderConnectorHelpLanguages(data.languages);
+}
+
 function renderConnectorHelps(items, data) {
   connectorHelpItems = items;
   connectorHelpTableBody.replaceChildren();
@@ -740,6 +782,9 @@ async function loadConnectorHelps(offset = connectorHelpOffset) {
 function resetConnectorHelpForm() {
   editingConnectorHelpId = null;
   connectorHelpForm.reset();
+  connectorLanguage.value = connectorHelpLanguages.some((language) => language.code === "es")
+    ? "es"
+    : connectorHelpLanguages[0]?.code || "";
   document.getElementById("connectorTitle").value = "Connecteur logique";
   document.getElementById("connectorSourceLabel").value = "manual_admin_v0";
   document.getElementById("connectorCaution").value = "La fonction exacte peut dépendre du contexte.";

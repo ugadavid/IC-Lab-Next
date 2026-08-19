@@ -203,9 +203,7 @@ function clampConfidence(value, fallback) {
 }
 
 function buildConnectorHelpEnrichments(request, connectorHelps = []) {
-  if (!new Set(["es", "fr"]).has(request.source_language) || connectorHelps.length === 0) {
-    return [];
-  }
+  if (connectorHelps.length === 0) return [];
 
   const wordTokens = request.tokens.filter((token) => token.kind === "word");
   const candidates = connectorHelps

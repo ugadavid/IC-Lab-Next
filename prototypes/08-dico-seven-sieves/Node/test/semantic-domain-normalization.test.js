@@ -72,7 +72,7 @@ test("les trois interfaces présentent l’aide discrète et leurs versions baby
   const domain = fs.readFileSync(path.join(root, "index-admin-ai-domain-0.1.html"), "utf8");
   const text = fs.readFileSync(path.join(root, "index-admin-ai-text-0.1.html"), "utf8");
   for (const html of [main, domain, text]) assert.match(html, /français naturel[^<]*minuscules[^<]*accents[^<]*espaces/);
-  assert.match(main, /app-version" content="0\.1\.7"/);
+  assert.match(main, /app-version" content="0\.1\.8"/);
   assert.match(domain, /app-version" content="0\.1\.4"/);
   assert.match(text, /app-version" content="0\.1\.14"/);
 });

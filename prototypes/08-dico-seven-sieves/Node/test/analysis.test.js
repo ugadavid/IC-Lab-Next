@@ -8,7 +8,7 @@ const {
   validateRequest,
 } = require("../src/analysis");
 
-const languages = ["es", "fr", "it", "pt"].map((code) => ({ code }));
+const languages = ["es", "fr", "it", "pt", "en"].map((code) => ({ code }));
 
 test("tokenize uses JavaScript-compatible UTF-16 offsets", () => {
   const text = "¡😀 Organización!";
@@ -300,6 +300,62 @@ test("analysis recognizes French connector spans and ignores case", () => {
   });
   assert.equal(response.pedagogical_enrichments[0].expression, "PARCE QUE");
   assert.deepEqual(response.pedagogical_enrichments[0].token_indexes, [0, 1]);
+});
+
+test("analysis accepts Italian, Portuguese, and English with an empty help catalogue", () => {
+  for (const code of ["it", "pt", "en"]) {
+    const validation = validateRequest({
+      contract_version: "0.1",
+      text: "Testo de controlo for comparison.",
+      source_language: code,
+      mediation_language: "fr",
+      comparison_languages: [],
+      sieves: [],
+    }, languages);
+    assert.equal(validation.ok, true, code);
+    const response = analyze(validation.value, {
+      sourceForms: [], relatedForms: [], relations: [], rules: [], connectorHelps: [],
+    });
+    assert.deepEqual(response.pedagogical_enrichments, [], code);
+  }
+});
+
+test("connector matching has no language hardcode once a documented help exists", () => {
+  const validation = validateRequest({
+    contract_version: "0.1",
+    text: "Tuttavia il testo continua.",
+    source_language: "it",
+    mediation_language: "fr",
+    comparison_languages: [],
+    sieves: [],
+  }, languages);
+  const response = analyze(validation.value, {
+    sourceForms: [], relatedForms: [], relations: [], rules: [],
+    connectorHelps: [{
+      id: 901,
+      normalized_expression: "tuttavia",
+      discourse_function: "OPPOSITION",
+      pedagogical_title: "Connecteur logique",
+      pedagogical_hint: "Une opposition est probablement introduite.",
+    }],
+  });
+  assert.equal(response.pedagogical_enrichments.length, 1);
+  assert.equal(response.pedagogical_enrichments[0].expression, "Tuttavia");
+});
+
+test("analysis validation rejects referenced and unknown source languages", () => {
+  for (const code of ["ca", "gl", "oc", "ro", "co", "sc", "rm", "xx"]) {
+    const validation = validateRequest({
+      contract_version: "0.1",
+      text: "Texte de contrôle",
+      source_language: code,
+      mediation_language: "fr",
+      comparison_languages: [],
+      sieves: [],
+    }, languages);
+    assert.equal(validation.ok, false, code);
+    assert.equal(validation.code, "INVALID_LANGUAGE", code);
+  }
 });
 
 test("analysis preserves accents and rejects internal punctuation", () => {

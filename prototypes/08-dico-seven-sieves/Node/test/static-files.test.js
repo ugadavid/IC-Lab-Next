@@ -34,7 +34,7 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.match(await admin.text(), /Dico-IC Admin/);
 
     const adminHtml = await (await fetch(`${server.baseUrl}/admin-app/index-admin-0.1.html`)).text();
-    assert.match(adminHtml, /app-version" content="0\.1\.7"/);
+    assert.match(adminHtml, /app-version" content="0\.1\.8"/);
     assert.match(adminHtml, /Domaine en français naturel : minuscules, accents et espaces/);
     assert.match(adminHtml, /Catalogue des langues/);
     assert.match(adminHtml, /Dico-IC documente actuellement quatre langues romanes/);
@@ -46,6 +46,10 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.match(adminScript, /langue de comparaison — non romane/);
     assert.match(adminScript, /Prête à accueillir des contenus validés/);
     assert.match(adminScript, /Romance: "Romane", Germanic: "Germanique"/);
+    assert.match(adminScript, /apiRequest\("\/connector-help-languages"\)/);
+    assert.match(adminScript, /Langues romanes documentées/);
+    assert.match(adminScript, /Langue de comparaison — non romane/);
+    assert.doesNotMatch(adminHtml, /<option value="(?:fr|es|it|pt|en)">/);
 
     const entryView = await fetch(`${server.baseUrl}/admin-app/index-admin-entry-0.1.1.html?entry_key=INFORMATION_DATA`);
     assert.equal(entryView.status, 200);

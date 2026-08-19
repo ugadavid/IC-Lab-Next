@@ -373,10 +373,13 @@ Règles V0 :
 
 - reconnaissance exacte, insensible à la casse et sensible aux accents ;
 - ponctuation admise avant ou après, mais pas entre les mots d'une locution ;
+- la langue source doit être active et `DOCUMENTED` dans le modèle `language` ;
+- les capacités actuelles sont FR, ES, IT, PT et EN, déterminées depuis ce modèle et non par une liste propre à `connector_help` ;
+- EN reste une langue de comparaison non romane, jamais une langue romane supplémentaire ;
 - seuls les objets `connector_help` au statut `VALIDATED` sont utilisés ;
 - une occurrence multi-token produit un seul enrichissement ;
 - Seven Sieves utilise `token_indexes`, `start` et `end` sans recalcul linguistique ;
-- l'absence de résultat est représentée par `pedagogical_enrichments: []`.
+- une langue utilisable sans aide validée produit normalement `pedagogical_enrichments: []`.
 
 L'ajout de ce tableau reste compatible avec `contract_version = 0.1` : il est additif et les anciens clients peuvent l'ignorer.
 

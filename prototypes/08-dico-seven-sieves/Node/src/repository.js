@@ -1,5 +1,10 @@
 const mysql = require("mysql2/promise");
 const { canonicalizeEntryKey } = require("../../admin/js/entry-key-canonicalization-0.1.js");
+const {
+  connectorHelpCapableLanguages,
+  connectorHelpLanguagePresentation,
+  isConnectorHelpCapableLanguage,
+} = require("./connector-help-capability");
 
 function createPool(overrides = {}) {
   return mysql.createPool({
@@ -196,13 +201,13 @@ function createRepository(pool) {
 
   async function resolveConnectorHelpReferences(connection, connectorHelp) {
     const [languageRows] = await connection.execute(`
-      SELECT id, code
+      SELECT id, code, is_active, documentation_status
       FROM language
-      WHERE code = ? AND is_active = 1 AND documentation_status = 'DOCUMENTED'
+      WHERE code = ?
       FOR UPDATE
     `, [connectorHelp.language]);
-    if (languageRows.length === 0 || !new Set(["es", "fr"]).has(languageRows[0].code)) {
-      const error = new Error("La langue Connector Help doit être une langue active parmi es ou fr.");
+    if (languageRows.length === 0 || !isConnectorHelpCapableLanguage(languageRows[0])) {
+      const error = new Error("La langue Connector Help doit être active et documentée.");
       error.code = "UNSUPPORTED_CONNECTOR_LANGUAGE";
       throw error;
     }
@@ -276,7 +281,7 @@ function createRepository(pool) {
   return {
     async getLanguages() {
       const [rows] = await pool.execute(`
-        SELECT code, name, family, is_romance, is_active
+        SELECT code, name, family, is_romance, is_active, documentation_status
         FROM language
         WHERE is_active = 1
           AND documentation_status = 'DOCUMENTED'
@@ -288,7 +293,17 @@ function createRepository(pool) {
         family: row.family,
         is_romance: Boolean(row.is_romance),
         is_active: Boolean(row.is_active),
+        documentation_status: row.documentation_status,
       }));
+    },
+
+    async getConnectorHelpLanguages() {
+      const [rows] = await pool.execute(`
+        SELECT code, name, family, is_romance, is_active, documentation_status
+        FROM language
+        ORDER BY is_romance DESC, name, code
+      `);
+      return connectorHelpCapableLanguages(rows).map(connectorHelpLanguagePresentation);
     },
 
     async getDocumentableLanguages() {
@@ -348,9 +363,7 @@ function createRepository(pool) {
     },
 
     async loadAnalysisResources(request) {
-      let connectorHelps = [];
-      if (new Set(["es", "fr"]).has(request.source_language)) {
-        [connectorHelps] = await pool.execute(`
+      const [connectorHelps] = await pool.execute(`
           SELECT
             ch.id,
             l.code AS language_code,
@@ -370,7 +383,6 @@ function createRepository(pool) {
             AND ch.status = 'VALIDATED'
           ORDER BY CHAR_LENGTH(ch.normalized_expression) DESC, ch.id ASC
         `, [request.source_language]);
-      }
 
       const lookupKeys = [...new Set(request.tokens
         .filter((token) => token.kind === "word")

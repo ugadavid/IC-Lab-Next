@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.7">
-  <title>Dico-IC Admin V0.1.7</title>
+  <meta name="app-version" content="0.1.8">
+  <title>Dico-IC Admin V0.1.8</title>
   <link rel="stylesheet" href="./css/admin-0.1.css">
 </head>
 <body>
@@ -14,7 +14,7 @@
       <p>Consultation et enrichissement local de la base de connaissances</p>
     </div>
     <div class="header-actions">
-      <span class="environment-label">V0.1.7 locale</span>
+      <span class="environment-label">V0.1.8 locale</span>
       <span id="apiStatus" class="api-status" data-state="loading">Connexion à l’API…</span>
     </div>
   </header>
@@ -276,7 +276,7 @@
           <h2 id="connectorHelpsTitle">Aides discursives</h2>
         </div>
       </div>
-      <p class="section-note">Associez une expression discursive ES ou FR à une aide de lecture validée. Seven Sieves les reçoit par <code>/analysis</code>, indépendamment des sept tamis.</p>
+      <p class="section-note">Associez une expression discursive d’une langue active et documentée à une aide de lecture. Quatre langues romanes et l’anglais de comparaison sont disponibles ; Seven Sieves reçoit les aides par <code>/analysis</code>, indépendamment des sept tamis.</p>
       <details class="context-help">
         <summary>? Comprendre</summary>
         <div><strong>Une aide discursive</strong> explique le rôle probable d’une expression qui organise le texte. Elle est rédigée puis vérifiée dans Dico-IC et peut guider la lecture dans Seven Sieves. Exemple : « sin embargo » signale une opposition.</div>
@@ -288,10 +288,7 @@
           <div class="connector-editor">
             <div class="field">
               <label for="connectorLanguage">Langue *</label>
-              <select id="connectorLanguage">
-                <option value="es">ES — Espagnol</option>
-                <option value="fr">FR — Français</option>
-              </select>
+              <select id="connectorLanguage"></select>
             </div>
             <div class="field">
               <label for="connectorExpression">Expression *</label>
@@ -359,8 +356,6 @@
           <input id="connectorHelpSearchInput" type="search" maxlength="100" placeholder="Expression, aide ou source">
           <select id="connectorLanguageFilter" aria-label="Filtrer par langue">
             <option value="">Toutes les langues</option>
-            <option value="es">ES</option>
-            <option value="fr">FR</option>
           </select>
           <select id="connectorFunctionFilter" aria-label="Filtrer par fonction">
             <option value="">Toutes les fonctions</option>

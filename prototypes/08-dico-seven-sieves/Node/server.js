@@ -11,7 +11,6 @@ const {
   validateRequest,
 } = require("./src/analysis");
 const {
-  ALLOWED_CONNECTOR_HELP_LANGUAGES,
   ALLOWED_CONNECTOR_HELP_STATUSES,
   ALLOWED_DISCOURSE_FUNCTIONS,
   ALLOWED_INFLECTED_FORM_STATUSES,
@@ -156,14 +155,24 @@ function createApp(repository, options = {}) {
     }
   });
 
+  app.get("/connector-help-languages", async (_req, res, next) => {
+    try {
+      const languages = await repository.getConnectorHelpLanguages();
+      res.json({ contract_version: CONTRACT_VERSION, languages });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   app.get("/connector-helps", async (req, res, next) => {
     try {
       const language = typeof req.query.language === "string" ? req.query.language.toLowerCase() : "";
       const discourseFunction = typeof req.query.function === "string"
         ? req.query.function.toUpperCase()
         : "";
-      if (language && !ALLOWED_CONNECTOR_HELP_LANGUAGES.has(language)) {
-        return errorResponse(res, 400, "INVALID_CONNECTOR_LANGUAGE", "language doit valoir es ou fr.", "language");
+      const connectorHelpLanguages = await repository.getConnectorHelpLanguages();
+      if (language && !connectorHelpLanguages.some((item) => item.code === language)) {
+        return errorResponse(res, 400, "INVALID_CONNECTOR_LANGUAGE", "La langue doit être active et documentée pour les aides à la lecture.", "language");
       }
       if (discourseFunction && !ALLOWED_DISCOURSE_FUNCTIONS.has(discourseFunction)) {
         return errorResponse(res, 400, "INVALID_DISCOURSE_FUNCTION", "La fonction discursive est invalide.", "function");
@@ -196,8 +205,9 @@ function createApp(repository, options = {}) {
     try {
       const language = typeof req.query.language === "string" ? req.query.language.toLowerCase() : "";
       const expression = typeof req.query.expression === "string" ? req.query.expression : "";
-      if (!ALLOWED_CONNECTOR_HELP_LANGUAGES.has(language)) {
-        return errorResponse(res, 400, "INVALID_CONNECTOR_LANGUAGE", "language doit valoir es ou fr.", "language");
+      const connectorHelpLanguages = await repository.getConnectorHelpLanguages();
+      if (!connectorHelpLanguages.some((item) => item.code === language)) {
+        return errorResponse(res, 400, "INVALID_CONNECTOR_LANGUAGE", "La langue doit être active et documentée pour les aides à la lecture.", "language");
       }
       if (!expression.trim() || expression.length > 255) {
         return errorResponse(res, 400, "INVALID_CONNECTOR_EXPRESSION", "expression est obligatoire.", "expression");
@@ -277,8 +287,9 @@ function createApp(repository, options = {}) {
         ? req.query.function.toUpperCase()
         : "";
       const status = typeof req.query.status === "string" ? req.query.status.toUpperCase() : "";
-      if (language && !ALLOWED_CONNECTOR_HELP_LANGUAGES.has(language)) {
-        return errorResponse(res, 400, "INVALID_CONNECTOR_LANGUAGE", "language doit valoir es ou fr.", "language");
+      const connectorHelpLanguages = await repository.getConnectorHelpLanguages();
+      if (language && !connectorHelpLanguages.some((item) => item.code === language)) {
+        return errorResponse(res, 400, "INVALID_CONNECTOR_LANGUAGE", "La langue doit être active et documentée pour les aides à la lecture.", "language");
       }
       if (discourseFunction && !ALLOWED_DISCOURSE_FUNCTIONS.has(discourseFunction)) {
         return errorResponse(res, 400, "INVALID_DISCOURSE_FUNCTION", "La fonction discursive est invalide.", "function");
