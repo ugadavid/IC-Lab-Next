@@ -10,6 +10,16 @@
   const TEACHER_PAGE = "./index-teacher-0.1.html";
   const STUDENT_PAGE = "./index-student-0.1.html";
 
+  function preparationSignature(preparation) {
+    const validPreparation = validatePreparation(preparation);
+    return JSON.stringify({
+      text: validPreparation.text,
+      source_language: validPreparation.source_language,
+      mediation_language: validPreparation.mediation_language,
+      comparison_languages: [...validPreparation.comparison_languages],
+    });
+  }
+
   function escapeHtml(value) {
     return String(value)
       .replaceAll("&", "&amp;")
@@ -90,10 +100,17 @@
     }
     const preparation = validatePreparation(activity.preparation);
     const analysis = validateAnalysisPackage(activity.analysis);
+    if (activity.preparation_signature !== undefined
+      && activity.preparation_signature !== preparationSignature(preparation)) {
+      throw new Error("La signature des paramètres préparés est invalide.");
+    }
     if (analysis.text !== preparation.text) throw new Error("Le texte préparé ne correspond pas à l’analyse.");
     if (analysis.languages.source !== preparation.source_language
       || analysis.languages.mediation !== preparation.mediation_language) {
       throw new Error("Les langues préparées ne correspondent pas à l’analyse.");
+    }
+    if (JSON.stringify(analysis.languages.comparison) !== JSON.stringify(preparation.comparison_languages)) {
+      throw new Error("Les langues de comparaison préparées ne correspondent pas à l’analyse.");
     }
     if (typeof activity.prepared_at !== "string" || Number.isNaN(Date.parse(activity.prepared_at))) {
       throw new Error("Date de préparation invalide.");
@@ -106,6 +123,7 @@
       format_version: FORMAT_VERSION,
       prepared_at: preparedAt,
       preparation,
+      preparation_signature: preparationSignature(preparation),
       analysis,
     });
   }
@@ -128,6 +146,10 @@
         activity: null,
       };
     }
+  }
+
+  function invalidateActivity(storage) {
+    storage.removeItem(STORAGE_KEY);
   }
 
   function summarizeAnalysis(analysis) {
@@ -257,6 +279,8 @@
     createActivity,
     createExplorationState,
     escapeHtml,
+    invalidateActivity,
+    preparationSignature,
     readActivity,
     normalizeReadingAids,
     readingAidFunctionLabel,

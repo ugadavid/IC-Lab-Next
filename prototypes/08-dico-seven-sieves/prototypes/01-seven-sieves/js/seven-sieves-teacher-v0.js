@@ -3,12 +3,19 @@
 const ANALYSIS_API_URL = "/analysis";
 const DEFAULT_SIEVES = [1, 2, 3, 4, 5, 6, 7];
 const sessionContract = window.SevenSievesSession;
+const lifecycleContract = window.SevenSievesAnalysisLifecycle;
 
 const sourceTextInput = document.getElementById("sourceTextInput");
 const sourceLanguage = document.getElementById("sourceLanguage");
 const mediationLanguage = document.getElementById("mediationLanguage");
+const comparisonControls = [...document.querySelectorAll('input[name="comparisonLanguage"]')];
+const preparationControls = [sourceTextInput, sourceLanguage, mediationLanguage, ...comparisonControls];
+const preparationCard = document.getElementById("preparationCard");
 const analyzeButton = document.getElementById("analyzeButton");
+const cancelAnalysisButton = document.getElementById("cancelAnalysisButton");
 const openStudentButton = document.getElementById("openStudentButton");
+const analysisProgress = document.getElementById("analysisProgress");
+const analysisElapsed = document.getElementById("analysisElapsed");
 const apiStatus = document.getElementById("apiStatus");
 const teacherFeedback = document.getElementById("teacherFeedback");
 const resultSummary = document.getElementById("resultSummary");
@@ -22,7 +29,8 @@ function setApiStatus(state, message) {
 }
 
 function getComparisonLanguages() {
-  return [...document.querySelectorAll('input[name="comparisonLanguage"]:checked')]
+  return comparisonControls
+    .filter((input) => input.checked)
     .map((input) => input.value)
     .filter((code) => code !== sourceLanguage.value);
 }
@@ -36,15 +44,28 @@ function currentPreparation() {
   };
 }
 
-function resetPreparedResult() {
+function clearPreparedActivity() {
   preparedActivity = null;
-  window.sessionStorage.removeItem(sessionContract.STORAGE_KEY);
+  sessionContract.invalidateActivity(window.sessionStorage);
   openStudentButton.disabled = true;
   resultSummary.hidden = true;
   warningList.hidden = true;
   warningList.textContent = "";
-  setApiStatus("idle", "Prête pour une analyse");
-  teacherFeedback.textContent = "Les choix sont modifiables jusqu’au lancement de l’analyse.";
+}
+
+function setPreparationLocked(locked) {
+  preparationControls.forEach((control) => { control.disabled = locked; });
+  analyzeButton.disabled = locked;
+  cancelAnalysisButton.hidden = !locked;
+  analysisProgress.hidden = !locked;
+  preparationCard.setAttribute("aria-busy", String(locked));
+}
+
+function invalidatePreparedResult() {
+  clearPreparedActivity();
+  lifecycle.invalidate();
+  setApiStatus("invalidated", "Nouvelle analyse nécessaire");
+  teacherFeedback.textContent = "Les paramètres ont changé. Relancez l’analyse pour préparer une nouvelle activité.";
 }
 
 function renderSummary(activity) {
@@ -69,7 +90,60 @@ function renderSummary(activity) {
   }
 }
 
-async function analyzeWithDicoIc() {
+function handleLifecycleTransition(state) {
+  if (state === "running") {
+    setPreparationLocked(true);
+    setApiStatus("loading", "Analyse en cours…");
+    teacherFeedback.textContent = "Analyse Dico-IC en cours… Aucun résultat précédent ne sera réutilisé.";
+    return;
+  }
+
+  if (["success", "cancelled", "timed_out", "error"].includes(state)) setPreparationLocked(false);
+  if (state === "cancelled") {
+    setApiStatus("cancelled", "Analyse annulée");
+    teacherFeedback.textContent = "Analyse annulée. Modifiez les paramètres ou relancez la préparation.";
+  } else if (state === "timed_out") {
+    setApiStatus("error", "Délai d’analyse dépassé");
+    teacherFeedback.textContent = "L’analyse a dépassé le délai autorisé. Vérifiez le service Dico-IC puis relancez la préparation.";
+  } else if (state === "error") {
+    setApiStatus("error", "Analyse impossible");
+    teacherFeedback.textContent = "Dico-IC n’a pas pu préparer l’activité. Vérifiez le service puis relancez l’analyse.";
+  }
+}
+
+const lifecycle = lifecycleContract.createAnalysisLifecycle({
+  timeoutMs: lifecycleContract.DEFAULT_ANALYSIS_TIMEOUT_MS,
+  onTransition: handleLifecycleTransition,
+  onElapsed: (seconds) => { analysisElapsed.textContent = `${seconds} s`; },
+});
+
+async function requestAnalysis(preparation, signal) {
+  const response = await fetch(ANALYSIS_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      Accept: "application/json",
+    },
+    signal,
+    body: JSON.stringify({
+      contract_version: "0.1",
+      ...preparation,
+      text: preparation.text,
+      sieves: DEFAULT_SIEVES,
+    }),
+  });
+  let data;
+  try {
+    data = await response.json();
+  } catch (error) {
+    throw new Error("Réponse JSON invalide.", { cause: error });
+  }
+  if (!response.ok) throw new Error(`Réponse HTTP ${response.status}.`);
+  return data;
+}
+
+function analyzeWithDicoIc() {
+  if (lifecycle.isRunning()) return;
   const preparation = currentPreparation();
   if (!preparation.text.trim()) {
     setApiStatus("error", "Texte requis");
@@ -78,54 +152,43 @@ async function analyzeWithDicoIc() {
     return;
   }
 
-  preparedActivity = null;
-  window.sessionStorage.removeItem(sessionContract.STORAGE_KEY);
-  openStudentButton.disabled = true;
-  resultSummary.hidden = true;
-  warningList.hidden = true;
-  analyzeButton.disabled = true;
-  setApiStatus("loading", "Analyse en cours…");
-  teacherFeedback.textContent = "Dico-IC prépare le paquet complet de l’activité…";
-
-  try {
-    const response = await fetch(ANALYSIS_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-        Accept: "application/json",
+  clearPreparedActivity();
+  analysisElapsed.textContent = "0 s";
+  lifecycle.start(
+    ({ signal }) => requestAnalysis(preparation, signal),
+    {
+      onSuccess(data) {
+        const activity = sessionContract.createActivity(preparation, data);
+        sessionContract.writeActivity(window.sessionStorage, activity);
+        preparedActivity = activity;
+        renderSummary(activity);
+        openStudentButton.disabled = false;
+        setApiStatus("ready", "Activité prête");
+        teacherFeedback.textContent = "Le paquet complet de cette analyse est conservé pour cet onglet. Vous pouvez ouvrir la vue apprenant.";
       },
-      body: JSON.stringify({
-        contract_version: "0.1",
-        ...preparation,
-        text: preparation.text,
-        sieves: DEFAULT_SIEVES,
-      }),
-    });
-    const data = await response.json().catch(() => null);
-    if (!response.ok) throw new Error(data?.error?.message || `Réponse HTTP ${response.status}.`);
-
-    preparedActivity = sessionContract.createActivity(preparation, data);
-    sessionContract.writeActivity(window.sessionStorage, preparedActivity);
-    renderSummary(preparedActivity);
-    openStudentButton.disabled = false;
-    setApiStatus("ready", "Activité prête");
-    teacherFeedback.textContent = "Le paquet complet est conservé pour cet onglet. Vous pouvez ouvrir la vue apprenant.";
-  } catch (error) {
-    setApiStatus("error", "Analyse impossible");
-    teacherFeedback.textContent = `Dico-IC n’a pas préparé l’activité : ${error.message}`;
-  } finally {
-    analyzeButton.disabled = false;
-  }
+      onError(error) {
+        clearPreparedActivity();
+        console.error("Échec de l’analyse Seven Sieves", error);
+      },
+    },
+  );
 }
 
 function restoreSessionIfAvailable() {
   const result = sessionContract.readActivity(window.sessionStorage);
-  if (result.status !== "ok") return;
+  if (result.status !== "ok") {
+    sessionContract.invalidateActivity(window.sessionStorage);
+    return;
+  }
   preparedActivity = result.activity;
+  if (preparedActivity.preparation_signature === undefined) {
+    preparedActivity.preparation_signature = sessionContract.preparationSignature(preparedActivity.preparation);
+    sessionContract.writeActivity(window.sessionStorage, preparedActivity);
+  }
   sourceTextInput.value = preparedActivity.preparation.text;
   sourceLanguage.value = preparedActivity.preparation.source_language;
   mediationLanguage.value = preparedActivity.preparation.mediation_language;
-  document.querySelectorAll('input[name="comparisonLanguage"]').forEach((input) => {
+  comparisonControls.forEach((input) => {
     input.checked = preparedActivity.preparation.comparison_languages.includes(input.value);
   });
   renderSummary(preparedActivity);
@@ -135,10 +198,16 @@ function restoreSessionIfAvailable() {
 }
 
 analyzeButton.addEventListener("click", analyzeWithDicoIc);
+cancelAnalysisButton.addEventListener("click", () => lifecycle.cancel());
 openStudentButton.addEventListener("click", () => {
-  if (preparedActivity) window.location.href = sessionContract.STUDENT_PAGE;
+  if (!preparedActivity) return;
+  if (preparedActivity.preparation_signature !== sessionContract.preparationSignature(currentPreparation())) {
+    invalidatePreparedResult();
+    return;
+  }
+  window.location.href = sessionContract.STUDENT_PAGE;
 });
-document.querySelectorAll("#sourceTextInput, #sourceLanguage, #mediationLanguage, input[name=\"comparisonLanguage\"]")
-  .forEach((control) => control.addEventListener("input", resetPreparedResult));
+preparationControls.forEach((control) => control.addEventListener("input", invalidatePreparedResult));
+window.addEventListener("pagehide", () => lifecycle.dispose());
 
 restoreSessionIfAvailable();

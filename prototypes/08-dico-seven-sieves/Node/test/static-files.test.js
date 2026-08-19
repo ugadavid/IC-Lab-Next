@@ -85,7 +85,7 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(teacher.status, 200);
     const teacherHtml = await teacher.text();
     assert.match(teacherHtml, /Interface enseignant/);
-    assert.match(teacherHtml, /app-version" content="0\.1\.2"/);
+    assert.match(teacherHtml, /app-version" content="0\.1\.3"/);
     assert.match(teacherHtml, /Durante el día, los estudiantes observan los efectos del cambio climático/);
     assert.match(teacherHtml, /Sin embargo, durante la noche la información sigue circulando/);
     assert.match(teacherHtml, /Ouvrir l’activité en vue apprenant/);
@@ -107,6 +107,10 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     const sessionScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-session-v0.js`);
     assert.equal(sessionScript.status, 200);
     assert.match(await sessionScript.text(), /seven-sieves\.activity\.v/);
+
+    const lifecycleScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-analysis-lifecycle-v0.js`);
+    assert.equal(lifecycleScript.status, 200);
+    assert.match(await lifecycleScript.text(), /DEFAULT_ANALYSIS_TIMEOUT_MS = 15_000/);
 
     const mock = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/mock/analysis-response-v0.json`);
     assert.equal(mock.status, 200);

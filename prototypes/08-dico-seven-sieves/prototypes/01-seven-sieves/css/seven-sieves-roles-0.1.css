@@ -25,6 +25,7 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 .api-status[data-state="ready"] { border-color: #8ed4a7; background: #e9f8ee; color: #185d39; }
 .api-status[data-state="loading"] { border-color: #f0c36b; background: #fff6df; color: #75500c; }
 .api-status[data-state="error"] { border-color: #e7a2a2; background: #fff0f0; color: #832c2c; }
+.api-status[data-state="cancelled"], .api-status[data-state="invalidated"] { border-color: #bdcad8; background: #f4f7fa; color: #52677e; }
 .button { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; padding: 10px 16px; border: 1px solid var(--blue); border-radius: 8px; background: var(--blue); color: white; font-weight: 800; text-decoration: none; }
 .button.secondary { border-color: #8ca0b6; background: white; color: var(--navy); }
 .button.ghost { border-color: #ffffff66; background: transparent; color: white; }
@@ -42,6 +43,9 @@ button:disabled { cursor: not-allowed; opacity: .52; }
 .comparison-options { display: flex; flex-wrap: wrap; gap: 9px 16px; padding-top: 5px; }
 .comparison-options label { display: flex; align-items: center; gap: 6px; font-weight: 700; }
 .teacher-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.button.cancel-analysis { background: #fff; color: var(--red); border: 1px solid #d69696; box-shadow: none; }
+.analysis-progress { display: flex; align-items: center; gap: 12px; margin-top: 14px; color: #52677e; font-size: 14px; }
+.analysis-progress progress { width: min(260px, 55%); height: 12px; accent-color: #4A90E2; }
 .feedback { margin: 14px 0 0; padding: 10px 12px; border-left: 3px solid var(--blue); background: #f2f7fc; color: #354b63; line-height: 1.45; }
 .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
 .metric { padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: #f8fafc; }

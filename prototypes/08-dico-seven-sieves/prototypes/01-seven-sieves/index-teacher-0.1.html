@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="app-version" content="0.1.2">
-  <title>Préparer une exploration Seven Sieves — Enseignant V0.1.2</title>
+  <meta name="app-version" content="0.1.3">
+  <title>Préparer une exploration Seven Sieves — Enseignant V0.1.3</title>
   <link rel="stylesheet" href="./css/seven-sieves-roles-0.1.css">
 </head>
 <body data-seven-sieves-role="teacher">
@@ -15,7 +15,7 @@
       <p>Choisir un court texte et les langues avant de transmettre l’activité à l’apprenant.</p>
     </div>
     <div class="topbar-actions">
-      <span class="version-chip">Enseignant V0.1.2</span>
+      <span class="version-chip">Enseignant V0.1.3</span>
       <span id="apiStatus" class="api-status" data-state="idle">Prête pour une analyse</span>
     </div>
   </header>
@@ -23,7 +23,7 @@
   <main class="teacher-page">
     <p class="teacher-intro">Dico-IC analyse le texte avec les sept tamis. Cette page prépare le paquet ; l’exploration se déroule ensuite dans une vue apprenant distincte.</p>
     <div class="teacher-grid">
-      <section class="card" aria-labelledby="preparationTitle">
+      <section id="preparationCard" class="card" aria-labelledby="preparationTitle" aria-busy="false">
         <h2 id="preparationTitle">Paramètres de l’activité</h2>
         <div class="field">
           <label for="sourceTextInput">Texte à explorer</label>
@@ -63,7 +63,12 @@
 
         <div class="teacher-actions">
           <button id="analyzeButton" class="button" type="button">Lancer l’analyse Dico-IC</button>
+          <button id="cancelAnalysisButton" class="button cancel-analysis" type="button" hidden>Annuler l’analyse</button>
           <button id="openStudentButton" class="button secondary" type="button" disabled>Ouvrir l’activité en vue apprenant</button>
+        </div>
+        <div id="analysisProgress" class="analysis-progress" role="status" aria-live="polite" hidden>
+          <progress aria-label="Analyse Dico-IC en cours"></progress>
+          <span>Analyse en cours · <strong id="analysisElapsed">0 s</strong></span>
         </div>
         <p id="teacherFeedback" class="feedback" aria-live="polite">Les choix sont modifiables jusqu’au lancement de l’analyse.</p>
       </section>
@@ -85,6 +90,7 @@
   </main>
 
   <script src="./js/seven-sieves-session-v0.js"></script>
+  <script src="./js/seven-sieves-analysis-lifecycle-v0.js"></script>
   <script src="./js/seven-sieves-teacher-v0.js"></script>
 </body>
 </html>
