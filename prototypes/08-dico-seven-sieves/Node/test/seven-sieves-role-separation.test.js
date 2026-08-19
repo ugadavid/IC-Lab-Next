@@ -343,3 +343,67 @@ test("student visual identity restores the historical pedagogical palette withou
   assert.match(css, /body\[data-seven-sieves-role="student"\] \.word\.selected/);
   assert.match(css, /body\[data-seven-sieves-role="teacher"\] \.card/);
 });
+
+test("student microcopy classifies all seven sieves without repeating generic principles", () => {
+  const root = path.join(__dirname, "../../prototypes/01-seven-sieves");
+  const student = fs.readFileSync(path.join(root, "index-student-0.1.html"), "utf8");
+  const script = fs.readFileSync(path.join(root, "js/seven-sieves-student-v0.js"), "utf8");
+  const principles = [
+    "Prudence : une ressemblance est un indice à vérifier dans le contexte, pas une traduction automatique.",
+    "Prudence : les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+    "Prudence : la prononciation peut varier selon les régions ; le repère reste ici graphique.",
+    "Prudence : la lecture syntaxique reste simplifiée ; le rôle exact doit être vérifié dans la phrase.",
+    "Les pluriels affichés s’appuient sur des mappings validés dans Dico-IC. Prudence : le rôle exact des infinitifs probables doit être vérifié dans la phrase.",
+    "Prudence : un affixe isolé ne détermine pas le sens complet.",
+  ];
+
+  assert.match(student, /app-version" content="0\.1\.4"/);
+  assert.match(student, /id="sievePrincipleCaution"[^>]*hidden/);
+  for (const principle of principles) {
+    assert.equal(script.split(principle).length - 1, 1, `single principle rendering: ${principle}`);
+  }
+  const principleCautions = script.match(/const SIEVE_PRINCIPLE_CAUTIONS = Object\.freeze\(\{[\s\S]*?\n\}\);/)?.[0] || "";
+  for (const sieveId of [1, 2, 4, 5, 6, 7]) assert.match(principleCautions, new RegExp(`\\n\\s*${sieveId}:`));
+  assert.doesNotMatch(principleCautions, /\n\s*3:/);
+  assert.match(script, /const principleCaution = SIEVE_PRINCIPLE_CAUTIONS\[number\] \|\| ""/);
+  assert.match(script, /sievePrincipleCaution\.hidden = !principleCaution/);
+
+  assert.doesNotMatch(script, /Ce retour n’est pas une note\./);
+  assert.doesNotMatch(`${student}\n${script}`, /\bnotation\b/i);
+  assert.match(script, /Observe quels tamis peuvent éclairer chacun des mots sélectionnés\./);
+
+  const genericCautions = script.match(/const GENERIC_SIEVE_CAUTIONS = Object\.freeze\(\{[\s\S]*?\n\}\);/)?.[0] || "";
+  for (const sieveId of [1, 2, 4, 5, 6, 7]) assert.match(genericCautions, new RegExp(`\\n\\s*${sieveId}:`));
+  assert.doesNotMatch(genericCautions, /\n\s*3:/);
+  assert.match(genericCautions, /Cette ressemblance est un indice/);
+  assert.match(genericCautions, /Les formes comparées sont des aides/);
+  assert.match(genericCautions, /La réalisation varie selon les régions/);
+  assert.match(genericCautions, /Le rôle exact dans la phrase n’est pas analysé en V0/);
+  assert.match(genericCautions, /lecture syntaxique simplifiée et contextuelle/);
+  assert.match(genericCautions, /mapping validé dans Dico-IC/);
+  assert.match(genericCautions, /Le rôle exact doit être vérifié dans la phrase/);
+  assert.match(genericCautions, /Un suffixe isolé ne détermine pas le sens complet/);
+
+  const cautionFormatter = script.match(/function individualCautionText\(enrichment\) \{[\s\S]*?\n\}/)?.[0] || "";
+  assert.match(cautionFormatter, /GENERIC_SIEVE_CAUTIONS\[enrichment\.sieve_id\]/);
+  assert.match(cautionFormatter, /\.includes\(enrichment\.caution\)\) return ""/);
+  assert.match(cautionFormatter, /enrichment\.sieve_id === 3/);
+  assert.match(cautionFormatter, /La forme proposée est confirmée ici par le lexique/);
+  assert.match(cautionFormatter, /Forme confirmée par le lexique : \$\{lexicalConfirmation\[1\]\}\./);
+  assert.match(cautionFormatter, /return `Prudence : \$\{enrichment\.caution\}`/);
+
+  const formatter = script.match(/function formatEnrichmentPlain\(enrichment\) \{[\s\S]*?\n\}/)?.[0] || "";
+  assert.match(formatter, /enrichment\.label/);
+  assert.match(formatter, /formatPayload\(enrichment\.payload\)/);
+  assert.match(formatter, /enrichment\.explanation/);
+  assert.match(formatter, /individualCautionText\(enrichment\)/);
+  assert.match(script, /payload\.forms/);
+  assert.match(script, /payload\.source_form && payload\.mediation_form/);
+  assert.match(script, /tooltip\.textContent = enrichments\.map\(formatEnrichmentPlain\)/);
+  assert.match(script, /activeEnrichments\.map\(enrichmentHtml\)/);
+  assert.match(script, /transformationsBox\.textContent = rows\.length \? rows\.join\("\\n"\)/);
+
+  const sidebar = script.match(/function updateSidebar\(\) \{[\s\S]*?\n\}/)?.[0] || "";
+  assert.match(sidebar, /currentHintsEl\.textContent = sieve\s*\? publicSieveStatus\(sieve\)/);
+  assert.doesNotMatch(sidebar, /sieve\.description/);
+});

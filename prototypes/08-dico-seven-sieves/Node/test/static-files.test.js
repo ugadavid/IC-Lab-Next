@@ -94,7 +94,7 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(student.status, 200);
     const studentHtml = await student.text();
     assert.match(studentHtml, /Activité apprenante/);
-    assert.match(studentHtml, /app-version" content="0\.1\.3"/);
+    assert.match(studentHtml, /app-version" content="0\.1\.4"/);
     assert.match(studentHtml, /Aides à la lecture/);
     assert.match(studentHtml, /Afficher les aides à la lecture \(0\)/);
     assert.match(studentHtml, /Aucune activité n’a encore été préparée/);

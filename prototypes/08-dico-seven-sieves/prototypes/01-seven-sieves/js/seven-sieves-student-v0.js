@@ -8,6 +8,7 @@ const explorationState = sessionContract.createExplorationState();
 const textContainer = document.getElementById("text");
 const sieveTitle = document.getElementById("sieve-title");
 const sieveDescription = document.getElementById("sieve-description");
+const sievePrincipleCaution = document.getElementById("sievePrincipleCaution");
 const activeSieveLabel = document.getElementById("activeSieveLabel");
 const selectedCountEl = document.getElementById("selectedCount");
 const correctCountEl = document.getElementById("correctCount");
@@ -21,6 +22,28 @@ const readingAidsList = document.getElementById("readingAidsList");
 const readingAidsCount = document.getElementById("readingAidsCount");
 const readingAidsSection = document.getElementById("readingAidsSection");
 const toggleReadingAidsButton = document.getElementById("toggleReadingAidsButton");
+const GENERIC_SIEVE_CAUTIONS = Object.freeze({
+  1: ["Cette ressemblance est un indice et non une traduction automatique."],
+  2: ["Les formes comparées sont des aides à l’inférence, pas une traduction automatique."],
+  4: ["La réalisation varie selon les régions ; le signal reste ici graphique."],
+  5: [
+    "Le rôle exact dans la phrase n’est pas analysé en V0.",
+    "Il s’agit d’une lecture syntaxique simplifiée et contextuelle.",
+  ],
+  6: [
+    "Cette information provient d’un mapping validé dans Dico-IC.",
+    "Le rôle exact doit être vérifié dans la phrase.",
+  ],
+  7: ["Un suffixe isolé ne détermine pas le sens complet."],
+});
+const SIEVE_PRINCIPLE_CAUTIONS = Object.freeze({
+  1: "Prudence : une ressemblance est un indice à vérifier dans le contexte, pas une traduction automatique.",
+  2: "Prudence : les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+  4: "Prudence : la prononciation peut varier selon les régions ; le repère reste ici graphique.",
+  5: "Prudence : la lecture syntaxique reste simplifiée ; le rôle exact doit être vérifié dans la phrase.",
+  6: "Les pluriels affichés s’appuient sur des mappings validés dans Dico-IC. Prudence : le rôle exact des infinitifs probables doit être vérifié dans la phrase.",
+  7: "Prudence : un affixe isolé ne détermine pas le sens complet.",
+});
 
 function getSieve(sieveId) {
   return analysisPackage?.sieves.find((sieve) => sieve.id === sieveId) || null;
@@ -126,12 +149,22 @@ function formatPayload(payload = {}) {
   return "";
 }
 
+function individualCautionText(enrichment) {
+  if (!enrichment.caution) return "";
+  if ((GENERIC_SIEVE_CAUTIONS[enrichment.sieve_id] || []).includes(enrichment.caution)) return "";
+  const lexicalConfirmation = enrichment.sieve_id === 3
+    ? enrichment.caution.match(/^La forme proposée est confirmée ici par le lexique : (.+)\.$/)
+    : null;
+  if (lexicalConfirmation) return `Forme confirmée par le lexique : ${lexicalConfirmation[1]}.`;
+  return `Prudence : ${enrichment.caution}`;
+}
+
 function formatEnrichmentPlain(enrichment) {
   return [
     enrichment.label,
     formatPayload(enrichment.payload),
     enrichment.explanation,
-    enrichment.caution ? `Prudence : ${enrichment.caution}` : "",
+    individualCautionText(enrichment),
   ].filter(Boolean).join("\n");
 }
 
@@ -278,7 +311,7 @@ function updateSidebar() {
     : "Aucun mot sélectionné.";
   const sieve = getSieve(explorationState.activeSieve);
   currentHintsEl.textContent = sieve
-    ? `${sieve.description}\n${publicSieveStatus(sieve)}`
+    ? publicSieveStatus(sieve)
     : "Tamis absent de cette activité.";
 
   if (selectedTokens.length === 0) {
@@ -374,6 +407,9 @@ function setSieve(number) {
   }
   sieveTitle.textContent = `${sieve.id}. ${sieve.label}`;
   sieveDescription.textContent = sieve.description;
+  const principleCaution = SIEVE_PRINCIPLE_CAUTIONS[number] || "";
+  sievePrincipleCaution.textContent = principleCaution;
+  sievePrincipleCaution.hidden = !principleCaution;
   activeSieveLabel.textContent = String(number);
   updateLegend();
   updateMicroGuide();
@@ -399,7 +435,7 @@ function compareSelection() {
   const selected = [...explorationState.selectedTokenIndexes].map(getToken).filter(Boolean);
   const matching = selected.filter((token) => getTokenEnrichments(token.index, explorationState.activeSieve).length > 0);
   globalFeedback.textContent = selected.length
-    ? `Comparaison : ${matching.length} mot(s) sur ${selected.length} disposent d’un indice pour le tamis ${explorationState.activeSieve}. Ce retour n’est pas une note.`
+    ? `Comparaison : ${matching.length} mot(s) sur ${selected.length} disposent d’un indice pour le tamis ${explorationState.activeSieve}. Observe quels tamis peuvent éclairer chacun des mots sélectionnés.`
     : "Sélectionne d’abord un ou plusieurs mots à comparer.";
   globalFeedback.style.background = "#eef4ff";
 }
