@@ -1,0 +1,48 @@
+{
+  "mission": 218,
+  "captured_at": "2026-08-19T15:04:18.856Z",
+  "database": "ic_dico",
+  "state": "applied",
+  "changed_rows": 15,
+  "idempotent_replay_changed_rows": 0,
+  "inserted_ids": [17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
+  "plan_sha256": "6a83db9ea254c0be3eec7fa864b0fd7ff41e34b8ea4070721f7411f7026271e3",
+  "backup_sha256": "598da6fb4509b2cb9a3454598c4ebb872f08fd132f113488e2ece4539b20d6f3",
+  "counts": {
+    "language": 12,
+    "lexical_entry": 305,
+    "lexical_form": 1286,
+    "inflected_form": 41,
+    "connector_help": 27,
+    "form_relation": 86,
+    "pattern_rule": 1,
+    "ic_feature": 8
+  },
+  "distribution": {
+    "fr": { "total": 6, "functions": 5 },
+    "es": { "total": 6, "functions": 5 },
+    "it": { "total": 5, "functions": 5 },
+    "pt": { "total": 5, "functions": 5 },
+    "en": { "total": 5, "functions": 5 },
+    "ca": { "total": 0, "functions": 0 },
+    "gl": { "total": 0, "functions": 0 },
+    "oc": { "total": 0, "functions": 0 },
+    "ro": { "total": 0, "functions": 0 },
+    "co": { "total": 0, "functions": 0 },
+    "sc": { "total": 0, "functions": 0 },
+    "rm": { "total": 0, "functions": 0 }
+  },
+  "hashes": {
+    "language": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff",
+    "lexical_entry": "34e32bd46e20d5bbc3b45f1171edecc54895eafc0b93a417e6c2e78d9e56d7ec",
+    "lexical_form": "a13665b8b26c4994bd0d491160fd93c7698dfb08b18bb909383f2e3781bb1c41",
+    "inflected_form": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184",
+    "connector_help": "a94c3b333830c15169d7bf31758c936912b6ac3b4b002fb600750c27c0271c11",
+    "form_relation": "216f0b7ba7055791d9b08286eb8210cb506f9d57b17533446de81e2fb0651a15",
+    "pattern_rule": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d",
+    "ic_feature": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a"
+  },
+  "historical_rows_sha256": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846",
+  "auto_increment": 32,
+  "only_expected_table_difference": "connector_help: 12 -> 27"
+}

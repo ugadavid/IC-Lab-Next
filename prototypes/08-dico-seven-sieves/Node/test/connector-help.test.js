@@ -352,7 +352,7 @@ test("repository archive updates status without physical deletion", async () => 
   assert.equal(statements.some((statement) => statement.startsWith("DELETE")), false);
 });
 
-test("connector SQL defines constraints and an idempotent 12-item seed", () => {
+test("connector SQL defines constraints and preserves the historical 12-item seed", () => {
   const sqlPath = path.resolve(__dirname, "../../database/current_draft/60_connector_help.sql");
   const sql = fs.readFileSync(sqlPath, "utf8");
   for (const expression of [

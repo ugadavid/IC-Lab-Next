@@ -1,0 +1,57 @@
+{
+  "mission": 218,
+  "base_url": "http://127.0.0.1:3000",
+  "contract_version": "0.1",
+  "english_public_classification": "Langue de comparaison — non romane",
+  "api": {
+    "it": [
+      ["Tuttavia", "OPPOSITION", 0, 8, [0]],
+      ["perché", "CAUSE", 21, 27, [3]],
+      ["Inoltre", "ADDITION", 52, 59, [9]],
+      ["quindi", "CONSEQUENCE", 84, 90, [15]],
+      ["poi", "CHRONOLOGY", 113, 116, [19]]
+    ],
+    "pt": [
+      ["No entanto", "OPPOSITION", 0, 10, [0, 1]],
+      ["porque", "CAUSE", 22, 28, [4]],
+      ["Além disso", "ADDITION", 53, 63, [10, 11]],
+      ["portanto", "CONSEQUENCE", 87, 95, [17]],
+      ["depois", "CHRONOLOGY", 119, 125, [21]]
+    ],
+    "en": [
+      ["However", "OPPOSITION", 0, 7, [0]],
+      ["because", "CAUSE", 21, 28, [4]],
+      ["Moreover", "ADDITION", 50, 58, [10]],
+      ["therefore", "CONSEQUENCE", 82, 91, [17]],
+      ["then", "CHRONOLOGY", 117, 121, [22]]
+    ],
+    "es_non_regression": [["Sin embargo", "OPPOSITION", 0, 11, [0, 1]]],
+    "fr_non_regression": [
+      ["Cependant", "OPPOSITION", 0, 9, [0]],
+      ["parce que", "CAUSE", 25, 34, [4, 5]]
+    ],
+    "case_insensitive": ["TUTTAVIA", "PERCHÉ"],
+    "accent_sensitive": {
+      "perche_not_matched": true,
+      "alem_disso_not_matched": true
+    },
+    "referenced_ca": { "status": 400, "error": "INVALID_CONNECTOR_LANGUAGE" }
+  },
+  "seven_sieves_engine": {
+    "languages_checked": ["it", "pt"],
+    "reading_aids_per_language": 5,
+    "sieves": 7,
+    "hidden_by_default": true,
+    "shown_on_request": true,
+    "hidden_again": true,
+    "active_sieve_preserved": 4,
+    "multi_token_pt": ["No entanto", "Além disso"],
+    "english_option_present": false,
+    "eighth_sieve_present": false
+  },
+  "visual_validation": {
+    "browser_connection_succeeded": false,
+    "reason": "Le navigateur intégré a échoué avant l’ouverture de la page.",
+    "human_validation_remaining": true
+  }
+}

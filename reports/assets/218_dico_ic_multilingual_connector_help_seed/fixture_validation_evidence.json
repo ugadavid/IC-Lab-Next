@@ -1,0 +1,134 @@
+{
+  "mission": 218,
+  "generated_at": "2026-08-19T15:01:47.034Z",
+  "fixture": {
+    "engine": "MariaDB 11",
+    "port": 3307,
+    "removed_by_orchestrator": true,
+    "removed_after_validation": true
+  },
+  "complete_copy": {
+    "table_count": 8,
+    "procedure_count": 9
+  },
+  "initial": {
+    "state": "pending",
+    "counts": {
+      "language": 12,
+      "lexical_entry": 305,
+      "lexical_form": 1286,
+      "inflected_form": 41,
+      "connector_help": 12,
+      "form_relation": 86,
+      "pattern_rule": 1,
+      "ic_feature": 8
+    },
+    "hashes": {
+      "language": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff",
+      "lexical_entry": "34e32bd46e20d5bbc3b45f1171edecc54895eafc0b93a417e6c2e78d9e56d7ec",
+      "lexical_form": "a13665b8b26c4994bd0d491160fd93c7698dfb08b18bb909383f2e3781bb1c41",
+      "inflected_form": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184",
+      "connector_help": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846",
+      "form_relation": "216f0b7ba7055791d9b08286eb8210cb506f9d57b17533446de81e2fb0651a15",
+      "pattern_rule": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d",
+      "ic_feature": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a"
+    },
+    "auto_increment": 17
+  },
+  "application": {
+    "changed_rows": 15,
+    "total": 27,
+    "distribution": {
+      "fr": {
+        "total": 6,
+        "functions": 5
+      },
+      "es": {
+        "total": 6,
+        "functions": 5
+      },
+      "it": {
+        "total": 5,
+        "functions": 5
+      },
+      "pt": {
+        "total": 5,
+        "functions": 5
+      },
+      "en": {
+        "total": 5,
+        "functions": 5
+      },
+      "ca": {
+        "total": 0,
+        "functions": 0
+      },
+      "gl": {
+        "total": 0,
+        "functions": 0
+      },
+      "oc": {
+        "total": 0,
+        "functions": 0
+      },
+      "ro": {
+        "total": 0,
+        "functions": 0
+      },
+      "co": {
+        "total": 0,
+        "functions": 0
+      },
+      "sc": {
+        "total": 0,
+        "functions": 0
+      },
+      "rm": {
+        "total": 0,
+        "functions": 0
+      }
+    }
+  },
+  "idempotent_replay": {
+    "changed_rows": 0,
+    "state": "applied"
+  },
+  "proposed_public_filter": {
+    "injected": 1,
+    "public_it_total": 5,
+    "exposed": false,
+    "removed": 1
+  },
+  "modified_row_rollback_refusal": "État partial : rollback refusé.",
+  "rollback": {
+    "changed_rows": 15,
+    "state": "pending",
+    "auto_increment": 17
+  },
+  "partial_state_refusal": "État partial : application refusée.",
+  "collision_refusal": "État unknown : application refusée.",
+  "final_restoration": {
+    "state": "pending",
+    "counts": {
+      "language": 12,
+      "lexical_entry": 305,
+      "lexical_form": 1286,
+      "inflected_form": 41,
+      "connector_help": 12,
+      "form_relation": 86,
+      "pattern_rule": 1,
+      "ic_feature": 8
+    },
+    "hashes": {
+      "language": "9956ca164174656abb6fe57a73ab11cb95b527263744290fb5de932e97b74cff",
+      "lexical_entry": "34e32bd46e20d5bbc3b45f1171edecc54895eafc0b93a417e6c2e78d9e56d7ec",
+      "lexical_form": "a13665b8b26c4994bd0d491160fd93c7698dfb08b18bb909383f2e3781bb1c41",
+      "inflected_form": "35d15bb6b4c68441809397abc1691e9270e430b8befd24645fa0f0d065ed5184",
+      "connector_help": "10d59caa8e50e3055a9dd75bac51ad9696d27c8124fbea8cee26da450210d846",
+      "form_relation": "216f0b7ba7055791d9b08286eb8210cb506f9d57b17533446de81e2fb0651a15",
+      "pattern_rule": "432537d637c3770d6ef60b1ba061799c0f0b0fac076fd1a2600d5e1ca12ba22d",
+      "ic_feature": "d0b7789145816be38945546c51000109d3ed156021b9874df76b15c2a084b44a"
+    },
+    "auto_increment": 17
+  }
+}
