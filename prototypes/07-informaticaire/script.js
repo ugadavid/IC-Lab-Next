@@ -2,6 +2,41 @@ const state = {
   query: "",
   filter: filters[0],
   focusItemId: "",
+  mapItemId: "miriadi",
+};
+
+const viewConfiguration = {
+  explorer: [
+    { id: "bibliotheque", label: "Toutes les fiches" },
+    { id: "partager", label: "À partager" },
+    { id: "sauver", label: "À sauver / vérifier" },
+  ],
+  carte: [
+    { id: "carte", label: "Voisinage interactif" },
+    { id: "graphe", label: "Lectures guidées" },
+  ],
+  visite: [
+    { id: "visite", label: "Visite en 5 étapes" },
+    { id: "demo", label: "Démo Galanet" },
+    { id: "parcours", label: "Par intention" },
+  ],
+  contribuer: [
+    { id: "contribuer", label: "Préparer une contribution" },
+    { id: "campagne", label: "Campagne de récupération" },
+  ],
+  comprendre: [
+    { id: "concept", label: "Le concept" },
+    { id: "publics", label: "Pour qui ?" },
+    { id: "frise", label: "Frise historique" },
+    { id: "pas-encore", label: "Limites" },
+    { id: "decisions", label: "Décisions" },
+    { id: "besoins", label: "Besoins" },
+  ],
+};
+
+const viewState = {
+  family: "accueil",
+  panel: "accueil",
 };
 
 const priorityShareIds = ["galanet", "miriadi", "romanofonia-cinema", "repli4c", "eurom", "portail-ple-katia", "phip", "elan", "speechmatics", "corpus-videos"];
@@ -115,6 +150,49 @@ const escapeHtml = (value) =>
 const listOrFallback = (values, fallback = "à compléter") => (values?.length ? values.join(", ") : fallback);
 
 const isActorItem = (item) => ["acteur", "acteur collectif", "institution"].includes(item.type);
+
+const documentaryFamily = (item) => {
+  if (isActorItem(item)) return "actor";
+  if (item.type === "projet") return "project";
+  if (item.type === "plateforme") return "platform";
+  if (["ressource", "outil", "corpus"].includes(item.type)) return "resource";
+  return "reference";
+};
+
+const relationEntries = (corpus = items) =>
+  corpus.flatMap((source) =>
+    (source.relations || []).map((relation) => ({
+      sourceId: source.id,
+      targetId: relation.target,
+      type: relation.type,
+      note: relation.note || "",
+    }))
+  );
+
+const buildRelationNeighborhood = (centerId, corpus = items) => {
+  const lookup = new Map(corpus.map((item) => [item.id, item]));
+  const center = lookup.get(centerId) || corpus.find((item) => (item.relations || []).length) || corpus[0];
+  if (!center) return { center: null, edges: [], neighbors: [] };
+
+  const edges = relationEntries(corpus)
+    .filter((entry) => entry.sourceId === center.id || entry.targetId === center.id)
+    .map((entry) => {
+      const neighborId = entry.sourceId === center.id ? entry.targetId : entry.sourceId;
+      return {
+        ...entry,
+        direction: entry.sourceId === center.id ? "sortante" : "entrante",
+        source: lookup.get(entry.sourceId),
+        target: lookup.get(entry.targetId),
+        neighbor: lookup.get(neighborId),
+      };
+    })
+    .filter((entry) => entry.source && entry.target && entry.neighbor);
+
+  const neighbors = [...new Map(edges.map((entry) => [entry.neighbor.id, entry.neighbor])).values()];
+  return { center, edges, neighbors };
+};
+
+const relationDegree = (itemId) => buildRelationNeighborhood(itemId).edges.length;
 
 const actorStatusPills = (item) => {
   if (!isActorItem(item)) return "";
@@ -354,6 +432,234 @@ const submitSiteSearch = (event) => {
   feedback.textContent = `Recherche lancée dans ${form.dataset.searchDomain}.`;
 };
 
+const setViewHash = (panelId) => {
+  const nextHash = `#${panelId}`;
+  if (window.location.hash === nextHash) return;
+  try {
+    window.history.pushState({ informaticairePanel: panelId }, "", nextHash);
+  } catch {
+    window.location.hash = panelId;
+  }
+};
+
+const renderSecondaryNavigation = (family, activePanel) => {
+  const navigation = document.querySelector("#secondary-navigation");
+  const panels = viewConfiguration[family] || [];
+  navigation.hidden = !panels.length;
+  navigation.innerHTML = panels
+    .map(
+      (panel) => `
+        <button
+          type="button"
+          data-view-panel="${panel.id}"
+          class="${panel.id === activePanel ? "active" : ""}"
+          ${panel.id === activePanel ? 'aria-current="page"' : ""}
+        >${escapeHtml(panel.label)}</button>
+      `
+    )
+    .join("");
+};
+
+const showAppView = (panelId = "accueil", { updateHash = true, resetViewport = true } = {}) => {
+  const requested = document.getElementById(String(panelId).replace(/^#/, ""));
+  const panel = requested?.matches("[data-view-family]") ? requested : document.querySelector("#accueil");
+  const family = panel.dataset.viewFamily;
+
+  document.querySelectorAll("[data-view-family]").forEach((section) => {
+    section.hidden = section !== panel;
+  });
+
+  viewState.family = family;
+  viewState.panel = panel.id;
+  document.body.dataset.activeView = family;
+  document.querySelectorAll("[data-primary-view]").forEach((link) => {
+    const active = link.dataset.primaryView === family;
+    link.classList.toggle("active", active);
+    if (active) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
+  renderSecondaryNavigation(family, panel.id);
+
+  if (panel.id === "carte") renderRelationMap(state.mapItemId);
+  if (updateHash) setViewHash(panel.id);
+  if (resetViewport && typeof window.scrollTo === "function") window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  return panel;
+};
+
+const shortSvgLabel = (value, maxLength = 21) => {
+  const words = String(value || "").split(/\s+/).filter(Boolean);
+  const lines = [""];
+  words.forEach((word) => {
+    const current = lines[lines.length - 1];
+    if (!current || `${current} ${word}`.length <= maxLength) lines[lines.length - 1] = current ? `${current} ${word}` : word;
+    else if (lines.length === 1) lines.push(word);
+  });
+  if (lines.length > 2 || lines[1]?.length > maxLength) {
+    lines.length = 2;
+    lines[1] = `${String(lines[1] || "").slice(0, maxLength - 1)}…`;
+  }
+  return lines;
+};
+
+const renderMapNode = (item, x, y, selected = false) => {
+  const width = selected ? 170 : 142;
+  const height = selected ? 82 : 70;
+  const lines = shortSvgLabel(item.title);
+  return `
+    <g
+      class="relation-node family-${documentaryFamily(item)} ${selected ? "selected" : ""}"
+      data-map-recenter="${escapeHtml(item.id)}"
+      role="button"
+      tabindex="0"
+      aria-label="${escapeHtml(item.title)}"
+      transform="translate(${x - width / 2} ${y - height / 2})"
+    >
+      <rect width="${width}" height="${height}" rx="19"></rect>
+      <text x="${width / 2}" y="${height / 2 - (lines.length - 1) * 8}" text-anchor="middle">
+        ${lines.map((line, index) => `<tspan x="${width / 2}" dy="${index ? 17 : 0}">${escapeHtml(line)}</tspan>`).join("")}
+      </text>
+      <title>${escapeHtml(item.title)} · ${escapeHtml(item.type)}</title>
+    </g>
+  `;
+};
+
+const renderRelationMap = (centerId = state.mapItemId) => {
+  const container = document.querySelector("#relation-map");
+  const detail = document.querySelector("#relation-detail");
+  if (!container || !detail) return;
+
+  const neighborhood = buildRelationNeighborhood(centerId);
+  if (!neighborhood.center) return;
+  state.mapItemId = neighborhood.center.id;
+  const picker = document.querySelector("#map-item-select");
+  if (picker) picker.value = neighborhood.center.id;
+
+  const center = { x: 420, y: 280 };
+  const positions = new Map(
+    neighborhood.neighbors.map((neighbor, index) => {
+      const angle = -Math.PI / 2 + (index * Math.PI * 2) / Math.max(neighborhood.neighbors.length, 1);
+      return [neighbor.id, { x: center.x + Math.cos(angle) * 285, y: center.y + Math.sin(angle) * 195 }];
+    })
+  );
+  const groupedEdges = neighborhood.neighbors.map((neighbor) => ({
+    neighbor,
+    edges: neighborhood.edges.filter((edge) => edge.neighbor.id === neighbor.id),
+  }));
+
+  const edgeMarkup = groupedEdges
+    .map(({ neighbor, edges }) => {
+      const position = positions.get(neighbor.id);
+      const labels = [...new Set(edges.map((edge) => edge.type))];
+      const fullLabel = labels.join(" · ");
+      const visibleLabel = fullLabel.length > 34 ? `${fullLabel.slice(0, 33)}…` : fullLabel;
+      const labelX = (center.x + position.x) / 2;
+      const labelY = (center.y + position.y) / 2 - 8;
+      return `
+        <g class="relation-edge" data-map-recenter="${escapeHtml(neighbor.id)}" role="button" tabindex="0" aria-label="${escapeHtml(fullLabel)} vers ${escapeHtml(neighbor.title)}">
+          <line class="relation-edge-hit" x1="${center.x}" y1="${center.y}" x2="${position.x}" y2="${position.y}"></line>
+          <line x1="${center.x}" y1="${center.y}" x2="${position.x}" y2="${position.y}" marker-end="url(#relation-arrow)"></line>
+          <text x="${labelX}" y="${labelY}" text-anchor="middle">${escapeHtml(visibleLabel)}</text>
+        </g>
+      `;
+    })
+    .join("");
+
+  const nodeMarkup = neighborhood.neighbors
+    .map((neighbor) => {
+      const position = positions.get(neighbor.id);
+      return renderMapNode(neighbor, position.x, position.y);
+    })
+    .join("");
+
+  container.innerHTML = `
+    <svg viewBox="0 0 840 560" role="img" aria-label="Voisinage direct de ${escapeHtml(neighborhood.center.title)}">
+      <defs>
+        <marker id="relation-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z"></path>
+        </marker>
+      </defs>
+      ${edgeMarkup}
+      ${nodeMarkup}
+      ${renderMapNode(neighborhood.center, center.x, center.y, true)}
+    </svg>
+  `;
+
+  const relationList = neighborhood.edges.length
+    ? neighborhood.edges
+        .map(
+          (edge) => `
+            <li>
+              <div>
+                <small>${edge.direction === "sortante" ? "Depuis cette fiche" : "Vers cette fiche"}</small>
+                <strong>${escapeHtml(edge.type)}</strong>
+                <span>${escapeHtml(edge.neighbor.title)}</span>
+                ${edge.note ? `<p>${escapeHtml(edge.note)}</p>` : ""}
+              </div>
+              <div class="relation-item-actions">
+                <button type="button" data-map-recenter="${escapeHtml(edge.neighbor.id)}">Recentrer</button>
+                <button type="button" data-open-detail="${escapeHtml(edge.neighbor.id)}">Fiche</button>
+              </div>
+            </li>
+          `
+        )
+        .join("")
+    : "<li class=\"empty-relation\">Aucune relation typée ne touche cette fiche.</li>";
+
+  detail.className = `relation-detail family-${documentaryFamily(neighborhood.center)}`;
+  detail.innerHTML = `
+    <div class="relation-detail-heading">
+      <span class="document-family">${escapeHtml(neighborhood.center.type)}</span>
+      <span class="document-status ${slugStatus(neighborhood.center.status)}">${escapeHtml(neighborhood.center.status)}</span>
+      <h3>${escapeHtml(neighborhood.center.title)}</h3>
+    </div>
+    <p class="relation-summary">${escapeHtml(neighborhood.center.description)}</p>
+    <div class="relation-count"><strong>${neighborhood.edges.length}</strong><span>relation${neighborhood.edges.length > 1 ? "s" : ""} dans ce voisinage</span></div>
+    <h4>Relations documentées</h4>
+    <ul class="relation-list">${relationList}</ul>
+    <button class="button primary full-detail-action" type="button" data-open-detail="${escapeHtml(neighborhood.center.id)}">Consulter la fiche complète</button>
+  `;
+};
+
+const populateMapPicker = () => {
+  const picker = document.querySelector("#map-item-select");
+  if (!picker) return;
+  picker.innerHTML = [...items]
+    .sort((a, b) => a.title.localeCompare(b.title, "fr"))
+    .map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.title)} · ${relationDegree(item.id)}</option>`)
+    .join("");
+  picker.value = state.mapItemId;
+};
+
+const openMap = (itemId) => {
+  if (!itemById().has(itemId)) return;
+  state.mapItemId = itemId;
+  showAppView("carte");
+  renderRelationMap(itemId);
+};
+
+const renderHomeRelationPreview = () => {
+  const container = document.querySelector("#home-relation-preview");
+  if (!container) return;
+  const neighborhood = buildRelationNeighborhood("miriadi");
+  const neighbors = neighborhood.neighbors.slice(0, 4);
+  const positions = [
+    { left: 8, top: 12 },
+    { left: 66, top: 9 },
+    { left: 70, top: 66 },
+    { left: 7, top: 69 },
+  ];
+  container.innerHTML = `
+    <div class="preview-caption"><strong>86 relations documentées</strong><span>Explorer la mémoire par ses liens réels.</span></div>
+    <svg viewBox="0 0 100 100" aria-hidden="true">
+      ${positions.map((position) => `<line x1="50" y1="50" x2="${position.left + 9}" y2="${position.top + 7}"></line>`).join("")}
+    </svg>
+    <button class="preview-node preview-center family-${documentaryFamily(neighborhood.center)}" type="button" data-open-map="${escapeHtml(neighborhood.center.id)}"><strong>${escapeHtml(neighborhood.center.title)}</strong><span>${escapeHtml(neighborhood.center.type)}</span></button>
+    ${neighbors
+      .map((neighbor, index) => `<button class="preview-node family-${documentaryFamily(neighbor)}" style="left:${positions[index].left}%;top:${positions[index].top}%" type="button" data-open-map="${escapeHtml(neighbor.id)}"><strong>${escapeHtml(neighbor.title)}</strong><span>${escapeHtml(neighbor.type)}</span></button>`)
+      .join("")}
+  `;
+};
+
 const renderTimeline = () => {
   const timeline = document.querySelector("#timeline");
   timeline.innerHTML = timelineItems
@@ -414,10 +720,10 @@ const renderCards = () => {
   cards.innerHTML = results
     .map(
       (item) => `
-        <article class="card" data-item-id="${item.id}">
+        <article class="card family-${documentaryFamily(item)}" data-item-id="${item.id}">
           <div class="card-meta">
-            ${pill(item.type, "type")}
-            ${pill(item.status, slugStatus(item.status))}
+            ${pill(item.type, "document-family")}
+            ${pill(item.status, `document-status ${slugStatus(item.status)}`)}
             ${actorStatusPills(item)}
             ${item.uncertain ? pill("à confirmer") : ""}
           </div>
@@ -445,7 +751,13 @@ const renderCards = () => {
             <strong>Risques / points de suivi</strong>
             <span>${(item.risks || []).join(", ") || "aucun risque identifié"}</span>
           </div>
-          <button class="card-action" type="button" data-open-detail="${item.id}">Ouvrir la fiche</button>
+          <div class="explorer-card-footer">
+            <span class="card-relation-count"><strong>${relationDegree(item.id)}</strong> relation${relationDegree(item.id) > 1 ? "s" : ""}</span>
+            <div class="explorer-card-actions">
+              <button class="card-action secondary" type="button" data-open-map="${item.id}">Voir dans la carte</button>
+              <button class="card-action" type="button" data-open-detail="${item.id}">Ouvrir la fiche</button>
+            </div>
+          </div>
         </article>
       `
     )
@@ -638,7 +950,7 @@ const downloadFile = (filename, mimeType, content) => {
 };
 
 const exportItemsJson = () => {
-  const filename = "informaticaire_items_v0.6.json";
+  const filename = "informaticaire_items_v0.7.0.json";
   downloadFile(filename, "application/json;charset=utf-8", JSON.stringify(items, null, 2));
   document.querySelector("#export-status").textContent = `${filename} généré.`;
 };
@@ -662,7 +974,7 @@ const exportRecoveryCsv = () => {
       ].map(csvCell).join(",");
     });
   const header = ["id", "ressource", "priorite", "etat", "prochaine_action", "personnes_a_contacter", "responsable"].map(csvCell).join(",");
-  const filename = "informaticaire_recovery_v0.6.csv";
+  const filename = "informaticaire_recovery_v0.7.0.csv";
   downloadFile(filename, "text/csv;charset=utf-8", [header, ...rows].join("\n"));
   document.querySelector("#export-status").textContent = `${filename} généré.`;
 };
@@ -814,14 +1126,13 @@ const exportContributionDraft = () => {
 const highlightSection = (selector) => {
   const section = document.querySelector(selector);
   if (!section) return;
-  section.scrollIntoView({ behavior: "smooth", block: "start" });
+  showAppView(section.id);
   section.classList.add("highlight-section");
   window.setTimeout(() => section.classList.remove("highlight-section"), 1800);
 };
 
 const activateLibrary = ({ query = "", filterValue = "all" } = {}) => {
   const search = document.querySelector("#search-input");
-  const library = document.querySelector("#bibliotheque");
   const exactQuery = String(query ?? "");
   state.query = exactQuery;
   state.filter = filters.find((filter) => filter.value === filterValue) || filters[0];
@@ -830,8 +1141,7 @@ const activateLibrary = ({ query = "", filterValue = "all" } = {}) => {
   renderFilters();
   renderCards();
 
-  if (window.location.hash !== "#bibliotheque") window.location.hash = "bibliotheque";
-  else library.scrollIntoView({ behavior: "smooth", block: "start" });
+  showAppView("bibliotheque");
 
   window.setTimeout(() => {
     search.focus({ preventScroll: true });
@@ -876,7 +1186,7 @@ const applyJourney = (journey) => {
   search.value = selected.query;
   renderFilters();
   renderCards();
-  document.querySelector(selected.target).scrollIntoView({ behavior: "smooth", block: "start" });
+  showAppView(selected.target);
 };
 
 const renderNeeds = () => {
@@ -905,6 +1215,20 @@ const updateStats = () => {
 };
 
 const bindEvents = () => {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    const target = document.querySelector(link.getAttribute("href"));
+    if (!target?.matches("[data-view-family]")) return;
+    event.preventDefault();
+    showAppView(target.id);
+  });
+
+  document.querySelector("#secondary-navigation").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-view-panel]");
+    if (button) showAppView(button.dataset.viewPanel);
+  });
+
   document.querySelector("#home-search-form").addEventListener("submit", (event) => {
     event.preventDefault();
     activateLibrary({ query: document.querySelector("#home-search-input").value });
@@ -913,6 +1237,11 @@ const bindEvents = () => {
   document.querySelector("#home-quick-filters").addEventListener("click", (event) => {
     const button = event.target.closest("[data-home-filter]");
     if (button) activateLibrary({ filterValue: button.dataset.homeFilter });
+  });
+
+  document.querySelector("#home-relation-preview").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-open-map]");
+    if (button) openMap(button.dataset.openMap);
   });
 
   document.querySelector("#visite").addEventListener("click", (event) => {
@@ -948,6 +1277,12 @@ const bindEvents = () => {
   });
 
   document.querySelector("#cards").addEventListener("click", (event) => {
+    const mapButton = event.target.closest("[data-open-map]");
+    if (mapButton) {
+      openMap(mapButton.dataset.openMap);
+      return;
+    }
+
     const detailButton = event.target.closest("[data-open-detail]");
     if (detailButton) {
       openDetail(detailButton.dataset.openDetail);
@@ -964,11 +1299,11 @@ const bindEvents = () => {
     document.querySelector("#search-input").value = linkedItem.title;
     renderFilters();
     renderCards();
-    document.querySelector("#bibliotheque").scrollIntoView({ behavior: "smooth", block: "start" });
+    showAppView("bibliotheque");
   });
 
   document.querySelector("#cards").addEventListener("click", (event) => {
-    if (event.target.closest("[data-related-id], [data-open-detail]")) return;
+    if (event.target.closest("[data-related-id], [data-open-detail], [data-open-map]")) return;
     const card = event.target.closest("[data-item-id]");
     if (card) openDetail(card.dataset.itemId);
   });
@@ -981,6 +1316,26 @@ const bindEvents = () => {
   document.querySelector("#graph-map").addEventListener("click", (event) => {
     const button = event.target.closest("[data-open-detail]");
     if (button) openDetail(button.dataset.openDetail);
+  });
+
+  document.querySelector("#map-item-select").addEventListener("change", (event) => renderRelationMap(event.target.value));
+
+  document.querySelector("#carte").addEventListener("click", (event) => {
+    const detailButton = event.target.closest("[data-open-detail]");
+    if (detailButton) {
+      openDetail(detailButton.dataset.openDetail);
+      return;
+    }
+    const recenterButton = event.target.closest("[data-map-recenter]");
+    if (recenterButton) renderRelationMap(recenterButton.dataset.mapRecenter);
+  });
+
+  document.querySelector("#relation-map").addEventListener("keydown", (event) => {
+    if (!["Enter", " "].includes(event.key)) return;
+    const target = event.target.closest("[data-map-recenter]");
+    if (!target) return;
+    event.preventDefault();
+    renderRelationMap(target.dataset.mapRecenter);
   });
 
   document.querySelector("#detail-modal").addEventListener("click", (event) => {
@@ -1009,6 +1364,10 @@ const bindEvents = () => {
     if (event.key === "Escape") closeDetail();
   });
 
+  const restoreViewFromLocation = () => showAppView(window.location.hash || "accueil", { updateHash: false });
+  window.addEventListener("popstate", restoreViewFromLocation);
+  window.addEventListener("hashchange", restoreViewFromLocation);
+
   document.querySelector("#export-json-button").addEventListener("click", exportItemsJson);
   document.querySelector("#export-csv-button").addEventListener("click", exportRecoveryCsv);
   document.querySelector("#contribution-form").addEventListener("submit", prepareContribution);
@@ -1034,4 +1393,7 @@ renderRescue();
 renderNeeds();
 updateStats();
 populateContributionTargets();
+populateMapPicker();
+renderHomeRelationPreview();
 bindEvents();
+showAppView(window.location.hash || "accueil", { updateHash: false, resetViewport: false });

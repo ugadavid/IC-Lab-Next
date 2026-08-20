@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="app-version" content="0.6.6">
+    <meta name="app-version" content="0.7.0">
     <title>Informaticaire - mémoire communautaire de l'intercompréhension</title>
     <link rel="stylesheet" href="styles.css">
   </head>
@@ -16,30 +16,22 @@
           <small>mémoire communautaire IC</small>
         </span>
       </a>
-      <nav aria-label="Navigation principale">
-        <a href="#concept">Concept</a>
-        <a href="#visite">Visite</a>
-        <a href="#demo">Démo rapide</a>
-        <a href="#publics">Pour qui ?</a>
-        <a href="#parcours">Je veux...</a>
-        <a href="#frise">Frise</a>
-        <a href="#bibliotheque">Explorer</a>
-        <a href="#partager">À partager</a>
-        <a href="#contribuer">Contribuer</a>
-        <a href="#graphe">Relations</a>
-        <a href="#campagne">Sauver</a>
-        <a href="#pas-encore">Limites</a>
-        <a href="#decisions">Décisions</a>
-        <a href="#sauver">À sauver</a>
-        <a href="#besoins">Besoins</a>
+      <nav class="primary-navigation" aria-label="Navigation principale">
+        <a href="#bibliotheque" data-primary-view="explorer">Explorer</a>
+        <a href="#carte" data-primary-view="carte">Carte</a>
+        <a href="#visite" data-primary-view="visite">Visite</a>
+        <a href="#contribuer" data-primary-view="contribuer">Contribuer</a>
+        <a href="#concept" data-primary-view="comprendre">Comprendre</a>
       </nav>
     </header>
 
+    <nav id="secondary-navigation" class="secondary-navigation" aria-label="Navigation secondaire" hidden></nav>
+
     <main>
-      <section id="accueil" class="hero">
+      <section id="accueil" class="hero" data-view-family="accueil">
         <div class="hero-copy">
-          <p class="eyebrow">Prototype v0.6.6</p>
-          <h1>Une mémoire vivante et partageable de l'intercompréhension.</h1>
+          <p class="eyebrow">Prototype documentaire vivant · v0.7.0</p>
+          <h1>Les ressources de l’IC <em>se retrouvent.</em></h1>
           <p>
             Informaticaire aide la communauté de l'intercompréhension à
             retrouver des ressources, comprendre leur histoire, identifier les
@@ -62,37 +54,40 @@
             </div>
           </form>
           <div class="hero-actions" aria-label="Accès rapides">
-            <a class="button" href="#bibliotheque">Explorer la bibliothèque</a>
+            <a class="button" href="#bibliotheque">Parcourir les 110 fiches</a>
             <a class="button" href="#visite">Découvrir en 5 étapes</a>
             <a class="button" href="#demo">Voir la démo rapide</a>
             <a class="button" href="#contribuer">Préparer une contribution</a>
           </div>
         </div>
-        <aside class="hero-panel" aria-label="Synthèse du prototype">
-          <div>
-            <strong id="stat-items">0</strong>
-            <span>fiches documentées</span>
-          </div>
-          <div>
-            <strong id="stat-recovery">0</strong>
-            <span>ressources à sauver ensemble</span>
-          </div>
-          <div>
-            <strong id="stat-share">0</strong>
-            <span>fiches à partager en priorité</span>
-          </div>
-          <div>
-            <strong id="stat-audiences">0</strong>
-            <span>publics cibles</span>
-          </div>
-          <div>
-            <strong id="stat-relations">0</strong>
-            <span>relations typées</span>
+        <aside class="hero-overview" aria-label="Synthèse relationnelle du prototype">
+          <div id="home-relation-preview" class="home-relation-preview" aria-label="Aperçu des relations documentées"></div>
+          <div class="hero-panel">
+            <div>
+              <strong id="stat-items">0</strong>
+              <span>fiches documentées</span>
+            </div>
+            <div>
+              <strong id="stat-recovery">0</strong>
+              <span>ressources à sauver ensemble</span>
+            </div>
+            <div>
+              <strong id="stat-share">0</strong>
+              <span>fiches à partager en priorité</span>
+            </div>
+            <div>
+              <strong id="stat-audiences">0</strong>
+              <span>publics cibles</span>
+            </div>
+            <div>
+              <strong id="stat-relations">0</strong>
+              <span>relations typées</span>
+            </div>
           </div>
         </aside>
       </section>
 
-      <section id="concept" class="section concept-section">
+      <section id="concept" class="section concept-section" data-view-family="comprendre" hidden>
         <div class="section-heading">
           <p class="eyebrow">Pourquoi Informaticaire ?</p>
           <h2>Un outil pour conserver, documenter et transmettre</h2>
@@ -115,7 +110,7 @@
         </div>
       </section>
 
-      <section id="visite" class="section guided-section">
+      <section id="visite" class="section guided-section" data-view-family="visite" hidden>
         <div class="section-heading">
           <p class="eyebrow">Visite guidée</p>
           <h2>Découvrir Informaticaire en 5 étapes</h2>
@@ -150,7 +145,7 @@
         </div>
       </section>
 
-      <section id="demo" class="section demo-section">
+      <section id="demo" class="section demo-section" data-view-family="visite" hidden>
         <div class="section-heading">
           <p class="eyebrow">Démo rapide</p>
           <h2>Un parcours Galanet montrable en deux minutes</h2>
@@ -172,7 +167,7 @@
         </div>
       </section>
 
-      <section id="publics" class="section audience-section">
+      <section id="publics" class="section audience-section" data-view-family="comprendre" hidden>
         <div class="section-heading">
           <p class="eyebrow">Pour qui ?</p>
           <h2>Un espace commun pour plusieurs métiers de l'IC</h2>
@@ -186,7 +181,7 @@
         </div>
       </section>
 
-      <section id="parcours" class="section journeys-section">
+      <section id="parcours" class="section journeys-section" data-view-family="visite" hidden>
         <div class="section-heading">
           <p class="eyebrow">Je veux...</p>
           <h2>Entrer par une action concrète</h2>
@@ -202,7 +197,7 @@
         </div>
       </section>
 
-      <section id="frise" class="section timeline-section">
+      <section id="frise" class="section timeline-section" data-view-family="comprendre" hidden>
         <div class="section-heading">
           <p class="eyebrow">Frise historique</p>
           <h2>Des CD-ROM aux corpus annotés</h2>
@@ -211,7 +206,7 @@
         <div id="timeline" class="timeline" aria-label="Frise des projets"></div>
       </section>
 
-      <section id="bibliotheque" class="section">
+      <section id="bibliotheque" class="section explorer-section" data-view-family="explorer" hidden>
         <div class="section-heading">
           <p class="eyebrow">Bibliothèque de fiches</p>
           <h2>Rechercher, filtrer, relier</h2>
@@ -239,7 +234,7 @@
         <div id="cards" class="card-grid" aria-live="polite"></div>
       </section>
 
-      <section id="partager" class="section share-section">
+      <section id="partager" class="section share-section" data-view-family="explorer" hidden>
         <div class="section-heading">
           <p class="eyebrow">À partager en priorité</p>
           <h2>Les fiches utiles à montrer à la communauté</h2>
@@ -248,7 +243,7 @@
         <div id="priority-share-list" class="share-grid"></div>
       </section>
 
-      <section id="contribuer" class="section contribute-section">
+      <section id="contribuer" class="section contribute-section" data-view-family="contribuer" hidden>
         <div class="section-heading">
           <p class="eyebrow">Contribuer</p>
           <h2>Aider à compléter la mémoire commune</h2>
@@ -350,7 +345,34 @@
         </div>
       </section>
 
-      <section id="graphe" class="section graph-section">
+      <section id="carte" class="section relational-section" data-view-family="carte" hidden>
+        <div class="section-heading relational-heading">
+          <div>
+            <p class="eyebrow">Cartographie documentaire</p>
+            <h2>Voir ce qui relie les fiches</h2>
+            <p>Choisissez une fiche : son voisinage direct révèle les filiations, ressources, acteurs et besoins réellement documentés dans le corpus.</p>
+          </div>
+          <label class="map-picker" for="map-item-select">
+            <span>Fiche centrale</span>
+            <select id="map-item-select"></select>
+          </label>
+        </div>
+        <div class="relation-workspace">
+          <div class="context-map" aria-label="Voisinage relationnel contextuel">
+            <div class="map-legend" aria-label="Couleurs des familles documentaires">
+              <span class="family-project">Projet</span>
+              <span class="family-platform">Plateforme</span>
+              <span class="family-resource">Ressource</span>
+              <span class="family-actor">Acteur</span>
+              <span class="family-reference">Concept / repère</span>
+            </div>
+            <div id="relation-map" class="relation-map"></div>
+          </div>
+          <aside id="relation-detail" class="relation-detail" aria-live="polite"></aside>
+        </div>
+      </section>
+
+      <section id="graphe" class="section graph-section" data-view-family="carte" hidden>
         <div class="section-heading">
           <p class="eyebrow">Relations</p>
           <h2>Acteurs, projets, ressources</h2>
@@ -359,7 +381,7 @@
         <div id="graph-map" class="graph-map" aria-label="Carte relationnelle simple"></div>
       </section>
 
-      <section id="campagne" class="section campaign-section">
+      <section id="campagne" class="section campaign-section" data-view-family="contribuer" hidden>
         <div class="section-heading">
           <p class="eyebrow">Ressources à sauver ensemble</p>
           <h2>Transformer la mémoire dispersée en actions collectives</h2>
@@ -368,7 +390,7 @@
         <div id="campaign-list" class="campaign-grid"></div>
       </section>
 
-      <section id="pas-encore" class="section limits-section">
+      <section id="pas-encore" class="section limits-section" data-view-family="comprendre" hidden>
         <div class="section-heading">
           <p class="eyebrow">Ce prototype n'est pas encore...</p>
           <h2>Un cadre clair pour éviter les malentendus</h2>
@@ -383,7 +405,7 @@
         </div>
       </section>
 
-      <section id="decisions" class="section decisions-section">
+      <section id="decisions" class="section decisions-section" data-view-family="comprendre" hidden>
         <div class="section-heading">
           <p class="eyebrow">Prochaines décisions communautaires</p>
           <h2>Passer du prototype à une gouvernance minimale</h2>
@@ -400,7 +422,7 @@
         </div>
       </section>
 
-      <section id="sauver" class="section rescue-section">
+      <section id="sauver" class="section rescue-section" data-view-family="explorer" hidden>
         <div class="section-heading">
           <p class="eyebrow">À sauver / à vérifier</p>
           <h2>Patrimoine fragile</h2>
@@ -409,7 +431,7 @@
         <div id="rescue-list" class="rescue-grid"></div>
       </section>
 
-      <section id="besoins" class="section needs-section">
+      <section id="besoins" class="section needs-section" data-view-family="comprendre" hidden>
         <div class="section-heading">
           <p class="eyebrow">Besoins récurrents</p>
           <h2>Besoins utiles pour faire évoluer l'outil</h2>
@@ -421,7 +443,7 @@
 
     <footer>
       <p>Prototype statique pour une mémoire communautaire de l'intercompréhension.</p>
-      <p>Données v0.6.6 nourries par une première lecture documentaire des entretiens et préparées pour une démonstration collective.</p>
+      <p>Données v0.7.0 nourries par une première lecture documentaire des entretiens et préparées pour une démonstration collective.</p>
     </footer>
 
     <div id="detail-modal" class="modal" hidden>

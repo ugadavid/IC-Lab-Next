@@ -42,7 +42,7 @@ test("the editorial corpus and all internal relation targets remain intact", () 
 });
 
 test("the first screen exposes one real search entry point and the four requested shortcuts", () => {
-  assert.match(html, /app-version" content="0\.6\.6"/);
+  assert.match(html, /app-version" content="0\.7\.0"/);
   assert.match(html, /id="home-search-form"[^>]*role="search"/);
   assert.match(html, /Rechercher un projet, une personne, une ressource…/);
   assert.match(html, /id="home-search-input"[^>]*type="search"/);
@@ -50,7 +50,7 @@ test("the first screen exposes one real search entry point and the four requeste
   assert.match(html, /data-home-filter="acteur"[^>]*>Acteurs</);
   assert.match(html, /data-home-filter="ressource"[^>]*>Ressources</);
   assert.match(html, /data-home-filter="à récupérer"[^>]*>À sauver</);
-  assert.match(html, /href="#bibliotheque">Explorer</);
+  assert.match(html, /href="#bibliotheque"[^>]*>Explorer</);
   assert.doesNotMatch(html, /href="#bibliotheque">Fiches</);
   assert.match(styles, /\.hero-search[\s\S]*\.hero-search-controls[\s\S]*\.hero-quick-filters/);
 });
@@ -102,21 +102,17 @@ test("activateLibrary transfers the exact query, renders once, navigates and res
     focus(options) { this.focusOptions = options; },
     setSelectionRange(startIndex, endIndex) { this.selection = [startIndex, endIndex]; },
   };
-  const library = { scrollCalls: 0, scrollIntoView() { this.scrollCalls += 1; } };
-  const location = { value: "#accueil" };
-  Object.defineProperty(location, "hash", {
-    get() { return this.value; },
-    set(value) { this.value = String(value).startsWith("#") ? String(value) : `#${value}`; },
-  });
   let filterRenders = 0;
   let cardRenders = 0;
+  const shownViews = [];
   const context = {
     state,
     filters,
-    document: { querySelector: (selector) => selector === "#search-input" ? searchInput : library },
-    window: { location, setTimeout: (callback) => callback() },
+    document: { querySelector: () => searchInput },
+    window: { setTimeout: (callback) => callback() },
     renderFilters: () => { filterRenders += 1; },
     renderCards: () => { cardRenders += 1; },
+    showAppView: (panel) => { shownViews.push(panel); },
   };
   vm.createContext(context);
   vm.runInContext(`${script.slice(start, end)}\n;globalThis.__activateLibrary = activateLibrary;`, context);
@@ -126,7 +122,7 @@ test("activateLibrary transfers the exact query, renders once, navigates and res
   assert.equal(state.filter.value, "projet");
   assert.equal(state.focusItemId, "");
   assert.equal(searchInput.value, "  EuRom5  ");
-  assert.equal(location.hash, "#bibliotheque");
+  assert.equal(shownViews[0], "bibliotheque");
   assert.equal(searchInput.focusOptions.preventScroll, true);
   assert.deepEqual(searchInput.selection, [10, 10]);
   assert.equal(filterRenders, 1);
@@ -135,14 +131,15 @@ test("activateLibrary transfers the exact query, renders once, navigates and res
   context.__activateLibrary();
   assert.equal(state.query, "");
   assert.equal(state.filter.value, "all");
-  assert.equal(library.scrollCalls, 1);
+  assert.deepEqual(shownViews, ["bibliotheque", "bibliotheque"]);
 });
 
 test("home events reuse activateLibrary and the static page remains file-compatible", () => {
   assert.match(script, /#home-search-form[\s\S]*activateLibrary\(\{ query: document\.querySelector\("#home-search-input"\)\.value \}\)/);
   assert.match(script, /#home-quick-filters[\s\S]*activateLibrary\(\{ filterValue: button\.dataset\.homeFilter \}\)/);
   assert.match(script, /state\.query = exactQuery[\s\S]*renderFilters\(\)[\s\S]*renderCards\(\)/);
-  assert.match(script, /window\.location\.hash = "bibliotheque"/);
+  assert.match(script, /showAppView\("bibliotheque"\)/);
+  assert.doesNotMatch(script, /activateLibrary[\s\S]{0,800}scrollIntoView/);
   assert.match(script, /search\.focus\(\{ preventScroll: true \}\)/);
   assert.match(html, /<script src="data\.js"><\/script>[\s\S]*<script src="script\.js"><\/script>/);
   assert.doesNotMatch(html, /type="module"|https?:\/\/[^"']+\.(?:js|css)/);
