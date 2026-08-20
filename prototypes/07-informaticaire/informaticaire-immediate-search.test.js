@@ -42,7 +42,7 @@ test("the editorial corpus and all internal relation targets remain intact", () 
 });
 
 test("the first screen exposes one real search entry point and the four requested shortcuts", () => {
-  assert.match(html, /app-version" content="0\.7\.0"/);
+  assert.match(html, /app-version" content="0\.7\.1"/);
   assert.match(html, /id="home-search-form"[^>]*role="search"/);
   assert.match(html, /Rechercher un projet, une personne, une ressource…/);
   assert.match(html, /id="home-search-input"[^>]*type="search"/);

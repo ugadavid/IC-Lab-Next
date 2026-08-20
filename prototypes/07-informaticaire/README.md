@@ -1,12 +1,12 @@
 # Informaticaire
 
-Prototype statique v0.7.0 pour une mémoire vivante, communautaire et partageable de l'intercompréhension.
+Prototype statique v0.7.1 pour une mémoire vivante, communautaire et partageable de l'intercompréhension.
 
 ## Présentation courte
 
 Informaticaire aide à retrouver, documenter, relier, sauver, réutiliser et partager les ressources, projets, acteurs, outils, corpus et besoins du domaine de l'intercompréhension.
 
-La v0.7.0 transforme la page historique en cinq parcours applicatifs substituables. Elle conserve toutes les fonctions documentaires, ajoute un explorateur coloré des 110 fiches et permet de parcourir contextuellement les 86 relations typées réelles.
+La v0.7.1 conserve les cinq parcours applicatifs de la v0.7.0 et affine la Carte relationnelle : disposition stable plus organique, nœuds documentaires compacts, panneau éditorial sans petit défilement imbriqué et correspondance visuelle bidirectionnelle entre graphe et relations.
 
 ## Publics visés
 
@@ -77,3 +77,4 @@ Aucun serveur, framework ou backend n'est nécessaire. Les données sont chargé
 - v0.6 enrichie : corpus porté à 104 fiches, liens issus du terrain intégrés et recherche externe ciblée dans Miriadi.
 - v0.6.6 : corpus consolidé à 110 fiches et recherche de la bibliothèque rendue directement accessible depuis l'accueil.
 - v0.7.0 : intégration du langage visuel validé, navigation en cinq familles, explorateur chromatique et cartographie contextuelle des 86 relations réelles.
+- v0.7.1 : finition visuelle et ergonomique de la Carte relationnelle, avec disposition organique déterministe et interactions graphe-panneau accessibles au clavier.

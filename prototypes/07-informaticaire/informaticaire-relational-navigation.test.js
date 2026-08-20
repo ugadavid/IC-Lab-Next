@@ -146,6 +146,90 @@ test("the map shows real labels, recentering and a path back to full records", (
   assert.match(styles, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+test("organic positions are deterministic, bounded and non-overlapping for the densest real neighborhood", () => {
+  const items = loadCorpus();
+  const relations = relationFunctions(items);
+  const neighborhood = relations.buildRelationNeighborhood("miriadi", items);
+  const start = script.indexOf("const stableMapHash =");
+  const end = script.indexOf("const renderMapNode", start);
+  const context = {};
+  vm.createContext(context);
+  vm.runInContext(
+    `${script.slice(start, end)}\n;globalThis.__layout = { stableMapHash, organicNeighborPositions, mapNodeMonogram };`,
+    context
+  );
+
+  const first = context.__layout.organicNeighborPositions("miriadi", neighborhood.neighbors);
+  const second = context.__layout.organicNeighborPositions("miriadi", [...neighborhood.neighbors].reverse());
+  const coordinates = [...first.entries()].map(([id, position]) => [id, position.x, position.y]);
+  const reversedCoordinates = [...second.entries()].map(([id, position]) => [id, position.x, position.y]);
+  assert.deepEqual(coordinates, reversedCoordinates);
+  assert.equal(coordinates.length, 8);
+  assert.ok(coordinates.every(([, x, y]) => x >= 88 && x <= 772 && y >= 106 && y <= 510));
+
+  for (let left = 0; left < coordinates.length; left += 1) {
+    for (let right = left + 1; right < coordinates.length; right += 1) {
+      const distance = Math.hypot(coordinates[left][1] - coordinates[right][1], coordinates[left][2] - coordinates[right][2]);
+      assert.ok(distance > 118, `${coordinates[left][0]} and ${coordinates[right][0]} remain separated`);
+    }
+  }
+  assert.equal(context.__layout.mapNodeMonogram(items.find((item) => item.id === "christian")), "CD");
+});
+
+test("one neighbor identity synchronizes the node, line and panel relation for pointer and keyboard focus", () => {
+  assert.match(script, /class="relation-edge" data-relation-neighbor=/);
+  assert.match(script, /data-relation-neighbor="\$\{escapeHtml\(edge\.neighbor\.id\)\}" tabindex="0"/);
+  assert.match(script, /data-relation-neighbor="\$\{escapeHtml\(item\.id\)\}"/);
+  assert.match(script, /mapSection\.addEventListener\("pointerover"/);
+  assert.match(script, /mapSection\.addEventListener\("focusin"/);
+  assert.match(script, /mapSection\.addEventListener\("focusout"/);
+  assert.match(script, /\["Enter", " "\]\.includes\(event\.key\)/);
+
+  const elements = ["alpha", "alpha", "alpha", "beta", "beta"].map((id) => ({
+    dataset: { relationNeighbor: id },
+    classes: new Set(),
+    classList: {
+      toggle(name, active) {
+        if (active) this.owner.classes.add(name);
+        else this.owner.classes.delete(name);
+      },
+    },
+  }));
+  elements.forEach((element) => { element.classList.owner = element; });
+  const section = {
+    classes: new Set(),
+    classList: {
+      toggle(name, active) {
+        if (active) section.classes.add(name);
+        else section.classes.delete(name);
+      },
+    },
+    querySelectorAll: () => elements,
+  };
+  const start = script.indexOf("const setRelationHighlight =");
+  const end = script.indexOf("const relationNeighborFromTarget", start);
+  const context = { document: { querySelector: () => section } };
+  vm.createContext(context);
+  vm.runInContext(`${script.slice(start, end)}\n;globalThis.__highlight = setRelationHighlight;`, context);
+
+  context.__highlight("alpha");
+  assert.ok(section.classes.has("has-relation-highlight"));
+  assert.ok(elements.filter((element) => element.dataset.relationNeighbor === "alpha").every((element) => element.classes.has("relation-active")));
+  assert.ok(elements.filter((element) => element.dataset.relationNeighbor === "beta").every((element) => element.classes.has("relation-muted")));
+
+  context.__highlight("");
+  assert.ok(elements.every((element) => !element.classes.has("relation-active") && !element.classes.has("relation-muted")));
+});
+
+test("the polished panel grows naturally and reduced motion disables the recentering animation", () => {
+  const panelRule = styles.match(/\.relation-detail \{([\s\S]*?)\n\}/)?.[1] || "";
+  assert.doesNotMatch(panelRule, /overflow:\s*auto|max-height:\s*620px/);
+  assert.match(html, /Explorer le voisinage de…/);
+  assert.match(script, />Consulter la fiche<\/button>/);
+  assert.match(styles, /@keyframes relation-node-enter/);
+  assert.match(styles, /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none !important/);
+});
+
 test("lossless functions, local portability and critical responsive rules remain present", () => {
   assert.match(script, /const exportItemsJson =/);
   assert.match(script, /const exportRecoveryCsv =/);

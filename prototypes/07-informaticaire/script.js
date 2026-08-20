@@ -501,23 +501,72 @@ const shortSvgLabel = (value, maxLength = 21) => {
   return lines;
 };
 
-const renderMapNode = (item, x, y, selected = false) => {
-  const width = selected ? 170 : 142;
-  const height = selected ? 82 : 70;
-  const lines = shortSvgLabel(item.title);
+const stableMapHash = (value) =>
+  [...String(value || "")].reduce((hash, character) => ((hash * 31 + character.codePointAt(0)) >>> 0), 2166136261);
+
+const organicNeighborPositions = (centerId, neighbors, center = { x: 430, y: 300 }) => {
+  const ordered = [...neighbors].sort(
+    (left, right) => stableMapHash(`${centerId}:${left.id}`) - stableMapHash(`${centerId}:${right.id}`)
+  );
+  const count = ordered.length;
+  if (!count) return new Map();
+
+  const startJitter = ((stableMapHash(centerId) % 19) - 9) * 0.012;
+  const angleStep = (Math.PI * 2) / count;
+  return new Map(
+    ordered.map((neighbor, index) => {
+      const seed = stableMapHash(`${neighbor.id}:${centerId}`);
+      const angleJitter = count > 2 ? (((seed % 101) / 100) - 0.5) * Math.min(0.2, angleStep * 0.28) : 0;
+      const angle = -Math.PI / 2 + startJitter + index * angleStep + angleJitter;
+      const radiusX = 286 + ((seed >>> 5) % 45) - 22;
+      const radiusY = 190 + ((seed >>> 11) % 37) - 18;
+      return [
+        neighbor.id,
+        {
+          x: Math.max(88, Math.min(772, center.x + Math.cos(angle) * radiusX)),
+          y: Math.max(106, Math.min(510, center.y + Math.sin(angle) * radiusY)),
+          order: index,
+        },
+      ];
+    })
+  );
+};
+
+const mapNodeMonogram = (item) => {
+  const ignored = new Set(["de", "des", "du", "et", "la", "le", "les", "y"]);
+  const words = (String(item.title || "").match(/[\p{L}\p{N}]+/gu) || []).filter((word) => !ignored.has(word.toLowerCase()));
+  if (words.length > 1) return `${words[0][0]}${words[1][0]}`.toLocaleUpperCase("fr");
+  return String(words[0] || item.type || "?").slice(0, 2).toLocaleUpperCase("fr");
+};
+
+const renderMapNode = (item, x, y, selected = false, order = 0) => {
+  const width = selected ? 166 : 132;
+  const height = selected ? 80 : 64;
+  const monogramSize = selected ? 42 : 34;
+  const monogramX = selected ? 12 : 10;
+  const monogramY = (height - monogramSize) / 2;
+  const titleX = monogramX + monogramSize + (selected ? 12 : 9);
+  const titleWidth = width - titleX - 10;
+  const lines = shortSvgLabel(item.title, selected ? 17 : 13);
+  const relationAttribute = selected ? 'data-map-center="true"' : `data-relation-neighbor="${escapeHtml(item.id)}"`;
   return `
     <g
-      class="relation-node family-${documentaryFamily(item)} ${selected ? "selected" : ""}"
+      class="relation-node family-${documentaryFamily(item)} ${selected ? "selected relation-center" : ""}"
       data-map-recenter="${escapeHtml(item.id)}"
+      ${relationAttribute}
       role="button"
       tabindex="0"
       aria-label="${escapeHtml(item.title)}"
       transform="translate(${x - width / 2} ${y - height / 2})"
+      style="--node-order:${order}"
     >
-      <rect width="${width}" height="${height}" rx="19"></rect>
-      <text x="${width / 2}" y="${height / 2 - (lines.length - 1) * 8}" text-anchor="middle">
-        ${lines.map((line, index) => `<tspan x="${width / 2}" dy="${index ? 17 : 0}">${escapeHtml(line)}</tspan>`).join("")}
+      <rect class="node-surface" width="${width}" height="${height}" rx="${selected ? 23 : 19}"></rect>
+      <rect class="node-monogram" x="${monogramX}" y="${monogramY}" width="${monogramSize}" height="${monogramSize}" rx="${selected ? 14 : 11}"></rect>
+      <text class="node-monogram-text" x="${monogramX + monogramSize / 2}" y="${height / 2 + 4}" text-anchor="middle">${escapeHtml(mapNodeMonogram(item))}</text>
+      <text class="node-title" x="${titleX}" y="${height / 2 - (lines.length - 1) * 8}" text-anchor="start" data-title-width="${titleWidth}">
+        ${lines.map((line, index) => `<tspan x="${titleX}" dy="${index ? 16 : 0}">${escapeHtml(line)}</tspan>`).join("")}
       </text>
+      <circle class="node-status-dot ${slugStatus(item.status)}" cx="${width - 10}" cy="10" r="4"></circle>
       <title>${escapeHtml(item.title)} · ${escapeHtml(item.type)}</title>
     </g>
   `;
@@ -527,6 +576,7 @@ const renderRelationMap = (centerId = state.mapItemId) => {
   const container = document.querySelector("#relation-map");
   const detail = document.querySelector("#relation-detail");
   if (!container || !detail) return;
+  setRelationHighlight("");
 
   const neighborhood = buildRelationNeighborhood(centerId);
   if (!neighborhood.center) return;
@@ -534,13 +584,8 @@ const renderRelationMap = (centerId = state.mapItemId) => {
   const picker = document.querySelector("#map-item-select");
   if (picker) picker.value = neighborhood.center.id;
 
-  const center = { x: 420, y: 280 };
-  const positions = new Map(
-    neighborhood.neighbors.map((neighbor, index) => {
-      const angle = -Math.PI / 2 + (index * Math.PI * 2) / Math.max(neighborhood.neighbors.length, 1);
-      return [neighbor.id, { x: center.x + Math.cos(angle) * 285, y: center.y + Math.sin(angle) * 195 }];
-    })
-  );
+  const center = { x: 430, y: 300 };
+  const positions = organicNeighborPositions(neighborhood.center.id, neighborhood.neighbors, center);
   const groupedEdges = neighborhood.neighbors.map((neighbor) => ({
     neighbor,
     edges: neighborhood.edges.filter((edge) => edge.neighbor.id === neighbor.id),
@@ -555,7 +600,7 @@ const renderRelationMap = (centerId = state.mapItemId) => {
       const labelX = (center.x + position.x) / 2;
       const labelY = (center.y + position.y) / 2 - 8;
       return `
-        <g class="relation-edge" data-map-recenter="${escapeHtml(neighbor.id)}" role="button" tabindex="0" aria-label="${escapeHtml(fullLabel)} vers ${escapeHtml(neighbor.title)}">
+        <g class="relation-edge" data-relation-neighbor="${escapeHtml(neighbor.id)}" data-map-recenter="${escapeHtml(neighbor.id)}" role="button" tabindex="0" aria-label="${escapeHtml(fullLabel)} vers ${escapeHtml(neighbor.title)}">
           <line class="relation-edge-hit" x1="${center.x}" y1="${center.y}" x2="${position.x}" y2="${position.y}"></line>
           <line x1="${center.x}" y1="${center.y}" x2="${position.x}" y2="${position.y}" marker-end="url(#relation-arrow)"></line>
           <text x="${labelX}" y="${labelY}" text-anchor="middle">${escapeHtml(visibleLabel)}</text>
@@ -567,7 +612,7 @@ const renderRelationMap = (centerId = state.mapItemId) => {
   const nodeMarkup = neighborhood.neighbors
     .map((neighbor) => {
       const position = positions.get(neighbor.id);
-      return renderMapNode(neighbor, position.x, position.y);
+      return renderMapNode(neighbor, position.x, position.y, false, position.order);
     })
     .join("");
 
@@ -580,7 +625,7 @@ const renderRelationMap = (centerId = state.mapItemId) => {
       </defs>
       ${edgeMarkup}
       ${nodeMarkup}
-      ${renderMapNode(neighborhood.center, center.x, center.y, true)}
+      ${renderMapNode(neighborhood.center, center.x, center.y, true, neighborhood.neighbors.length)}
     </svg>
   `;
 
@@ -588,8 +633,8 @@ const renderRelationMap = (centerId = state.mapItemId) => {
     ? neighborhood.edges
         .map(
           (edge) => `
-            <li>
-              <div>
+            <li data-relation-neighbor="${escapeHtml(edge.neighbor.id)}" tabindex="0">
+              <div class="relation-card-copy">
                 <small>${edge.direction === "sortante" ? "Depuis cette fiche" : "Vers cette fiche"}</small>
                 <strong>${escapeHtml(edge.type)}</strong>
                 <span>${escapeHtml(edge.neighbor.title)}</span>
@@ -597,7 +642,7 @@ const renderRelationMap = (centerId = state.mapItemId) => {
               </div>
               <div class="relation-item-actions">
                 <button type="button" data-map-recenter="${escapeHtml(edge.neighbor.id)}">Recentrer</button>
-                <button type="button" data-open-detail="${escapeHtml(edge.neighbor.id)}">Fiche</button>
+                <button type="button" data-open-detail="${escapeHtml(edge.neighbor.id)}">Consulter la fiche</button>
               </div>
             </li>
           `
@@ -608,17 +653,36 @@ const renderRelationMap = (centerId = state.mapItemId) => {
   detail.className = `relation-detail family-${documentaryFamily(neighborhood.center)}`;
   detail.innerHTML = `
     <div class="relation-detail-heading">
-      <span class="document-family">${escapeHtml(neighborhood.center.type)}</span>
-      <span class="document-status ${slugStatus(neighborhood.center.status)}">${escapeHtml(neighborhood.center.status)}</span>
+      <div class="relation-detail-meta">
+        <span class="document-family">${escapeHtml(neighborhood.center.type)}</span>
+        <span class="document-status ${slugStatus(neighborhood.center.status)}">${escapeHtml(neighborhood.center.status)}</span>
+      </div>
       <h3>${escapeHtml(neighborhood.center.title)}</h3>
     </div>
     <p class="relation-summary">${escapeHtml(neighborhood.center.description)}</p>
-    <div class="relation-count"><strong>${neighborhood.edges.length}</strong><span>relation${neighborhood.edges.length > 1 ? "s" : ""} dans ce voisinage</span></div>
-    <h4>Relations documentées</h4>
+    <div class="relation-section-heading">
+      <h4>Relations documentées</h4>
+      <div class="relation-count"><strong>${neighborhood.edges.length}</strong><span>relation${neighborhood.edges.length > 1 ? "s" : ""}</span></div>
+    </div>
     <ul class="relation-list">${relationList}</ul>
     <button class="button primary full-detail-action" type="button" data-open-detail="${escapeHtml(neighborhood.center.id)}">Consulter la fiche complète</button>
   `;
 };
+
+const setRelationHighlight = (neighborId = "") => {
+  const section = document.querySelector("#carte");
+  if (!section) return;
+  const activeId = String(neighborId || "");
+  section.classList.toggle("has-relation-highlight", Boolean(activeId));
+  section.querySelectorAll("[data-relation-neighbor]").forEach((element) => {
+    const active = Boolean(activeId) && element.dataset.relationNeighbor === activeId;
+    element.classList.toggle("relation-active", active);
+    element.classList.toggle("relation-muted", Boolean(activeId) && !active);
+  });
+};
+
+const relationNeighborFromTarget = (target) =>
+  target?.closest?.("[data-relation-neighbor]")?.dataset.relationNeighbor || "";
 
 const populateMapPicker = () => {
   const picker = document.querySelector("#map-item-select");
@@ -1320,7 +1384,8 @@ const bindEvents = () => {
 
   document.querySelector("#map-item-select").addEventListener("change", (event) => renderRelationMap(event.target.value));
 
-  document.querySelector("#carte").addEventListener("click", (event) => {
+  const mapSection = document.querySelector("#carte");
+  mapSection.addEventListener("click", (event) => {
     const detailButton = event.target.closest("[data-open-detail]");
     if (detailButton) {
       openDetail(detailButton.dataset.openDetail);
@@ -1328,6 +1393,27 @@ const bindEvents = () => {
     }
     const recenterButton = event.target.closest("[data-map-recenter]");
     if (recenterButton) renderRelationMap(recenterButton.dataset.mapRecenter);
+  });
+
+  mapSection.addEventListener("pointerover", (event) => {
+    const neighborId = relationNeighborFromTarget(event.target);
+    if (neighborId) setRelationHighlight(neighborId);
+  });
+
+  mapSection.addEventListener("pointerout", (event) => {
+    const currentId = relationNeighborFromTarget(event.target);
+    if (!currentId) return;
+    const nextId = relationNeighborFromTarget(event.relatedTarget);
+    if (nextId !== currentId) setRelationHighlight(nextId);
+  });
+
+  mapSection.addEventListener("focusin", (event) => {
+    const neighborId = relationNeighborFromTarget(event.target);
+    if (neighborId) setRelationHighlight(neighborId);
+  });
+
+  mapSection.addEventListener("focusout", () => {
+    window.setTimeout(() => setRelationHighlight(relationNeighborFromTarget(document.activeElement)), 0);
   });
 
   document.querySelector("#relation-map").addEventListener("keydown", (event) => {
@@ -1396,4 +1482,4 @@ populateContributionTargets();
 populateMapPicker();
 renderHomeRelationPreview();
 bindEvents();
-showAppView(window.location.hash || "accueil", { updateHash: false, resetViewport: false });
+showAppView(window.location.hash || "accueil", { updateHash: false });
