@@ -273,6 +273,87 @@ const renderExternalLinks = (item) => {
   `;
 };
 
+const renderSiteSearch = (item) => {
+  const search = item.siteSearch;
+  if (!search?.searchUrlTemplate || !search?.domain) return "";
+
+  const inputId = `site-search-${item.id}`;
+  const label = search.label || `Explorer les ressources de ${search.domain}`;
+  const buttonLabel = search.buttonLabel || "Rechercher";
+  const help =
+    search.help ||
+    `Cette recherche externe complète les ressources déjà documentées dans Informaticaire en limitant les résultats au domaine ${search.domain}.`;
+
+  return `
+    <div class="detail-card site-search-card">
+      <div class="detail-group">
+        <strong>${escapeHtml(label)}</strong>
+        <span>${escapeHtml(help)}</span>
+      </div>
+      <form
+        class="site-search-form"
+        data-site-search-form
+        data-search-template="${escapeHtml(search.searchUrlTemplate)}"
+        data-search-domain="${escapeHtml(search.domain)}"
+      >
+        <label for="${escapeHtml(inputId)}">Que cherchez-vous dans ${escapeHtml(search.domain)} ?</label>
+        <div class="site-search-controls">
+          <input
+            id="${escapeHtml(inputId)}"
+            name="site-search-query"
+            type="search"
+            placeholder="${escapeHtml(search.placeholder || "Ex. formation, activité, évaluation…")}" 
+            autocomplete="off"
+            required
+          >
+          <button class="button site-search-submit" type="submit">${escapeHtml(buttonLabel)}</button>
+        </div>
+        <small>Recherche externe limitée à ${escapeHtml(search.domain)}. Les résultats s’ouvrent dans un nouvel onglet.</small>
+        <p class="site-search-feedback" data-site-search-feedback aria-live="polite"></p>
+      </form>
+    </div>
+  `;
+};
+
+const buildSiteSearchUrl = (template, query) => {
+  const normalizedQuery = String(query || "").trim();
+  if (!normalizedQuery || !String(template || "").includes("{query}")) return "";
+
+  try {
+    const candidate = String(template).replace("{query}", encodeURIComponent(normalizedQuery));
+    const url = new URL(candidate, window.location.href);
+    if (!['http:', 'https:'].includes(url.protocol)) return "";
+    return url.href;
+  } catch {
+    return "";
+  }
+};
+
+const submitSiteSearch = (event) => {
+  const form = event.target.closest("[data-site-search-form]");
+  if (!form) return;
+
+  event.preventDefault();
+  const input = form.querySelector('[name="site-search-query"]');
+  const feedback = form.querySelector("[data-site-search-feedback]");
+  const query = input?.value.trim() || "";
+
+  if (!query) {
+    feedback.textContent = "Saisissez quelques mots avant de lancer la recherche.";
+    input?.focus();
+    return;
+  }
+
+  const targetUrl = buildSiteSearchUrl(form.dataset.searchTemplate, query);
+  if (!targetUrl) {
+    feedback.textContent = "Cette recherche externe n’est pas disponible pour le moment.";
+    return;
+  }
+
+  window.open(targetUrl, "_blank", "noopener,noreferrer");
+  feedback.textContent = `Recherche lancée dans ${form.dataset.searchDomain}.`;
+};
+
 const renderTimeline = () => {
   const timeline = document.querySelector("#timeline");
   timeline.innerHTML = timelineItems
@@ -520,6 +601,7 @@ const openDetail = (itemId) => {
       </div>
       ${recovery}
       ${renderExternalLinks(item)}
+      ${renderSiteSearch(item)}
       <div class="detail-card">${renderRelations(item)}</div>
       <div class="detail-card">
         <div class="detail-group"><strong>Traçabilité documentaire</strong><span>Repéré dans les entretiens et consolidé progressivement.</span></div>
@@ -890,6 +972,8 @@ const bindEvents = () => {
       openDetail(relatedButton.dataset.relatedId);
     }
   });
+
+  document.querySelector("#detail-modal").addEventListener("submit", submitSiteSearch);
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeDetail();

@@ -18,7 +18,7 @@ La v0.6 prépare une version de démonstration : une personne découvrant l'outi
 
 ## Fonctionnalités
 
-- Bibliothèque de 42 fiches documentées.
+- Bibliothèque de 104 fiches documentées.
 - Recherche et filtres par type, statut et public.
 - Fiches détaillées avec description, état, relations, acteurs, traçabilité, risques, droits et pistes de réutilisation.
 - Relations internes simples et relations typées.
@@ -29,6 +29,7 @@ La v0.6 prépare une version de démonstration : une personne découvrant l'outi
 - Export des fiches en JSON et de la campagne de récupération en CSV.
 - Visite guidée en 5 étapes.
 - Démo rapide autour de Galanet.
+- Recherche externe ciblée dans les ressources de Miriadi, directement depuis sa fiche et sans quitter l’état courant d’Informaticaire.
 - Sections de prudence publique et de décisions communautaires.
 
 ## Comment ouvrir le prototype
@@ -72,3 +73,4 @@ Aucun serveur, framework ou backend n'est nécessaire. Les données sont chargé
 - v0.4 : recentrage communautaire avec publics, parcours d'usage, réorganisation des fiches et champs de réutilisation.
 - v0.5 : contribution simulée, champs droits/licence/accessibilité, filtres par public, priorité communautaire et vue "À partager en priorité".
 - v0.6 : version démonstration avec visite guidée, démo rapide, indicateurs de synthèse, limites publiques, décisions communautaires et README partageable.
+- v0.6 enrichie : corpus porté à 104 fiches, liens issus du terrain intégrés et recherche externe ciblée dans Miriadi.

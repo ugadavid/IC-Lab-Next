@@ -862,6 +862,67 @@ main {
   min-height: 0;
 }
 
+.site-search-card {
+  grid-column: 1 / -1;
+  border-left: 5px solid var(--accent);
+  background:
+    linear-gradient(135deg, rgba(45, 106, 115, 0.08), rgba(255, 255, 255, 0.9));
+}
+
+.site-search-form {
+  display: grid;
+  gap: 8px;
+}
+
+.site-search-form label {
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.site-search-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.site-search-controls input {
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 11px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+
+.site-search-controls input:focus-visible {
+  outline: 3px solid rgba(45, 106, 115, 0.2);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.site-search-submit {
+  min-height: 42px;
+  padding: 9px 14px;
+  color: #fff;
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.site-search-form small {
+  color: var(--muted);
+}
+
+.site-search-feedback {
+  min-height: 1.4em;
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
 footer {
   display: flex;
   flex-wrap: wrap;
@@ -906,6 +967,10 @@ footer p {
 
   .result-actions {
     justify-content: flex-start;
+  }
+
+  .site-search-controls {
+    grid-template-columns: 1fr;
   }
 
   .graph-chain {
