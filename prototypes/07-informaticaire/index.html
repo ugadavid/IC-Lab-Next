@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="app-version" content="0.6.6">
     <title>Informaticaire - mémoire communautaire de l'intercompréhension</title>
     <link rel="stylesheet" href="styles.css">
   </head>
@@ -22,7 +23,7 @@
         <a href="#publics">Pour qui ?</a>
         <a href="#parcours">Je veux...</a>
         <a href="#frise">Frise</a>
-        <a href="#bibliotheque">Fiches</a>
+        <a href="#bibliotheque">Explorer</a>
         <a href="#partager">À partager</a>
         <a href="#contribuer">Contribuer</a>
         <a href="#graphe">Relations</a>
@@ -37,7 +38,7 @@
     <main>
       <section id="accueil" class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Prototype v0.6</p>
+          <p class="eyebrow">Prototype v0.6.6</p>
           <h1>Une mémoire vivante et partageable de l'intercompréhension.</h1>
           <p>
             Informaticaire aide la communauté de l'intercompréhension à
@@ -46,8 +47,22 @@
             fragile et préparer la réutilisation collective des activités,
             outils, corpus et plateformes du domaine.
           </p>
+          <form id="home-search-form" class="hero-search" role="search">
+            <label for="home-search-input">Rechercher un projet, une personne, une ressource…</label>
+            <div class="hero-search-controls">
+              <input id="home-search-input" type="search" placeholder="Ex. Galanet, EuroComRom, Sandra Garbarino…" autocomplete="off">
+              <button class="button primary" type="submit">Rechercher</button>
+            </div>
+            <div id="home-quick-filters" class="hero-quick-filters" aria-label="Accès rapides à la bibliothèque">
+              <span>Accès rapides :</span>
+              <button type="button" data-home-filter="projet">Projets</button>
+              <button type="button" data-home-filter="acteur">Acteurs</button>
+              <button type="button" data-home-filter="ressource">Ressources</button>
+              <button type="button" data-home-filter="à récupérer">À sauver</button>
+            </div>
+          </form>
           <div class="hero-actions" aria-label="Accès rapides">
-            <a class="button primary" href="#bibliotheque">Explorer les fiches</a>
+            <a class="button" href="#bibliotheque">Explorer la bibliothèque</a>
             <a class="button" href="#visite">Découvrir en 5 étapes</a>
             <a class="button" href="#demo">Voir la démo rapide</a>
             <a class="button" href="#contribuer">Préparer une contribution</a>
@@ -406,7 +421,7 @@
 
     <footer>
       <p>Prototype statique pour une mémoire communautaire de l'intercompréhension.</p>
-      <p>Données v0.6 nourries par une première lecture documentaire des entretiens et préparées pour une démonstration collective.</p>
+      <p>Données v0.6.6 nourries par une première lecture documentaire des entretiens et préparées pour une démonstration collective.</p>
     </footer>
 
     <div id="detail-modal" class="modal" hidden>

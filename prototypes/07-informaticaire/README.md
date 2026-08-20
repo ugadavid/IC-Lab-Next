@@ -1,12 +1,12 @@
 # Informaticaire
 
-Prototype statique v0.6 pour une mémoire vivante, communautaire et partageable de l'intercompréhension.
+Prototype statique v0.6.6 pour une mémoire vivante, communautaire et partageable de l'intercompréhension.
 
 ## Présentation courte
 
 Informaticaire aide à retrouver, documenter, relier, sauver, réutiliser et partager les ressources, projets, acteurs, outils, corpus et besoins du domaine de l'intercompréhension.
 
-La v0.6 prépare une version de démonstration : une personne découvrant l'outil doit pouvoir comprendre rapidement ce qu'il contient, comment chercher, pourquoi certaines ressources sont fragiles et comment proposer une contribution.
+La v0.6.6 permet de commencer immédiatement une recherche depuis l'accueil tout en conservant la présentation, la visite et les parcours documentaires du prototype.
 
 ## Publics visés
 
@@ -18,7 +18,7 @@ La v0.6 prépare une version de démonstration : une personne découvrant l'outi
 
 ## Fonctionnalités
 
-- Bibliothèque de 104 fiches documentées.
+- Bibliothèque de 110 fiches documentées.
 - Recherche et filtres par type, statut et public.
 - Fiches détaillées avec description, état, relations, acteurs, traçabilité, risques, droits et pistes de réutilisation.
 - Relations internes simples et relations typées.
@@ -74,3 +74,4 @@ Aucun serveur, framework ou backend n'est nécessaire. Les données sont chargé
 - v0.5 : contribution simulée, champs droits/licence/accessibilité, filtres par public, priorité communautaire et vue "À partager en priorité".
 - v0.6 : version démonstration avec visite guidée, démo rapide, indicateurs de synthèse, limites publiques, décisions communautaires et README partageable.
 - v0.6 enrichie : corpus porté à 104 fiches, liens issus du terrain intégrés et recherche externe ciblée dans Miriadi.
+- v0.6.6 : corpus consolidé à 110 fiches et recherche de la bibliothèque rendue directement accessible depuis l'accueil.

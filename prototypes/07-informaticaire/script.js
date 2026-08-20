@@ -819,6 +819,26 @@ const highlightSection = (selector) => {
   window.setTimeout(() => section.classList.remove("highlight-section"), 1800);
 };
 
+const activateLibrary = ({ query = "", filterValue = "all" } = {}) => {
+  const search = document.querySelector("#search-input");
+  const library = document.querySelector("#bibliotheque");
+  const exactQuery = String(query ?? "");
+  state.query = exactQuery;
+  state.filter = filters.find((filter) => filter.value === filterValue) || filters[0];
+  state.focusItemId = "";
+  search.value = exactQuery;
+  renderFilters();
+  renderCards();
+
+  if (window.location.hash !== "#bibliotheque") window.location.hash = "bibliotheque";
+  else library.scrollIntoView({ behavior: "smooth", block: "start" });
+
+  window.setTimeout(() => {
+    search.focus({ preventScroll: true });
+    search.setSelectionRange(exactQuery.length, exactQuery.length);
+  }, 0);
+};
+
 const runGalanetDemo = () => {
   const galanet = itemById().get("galanet");
   if (!galanet) return;
@@ -885,6 +905,16 @@ const updateStats = () => {
 };
 
 const bindEvents = () => {
+  document.querySelector("#home-search-form").addEventListener("submit", (event) => {
+    event.preventDefault();
+    activateLibrary({ query: document.querySelector("#home-search-input").value });
+  });
+
+  document.querySelector("#home-quick-filters").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-home-filter]");
+    if (button) activateLibrary({ filterValue: button.dataset.homeFilter });
+  });
+
   document.querySelector("#visite").addEventListener("click", (event) => {
     const button = event.target.closest("[data-tour-target]");
     if (button) highlightSection(button.dataset.tourTarget);
