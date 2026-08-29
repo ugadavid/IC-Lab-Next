@@ -1,0 +1,1764 @@
+{
+  "contract_version": "0.1",
+  "status": "complete",
+  "text": "Durante el día, los estudiantes observan los efectos del cambio climático y comparten sus resultados. Sin embargo, durante la noche la información sigue circulando entre universidades de distintos países. Cada lector compara las palabras, reconoce algunas terminaciones y construye progresivamente el sentido del texto.",
+  "languages": {
+    "source": "es",
+    "mediation": "fr",
+    "comparison": [
+      "it",
+      "pt"
+    ]
+  },
+  "sieves": [
+    {
+      "id": 1,
+      "code": "international_lexicon",
+      "label": "Lexique international",
+      "description": "Repère les formes transparentes ou quasi transparentes.",
+      "status": "available",
+      "result_count": 3
+    },
+    {
+      "id": 2,
+      "code": "pan_romance_lexicon",
+      "label": "Lexique pan-roman",
+      "description": "Compare des formes proches dans plusieurs langues romanes.",
+      "status": "available",
+      "result_count": 26
+    },
+    {
+      "id": 3,
+      "code": "phonetic_correspondences",
+      "label": "Correspondances phonétiques",
+      "description": "Repère des correspondances régulières entre formes.",
+      "status": "available",
+      "result_count": 1
+    },
+    {
+      "id": 4,
+      "code": "graphy_pronunciation",
+      "label": "Graphies / prononciations",
+      "description": "Signale des graphies utiles pour orienter la prononciation.",
+      "status": "experimental",
+      "result_count": 3
+    },
+    {
+      "id": 5,
+      "code": "pan_romance_syntax",
+      "label": "Syntaxe pan-romane",
+      "description": "Propose une lecture syntaxique très simplifiée de l’énoncé.",
+      "status": "experimental",
+      "result_count": 0
+    },
+    {
+      "id": 6,
+      "code": "morphosyntax",
+      "label": "Morphosyntaxe",
+      "description": "Repère quelques signaux grammaticaux visibles.",
+      "status": "experimental",
+      "result_count": 5
+    },
+    {
+      "id": 7,
+      "code": "affixes",
+      "label": "Préfixes / suffixes",
+      "description": "Repère des affixes donnant des indices morphologiques.",
+      "status": "available",
+      "result_count": 1
+    }
+  ],
+  "tokens": [
+    {
+      "index": 0,
+      "kind": "word",
+      "surface": "Durante",
+      "normalized": "durante",
+      "start": 0,
+      "end": 7,
+      "enrichments": [
+        {
+          "id": "e-0001",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "pendant la durée de quelque chose",
+            "forms": [
+              {
+                "language": "es",
+                "form": "durante"
+              },
+              {
+                "language": "fr",
+                "form": "durant"
+              },
+              {
+                "language": "it",
+                "form": "durante"
+              },
+              {
+                "language": "pt",
+                "form": "durante"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "kind": "word",
+      "surface": "el",
+      "normalized": "el",
+      "start": 8,
+      "end": 10,
+      "enrichments": [
+        {
+          "id": "e-0002",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "article défini masculin singulier",
+            "forms": [
+              {
+                "language": "es",
+                "form": "el"
+              },
+              {
+                "language": "fr",
+                "form": "le"
+              },
+              {
+                "language": "it",
+                "form": "il"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "kind": "word",
+      "surface": "día",
+      "normalized": "día",
+      "start": 11,
+      "end": 14,
+      "enrichments": []
+    },
+    {
+      "index": 3,
+      "kind": "punctuation",
+      "surface": ",",
+      "normalized": "",
+      "start": 14,
+      "end": 15,
+      "enrichments": []
+    },
+    {
+      "index": 4,
+      "kind": "word",
+      "surface": "los",
+      "normalized": "los",
+      "start": 16,
+      "end": 19,
+      "enrichments": [
+        {
+          "id": "e-0003",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "pronom défini pluriel, sujet",
+            "forms": [
+              {
+                "language": "es",
+                "form": "los"
+              },
+              {
+                "language": "fr",
+                "form": "les"
+              },
+              {
+                "language": "it",
+                "form": "li"
+              },
+              {
+                "language": "pt",
+                "form": "os"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "kind": "word",
+      "surface": "estudiantes",
+      "normalized": "estudiantes",
+      "start": 20,
+      "end": 31,
+      "enrichments": [
+        {
+          "id": "e-0004",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "Personne qui étudie",
+            "forms": [
+              {
+                "language": "es",
+                "form": "estudiante"
+              },
+              {
+                "language": "fr",
+                "form": "étudiant"
+              },
+              {
+                "language": "it",
+                "form": "studente"
+              },
+              {
+                "language": "pt",
+                "form": "estudante"
+              }
+            ]
+          }
+        },
+        {
+          "id": "e-0005",
+          "sieve_id": 6,
+          "type": "morphosyntactic_signal",
+          "label": "Pluriel validé",
+          "explanation": "Cette forme est le pluriel validé de « estudiante » dans Dico-IC.",
+          "caution": "Cette information provient d’un mapping validé dans Dico-IC.",
+          "confidence": 0.99,
+          "level": "strong",
+          "source": {
+            "kind": "inflected_form",
+            "id": 2,
+            "label": "Dico-IC"
+          },
+          "payload": {
+            "category": "validated_plural",
+            "grammatical_number": "PLURAL",
+            "lemma": "estudiante",
+            "surface_form": "estudiantes"
+          }
+        }
+      ]
+    },
+    {
+      "index": 6,
+      "kind": "word",
+      "surface": "observan",
+      "normalized": "observan",
+      "start": 32,
+      "end": 40,
+      "enrichments": []
+    },
+    {
+      "index": 7,
+      "kind": "word",
+      "surface": "los",
+      "normalized": "los",
+      "start": 41,
+      "end": 44,
+      "enrichments": [
+        {
+          "id": "e-0006",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "pronom défini pluriel, sujet",
+            "forms": [
+              {
+                "language": "es",
+                "form": "los"
+              },
+              {
+                "language": "fr",
+                "form": "les"
+              },
+              {
+                "language": "it",
+                "form": "li"
+              },
+              {
+                "language": "pt",
+                "form": "os"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 8,
+      "kind": "word",
+      "surface": "efectos",
+      "normalized": "efectos",
+      "start": 45,
+      "end": 52,
+      "enrichments": []
+    },
+    {
+      "index": 9,
+      "kind": "word",
+      "surface": "del",
+      "normalized": "del",
+      "start": 53,
+      "end": 56,
+      "enrichments": [
+        {
+          "id": "e-0007",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "article défini masculin singulier",
+            "forms": [
+              {
+                "language": "es",
+                "form": "del"
+              },
+              {
+                "language": "fr",
+                "form": "du"
+              },
+              {
+                "language": "it",
+                "form": "del"
+              },
+              {
+                "language": "pt",
+                "form": "do"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "kind": "word",
+      "surface": "cambio",
+      "normalized": "cambio",
+      "start": 57,
+      "end": 63,
+      "enrichments": []
+    },
+    {
+      "index": 11,
+      "kind": "word",
+      "surface": "climático",
+      "normalized": "climático",
+      "start": 64,
+      "end": 73,
+      "enrichments": [
+        {
+          "id": "e-0008",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "relatif au climat",
+            "forms": [
+              {
+                "language": "es",
+                "form": "climático"
+              },
+              {
+                "language": "fr",
+                "form": "climatique"
+              },
+              {
+                "language": "it",
+                "form": "climatico"
+              },
+              {
+                "language": "pt",
+                "form": "climático"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 12,
+      "kind": "word",
+      "surface": "y",
+      "normalized": "y",
+      "start": 74,
+      "end": 75,
+      "enrichments": [
+        {
+          "id": "e-0009",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "conjonction de coordination signifiant 'et'",
+            "forms": [
+              {
+                "language": "es",
+                "form": "y"
+              },
+              {
+                "language": "fr",
+                "form": "et"
+              },
+              {
+                "language": "it",
+                "form": "e"
+              },
+              {
+                "language": "pt",
+                "form": "e"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 13,
+      "kind": "word",
+      "surface": "comparten",
+      "normalized": "comparten",
+      "start": 76,
+      "end": 85,
+      "enrichments": []
+    },
+    {
+      "index": 14,
+      "kind": "word",
+      "surface": "sus",
+      "normalized": "sus",
+      "start": 86,
+      "end": 89,
+      "enrichments": []
+    },
+    {
+      "index": 15,
+      "kind": "word",
+      "surface": "resultados",
+      "normalized": "resultados",
+      "start": 90,
+      "end": 100,
+      "enrichments": [
+        {
+          "id": "e-0010",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "résultat d'une action ou d'un événement",
+            "forms": [
+              {
+                "language": "es",
+                "form": "resultado"
+              },
+              {
+                "language": "fr",
+                "form": "résultat"
+              },
+              {
+                "language": "it",
+                "form": "risultato"
+              },
+              {
+                "language": "pt",
+                "form": "resultado"
+              }
+            ]
+          }
+        },
+        {
+          "id": "e-0011",
+          "sieve_id": 6,
+          "type": "morphosyntactic_signal",
+          "label": "Pluriel validé",
+          "explanation": "Cette forme est le pluriel validé de « resultado » dans Dico-IC.",
+          "caution": "Cette information provient d’un mapping validé dans Dico-IC.",
+          "confidence": 0.99,
+          "level": "strong",
+          "source": {
+            "kind": "inflected_form",
+            "id": 3,
+            "label": "Dico-IC"
+          },
+          "payload": {
+            "category": "validated_plural",
+            "grammatical_number": "PLURAL",
+            "lemma": "resultado",
+            "surface_form": "resultados"
+          }
+        }
+      ]
+    },
+    {
+      "index": 16,
+      "kind": "punctuation",
+      "surface": ".",
+      "normalized": "",
+      "start": 100,
+      "end": 101,
+      "enrichments": []
+    },
+    {
+      "index": 17,
+      "kind": "word",
+      "surface": "Sin",
+      "normalized": "sin",
+      "start": 102,
+      "end": 105,
+      "enrichments": [
+        {
+          "id": "e-0012",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "indiquant l'absence de quelque chose",
+            "forms": [
+              {
+                "language": "es",
+                "form": "sin"
+              },
+              {
+                "language": "fr",
+                "form": "sans"
+              },
+              {
+                "language": "it",
+                "form": "senza"
+              },
+              {
+                "language": "pt",
+                "form": "sem"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 18,
+      "kind": "word",
+      "surface": "embargo",
+      "normalized": "embargo",
+      "start": 106,
+      "end": 113,
+      "enrichments": []
+    },
+    {
+      "index": 19,
+      "kind": "punctuation",
+      "surface": ",",
+      "normalized": "",
+      "start": 113,
+      "end": 114,
+      "enrichments": []
+    },
+    {
+      "index": 20,
+      "kind": "word",
+      "surface": "durante",
+      "normalized": "durante",
+      "start": 115,
+      "end": 122,
+      "enrichments": [
+        {
+          "id": "e-0013",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "pendant la durée de quelque chose",
+            "forms": [
+              {
+                "language": "es",
+                "form": "durante"
+              },
+              {
+                "language": "fr",
+                "form": "durant"
+              },
+              {
+                "language": "it",
+                "form": "durante"
+              },
+              {
+                "language": "pt",
+                "form": "durante"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 21,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 123,
+      "end": 125,
+      "enrichments": [
+        {
+          "id": "e-0014",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "article défini féminin singulier",
+            "forms": [
+              {
+                "language": "es",
+                "form": "la"
+              },
+              {
+                "language": "fr",
+                "form": "la"
+              },
+              {
+                "language": "it",
+                "form": "la"
+              },
+              {
+                "language": "pt",
+                "form": "a"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 22,
+      "kind": "word",
+      "surface": "noche",
+      "normalized": "noche",
+      "start": 126,
+      "end": 131,
+      "enrichments": [
+        {
+          "id": "e-0015",
+          "sieve_id": 1,
+          "type": "lexical_transparency",
+          "label": "Mot transparent ou quasi transparent",
+          "explanation": "La forme es est proche d’une forme reconnaissable en fr.",
+          "caution": "Cette ressemblance est un indice et non une traduction automatique.",
+          "confidence": 0.45,
+          "level": "informational",
+          "source": {
+            "kind": "form_relation",
+            "label": "manual_admin_v0"
+          },
+          "payload": {
+            "source_form": "noche",
+            "mediation_form": "nuit",
+            "mediation_language": "fr",
+            "relation_type": "COGNATE_WEAK"
+          }
+        },
+        {
+          "id": "e-0016",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "période de la journée où il fait sombre, entre le coucher et le lever du soleil",
+            "forms": [
+              {
+                "language": "es",
+                "form": "noche"
+              },
+              {
+                "language": "fr",
+                "form": "nuit"
+              },
+              {
+                "language": "it",
+                "form": "notte"
+              },
+              {
+                "language": "pt",
+                "form": "noite"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 23,
+      "kind": "word",
+      "surface": "la",
+      "normalized": "la",
+      "start": 132,
+      "end": 134,
+      "enrichments": [
+        {
+          "id": "e-0017",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "article défini féminin singulier",
+            "forms": [
+              {
+                "language": "es",
+                "form": "la"
+              },
+              {
+                "language": "fr",
+                "form": "la"
+              },
+              {
+                "language": "it",
+                "form": "la"
+              },
+              {
+                "language": "pt",
+                "form": "a"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 24,
+      "kind": "word",
+      "surface": "información",
+      "normalized": "información",
+      "start": 135,
+      "end": 146,
+      "enrichments": [
+        {
+          "id": "e-0018",
+          "sieve_id": 1,
+          "type": "lexical_transparency",
+          "label": "Mot transparent ou quasi transparent",
+          "explanation": "La forme es est proche d’une forme reconnaissable en fr.",
+          "caution": "Cette ressemblance est un indice et non une traduction automatique.",
+          "confidence": 0.98,
+          "level": "strong",
+          "source": {
+            "kind": "form_relation",
+            "label": "manual_seed"
+          },
+          "payload": {
+            "source_form": "información",
+            "mediation_form": "information",
+            "mediation_language": "fr",
+            "relation_type": "COGNATE_STRONG"
+          }
+        },
+        {
+          "id": "e-0019",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "information, donnée communiquée",
+            "forms": [
+              {
+                "language": "es",
+                "form": "información"
+              },
+              {
+                "language": "fr",
+                "form": "information"
+              },
+              {
+                "language": "it",
+                "form": "informazione"
+              },
+              {
+                "language": "pt",
+                "form": "informação"
+              }
+            ]
+          }
+        },
+        {
+          "id": "e-0020",
+          "sieve_id": 3,
+          "type": "form_correspondence",
+          "label": "Correspondance -ción → -tion",
+          "explanation": "Correspondance fréquente du suffixe espagnol -ción vers le suffixe français -tion.",
+          "caution": "La forme proposée est confirmée ici par le lexique : information.",
+          "confidence": 0.88,
+          "level": "strong",
+          "source": {
+            "kind": "pattern_rule",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "original": "información",
+            "transformed": "information",
+            "source_pattern": "ción",
+            "target_pattern": "tion",
+            "source_language": "es",
+            "target_language": "fr"
+          }
+        },
+        {
+          "id": "e-0021",
+          "sieve_id": 7,
+          "type": "affix_signal",
+          "label": "Suffixe -ción repéré",
+          "explanation": "La finale peut aider à reconnaître une famille de mots.",
+          "caution": "Un suffixe isolé ne détermine pas le sens complet.",
+          "confidence": 0.854,
+          "level": "informational",
+          "source": {
+            "kind": "pattern_rule",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "affix_type": "suffix",
+            "affix": "ción",
+            "language": "es"
+          }
+        }
+      ]
+    },
+    {
+      "index": 25,
+      "kind": "word",
+      "surface": "sigue",
+      "normalized": "sigue",
+      "start": 147,
+      "end": 152,
+      "enrichments": []
+    },
+    {
+      "index": 26,
+      "kind": "word",
+      "surface": "circulando",
+      "normalized": "circulando",
+      "start": 153,
+      "end": 163,
+      "enrichments": [
+        {
+          "id": "e-0022",
+          "sieve_id": 4,
+          "type": "grapho_phonetic_signal",
+          "label": "c devant e ou i",
+          "explanation": "Le c devant e ou i attire l’attention sur une variation de prononciation en espagnol.",
+          "caution": "La réalisation varie selon les régions ; le signal reste ici graphique.",
+          "confidence": 0.7,
+          "level": "informational",
+          "source": {
+            "kind": "heuristic",
+            "label": "Heuristique grapho-phonique V0"
+          },
+          "payload": {
+            "pattern": "ci",
+            "scope": "contains",
+            "comparison_hint": "variation graphique et phonétique"
+          }
+        }
+      ]
+    },
+    {
+      "index": 27,
+      "kind": "word",
+      "surface": "entre",
+      "normalized": "entre",
+      "start": 164,
+      "end": 169,
+      "enrichments": [
+        {
+          "id": "e-0023",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "préposition exprimant une relation entre plusieurs entités",
+            "forms": [
+              {
+                "language": "es",
+                "form": "entre"
+              },
+              {
+                "language": "fr",
+                "form": "entre"
+              },
+              {
+                "language": "it",
+                "form": "tra"
+              },
+              {
+                "language": "pt",
+                "form": "entre"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 28,
+      "kind": "word",
+      "surface": "universidades",
+      "normalized": "universidades",
+      "start": 170,
+      "end": 183,
+      "enrichments": [
+        {
+          "id": "e-0024",
+          "sieve_id": 1,
+          "type": "lexical_transparency",
+          "label": "Mot transparent ou quasi transparent",
+          "explanation": "La forme es est proche d’une forme reconnaissable en fr.",
+          "caution": "Cette ressemblance est un indice et non une traduction automatique.",
+          "confidence": 0.78,
+          "level": "informational",
+          "source": {
+            "kind": "form_relation",
+            "label": "manual_seed"
+          },
+          "payload": {
+            "source_form": "universidad",
+            "mediation_form": "université",
+            "mediation_language": "fr",
+            "relation_type": "COGNATE_WEAK"
+          }
+        },
+        {
+          "id": "e-0025",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "université, établissement d’enseignement supérieur",
+            "forms": [
+              {
+                "language": "es",
+                "form": "universidad"
+              },
+              {
+                "language": "fr",
+                "form": "université"
+              },
+              {
+                "language": "it",
+                "form": "università"
+              },
+              {
+                "language": "pt",
+                "form": "universidade"
+              }
+            ]
+          }
+        },
+        {
+          "id": "e-0026",
+          "sieve_id": 6,
+          "type": "morphosyntactic_signal",
+          "label": "Pluriel validé",
+          "explanation": "Cette forme est le pluriel validé de « universidad » dans Dico-IC.",
+          "caution": "Cette information provient d’un mapping validé dans Dico-IC.",
+          "confidence": 0.99,
+          "level": "strong",
+          "source": {
+            "kind": "inflected_form",
+            "id": 6,
+            "label": "Dico-IC"
+          },
+          "payload": {
+            "category": "validated_plural",
+            "grammatical_number": "PLURAL",
+            "lemma": "universidad",
+            "surface_form": "universidades"
+          }
+        }
+      ]
+    },
+    {
+      "index": 29,
+      "kind": "word",
+      "surface": "de",
+      "normalized": "de",
+      "start": 184,
+      "end": 186,
+      "enrichments": [
+        {
+          "id": "e-0027",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "préposition exprimant la possession ou origine",
+            "forms": [
+              {
+                "language": "es",
+                "form": "de"
+              },
+              {
+                "language": "fr",
+                "form": "de"
+              },
+              {
+                "language": "it",
+                "form": "di"
+              },
+              {
+                "language": "pt",
+                "form": "de"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 30,
+      "kind": "word",
+      "surface": "distintos",
+      "normalized": "distintos",
+      "start": 187,
+      "end": 196,
+      "enrichments": []
+    },
+    {
+      "index": 31,
+      "kind": "word",
+      "surface": "países",
+      "normalized": "países",
+      "start": 197,
+      "end": 203,
+      "enrichments": []
+    },
+    {
+      "index": 32,
+      "kind": "punctuation",
+      "surface": ".",
+      "normalized": "",
+      "start": 203,
+      "end": 204,
+      "enrichments": []
+    },
+    {
+      "index": 33,
+      "kind": "word",
+      "surface": "Cada",
+      "normalized": "cada",
+      "start": 205,
+      "end": 209,
+      "enrichments": [
+        {
+          "id": "e-0028",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "déterminant indiquant une unité dans un ensemble",
+            "forms": [
+              {
+                "language": "es",
+                "form": "cada"
+              },
+              {
+                "language": "fr",
+                "form": "chaque"
+              },
+              {
+                "language": "it",
+                "form": "ogni"
+              },
+              {
+                "language": "pt",
+                "form": "cada"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 34,
+      "kind": "word",
+      "surface": "lector",
+      "normalized": "lector",
+      "start": 210,
+      "end": 216,
+      "enrichments": []
+    },
+    {
+      "index": 35,
+      "kind": "word",
+      "surface": "compara",
+      "normalized": "compara",
+      "start": 217,
+      "end": 224,
+      "enrichments": []
+    },
+    {
+      "index": 36,
+      "kind": "word",
+      "surface": "las",
+      "normalized": "las",
+      "start": 225,
+      "end": 228,
+      "enrichments": []
+    },
+    {
+      "index": 37,
+      "kind": "word",
+      "surface": "palabras",
+      "normalized": "palabras",
+      "start": 229,
+      "end": 237,
+      "enrichments": [
+        {
+          "id": "e-0029",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "Unité de langage écrite ou orale",
+            "forms": [
+              {
+                "language": "es",
+                "form": "palabra"
+              },
+              {
+                "language": "fr",
+                "form": "mot"
+              },
+              {
+                "language": "it",
+                "form": "parola"
+              },
+              {
+                "language": "pt",
+                "form": "palavra"
+              }
+            ]
+          }
+        },
+        {
+          "id": "e-0030",
+          "sieve_id": 6,
+          "type": "morphosyntactic_signal",
+          "label": "Pluriel validé",
+          "explanation": "Cette forme est le pluriel validé de « palabra » dans Dico-IC.",
+          "caution": "Cette information provient d’un mapping validé dans Dico-IC.",
+          "confidence": 0.99,
+          "level": "strong",
+          "source": {
+            "kind": "inflected_form",
+            "id": 16,
+            "label": "Dico-IC"
+          },
+          "payload": {
+            "category": "validated_plural",
+            "grammatical_number": "PLURAL",
+            "lemma": "palabra",
+            "surface_form": "palabras"
+          }
+        }
+      ]
+    },
+    {
+      "index": 38,
+      "kind": "punctuation",
+      "surface": ",",
+      "normalized": "",
+      "start": 237,
+      "end": 238,
+      "enrichments": []
+    },
+    {
+      "index": 39,
+      "kind": "word",
+      "surface": "reconoce",
+      "normalized": "reconoce",
+      "start": 239,
+      "end": 247,
+      "enrichments": [
+        {
+          "id": "e-0031",
+          "sieve_id": 4,
+          "type": "grapho_phonetic_signal",
+          "label": "c devant e ou i",
+          "explanation": "Le c devant e ou i attire l’attention sur une variation de prononciation en espagnol.",
+          "caution": "La réalisation varie selon les régions ; le signal reste ici graphique.",
+          "confidence": 0.7,
+          "level": "informational",
+          "source": {
+            "kind": "heuristic",
+            "label": "Heuristique grapho-phonique V0"
+          },
+          "payload": {
+            "pattern": "ce",
+            "scope": "contains",
+            "comparison_hint": "variation graphique et phonétique"
+          }
+        }
+      ]
+    },
+    {
+      "index": 40,
+      "kind": "word",
+      "surface": "algunas",
+      "normalized": "algunas",
+      "start": 248,
+      "end": 255,
+      "enrichments": []
+    },
+    {
+      "index": 41,
+      "kind": "word",
+      "surface": "terminaciones",
+      "normalized": "terminaciones",
+      "start": 256,
+      "end": 269,
+      "enrichments": [
+        {
+          "id": "e-0032",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "Terminaison d'un mot",
+            "forms": [
+              {
+                "language": "es",
+                "form": "terminación"
+              },
+              {
+                "language": "fr",
+                "form": "terminaison"
+              },
+              {
+                "language": "it",
+                "form": "terminazione"
+              },
+              {
+                "language": "pt",
+                "form": "terminação"
+              }
+            ]
+          }
+        },
+        {
+          "id": "e-0033",
+          "sieve_id": 4,
+          "type": "grapho_phonetic_signal",
+          "label": "c devant e ou i",
+          "explanation": "Le c devant e ou i attire l’attention sur une variation de prononciation en espagnol.",
+          "caution": "La réalisation varie selon les régions ; le signal reste ici graphique.",
+          "confidence": 0.7,
+          "level": "informational",
+          "source": {
+            "kind": "heuristic",
+            "label": "Heuristique grapho-phonique V0"
+          },
+          "payload": {
+            "pattern": "ci",
+            "scope": "contains",
+            "comparison_hint": "variation graphique et phonétique"
+          }
+        },
+        {
+          "id": "e-0034",
+          "sieve_id": 6,
+          "type": "morphosyntactic_signal",
+          "label": "Pluriel validé",
+          "explanation": "Cette forme est le pluriel validé de « terminación » dans Dico-IC.",
+          "caution": "Cette information provient d’un mapping validé dans Dico-IC.",
+          "confidence": 0.99,
+          "level": "strong",
+          "source": {
+            "kind": "inflected_form",
+            "id": 10,
+            "label": "Dico-IC"
+          },
+          "payload": {
+            "category": "validated_plural",
+            "grammatical_number": "PLURAL",
+            "lemma": "terminación",
+            "surface_form": "terminaciones"
+          }
+        }
+      ]
+    },
+    {
+      "index": 42,
+      "kind": "word",
+      "surface": "y",
+      "normalized": "y",
+      "start": 270,
+      "end": 271,
+      "enrichments": [
+        {
+          "id": "e-0035",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "conjonction de coordination signifiant 'et'",
+            "forms": [
+              {
+                "language": "es",
+                "form": "y"
+              },
+              {
+                "language": "fr",
+                "form": "et"
+              },
+              {
+                "language": "it",
+                "form": "e"
+              },
+              {
+                "language": "pt",
+                "form": "e"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 43,
+      "kind": "word",
+      "surface": "construye",
+      "normalized": "construye",
+      "start": 272,
+      "end": 281,
+      "enrichments": []
+    },
+    {
+      "index": 44,
+      "kind": "word",
+      "surface": "progresivamente",
+      "normalized": "progresivamente",
+      "start": 282,
+      "end": 297,
+      "enrichments": []
+    },
+    {
+      "index": 45,
+      "kind": "word",
+      "surface": "el",
+      "normalized": "el",
+      "start": 298,
+      "end": 300,
+      "enrichments": [
+        {
+          "id": "e-0036",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "article défini masculin singulier",
+            "forms": [
+              {
+                "language": "es",
+                "form": "el"
+              },
+              {
+                "language": "fr",
+                "form": "le"
+              },
+              {
+                "language": "it",
+                "form": "il"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 46,
+      "kind": "word",
+      "surface": "sentido",
+      "normalized": "sentido",
+      "start": 301,
+      "end": 308,
+      "enrichments": [
+        {
+          "id": "e-0037",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "Sens d'un mot ou d'une phrase",
+            "forms": [
+              {
+                "language": "es",
+                "form": "sentido"
+              },
+              {
+                "language": "fr",
+                "form": "sens"
+              },
+              {
+                "language": "it",
+                "form": "senso"
+              },
+              {
+                "language": "pt",
+                "form": "sentido"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 47,
+      "kind": "word",
+      "surface": "del",
+      "normalized": "del",
+      "start": 309,
+      "end": 312,
+      "enrichments": [
+        {
+          "id": "e-0038",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "article défini masculin singulier",
+            "forms": [
+              {
+                "language": "es",
+                "form": "del"
+              },
+              {
+                "language": "fr",
+                "form": "du"
+              },
+              {
+                "language": "it",
+                "form": "del"
+              },
+              {
+                "language": "pt",
+                "form": "do"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 48,
+      "kind": "word",
+      "surface": "texto",
+      "normalized": "texto",
+      "start": 313,
+      "end": 318,
+      "enrichments": [
+        {
+          "id": "e-0039",
+          "sieve_id": 2,
+          "type": "pan_romance_family",
+          "label": "Parenté lexicale romane",
+          "explanation": "Des formes apparentées sont attestées dans plusieurs langues demandées.",
+          "caution": "Les formes comparées sont des aides à l’inférence, pas une traduction automatique.",
+          "confidence": 0.84,
+          "level": "strong",
+          "source": {
+            "kind": "lexical_form",
+            "label": "Dico-IC V0"
+          },
+          "payload": {
+            "family_label": "Contenu écrit",
+            "forms": [
+              {
+                "language": "es",
+                "form": "texto"
+              },
+              {
+                "language": "fr",
+                "form": "texte"
+              },
+              {
+                "language": "it",
+                "form": "testo"
+              },
+              {
+                "language": "pt",
+                "form": "texto"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "index": 49,
+      "kind": "punctuation",
+      "surface": ".",
+      "normalized": "",
+      "start": 318,
+      "end": 319,
+      "enrichments": []
+    }
+  ],
+  "pedagogical_enrichments": [
+    {
+      "id": "p-0001",
+      "type": "connector_help",
+      "label": "Connecteur logique",
+      "language": "es",
+      "function": "OPPOSITION",
+      "expression": "Sin embargo",
+      "token_indexes": [
+        17,
+        18
+      ],
+      "start": 102,
+      "end": 113,
+      "pedagogical_hint": "L'auteur introduit probablement une idée qui contraste avec ce qui précède.",
+      "example": "sin embargo / cependant",
+      "caution": "La fonction exacte peut dépendre du contexte.",
+      "source": {
+        "kind": "connector_help",
+        "id": 1,
+        "label": "Dico-IC"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "code": "SIEVE_EXPERIMENTAL",
+      "severity": "info",
+      "scope": "sieve",
+      "message": "Le tamis 4 utilise une heuristique exploratoire V0.",
+      "sieve_id": 4
+    },
+    {
+      "code": "SIEVE_EXPERIMENTAL",
+      "severity": "info",
+      "scope": "sieve",
+      "message": "Le tamis 5 utilise une heuristique exploratoire V0.",
+      "sieve_id": 5
+    },
+    {
+      "code": "SIEVE_EXPERIMENTAL",
+      "severity": "info",
+      "scope": "sieve",
+      "message": "Le tamis 6 utilise une heuristique exploratoire V0.",
+      "sieve_id": 6
+    }
+  ]
+}
+

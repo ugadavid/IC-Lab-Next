@@ -504,6 +504,19 @@ document.querySelectorAll(".sieve-btn[data-sieve]").forEach((button) => {
   button.addEventListener("click", () => setSieve(Number(button.dataset.sieve)));
 });
 
-const storedActivity = sessionContract.readActivity(window.sessionStorage);
-if (storedActivity.status === "ok") renderActivity(storedActivity.activity);
-else showEmptyState(storedActivity.status);
+const soutenanceContract = window.SevenSievesSoutenance;
+if (soutenanceContract?.isSoutenanceRequest(window.location.search)) {
+  soutenanceContract.loadActivity({
+    sessionContract,
+    storage: window.sessionStorage,
+    fetchImpl: window.fetch.bind(window),
+  }).then(renderActivity).catch((error) => {
+    showEmptyState("invalid");
+    document.getElementById("emptyReason").textContent = `L’activité de soutenance n’a pas pu être chargée : ${error.message}`;
+    console.error("Échec du chargement Seven Sieves pour la soutenance", error);
+  });
+} else {
+  const storedActivity = sessionContract.readActivity(window.sessionStorage);
+  if (storedActivity.status === "ok") renderActivity(storedActivity.activity);
+  else showEmptyState(storedActivity.status);
+}

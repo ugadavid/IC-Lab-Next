@@ -94,11 +94,17 @@ test("serves admin and Seven Sieves prototypes from the Node app", async () => {
     assert.equal(student.status, 200);
     const studentHtml = await student.text();
     assert.match(studentHtml, /Activité apprenante/);
-    assert.match(studentHtml, /app-version" content="0\.1\.5"/);
+    assert.match(studentHtml, /app-version" content="0\.1\.6"/);
     assert.match(studentHtml, /Aides à la lecture/);
     assert.match(studentHtml, /Afficher les aides à la lecture \(0\)/);
     assert.match(studentHtml, /Aucune activité n’a encore été préparée/);
     assert.equal((studentHtml.match(/class="sieve-btn"/g) || []).length, 7);
+
+    assert.match(studentHtml, /seven-sieves-soutenance-v0\.js/);
+
+    const soutenanceAnalysis = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/mock/soutenance-analysis-v0.json`);
+    assert.equal(soutenanceAnalysis.status, 200);
+    assert.equal((await soutenanceAnalysis.json()).languages.source, "es");
 
     const teacherScript = await fetch(`${server.baseUrl}/prototypes/01-seven-sieves/js/seven-sieves-teacher-v0.js`);
     assert.equal(teacherScript.status, 200);

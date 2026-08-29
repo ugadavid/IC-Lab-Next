@@ -62,7 +62,7 @@ test("learner guide replaces the accordion with an accessible contextual dialog"
   const root = path.join(__dirname, "../../prototypes/01-seven-sieves");
   const html = fs.readFileSync(path.join(root, "index-student-0.1.html"), "utf8");
 
-  assert.match(html, /app-version" content="0\.1\.5"/);
+  assert.match(html, /app-version" content="0\.1\.6"/);
   assert.match(html, /id="helpButton"[^>]*aria-haspopup="dialog"[^>]*aria-controls="learnerHelpDialog"[^>]*aria-expanded="false"/);
   assert.doesNotMatch(html, /href="#studentHelp"|id="studentHelp"|<details|<summary/);
   assert.match(html, /id="learnerHelpLayer"[^>]*aria-hidden="true" hidden/);
