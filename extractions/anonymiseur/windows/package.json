@@ -1,0 +1,7 @@
+{
+  "name": "atelier-anonymisation",
+  "productName": "Atelier d’anonymisation",
+  "version": "0.1.2",
+  "private": true,
+  "main": "windows/main.cjs"
+}

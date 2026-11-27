@@ -1,5 +1,7 @@
 # Atelier d’anonymisation autonome · 0.1.1
 
+L’[application Windows 0.1.2](windows/README.md) installe cette interface, son lecteur et les outils de rendu. Son raccourci **Atelier d’anonymisation** ouvre une fenêtre dédiée. Les instructions ci-dessous concernent l’édition navigateur.
+
 Depuis la racine du clone sur CODEX_VM, lancez cette commande dans PowerShell.
 
 ```powershell

@@ -1,0 +1,10 @@
+# Composants de l’édition Windows 0.1.2
+
+| Composant fourni | Provenance et documents installés |
+| --- | --- |
+| Electron 45.4.1 x64, Chromium, Node et leurs composants | Archive officielle `electron-v45.4.1-win32-x64.zip`. La licence MIT d’Electron et les avis collectifs de Chromium accompagnent l’exécutable dans `LICENSE` et `LICENSES.chromium.html`. Le fichier multimédia interne `ffmpeg.dll` sert au lecteur Chromium. [Distribution Electron](https://github.com/electron/electron/releases/tag/v45.4.1) |
+| FFmpeg et FFprobe en processus séparés | Gyan, `2026-02-04-git-627da1111c-full_build`, x64 statique, GCC 15.2.0. Les deux exécutables annoncent GPL version 3 ou ultérieure, avec `--enable-gpl`, `--enable-version3`, `--enable-libx264`. Le script vérifie les empreintes, la configuration et l’absence de `--enable-nonfree`. Le texte GPL, le README du constructeur, ses versions de bibliothèques, `-buildconf` et `-L` sont fournis dans `resources/outils`. [Révision FFmpeg](https://github.com/FFmpeg/FFmpeg/commit/627da1111c) · [Builds Gyan](https://www.gyan.dev/ffmpeg/builds/) |
+| Bibliothèques liées au build Gyan | La liste complète du fournisseur figure dans `README-Gyan.txt`. Elle comprend notamment x264 v0.165.3223. La révision FFmpeg seule ne contient ni ces bibliothèques ni les scripts de construction du build complet. [Conditions FFmpeg](https://ffmpeg.org/legal.html) · [GPLv3, article 6](https://www.gnu.org/licenses/gpl-3.0.html#section6) |
+| Interface et moteur de l’atelier | Extraction IC-Lab-Next issue de Proto05 0.1.69, base autonome 0.1.1. Les origines par fichier sont dans `resources/app/NOTICES.md`. |
+
+Cette édition est préparée pour l’essai de David sur ses machines. Pour une remise du setup à un tiers, il reste à réunir les sources correspondantes complètes et les scripts du build Gyan, ou à remplacer ce build par un couple reconstruit avec ses sources et notices. Le dossier Gyan disponible ici contient des notices, une configuration et une liste de versions, dont une entrée `latest`. Il ne contient pas d’archive attestant ces sources complètes. Aucune licence générale du code IC-Lab n’est attribuée par cette livraison.

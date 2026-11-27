@@ -20,12 +20,15 @@ function createWorkshop({dataDir, chooseVideo, chooseDestination, programs, temp
   async function open() {
     const file = await chooseVideo(session.signal);
     if (!file) return null;
+    return openFile(file);
+  }
+  async function openFile(file) {
     if (![".mp4",".m4v",".mov",".webm"].includes(path.extname(file).toLowerCase()))
       throw failure(400,"Choisissez une vidéo MP4, M4V, MOV ou WebM.");
     const before = await fs.stat(file,{bigint:true});
     if (!before.isFile() || !before.size) throw failure(400,"Choisissez un fichier vidéo non vide.");
     const hash = createHash("sha256");
-    for await (const block of createReadStream(file)) hash.update(block);
+    for await (const block of createReadStream(file,{signal:session.signal})) hash.update(block);
     const id = hash.digest("hex");
     const source = {id, file, name:path.basename(file), size:Number(before.size), stamp:stamp(before)};
     await checkSource(source);
@@ -120,7 +123,8 @@ function createWorkshop({dataDir, chooseVideo, chooseDestination, programs, temp
     for (const job of active) job.abort.abort();
     await Promise.allSettled([...active].map(job => job.done));
   }
-  return {open, describe, sourceFor, checkSource, current, start, outputFile, close,
+  return {open, openFile, describe, sourceFor, checkSource, current, start, outputFile, close,
+    hasActiveExport:() => active.size > 0,
     versions:id => versionsOnDisk(dataDir,id)};
 }
 module.exports = {createWorkshop};
