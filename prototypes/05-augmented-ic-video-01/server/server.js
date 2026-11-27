@@ -71,6 +71,7 @@ const {
   cleanupDownloadWorkspace,
   createDownloadWorkspace,
   publishDownloadedFile,
+  publishExclusive,
   removeEmptyParents
 } = require("./library-download-finalization");
 const {
@@ -83,7 +84,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.68";
+const VERSION = "0.1.69";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -1253,6 +1254,8 @@ function libraryAssetDetails(asset, usage = null, { activities = [], audioPlans 
       return {
         ...playableForClient(playable),
         ...(observation?.state !== "not-managed" ? {
+          hasWorkshopVersions: READ_CONTEXT.getStore()?.workshopPlayableIds?.has(playable.id),
+          workingCopyOf: sourceOfWorkingCopy(playable, sources.find(item => item.id === playable.sourceId)),
           localFileState: observation.state,
           localFileReason: observation.reason || null
         } : {})
@@ -2880,18 +2883,32 @@ async function finalizeLibraryDownload(job, candidate, ffmpegStatus) {
   if (!stat?.isFile() || stat.size <= 0) throw new Error("FFmpeg n’a produit aucun fichier exploitable.");
   const probe = probeDownloadedMedia(ffmpegStatus, job.temporaryPath);
   const sha256 = await hashFile(job.temporaryPath);
-  const duplicate = VIDEO_LIBRARY.playables.find(item => (
-    item.assetId === job.assetId
-    && (item.sha256 === sha256 || item.technicalMetadata?.sha256 === sha256)
-  ));
-  if (duplicate) throw new Error("Une copie locale équivalente existe déjà pour cet asset.");
-  const storageKey = `${job.assetId}/source/${sha256.slice(0, 16)}-${job.fileName}`;
+  const known = VIDEO_LIBRARY.playables.filter(item => item.assetId === job.assetId &&
+    (item.sha256 === sha256 || item.technicalMetadata?.sha256 === sha256 || item.provenance?.sha256 === sha256));
+  if (job.workshop) {
+    for (const copy of known) {
+      const source = VIDEO_LIBRARY.sources.find(s => s.id === copy.sourceId);
+      if (sourceOfWorkingCopy(copy, source) !== job.playableId) continue;
+      const local = observeLocalPlayableFile(copy, source);
+      if (local.state === "present" && await verifiedWorkingCopy(copy,source))
+        return {assetId:job.assetId, playableId:copy.id, sourceId:source.id, storageKey:local.storageKey};
+      if (local.state === "missing" && local.storageScope === "workspace") {
+        // Même empreinte et même identité. Le lien exclusif ne remplace aucun fichier.
+        await fs.mkdir(path.dirname(local.file),{recursive:true});
+        await publishExclusive(job.temporaryPath, local.file);
+        return {assetId:job.assetId, playableId:copy.id, sourceId:source.id, storageKey:local.storageKey};
+      }
+    }
+  } else if (known.length) throw new Error("Une copie locale équivalente existe déjà pour cet asset.");
+  // Deux sources peuvent avoir les mêmes octets. Une copie endommagée reste intacte.
+  const token = job.workshop ? crypto.randomUUID() : sha256.slice(0,16);
+  const storageKey = `${job.assetId}/source/${token}-${job.fileName}`;
   const targetPath = safeLibraryMediaPath(storageKey, "workspace");
   if (fsSync.existsSync(targetPath)) throw new Error("Un fichier géré utilise déjà cette destination.");
   const now = new Date().toISOString();
   const mimeType = path.extname(job.fileName).toLowerCase() === ".webm" ? "video/webm" : "video/mp4";
   const metadata = downloadedTechnicalMetadata(probe, { mimeType, sizeBytes: stat.size, sha256, fileName: job.fileName, analyzedAt: now });
-  const identity = `${job.assetId}-download-${sha256.slice(0, 16)}`;
+  const identity = job.workshop ? `atelier-${token}` : `${job.assetId}-download-${token}`;
   const sourceId = `source-${identity}`;
   const playableId = `video-${identity}`;
   const provenance = {
@@ -2949,7 +2966,10 @@ function parseFfmpegProgress(job, chunk) {
       if (match) job.mediaTimeMs = Math.max(job.mediaTimeMs || 0, Math.round((Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3])) * 1000));
     } else if (key === "speed") job.speed = value;
   }
-  job.progress = job.durationMs ? Math.min(99, Math.max(job.progress, Math.floor((job.mediaTimeMs / job.durationMs) * 100))) : Math.max(job.progress, job.mediaTimeMs > 0 ? 1 : 0);
+  if (Number.isFinite(job.mediaTimeMs)) {
+    const percent = job.durationMs > 0 ? Math.min(99, Math.floor(100 * job.mediaTimeMs / job.durationMs)) : Number(job.mediaTimeMs > 0);
+    job.progress = Math.max(job.progress || 0, percent);
+  }
   job.updatedAt = new Date().toISOString();
 }
 
@@ -3025,8 +3045,8 @@ async function runLibraryDownload(job, candidate, inspection, ffmpegStatus) {
     if (sizeMonitor) clearInterval(sizeMonitor);
     if (job.process) { await terminateOwnedDownloadProcess(job); delete job.process; }
     if (job.workspace) { try { await cleanupDownloadWorkspace(job.workspace, LIBRARY_DOWNLOAD_ROOT); } catch {} }
-    const legacyTempRoot = safeAssetWorkspacePath(job.assetId, "temp");
-    try {
+    if (!job.workshop) try {
+      const legacyTempRoot = safeAssetWorkspacePath(job.assetId, "temp");
       await fs.rm(legacyTempRoot, { recursive: true, force: true });
       await removeEmptyParents(path.dirname(legacyTempRoot), VIDEO_LIBRARY_WORKSPACES_DIR);
     } catch {}
@@ -3046,40 +3066,52 @@ function trimLibraryDownloadHistory() {
   }
 }
 
-async function startLibraryDownload(payload) {
+async function startLibraryDownload(payload, {workshop = false} = {}) {
   if (SERVER_SHUTTING_DOWN) throw Object.assign(new Error("Le serveur est en cours d’arrêt."), { statusCode: 503 });
   const assetId = String(payload?.assetId || "");
   const playableId = String(payload?.playableId || "");
   const candidate = remoteDownloadCandidate(assetId, playableId);
   if (!candidate) throw Object.assign(new Error("L’asset ou le playable distant est introuvable."), { statusCode: 404 });
-  if (VIDEO_LIBRARY.playables.some(item => {
+  if (!workshop && VIDEO_LIBRARY.playables.some(item => {
     if (item.assetId !== assetId || item.kind !== "local-file" || item.availability !== "available") return false;
     const storageKey = localStorageKeyForPlayable(item, VIDEO_LIBRARY.sources.find(source => source.id === item.sourceId));
     return Boolean(storageKey) && fsSync.existsSync(safeLibraryMediaPath(storageKey, localStorageScopeForPlayable(item)));
   })) {
     throw Object.assign(new Error("Une copie locale disponible existe déjà pour cet asset."), { statusCode: 409 });
   }
-  if ([...ACTIVE_LIBRARY_DOWNLOADS.values()].some(job => job.assetId === assetId && ["preparing", "downloading", "finalizing", "cancelling"].includes(job.status))) {
-    throw Object.assign(new Error("Un téléchargement est déjà actif pour cet asset."), { statusCode: 409 });
+  const active = [...ACTIVE_LIBRARY_DOWNLOADS.values()].find(job => job.assetId === assetId &&
+    (!workshop || job.playableId === playableId) && !["completed","failed","cancelled"].includes(job.status));
+  if (active) {
+    if (workshop) return active;
+    throw Object.assign(new Error("Un téléchargement est déjà actif pour cet asset."), {statusCode:409});
   }
   const ffmpegStatus = detectLibraryFfmpeg();
   if (!ffmpegStatus.available) throw Object.assign(new Error(ffmpegStatus.error), { statusCode: 503 });
-  const fileName = safeDownloadFileName(payload?.fileName, candidate);
-  const inspection = await inspectRemoteDownload(candidate);
+  const fileName = safeDownloadFileName(workshop ? proposedDownloadFileName(candidate.asset,candidate) : payload?.fileName, candidate);
   const now = new Date().toISOString();
   const job = {
     id: `library-download-${crypto.randomBytes(18).toString("base64url")}`,
-    assetId, playableId: candidate.playable.id, fileName,
+    assetId, playableId: candidate.playable.id, fileName, workshop,
     container: path.extname(fileName).toLowerCase() === ".webm" ? "webm" : "mp4",
     status: "preparing", stateLabel: "Préparation", progress: 0,
-    mediaTimeMs: 0, durationMs: inspection.durationMs,
-    speed: null, outputSizeBytes: 0, quality: inspection.quality,
-    estimatedSizeBytes: inspection.estimatedSizeBytes,
+    mediaTimeMs: 0, durationMs: null,
+    speed: null, outputSizeBytes: 0, quality: null,
+    estimatedSizeBytes: null,
     createdAt: now, updatedAt: now, error: null
   };
   trimLibraryDownloadHistory();
   ACTIVE_LIBRARY_DOWNLOADS.set(job.id, job);
-  job.completion = runLibraryDownload(job, candidate, inspection, ffmpegStatus);
+  const inspecting = inspectRemoteDownload(candidate);
+  job.completion = inspecting.then(inspection => {
+    Object.assign(job,{durationMs:inspection.durationMs, quality:inspection.quality, estimatedSizeBytes:inspection.estimatedSizeBytes});
+    if (job.cancelRequested) { job.status="cancelled"; job.finishedAt=new Date().toISOString(); return; }
+    return runLibraryDownload(job,candidate,inspection,ffmpegStatus);
+  }, error => {
+    job.status = job.cancelRequested ? "cancelled" : "failed";
+    job.stateLabel = job.cancelRequested ? "Annulé" : "Échec";
+    job.error = libraryDownloadError(error, job); job.finishedAt = job.updatedAt = new Date().toISOString();
+  });
+  if (!workshop) await inspecting;
   return job;
 }
 
@@ -3852,41 +3884,62 @@ function workshopMediaUrl(local) {
   return `/api/proto05/library/media/${scope}${encodeURIComponent(local.storageKey)}`;
 }
 
-async function openVideoWorkshop({ assetId, playableId, prepareLocal = false }) {
-  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
-  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId);
-  const source = VIDEO_LIBRARY.sources.find(item => item.id === playable?.sourceId && item.assetId === assetId);
-  if (!asset || !playable || !source) throw new Error("Cette version ne figure plus dans la vidéothèque.");
-
-  const existing = reusablePreparation(assetId, playableId, source.id);
-  if (existing) return { job: publicHlsPreparationJob(existing) };
-
-  let resolved;
-  if (playable.kind === "local-file") {
-    const local = observeLocalPlayableFile(playable, source);
-    if (local.state !== "present") throw new Error("La copie locale est introuvable. Vérifiez le fichier de cette version.");
-    if (!prepareLocal) return { mediaUrl: workshopMediaUrl(local) };
-    resolved = { asset, playable, source, isLocal: true, reportPhase: true, sourceLabel: asset.title, manifest: local.file };
-  } else {
-    const candidate = remoteDownloadCandidate(assetId, playableId);
-    if (!candidate) throw new Error("Cette version demande une copie locale de travail.");
-    const download = [...ACTIVE_LIBRARY_DOWNLOADS.values()].find(item =>
-      item.assetId === assetId && item.playableId === playableId &&
-      ["preparing", "downloading", "finalizing", "cleaning", "cancelling"].includes(item.status));
-    if (download) return { download: publicLibraryDownloadJob(download) };
-
-    const copies = VIDEO_LIBRARY.playables.filter(item => item.assetId === assetId && item.kind === "local-file" &&
-      explicitRole(item) === "working-copy" && item.provenance?.sourcePlayableId === playableId &&
-      observeLocalPlayableFile(item, VIDEO_LIBRARY.sources.find(src => src.id === item.sourceId)).state === "present");
-    if (copies.length === 1) return { localPlayableId: copies[0].id };
-
-    const inspection = await inspectRemoteDownload(candidate);
-    resolved = { asset, playable, source, isLocal: false, sourceLabel: asset.title, reportPhase: true,
-      manifest: new URL(inspection.inputPath, `http://127.0.0.1:${PORT}`).href };
+const {sourceOfWorkingCopy, createCopyVerifier} = require("./workshop-local-copy");
+const verifiedWorkingCopy = createCopyVerifier({
+  observe:observeLocalPlayableFile, hash:hashFile, probe:file => {
+    const ffmpeg = detectLibraryFfmpeg();
+    if (!ffmpeg.available) throw Error(ffmpeg.error);
+    try { return probeDownloadedMedia(ffmpeg,file); } catch { return null; }
   }
-  // Une autre requête a pu créer le job pendant la résolution de la source.
-  const job = reusablePreparation(assetId, playableId, source.id) || startHlsPreparation(resolved);
-  return { job: publicHlsPreparationJob(job) };
+});
+
+const workshopOpenings = new Map();
+
+function openVideoWorkshop({assetId, playableId, prepareLocal = false}) {
+  const key = JSON.stringify([assetId, playableId, prepareLocal]);
+  if (!workshopOpenings.has(key)) {
+    const opening = resolveVideoWorkshop(assetId, playableId, prepareLocal)
+      .finally(() => workshopOpenings.delete(key));
+    workshopOpenings.set(key, opening);
+  }
+  return workshopOpenings.get(key);
+}
+
+async function resolveVideoWorkshop(assetId, playableId, prepareLocal) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId && !item.removedAt);
+  const source = VIDEO_LIBRARY.sources.find(item => item.id === playable?.sourceId && item.assetId === assetId);
+  if (!asset || !playable || !source) throw Error("Cette version ne figure plus dans la vidéothèque.");
+
+  if (playable.kind === "local-file") {
+    const originId = sourceOfWorkingCopy(playable, source);
+    const local = originId ? await verifiedWorkingCopy(playable, source) : observeLocalPlayableFile(playable, source);
+    if (local?.state !== "present" || !local.sizeBytes) {
+      if (!originId || !remoteDownloadCandidate(assetId, originId)) throw Error("La copie locale est introuvable ou illisible.");
+      const recovered = await resolveVideoWorkshop(assetId, originId, false);
+      if (recovered.mediaPlayableId) {
+        if (!workshopMediaMatches(playable, recovered.mediaPlayableId))
+          throw Error("La source distante a changé depuis cette copie. Sélectionnez son original dans la fiche vidéo.");
+        if (prepareLocal) return resolveVideoWorkshop(assetId, recovered.mediaPlayableId, true);
+      }
+      return {...recovered, resolvedFrom:originId};
+    }
+    if (!prepareLocal) return {mediaUrl:workshopMediaUrl(local), mediaPlayableId:playable.id};
+    const job = reusablePreparation(assetId,playableId,source.id) || startHlsPreparation({
+      asset, playable, source, isLocal:true, reportPhase:true, sourceLabel:asset.title, manifest:local.file});
+    return {job:publicHlsPreparationJob(job), resolvedFrom:playable.id};
+  }
+
+  for (const copy of VIDEO_LIBRARY.playables) {
+    if (copy.assetId !== assetId || copy.kind !== "local-file") continue;
+    const origin = VIDEO_LIBRARY.sources.find(s => s.id === copy.sourceId);
+    if (sourceOfWorkingCopy(copy,origin) !== playableId) continue;
+    const local = await verifiedWorkingCopy(copy,origin);
+    if (local) return prepareLocal ? resolveVideoWorkshop(assetId, copy.id, true) :
+      {mediaUrl:workshopMediaUrl(local), mediaPlayableId:copy.id};
+  }
+  const download = await startLibraryDownload({assetId,playableId}, {workshop:true});
+  return {download:publicLibraryDownloadJob(download)};
 }
 
 async function removePreparationWorkspace(job) {
@@ -4101,10 +4154,23 @@ async function persistMariaDbSnapshot(patch, {
 const {validateWorkshopProject} = require("../shared/workshop-project");
 const {createWorkshopExports, completedExport} = require("./workshop-exports");
 
+function workshopMediaMatches(selected, mediaId) {
+  if (!selected) return false;
+  if (selected.id === mediaId) return true;
+  const media = VIDEO_LIBRARY.playables.find(p => p.assetId === selected.assetId && p.id === mediaId && !p.removedAt);
+  const originOf = p => sourceOfWorkingCopy(p, VIDEO_LIBRARY.sources.find(s => s.id === p?.sourceId));
+  const origin = originOf(media);
+  if (!origin) return false;
+  if (origin === selected.id) return true;
+  const hash = p => p.technicalMetadata?.sha256 || p.provenance?.sha256 || p.sha256;
+  return origin === originOf(selected) && (!hash(selected) || hash(selected) === hash(media));
+}
+
 function workshopInput(project, {mediaPlayableId, preparationId}) {
   const {assetId, playableId} = project;
   const media = VIDEO_LIBRARY.playables.find(p => p.assetId === assetId && p.id === mediaPlayableId && !p.removedAt);
-  if (!media || (media.id !== playableId && !(explicitRole(media) === "working-copy" && media.provenance?.sourcePlayableId === playableId)))
+  const selected = VIDEO_LIBRARY.playables.find(p => p.assetId === assetId && p.id === playableId && !p.removedAt);
+  if (!media || !workshopMediaMatches(selected, media.id))
     throw Error("La copie de lecture ne correspond plus à la version source. Rouvrez la vidéo.");
   if (preparationId) {
     const prep = ACTIVE_HLS_PREPARATIONS.get(preparationId);
@@ -4505,9 +4571,10 @@ async function handleApiInReadContext(request, response, url) {
   if (url.pathname === "/api/proto05/library/assets") {
     if (request.method === "GET") {
       const activities = (await readActivities()).activities || [];
+      const counts = READ_CONTEXT.getStore().workshopCounts;
       const assets = VIDEO_LIBRARY.assets.map(asset => {
         const plan = libraryAssetDeletionPlan(asset.id, activities);
-        return libraryAssetDetails(asset, libraryUsageSummary(plan));
+        return {...libraryAssetDetails(asset, libraryUsageSummary(plan)), workshopCount:counts.get(asset.id) || 0};
       });
       return sendJson(response, 200, { schemaVersion: VIDEO_LIBRARY.schemaVersion, updatedAt: VIDEO_LIBRARY.updatedAt || null, assets, folders: VIDEO_LIBRARY.folders || [], tags: VIDEO_LIBRARY.tags || [] });
     }
@@ -5031,6 +5098,14 @@ const job = { id: `hls-derivation-${Date.now()}-${crypto.randomBytes(4).toString
   return sendJson(response, 404, { error: "Route API introuvable." });
 }
 
+function workshopCountScope(request, url) {
+  if (request.method !== "GET") return false;
+  if (url.pathname === "/api/proto05/library/assets") return true;
+  const detail = /^\/api\/proto05\/library\/assets\/([^/]+)$/.exec(url.pathname);
+  if (!detail) return false;
+  try { return decodeURIComponent(detail[1]); } catch { return false; }
+}
+
 async function handleApi(request, response, url) {
   if (url.pathname === "/api/health") return handleApiInReadContext(request, response, url);
   if (url.pathname === "/api/diagnostics/mariadb/retry") {
@@ -5052,6 +5127,7 @@ async function handleApi(request, response, url) {
   if (READ_CONTEXT.getStore()) return handleApiInReadContext(request, response, url);
   try {
     const snapshot = await proto05ReadBoundary().readSnapshot({
+      includeWorkshopCounts: workshopCountScope(request, url),
       operation: `${request.method} ${url.pathname}`
     });
     return await READ_CONTEXT.run(snapshot, () => handleApiInReadContext(request, response, url));
@@ -5379,6 +5455,7 @@ const server = http.createServer(async (request, response) => {
       let snapshot;
       try {
         snapshot = await proto05ReadBoundary().readSnapshot({
+          includeWorkshopCounts: workshopCountScope(request, url),
           operation: `${request.method} ${url.pathname}`
         });
       } catch (error) {

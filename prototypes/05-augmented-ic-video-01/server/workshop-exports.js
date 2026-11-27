@@ -21,7 +21,7 @@ function createWorkshopExports({write, readLibrary, resolveInput, tools, publish
 
   function status(library, version) {
     const live = active.get(version.id);
-    if (live) return {id:live.id, versionId:version.id, name:version.name, status:live.phase, progress:live.progress};
+    if (live) return {id:live.id, versionId:version.id, name:version.name, status:live.phase, progress:Number.isFinite(live.mediaTimeMs) ? live.progress : null};
     const t = last(library, version);
     const common = {id:t?.id || null, versionId:version.id, name:version.name};
     if (!t) return {...common, status:"idle"};

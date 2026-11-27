@@ -806,13 +806,26 @@ function createMariaDbReadonlyAdapter({
         database.release();
       }
     },
-    async readSnapshot({ afterTableRead = null } = {}) {
+    async readSnapshot({ afterTableRead = null, includeWorkshopCounts = false } = {}) {
       try {
         return await runConsistentReadSnapshot({
           acquireConnection: connection,
           project: async database => {
             const tables = await readCanonicalTablesWithProcedures(database, { afterTableRead });
-            return projectMariaDbSnapshotForApplication(mapMariaDbTablesToSnapshot(tables));
+            const snapshot = projectMariaDbSnapshotForApplication(mapMariaDbTablesToSnapshot(tables));
+            if (typeof includeWorkshopCounts === "string") {
+              const [rows] = await database.query(
+                "SELECT DISTINCT source_playable_id FROM media_workshop_versions WHERE source_asset_id = ?",
+                [includeWorkshopCounts]
+              );
+              snapshot.workshopPlayableIds = new Set(rows.map(row => row.source_playable_id));
+            } else if (includeWorkshopCounts) {
+              const [rows] = await database.query(
+                "SELECT source_asset_id, COUNT(*) AS n FROM media_workshop_versions GROUP BY source_asset_id"
+              );
+              snapshot.workshopCounts = new Map(rows.map(row => [row.source_asset_id, Number(row.n)]));
+            }
+            return snapshot;
           }
         });
       } catch (error) {

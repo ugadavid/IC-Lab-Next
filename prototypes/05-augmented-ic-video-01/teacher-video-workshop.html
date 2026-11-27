@@ -32,11 +32,15 @@
           <input hidden id="openProject" type="file" accept=".json">
         </div>
       </div>
-      <section id="exportPanel" aria-label="Export MP4" hidden>
-        <span id="exportMessage" role="status"></span>
+      <section id="exportPanel" aria-labelledby="taskTitle" hidden>
+        <strong id="taskTitle"></strong>
+        <div class="taskLine"><span id="exportMessage" role="status"></span>
+          <span id="taskMeter" role="progressbar" aria-label="Avancement" aria-valuemin="0" aria-valuemax="100" hidden><span id="taskPercent"></span> %</span>
+        </div>
         <a id="readExport" target="_blank" rel="noopener" hidden>Lire le MP4</a>
         <a id="downloadExport" download hidden>Télécharger le MP4</a>
         <button type="button" id="retryExport" hidden>Réessayer l’export</button>
+        <button type="button" id="closeProgress" hidden>Fermer</button>
       </section>
       <p id="version" class="small">
       </p>
@@ -216,6 +220,7 @@
     </div>
   </dialog>
   <script src="/shared/workshop-project.js"></script>
+  <script src="/shared/workshop-progress.js"></script>
   <script src="/shared/workshop-export.js"></script>
   <script src="/shared/workshop-versions.js"></script>
   <script src="/shared/workshop-timeline.js"></script>
@@ -232,7 +237,7 @@ let playableId = new URL(location.href).searchParams.get("playableId");
 let forcePreparation = false;
 let timeline, mediaLocator;
 let mediaName;
-let mediaSize;
+let mediaSize, versionLabel = "";
 function showWorkspace(visible) {
   for (const id of ["workspace", "projectTools", "layoutBtn", "help"]) byId(id).hidden = !visible;
 }
@@ -253,6 +258,7 @@ function status(message) {
 
 function failed(error) {
   clearTimeout(timer);
+  workshopProgress.hide("source");
   timeline?.suspend();
   showWorkspace(false);
   status(error.message || "La connexion avec Proto05 a été interrompue.");
@@ -275,6 +281,8 @@ function playMedia(url, directLocal, locator) {
       return;
     }
     byId("panel").hidden = true;
+    workshopProgress.hide("source");
+    byId("version").textContent = versionLabel + (directLocal ? " · Copie locale" : " · Préparation temporaire");
     showWorkspace(true);
     if (!timeline) timeline = mountWorkshopTimeline({ video: player, assetId, playableId, name: mediaName, size: mediaSize, media: () => mediaLocator });
     else timeline.resume();
@@ -293,17 +301,21 @@ async function follow(job, download, mediaId, visited) {
   if (job.status === "completed") {
     if (!download) return playMedia(api + "/hls-preparations/" + encodeURIComponent(job.id) + "/media", false, {mediaPlayableId:mediaId, preparationId:job.id});
     if (!job.result?.playableId || job.result.assetId !== assetId) throw new Error("La copie téléchargée est introuvable.");
-    return prepare(job.result.playableId, visited);
+    if (mediaId === playableId) return prepare(job.result.playableId, visited);
+    // Recontrôler l’identité historique après restauration d’une copie choisie explicitement.
+    return prepare(playableId, new Set());
   }
   if (["failed", "cancelled"].includes(job.status)) throw new Error(job.error || "La préparation a été interrompue.");
-  let message = "Préparation de la copie de travail…";
+  let message = download ? "Vérification de la source distante…" : "Préparation de la copie de travail…";
+  let percent = null;
   if (job.status === "downloading" || job.phase === "downloading") {
     message = "Téléchargement de la vidéo en cours…";
-    if (download && job.durationMs > 0) message += " " + job.progress + " %";
+    if (download && job.durationMs > 0 && Number.isFinite(job.progress)) percent = job.progress;
   } else if (job.status === "finalizing" || job.phase === "checking") message = "Vérification du média…";
   else if (job.status === "cancelling") message = "Annulation en cours…";
   else if (job.status === "cleaning") message = "Nettoyage de la copie temporaire…";
-  status(message);
+  byId("panel").hidden = true;
+  workshopProgress.show("source", "Ouverture de la vidéo", message, percent);
   const path = (download ? "/downloads/" : "/hls-preparations/") + encodeURIComponent(job.id);
   if (!finished) timer = setTimeout(async () => {
     try { await follow((await json(path)).job, download, mediaId, visited); } catch (error) { failed(error); }
@@ -325,12 +337,13 @@ async function open() {
   document.querySelector("h1").textContent = asset.title || asset.id;
   document.title = (asset.title || asset.id) + " · Atelier d’anonymisation";
   const choices = asset.playables.filter(item => ["local-file", "hls", "direct-url"].includes(item.kind) && !item.removedAt);
-  // Une copie de lecture unique reste accessible par l'identité de son original.
+  // Une copie avec ses propres montages reste un choix explicite.
   const copies = choices.filter(item => item.role === "working-copy" && item.localFileState === "present");
   const aliases = new Set();
   for (const original of choices.filter(item => item.kind !== "local-file")) {
-    const matches = copies.filter(item => item.provenance?.sourcePlayableId === original.id);
-    if (matches.length === 1) aliases.add(matches[0].id);
+    for (const copy of copies) {
+      if (!copy.hasWorkshopVersions && (copy.workingCopyOf || copy.provenance?.sourcePlayableId) === original.id) aliases.add(copy.id);
+    }
   }
   const distinct = choices.filter(item => !aliases.has(item.id));
   if (!playableId && distinct.length === 1) selectVersion(distinct[0].id);
@@ -347,7 +360,8 @@ async function open() {
   }
   const item = choices.find(entry => entry.id === playableId);
   if (!item) throw new Error(playableId ? "Cette version est introuvable. Revenez à la fiche vidéo." : "Cette vidéo nécessite une copie locale ou une source téléchargeable.");
-  byId("version").textContent = "Atelier d’anonymisation · " + versionName(item);
+  versionLabel = "Atelier d’anonymisation · " + versionName(item);
+  byId("version").textContent = versionLabel;
   status("Ouverture de cette version…");
   mediaName = item.technicalMetadata?.fileName || item.name || asset.title || item.id;
   mediaSize = item.technicalMetadata?.sizeBytes;
@@ -361,11 +375,11 @@ async function prepare(mediaId, visited) {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId, playableId: mediaId, prepareLocal: forcePreparation })
   });
-  if (result.mediaUrl) return playMedia(result.mediaUrl, true, {mediaPlayableId:mediaId});
+  if (result.mediaUrl) return playMedia(result.mediaUrl, true, {mediaPlayableId:result.mediaPlayableId || mediaId});
   if (result.localPlayableId) {
     return prepare(result.localPlayableId, visited);
   }
-  await follow(result.job || result.download, Boolean(result.download), mediaId, visited);
+  await follow(result.job || result.download, Boolean(result.download), result.resolvedFrom || mediaId, visited);
 }
 versions.onchange = () => { if (versions.value) { selectVersion(versions.value); open().catch(failed); } };
 byId("retry").onclick = () => open().catch(failed);

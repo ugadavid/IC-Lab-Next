@@ -769,10 +769,24 @@ header a {
 .saved-version time { font-size: .85rem; }
 
 #exportPanel {
-  display: flex;
-  align-items: center;
-  gap: .8rem;
-  flex-wrap: wrap;
-  margin: .4rem 0;
+  position: fixed;
+  z-index: 5;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: 80vh;
+  overflow: auto;
+  padding: .85rem 1rem;
+  background: white;
+  color: #17342e;
+  border: 1px solid #adc5bc;
+  border-radius: .65rem;
+  box-shadow: 0 .3rem 1.2rem #143c322b;
 }
+#taskTitle { display: block; overflow-wrap: anywhere; }
+.taskLine { display: flex; align-items: baseline; justify-content: space-between; gap: .5rem; margin-top: .25rem; }
+#taskMeter { flex: 0 0 5ch; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#exportPanel a, #exportPanel button { display: inline-block; margin: .5rem .5rem 0 0; }
 #exportMessage { overflow-wrap: anywhere; }

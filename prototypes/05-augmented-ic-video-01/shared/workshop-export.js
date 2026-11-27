@@ -5,12 +5,13 @@ function mountWorkshopExport({assetId, playableId, request, snapshot, pause, med
   const key = 'iclab.atelier.version-ouverte.' + JSON.stringify([assetId,playableId]);
   let selected = null, parts = null, generation = 0, timer, busy = false, queuedStart = false, restoring;
   const retry = $('retryExport'), read = $('readExport'), download = $('downloadExport');
+  let tracking = false;
   function clear() {
+    tracking = false;
     clearTimeout(timer);
     retry.hidden = read.hidden = download.hidden = true;
     read.removeAttribute('href'); download.removeAttribute('href');
-    $('exportMessage').textContent = '';
-    $('exportPanel').hidden = true;
+    workshopProgress.hide('export');
   }
   function select(version, project) {
     clear(); generation++; busy = queuedStart = false;
@@ -18,16 +19,17 @@ function mountWorkshopExport({assetId, playableId, request, snapshot, pause, med
     parts = JSON.stringify(project.parts);
     try { sessionStorage.setItem(key,selected.id); } catch {}
   }
-  function announce(text) {
-    $('exportPanel').hidden = false;
-    $('exportMessage').textContent = selected.name + ' · ' + text;
+  function announce(text, percent = null, terminal = false) {
+    workshopProgress.show('export', selected.name, text, percent, terminal);
   }
   async function query(start, retryOf = null) {
     if (!selected) return;
     if (busy) { if (start) queuedStart = true; return; }
     const token = generation;
-    clear(); busy = true;
+    clearTimeout(timer); busy = true;
     if (start) {
+      retry.hidden = read.hidden = download.hidden = true;
+      tracking = true;
       announce('Demande d’export…');
       try { sessionStorage.setItem(key + '.export',JSON.stringify({id:selected.id,retryOf})); } catch {}
     }
@@ -39,22 +41,28 @@ function mountWorkshopExport({assetId, playableId, request, snapshot, pause, med
       if (start) { try { sessionStorage.removeItem(key + '.export'); } catch {} }
       if (job.status === 'idle') return;
       if (job.status === 'completed') {
-        announce('MP4 prêt.');
+        retry.hidden = true;
+        if (tracking) announce('MP4 prêt.',null,true);
         read.href = download.href = job.mediaUrl;
         download.download = selected.name.replace(/[<>:"/\\|?*\u0000-\u001f]/g,'_').slice(0,100) + '-' + selected.id + '.mp4';
         read.hidden = download.hidden = false;
       } else if (job.status === 'failed') {
-        announce(job.error); retry.hidden = false;
+        announce(job.error,null,true); retry.hidden = false;
         retry.onclick = () => query(true,job.id);
-      } else if (job.status === 'unavailable') announce(job.error);
-      else {
-        const phase = {starting:'Préparation…',rendering:'Rendu ' + (job.progress || 0) + ' %',validating:'Vérification des pistes et du fichier…',publishing:'Inscription dans la vidéothèque…'};
-        announce(phase[job.status] || 'Traitement en cours…');
+      } else if (job.status === 'unavailable') {
+        if (tracking) announce(job.error,null,true);
+      } else {
+        const phase = {starting:'Préparation…',rendering:'Rendu',validating:'Vérification des pistes et du fichier…',publishing:'Inscription dans la vidéothèque…'};
+        if (!retry.hidden) retry.hidden = true;
+        if (!read.hidden) read.hidden = true;
+        if (!download.hidden) download.hidden = true;
+        tracking = true;
+        announce(phase[job.status] || 'Traitement en cours…',job.status === 'rendering' ? job.progress : null);
         timer = setTimeout(()=>query(false),650);
       }
     } catch (error) {
       if (token !== generation) return;
-      announce(error.message || 'Connexion interrompue.'); retry.hidden = false;
+      announce(error.message || 'Connexion interrompue.',null,true); retry.hidden = false;
       retry.onclick = () => query(start,retryOf);
     } finally {
       if (token === generation) {

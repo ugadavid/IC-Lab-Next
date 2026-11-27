@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.68
+# Serveur autonome du Prototype 05 — 0.1.69
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -16,6 +16,13 @@ Le flou, la coupure et le bip sont appliqués pendant l’aperçu. **Exporter en
 une variante avant de lancer le rendu. Le lecteur et le téléchargement sont disponibles
 après décodage de contrôle et inscription du dérivé dans la vidéothèque. Le registre
 des traitements du schéma 008 conserve la filiation et la tentative d’export.
+
+La carte compte les versions de montage de toutes les sources de la vidéo. L’atelier
+garde le brouillon et les versions sous l’identité de la source choisie. La première
+ouverture distante crée une copie de travail dans
+`data/video-library-workspaces/<asset>/source/`. Les ouvertures suivantes vérifient
+la provenance et l’intégrité du fichier avant tout accès distant. La progression
+de l’ouverture et du rendu s’affiche dans le panneau central de l’atelier.
 
 ## Autorité de données
 

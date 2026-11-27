@@ -43,12 +43,22 @@ async function createDownloadWorkspace(downloadRoot, prefix) {
   return fs.mkdtemp(path.join(downloadRoot, `${safePrefix}-`));
 }
 
+// Certaines configurations Windows interdisent les liens physiques.
+async function publishExclusive(source, target) {
+  try {
+    await fs.link(source, target);
+  } catch (error) {
+    if (!["EPERM", "EXDEV", "ENOSYS", "ENOTSUP"].includes(error.code)) throw error;
+    await fs.copyFile(source, target, require("node:fs").constants.COPYFILE_EXCL);
+  }
+}
+
 async function linkThenUnlinkWithWindowsRetries(source, target, options = {}) {
   const attempts = Number.isInteger(options.attempts) ? options.attempts : 5;
   const delayMs = Number.isInteger(options.delayMs) ? options.delayMs : 40;
   for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
-      await fs.link(source, target);
+      await publishExclusive(source, target);
       try {
         await fs.unlink(source);
       } catch (error) {
@@ -116,6 +126,7 @@ async function cleanupDownloadWorkspace(workspace, downloadRoot) {
 }
 
 module.exports = {
+  publishExclusive,
   cleanupDownloadWorkspace,
   createDownloadWorkspace,
   linkThenUnlinkWithWindowsRetries,
