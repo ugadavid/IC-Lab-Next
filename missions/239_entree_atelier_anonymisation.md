@@ -1,0 +1,10 @@
+# Mission 239 — Ouvrir le nouvel atelier depuis la vidéothèque
+
+Branche de travail `atelier-anonymisation`. Relire le [rapport 238](../reports/238_etude_raccordement_atelier_proto05_report.md) et la V12 qu’il référence.
+
+David souhaite construire et essayer le nouvel atelier de bout en bout en parallèle de l’ancien. La décision sur le devenir de l’ancien parcours lui revient après validation de l’ensemble. Le premier lot va du clic sur une fiche de la vidéothèque jusqu’à la lecture de la bonne version dans le nouvel atelier. La timeline V12 et l’export combiné suivront dans les lots suivants.
+
+- Ajouter **Anonymiser** sur chaque carte vidéo de la vidéothèque. Conserver les commandes actuelles, leurs routes et leur comportement. Donner au nouvel atelier sa propre route, rechargeable avec l’identité de la vidéo et de sa version.
+- Ouvrir immédiatement l’atelier. Réutiliser les services existants pour lire le média prêt, rejoindre sa préparation active ou démarrer celle qui manque. Afficher sur place l’étape réellement connue, par exemple « Téléchargement de la vidéo en cours… ». Passer automatiquement au lecteur. En cas d’échec, afficher une cause compréhensible et **Réessayer**. En cas de choix de version ambigu, le résoudre dans l’atelier.
+- Contrôler sur un média de démonstration local puis distant le clic unique, la lecture, le rechargement et le double-clic pendant une préparation (un seul travail pour la version), l’isolation entre deux versions et la reprise après erreur. Rejouer aussi le parcours historique depuis la même fiche. Préserver originaux, dérivés et associations existantes.
+- Publier le code et le rapport `reports/239_entree_atelier_anonymisation_report.md`. Indiquer les essais réellement exécutés, leurs résultats et une courte recette pour David sur la VM. Faire commit et push sur `origin/atelier-anonymisation`, vérifier le SHA distant et la lecture des livrables, transmettre le lien du rapport puis s’arrêter pour validation. En cas de blocage de publication, indiquer le SHA local et la cause.
