@@ -83,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.64";
+const VERSION = "0.1.65";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -2643,17 +2643,14 @@ async function copyDirectLibraryMedia(request, url) {
 }
 
 function findFfmpeg() {
-  const configured = RUNTIME_FFMPEG_PATH || process.env.PROTO05_FFMPEG_PATH || process.env.FFMPEG_PATH;
-  if (configured) {
-    if (!fsSync.existsSync(configured)) throw new Error("FFmpeg configuré mais inaccessible.");
-    return configured;
-  }
-  return "ffmpeg";
+  const status = detectInstalledFfmpeg();
+  if (!status.available) throw new Error(status.error);
+  return status.candidate;
 }
 
 function libraryDownloadProgram(candidate, { probe = false } = {}) {
   const testScript = process.env.PROTO05_TEST_FFMPEG_SCRIPT;
-  if (testScript) return { executable: process.execPath, prefixArgs: [testScript, probe ? "--ffprobe" : "--ffmpeg"] };
+  if (testScript && candidate === process.execPath) return { executable: process.execPath, prefixArgs: [testScript, probe ? "--ffprobe" : "--ffmpeg"] };
   if (probe) {
     if (/ffmpeg(?:\.exe)?$/i.test(candidate)) return { executable: candidate.replace(/ffmpeg(?:\.exe)?$/i, process.platform === "win32" ? "ffprobe.exe" : "ffprobe"), prefixArgs: [] };
     return { executable: "ffprobe", prefixArgs: [] };
@@ -2665,7 +2662,7 @@ function validateConfiguredFfmpegPath(value) {
   if (typeof value !== "string" || !value.trim()) throw new Error("Le chemin de ffmpeg.exe est obligatoire.");
   const candidate = value.trim();
   if (!path.isAbsolute(candidate) || !/^ffmpeg(?:\.exe)?$/i.test(path.basename(candidate))) throw new Error("Sélectionnez uniquement le fichier ffmpeg.exe.");
-  if (!fsSync.existsSync(candidate) || !fsSync.statSync(candidate).isFile()) throw new Error("Le fichier ffmpeg.exe est introuvable.");
+  if (!fsSync.statSync(candidate, { throwIfNoEntry: false })?.isFile()) throw new Error("FFmpeg est introuvable au chemin configuré. Corrigez le chemin absolu de ffmpeg dans PROTO05_FFMPEG_PATH ou dans la vidéothèque.");
   return candidate;
 }
 
@@ -2673,24 +2670,35 @@ function inspectFfmpegCandidate(candidate, source) {
   const program = libraryDownloadProgram(candidate);
   const checked = spawnSync(program.executable, [...program.prefixArgs, "-version"], { encoding: "utf8", timeout: 4000, windowsHide: true, shell: false });
   if (checked.error || checked.status !== 0 || !/^ffmpeg version /i.test(String(checked.stdout || ""))) {
-    return { available: false, source, error: "FFmpeg est absent ou invalide. Configurez le chemin exact de ffmpeg.exe." };
+    return { available: false, source, missingFfmpeg: checked.error?.code === "ENOENT", error: "FFmpeg est introuvable ou inutilisable. Installez FFmpeg et FFprobe, puis indiquez le chemin absolu de ffmpeg dans PROTO05_FFMPEG_PATH." };
   }
   const version = String(checked.stdout).split(/\r?\n/, 1)[0].replace(/^ffmpeg version\s+/i, "").slice(0, 160);
   const probe = libraryDownloadProgram(candidate, { probe: true });
   const probeCheck = spawnSync(probe.executable, [...probe.prefixArgs, "-version"], { encoding: "utf8", timeout: 4000, windowsHide: true, shell: false });
-  if (probeCheck.error || probeCheck.status !== 0) return { available: false, source, error: "FFprobe associé à FFmpeg est absent ou invalide." };
+  if (probeCheck.error || probeCheck.status !== 0 || !/^ffprobe version /i.test(String(probeCheck.stdout || ""))) {
+    const location = source === "PATH" ? "dans le PATH du serveur" : "à côté de FFmpeg";
+    return { available: false, source, error: `FFprobe est introuvable ou inutilisable. Installez ffprobe de la même distribution ${location}.` };
+  }
   return { available: true, source, version, candidate, program, probe };
 }
 
-function detectLibraryFfmpeg() {
-  if (process.env.PROTO05_TEST_FFMPEG_SCRIPT) return inspectFfmpegCandidate(process.execPath, "fixture contrôlée");
+function detectInstalledFfmpeg() {
   const configured = RUNTIME_FFMPEG_PATH || process.env.PROTO05_FFMPEG_PATH || process.env.FFMPEG_PATH;
   if (configured) {
     try { return inspectFfmpegCandidate(validateConfiguredFfmpegPath(configured), RUNTIME_FFMPEG_PATH ? "configuration temporaire" : "configuration Proto05"); }
     catch (error) { return { available: false, source: "configuration Proto05", error: error.message }; }
   }
   if (process.env.PROTO05_TEST_DISABLE_PATH_FFMPEG === "1") return { available: false, source: "PATH", error: "FFmpeg est introuvable dans la configuration Proto05 et dans PATH." };
-  return inspectFfmpegCandidate("ffmpeg", "PATH");
+  const fromPath = inspectFfmpegCandidate("ffmpeg", "PATH");
+  if (!fromPath.missingFfmpeg || process.platform !== "win32" || !process.env.SystemDrive) return fromPath;
+  const candidate = path.join(process.env.SystemDrive + path.sep, "Tools", "FFmpeg", "bin", "ffmpeg.exe");
+  if (!fsSync.existsSync(candidate)) return fromPath;
+  return inspectFfmpegCandidate(candidate, "installation Windows (Tools/FFmpeg/bin)");
+}
+
+function detectLibraryFfmpeg() {
+  if (process.env.PROTO05_TEST_FFMPEG_SCRIPT) return inspectFfmpegCandidate(process.execPath, "fixture contrôlée");
+  return detectInstalledFfmpeg();
 }
 
 function publicFfmpegStatus(status = detectLibraryFfmpeg()) {
@@ -3354,9 +3362,7 @@ function ffmpegTemporalLocalFilter(masks, blurProfile = anonymizationBlurProfile
 }
 
 function ffprobeVideoInfo(ffmpeg, filePath, explainFailure = false) {
-  const executable = path.basename(ffmpeg).toLowerCase().startsWith("ffmpeg")
-    ? path.join(path.dirname(ffmpeg), path.basename(ffmpeg).replace(/^ffmpeg/i, "ffprobe"))
-    : "ffprobe";
+  const { executable } = libraryDownloadProgram(ffmpeg, { probe: true });
   const result = spawnSync(executable, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,r_frame_rate,start_time,nb_frames:format=duration", "-of", "json", filePath], { encoding: "utf8", windowsHide: true, timeout: 10000 });
   if (result.error || result.status !== 0) {
     if (explainFailure && result.error?.code === "ENOENT") throw new Error("FFprobe est introuvable. Vérifiez sa présence à côté de FFmpeg.");
@@ -3445,9 +3451,7 @@ function ffmpegVersion(ffmpeg) {
 }
 
 function ffprobeAudioCodec(ffmpeg, filePath) {
-  const executable = path.basename(ffmpeg).toLowerCase().startsWith("ffmpeg")
-    ? path.join(path.dirname(ffmpeg), path.basename(ffmpeg).replace(/^ffmpeg/i, "ffprobe"))
-    : "ffprobe";
+  const { executable } = libraryDownloadProgram(ffmpeg, { probe: true });
   const result = spawnSync(executable, ["-v", "error", "-select_streams", "a:0", "-show_entries", "stream=codec_name", "-of", "default=nw=1:nk=1", filePath], { encoding: "utf8", windowsHide: true, timeout: 10000 });
   return result.error || result.status !== 0 ? null : String(result.stdout || "").trim().toLowerCase() || null;
 }

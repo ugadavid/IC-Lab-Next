@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.64
+# Serveur autonome du Prototype 05 — 0.1.65
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -222,11 +222,20 @@ conservés ; une source `local-file` et son playable sont ajoutés au même asse
 puis le playable local devient le défaut après validation par `ffprobe` et
 écriture canonique réussie.
 
-Le serveur détecte FFmpeg et FFprobe depuis `PROTO05_FFMPEG_PATH`,
-`FFMPEG_PATH`, puis `PATH`. L’interface accepte aussi, pour l’exécution
-courante, le chemin absolu du seul fichier `ffmpeg.exe` ; aucun argument ou
-fragment de commande fourni par le navigateur n’est exécuté. FFmpeg est lancé
-avec une liste d’arguments et `shell: false`.
+Le téléchargement, le nouvel atelier et les préparations historiques utilisent
+la même détection. Un chemin validé dans la vidéothèque vaut pour la session.
+À chaque redémarrage, Proto05 cherche d’abord `PROTO05_FFMPEG_PATH`, puis
+`FFMPEG_PATH`, puis les outils du `PATH` hérité par Node. Sous Windows, si
+FFmpeg est absent du `PATH`, il essaie aussi `%SystemDrive%\Tools\FFmpeg\bin`.
+Les deux exécutables doivent répondre à `-version`. Un réglage explicite
+invalide ou un FFprobe manquant donne un diagnostic pour l’outil concerné.
+
+Sur CODEX_VM, le dossier installé est détecté au double-clic sur
+`START_IC_LAB_NEXT.bat`. Pour une installation personnalisée, le réglage
+durable existant est `PROTO05_FFMPEG_PATH` dans le fichier local
+`.env.local` du prototype, avec le chemin absolu de FFmpeg et FFprobe à ses
+côtés. [L’état FFmpeg de Proto05](http://127.0.0.1:8791/api/proto05/library/ffmpeg)
+indique la disponibilité, l’origine du réglage et la version.
 
 Les tâches exposent leur progression et peuvent être annulées. Les fichiers
 incomplets restent dans un dossier de travail privé, sont nettoyés après
