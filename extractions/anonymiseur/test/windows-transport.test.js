@@ -26,12 +26,47 @@ test("les requêtes de la fenêtre lisent les plages et passent par le même con
     const index = await handle(new Request(origin + "/"));
     assert.match(await index.text(),/id="chooseMedia"/);
     assert.match(index.headers.get("Content-Security-Policy"),/frame-ancestors 'none'/);
-    for (const [site,status] of [["https://ailleurs.invalid",403],[origin,200]]) {
-      const response = await handle(new Request(origin + "/api/choisir",{method:"POST",
-        headers:{origin:site,"content-type":"application/json"},body:"{}"}));
-      assert.equal(response.status,status);
-      if (status===200) assert.deepEqual(await response.json(),{source:null});
-    }
-    assert.equal(picks,1);
+    assert.equal(picks,0);
   } finally { await fs.rm(dir,{recursive:true,force:true}); }
+});
+
+test("le sélecteur, la sauvegarde et l’export utilisent l’initiateur Electron même sans en-tête Origin",async () => {
+  const calls = [], diagnostics = [];
+  const id = "a".repeat(64), version = "b2e49d43-d21e-43cb-b3d8-bed9ca245791";
+  const versions = {save:async (key,data) => { calls.push(["sauver",key,data.name]); return {id:key}; },
+    read:async key => ({id:key})};
+  const handle = desktopHandler({open:async () => { calls.push(["ouvrir"]); return null; },
+    sourceFor:() => ({id}),versions:() => versions,
+    start:(_source,v,job) => { calls.push(["exporter",v.id,job]); return {status:"starting"}; }},
+    entry => diagnostics.push(entry));
+  const url = "/api/sources/" + id + "/versions/" + version;
+  function write(route,method,body,initiator,headers) {
+    const request = new Request(origin + route,{method,headers,body:JSON.stringify(body)});
+    if (initiator !== undefined) request.initiatorOrigin = initiator;
+    return handle(request);
+  }
+  const json = {"content-type":"application/json;charset=utf-8"};
+  assert.equal((await write("/api/choisir","POST",{},origin,json)).status,200);
+  assert.equal(diagnostics.at(-1).origineHTTP,"absente");
+  assert.equal((await write(url,"PUT",{name:"Visages seuls"},origin,json)).status,200);
+  assert.equal((await write(url + "/export","POST",{requestId:version},origin,{...json,origin})).status,200);
+  assert.deepEqual(calls,[["ouvrir"],["sauver",version,"Visages seuls"],["exporter",version,version]]);
+
+  for (const [initiator,headers] of [
+    [undefined,{...json,origin}], ["null",{...json,origin}], ["https://ailleurs.invalid",{...json,origin}],
+    [origin,{...json,origin:"https://ailleurs.invalid"}], [origin,{...json,origin:"null"}],
+    [origin,{...json,"sec-fetch-site":"cross-site"}], [origin,{}],
+    [origin,{"content-type":"text/plain"}], [origin,{"content-type":"application/jsonp"}]
+  ]) {
+    assert.equal((await write("/api/choisir","POST",{},initiator,headers)).status,403);
+  }
+  const noType = new Request(origin + "/api/choisir",{method:"POST",body:Buffer.from("{}")});
+  noType.initiatorOrigin = origin;
+  assert.equal(noType.headers.has("content-type"),false);
+  assert.equal((await handle(noType)).status,403);
+  const foreign = new Request("https://ailleurs.invalid/api/choisir",{method:"POST",headers:json,body:"{}"});
+  foreign.initiatorOrigin = origin;
+  assert.equal((await handle(foreign)).status,403);
+  assert.equal(calls.length,3);
+  assert.equal(diagnostics.at(-1).typeJSON,false);
 });

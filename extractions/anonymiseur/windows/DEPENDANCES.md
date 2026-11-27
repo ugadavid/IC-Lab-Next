@@ -1,4 +1,4 @@
-# Composants de l’édition Windows 0.1.2
+# Composants de l’édition Windows 0.1.3
 
 | Composant fourni | Provenance et documents installés |
 | --- | --- |

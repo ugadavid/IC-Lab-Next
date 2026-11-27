@@ -65,7 +65,12 @@ async function start() {
     return result;
   };
   const ses = session.defaultSession;
-  ses.protocol.handle("https",desktopHandler(workshop));
+  ses.protocol.handle("https",desktopHandler(workshop,details => {
+    try {
+      const entry = {date:new Date().toISOString(), version:app.getVersion(), ...details};
+      require("node:fs").writeFileSync(path.join(profile,"diagnostic-acces.json"),JSON.stringify(entry,null,2),"utf8");
+    } catch (error) { console.warn("Diagnostic d’accès",error.message); }
+  }));
   ses.setPermissionRequestHandler((_contents,_permission,answer) => answer(false));
   ses.setPermissionCheckHandler(() => false);
   ses.webRequest.onBeforeRequest((details,answer) => {

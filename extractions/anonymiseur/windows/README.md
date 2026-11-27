@@ -1,6 +1,6 @@
 # Construire l’application Windows
 
-**Atelier d’anonymisation 0.1.2** reprend la version autonome 0.1.1. L’installateur x64 s’utilise hors ligne, par utilisateur. Electron embarque le moteur JavaScript et le lecteur. Les deux programmes de rendu sont lancés par leur chemin absolu sous `resources/outils`. La version en navigateur reste disponible avec son lanceur d’origine.
+**Atelier d’anonymisation 0.1.3** reprend la version autonome 0.1.1. L’installateur x64 s’utilise hors ligne, par utilisateur. Electron embarque le moteur JavaScript et le lecteur. Les deux programmes de rendu sont lancés par leur chemin absolu sous `resources/outils`. La version en navigateur reste disponible avec son lanceur d’origine.
 
 ## Construction sur CODEX_VM
 
@@ -10,10 +10,10 @@ Depuis la racine du dépôt, dans PowerShell 7 sur CODEX_VM :
 
 ```powershell
 $archive = Get-ChildItem "$env:LOCALAPPDATA\electron\Cache" -Recurse -File -Filter 'electron-v45.4.1-win32-x64.zip' | Select-Object -First 1
-.\extractions\anonymiseur\windows\build.ps1 -ElectronZip $archive.FullName -FFmpegDir 'C:\Tools\FFmpeg'
+.\extractions\anonymiseur\windows\build.ps1 -ElectronZip $archive.FullName -FFmpegDir 'C:\Tools\FFmpeg' -OutputRoot (Join-Path $PWD 'dist')
 ```
 
-Le script construit dans un dossier temporaire neuf et dépose le setup, `SHA256.txt` et `MEMO-ZI.md` dans `Documents\Livraisons\Anonymiseur-0.1.2-ZI`. Le paramètre `-OutputRoot` permet de choisir un dossier d’essai vide. Une livraison existante est préservée. Les signatures et horodatages du compilateur peuvent faire varier le SHA du setup entre deux constructions. Les exécutables tiers ont chacun une empreinte verrouillée.
+Cette commande dépose le setup, `SHA256.txt` et `MEMO-ZI.md` dans `dist\Anonymiseur-0.1.3-ZI` du projet. Le script construit dans un dossier temporaire neuf et préserve une livraison existante. Les signatures et horodatages du compilateur peuvent faire varier le SHA du setup entre deux constructions. Les exécutables tiers ont chacun une empreinte verrouillée.
 
 ## Données et fermeture
 

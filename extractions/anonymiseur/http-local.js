@@ -14,6 +14,9 @@ function json(res,status,body) {
   res.writeHead(status,{"Content-Type":"application/json; charset=utf-8","Cache-Control":"no-store"});
   res.end(JSON.stringify(body));
 }
+function isJson(contentType) {
+  return (contentType || "").split(";",1)[0].trim().toLowerCase() === "application/json";
+}
 async function body(req) {
   const chunks = [];
   let size = 0;
@@ -55,7 +58,7 @@ function createHandler(workshop, origin) {
       const landing = reading && route === "/" && req.headers["sec-fetch-dest"] === "document";
       if (req.headers.host !== host || (!landing && ((req.headers.origin && req.headers.origin !== origin) ||
           req.headers["sec-fetch-site"] === "cross-site"))) throw failure(403,"Accès local requis.");
-      if (!reading && (req.headers.origin !== origin || !req.headers["content-type"]?.startsWith("application/json")))
+      if (!reading && (req.headers.origin !== origin || !isJson(req.headers["content-type"])))
         throw failure(403,"Ouvrez l’atelier pour effectuer cette action.");
       const name = route === "/" ? "index.html" : route.slice(1);
       if (reading && ui.has(name)) return await sendFile(req,res,path.join(__dirname,"ui",name));
@@ -92,4 +95,4 @@ function createHandler(workshop, origin) {
     }
   };
 }
-module.exports = {createHandler};
+module.exports = {createHandler,isJson};
