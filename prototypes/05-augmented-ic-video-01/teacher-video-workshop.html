@@ -1,43 +1,193 @@
 <!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Atelier d’anonymisation · Proto05</title>
-  <style>
-    :root { color-scheme: light; font: 16px/1.45 system-ui, sans-serif; color: #18342f; background: #f3f6f4; }
-    * { box-sizing: border-box; }
-    body { max-width: 66rem; margin: auto; padding: clamp(1rem, 4vw, 3rem); }
-    nav { display: flex; flex-wrap: wrap; gap: 1rem; }
-    a { color: #11695e; text-underline-offset: .18em; }
-    h1 { margin: 1.5rem 0 .25rem; font-size: clamp(1.55rem, 4vw, 2.4rem); line-height: 1.2; overflow-wrap: anywhere; }
-    #version { margin: 0 0 1rem; color: #465e58; overflow-wrap: anywhere; }
-    .stage { margin-top: 1rem; position: relative; aspect-ratio: 16/9; border-radius: .8rem; overflow: hidden; background: #142723; color: #fff; display: grid; place-items: center; }
-    video { width: 100%; height: 100%; position: absolute; inset: 0; }
-    #panel { position: relative; z-index: 1; border-radius: .65rem; background: #142723; max-width: 36rem; padding: 1.3rem; text-align: center; }
-    #message { margin: .5rem 0; overflow-wrap: anywhere; }
-    button, select { font: inherit; border-radius: .4rem; padding: .45rem .75rem; }
-    button { color: #14342d; background: #ecf6ed; border: 1px solid #9abeb0; cursor: pointer; }
-    select { width: min(100%, 25rem); }
-    label { display: block; margin: .45rem; }
-    #retry { margin: .5rem; }
-    [hidden] { display: none !important; }
-  </style>
-</head>
-<body>
-  <nav aria-label="Retour"><a href="/teacher/videos">← Vidéothèque</a><a id="detail">Fiche vidéo</a></nav>
-  <main>
-    <h1>Atelier d’anonymisation</h1>
-    <p id="version"></p>
-    <div class="stage">
-      <video id="player" controls playsinline preload="auto" aria-label="Vidéo à anonymiser" hidden></video>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Atelier d’anonymisation · Proto05</title>
+    <link rel="stylesheet" href="/shared/workshop-timeline.css">
+  </head>
+  <body>
+    <header>
+      <b>IC-Lab</b>
+      <nav aria-label="Retour">
+        <a href="/teacher/videos">Vidéothèque</a> · <a id="detail">Fiche vidéo</a>
+      </nav>
+      <button hidden class="icon" id="layoutBtn" popovertarget="layoutBox" aria-label="Disposition de l’atelier" data-tip="Disposition de l’atelier">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+          <rect x="2" y="4" width="20" height="16" rx="2"/>
+          <path d="M16 4v16M2 15h14"/>
+        </svg>
+      </button>
+      <button hidden id="help" title="Raccourcis clavier (?)" aria-label="Afficher les raccourcis clavier">?</button>
+    </header>
+    <main>
+      <div class="row spread">
+        <h1>Atelier d’anonymisation</h1>
+        <div class="row" id="projectTools" hidden>
+          <button id="save" title="Ctrl+S">Enregistrer le projet</button>
+          <button id="pickopenProject" type="button">Ouvrir un projet</button>
+          <input hidden id="openProject" type="file" accept=".json">
+        </div>
+      </div>
+      <p id="version" class="small">
+      </p>
       <section id="panel">
-        <div id="choice" hidden><label for="versions">Quelle version ouvrir dans l’atelier ?</label><select id="versions"></select></div>
+        <div id="choice" hidden>
+          <label for="versions">Quelle version ouvrir dans l’atelier ?</label>
+          <select id="versions">
+          </select>
+        </div>
         <p id="message" role="status" aria-live="polite">Ouverture de la vidéo…</p>
         <button id="retry" type="button" hidden>Réessayer</button>
       </section>
+      <div id="workspace" hidden>
+        <p class="small">
+          <span id="autos">
+          </span>
+          <span id="fileStatus">
+          </span>
+        </p>
+        <div class="grid">
+          <section class="card">
+            <div class="stage" id="stage">
+              <div id="picture">
+                <video id="player" playsinline preload="auto" aria-label="Vidéo à anonymiser">
+                </video>
+                <canvas id="canvas" aria-hidden="true">
+                </canvas>
+              </div>
+            </div>
+            <div class="row spread controls">
+              <div class="row">
+                <span class="jump">
+                  <button data-step title="Choisir le pas (P)" aria-keyshortcuts="P" aria-label="Choisir le pas de déplacement" aria-haspopup="true">▾</button>
+                  <button id="back" aria-label="Reculer">
+                  </button>
+                </span>
+                <button id="play" class="primary">▶ Lire</button>
+                <span class="jump">
+                  <button id="forward" aria-label="Avancer">
+                  </button>
+                  <button data-step title="Choisir le pas (P)" aria-keyshortcuts="P" aria-label="Choisir le pas de déplacement" aria-haspopup="true">▾</button>
+                </span>
+                <span id="clock" class="time">
+                </span>
+              </div>
+              <button id="mode">Prévisualiser le résultat</button>
+            </div>
+            <div class="row">
+              <button id="undo" title="Annuler (Ctrl+Z)">↶ Annuler</button>
+              <button id="redo" title="Rétablir (Ctrl+Y)">↷ Rétablir</button>
+              <button id="mag" aria-pressed="false">Aimants</button>
+              <button id="loop" aria-pressed="false" title="Rejouer la sélection avec 1 s de contexte (B)">↻ Boucle</button>
+              <small id="snapInfo">
+              </small>
+            </div>
+            <div class="zoomrow">
+              <small id="windowTimes">
+              </small>
+              <span>Zoom</span>
+              <button id="zoomOut" aria-label="Réduire le zoom">−</button>
+              <output id="zoomLevel">
+              </output>
+              <button id="zoomIn" aria-label="Agrandir autour du curseur">+</button>
+              <button id="zoomAll">Tout voir</button>
+            </div>
+            <div id="timelineView" class="timeline-view">
+              <div id="timelineBody" class="timeline">
+                <b>Temps</b>
+                <input id="seek" type="range" min="0" max="1" step=".01" value="0" aria-label="Position de lecture">
+                <b>Image</b>
+                <div class="track" id="imageTrack">
+                </div>
+                <b>Son</b>
+                <div class="track" id="audioTrack">
+                </div>
+              </div>
+            </div>
+          </section>
+          <aside class="card">
+            <h2>Ajouter au curseur</h2>
+            <div class="row">
+              <button id="newMask" title="Raccourci : M" aria-keyshortcuts="M">＋ Zone à flouter</button>
+              <button id="newSound" title="Raccourci : S" aria-keyshortcuts="S">＋ Passage sonore</button>
+            </div>
+            <hr>
+              <div id="editor" class="stack">
+              </div>
+            </aside>
+          </div>
+        </div>
+      </main>
+      <div popover id="layoutBox">
+        <h2>Disposition de l’atelier</h2>
+        <label>Largeur de l’atelier<select id="workspaceWidth">
+          <option value="compact">Compacte</option>
+          <option value="wide" selected>Toute la fenêtre</option>
+        </select>
+      </label>
+      <label>Outils<select id="panelSide">
+        <option value="right">À droite</option>
+        <option value="left">À gauche</option>
+        <option value="below">Sous la timeline</option>
+      </select>
+    </label>
+    <label>
+      <span>Largeur de la vidéo · <output id="sizeLabel">100 %</output>
+    </span>
+    <input id="readerSize" type="range" min="40" max="100" step="5" value="100">
+  </label>
+</div>
+<div id="toolTip" role="tooltip" hidden>
+</div>
+<div id="popup" class="popup" hidden>
+</div>
+<dialog id="helpBox" aria-labelledby="helpTitle">
+  <h2 id="helpTitle">Raccourcis clavier</h2>
+  <dl>
+    <dt>← / →</dt>
+    <dd>Reculer / avancer du pas choisi</dd>
+    <dt>P</dt>
+    <dd>Choisir le pas avec ↑ ↓, valider avec Entrée</dd>
+    <dt>M</dt>
+    <dd>Ajouter un masque au curseur</dd>
+    <dt>S</dt>
+    <dd>Ajouter un passage sonore au curseur</dd>
+    <dt>D / F / U</dt>
+    <dd>Définir le début, la fin ou la durée de la sélection</dd>
+    <dt>Suppr</dt>
+    <dd>Supprimer la sélection</dd>
+    <dt>Ctrl+S</dt>
+    <dd>Enregistrer le projet avec son historique</dd>
+    <dt>Ctrl+Z / Ctrl+Y</dt>
+    <dd>Annuler / rétablir une modification</dd>
+    <dt>B</dt>
+    <dd>Boucler sur la sélection avec 1 s de contexte</dd>
+    <dt>Alt + glisser</dt>
+    <dd>Suspendre les aimants pendant le geste</dd>
+    <dt>?</dt>
+    <dd>Afficher cette aide</dd>
+    <dt>Échap</dt>
+    <dd>Fermer le menu ou le panneau</dd>
+  </dl>
+  <p class="small">Glissez un passage pour le déplacer ou tirez ses bords. Sur la vidéo, déplacez le cadre ou tirez son coin inférieur droit. Sur un cadre sélectionné et focalisé, les flèches le déplacent d’un pixel vidéo. Maj + flèches ajuste sa taille.</p>
+  <button id="closeHelp">Fermer</button>
+</dialog>
+<dialog id="durationBox" aria-labelledby="durationTitle">
+  <form id="durationForm">
+    <h2 id="durationTitle">Définir la durée</h2>
+    <label>Durée du passage<input id="lengthInput" autocomplete="off" placeholder="3s15 ou 3,15">
+    </label>
+    <p id="lengthInfo" class="small" aria-live="polite">
+    </p>
+    <button type="button" id="fit" hidden>Utiliser la durée disponible</button>
+    <div class="row">
+      <button class="primary">Appliquer</button>
+      <button type="button" id="cancelLength">Annuler</button>
     </div>
-  </main>
+  </form>
+</dialog>
+  <script src="/shared/workshop-timeline.js"></script>
 <script>
 "use strict";
 const byId = id => document.getElementById(id);
@@ -49,6 +199,12 @@ const detail = byId("detail");
 detail.href = "/teacher/videos/" + encodeURIComponent(assetId);
 let playableId = new URL(location.href).searchParams.get("playableId");
 let forcePreparation = false;
+let timeline;
+let mediaName;
+let mediaSize;
+function showWorkspace(visible) {
+  for (const id of ["workspace", "projectTools", "layoutBtn", "help"]) byId(id).hidden = !visible;
+}
 let timer;
 let finished = false;
 
@@ -66,7 +222,8 @@ function status(message) {
 
 function failed(error) {
   clearTimeout(timer);
-  player.hidden = true;
+  timeline?.suspend();
+  showWorkspace(false);
   status(error.message || "La connexion avec Proto05 a été interrompue.");
   byId("retry").hidden = false;
 }
@@ -80,15 +237,18 @@ function selectVersion(id) {
 
 function playMedia(url, directLocal) {
   status("Chargement du lecteur…");
-  player.controls = false;
-  player.hidden = false;
   player.onloadeddata = () => {
+    if (!Number.isFinite(player.duration) || player.duration <= 0) {
+      failed(new Error("La durée de cette vidéo est indisponible."));
+      return;
+    }
     byId("panel").hidden = true;
-    player.controls = true;
+    showWorkspace(true);
+    if (!timeline) timeline = mountWorkshopTimeline({ video: player, assetId, playableId, name: mediaName, size: mediaSize });
+    else timeline.resume();
   };
   player.onerror = () => {
     player.onloadeddata = null;
-    player.hidden = true;
     if (directLocal) forcePreparation = true;
     failed(new Error(directLocal ? "Le navigateur ne peut pas lire cette copie. Réessayez pour la préparer avec FFmpeg." :
       "Le fichier préparé ne peut pas être lu dans ce navigateur. Vérifiez son format et la connexion."));
@@ -96,13 +256,12 @@ function playMedia(url, directLocal) {
   player.src = url;
 }
 
-async function follow(job, download) {
-  if (job.assetId !== assetId || job.playableId !== playableId) throw new Error("La tâche ne correspond plus à cette version.");
+async function follow(job, download, mediaId, visited) {
+  if (job.assetId !== assetId || job.playableId !== mediaId) throw new Error("La tâche ne correspond plus à cette version.");
   if (job.status === "completed") {
     if (!download) return playMedia(api + "/hls-preparations/" + encodeURIComponent(job.id) + "/media", false);
     if (!job.result?.playableId || job.result.assetId !== assetId) throw new Error("La copie téléchargée est introuvable.");
-    selectVersion(job.result.playableId);
-    return open();
+    return prepare(job.result.playableId, visited);
   }
   if (["failed", "cancelled"].includes(job.status)) throw new Error(job.error || "La préparation a été interrompue.");
   let message = "Préparation de la copie de travail…";
@@ -115,7 +274,7 @@ async function follow(job, download) {
   status(message);
   const path = (download ? "/downloads/" : "/hls-preparations/") + encodeURIComponent(job.id);
   if (!finished) timer = setTimeout(async () => {
-    try { await follow((await json(path)).job, download); } catch (error) { failed(error); }
+    try { await follow((await json(path)).job, download, mediaId, visited); } catch (error) { failed(error); }
   }, 550);
 }
 
@@ -134,9 +293,14 @@ async function open() {
   document.querySelector("h1").textContent = asset.title || asset.id;
   document.title = (asset.title || asset.id) + " · Atelier d’anonymisation";
   const choices = asset.playables.filter(item => ["local-file", "hls", "direct-url"].includes(item.kind) && !item.removedAt);
-  const originalsWithCopies = new Set(choices.filter(item => item.role === "working-copy" &&
-    item.localFileState === "present").map(item => item.provenance?.sourcePlayableId).filter(Boolean));
-  const distinct = choices.filter(item => item.kind === "local-file" || !originalsWithCopies.has(item.id));
+  // Une copie de lecture unique reste accessible par l'identité de son original.
+  const copies = choices.filter(item => item.role === "working-copy" && item.localFileState === "present");
+  const aliases = new Set();
+  for (const original of choices.filter(item => item.kind !== "local-file")) {
+    const matches = copies.filter(item => item.provenance?.sourcePlayableId === original.id);
+    if (matches.length === 1) aliases.add(matches[0].id);
+  }
+  const distinct = choices.filter(item => !aliases.has(item.id));
   if (!playableId && distinct.length === 1) selectVersion(distinct[0].id);
   if (!playableId && distinct.length > 1) {
     versions.replaceChildren(new Option("Choisir une version…", ""));
@@ -153,21 +317,28 @@ async function open() {
   if (!item) throw new Error(playableId ? "Cette version est introuvable. Revenez à la fiche vidéo." : "Cette vidéo nécessite une copie locale ou une source téléchargeable.");
   byId("version").textContent = "Atelier d’anonymisation · " + versionName(item);
   status("Ouverture de cette version…");
+  mediaName = item.technicalMetadata?.fileName || item.name || asset.title || item.id;
+  mediaSize = item.technicalMetadata?.sizeBytes;
+  return prepare(playableId, new Set());
+}
+
+async function prepare(mediaId, visited) {
+  if (visited.has(mediaId)) throw new Error("La copie de travail de cette version est introuvable.");
+  visited.add(mediaId);
   const result = await json("/workshop-preparations", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ assetId, playableId, prepareLocal: forcePreparation })
+    body: JSON.stringify({ assetId, playableId: mediaId, prepareLocal: forcePreparation })
   });
   if (result.mediaUrl) return playMedia(result.mediaUrl, true);
   if (result.localPlayableId) {
-    selectVersion(result.localPlayableId);
-    return open();
+    return prepare(result.localPlayableId, visited);
   }
-  await follow(result.job || result.download, Boolean(result.download));
+  await follow(result.job || result.download, Boolean(result.download), mediaId, visited);
 }
 versions.onchange = () => { if (versions.value) { selectVersion(versions.value); open().catch(failed); } };
 byId("retry").onclick = () => open().catch(failed);
-window.addEventListener("pagehide", () => { finished = true; clearTimeout(timer); });
-window.addEventListener("pageshow", event => { if (event.persisted) { finished = false; open().catch(failed); } });
+window.addEventListener("pagehide", () => { finished = true; clearTimeout(timer); timeline?.suspend(); });
+window.addEventListener("pageshow", event => { if (event.persisted) { finished = false; if (!timeline || byId("workspace").hidden) open().catch(failed); } });
 open().catch(failed);
 </script>
 </body></html>

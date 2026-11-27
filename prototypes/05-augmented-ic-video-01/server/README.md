@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.65
+# Serveur autonome du Prototype 05 — 0.1.66
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -6,6 +6,14 @@ l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la ra
 ```powershell
 node --env-file=../.env.local server.js
 ```
+
+Depuis la vidéothèque, **Anonymiser** ouvre le montage image et son sur la version
+choisie. Le navigateur conserve le projet, le curseur et les piles annuler/rétablir
+pour le couple vidéo/version. **Ctrl+S** enregistre aussi un fichier projet JSON.
+Les bornes des passages sont en secondes, début inclus et fin exclue. Les rectangles
+du projet sont relatifs à l’image vidéo, y compris en présence de bandes latérales.
+Le flou, la coupure et le bip sont appliqués pendant l’aperçu. L’export combiné
+fera l’objet d’un lot ultérieur.
 
 ## Autorité de données
 
