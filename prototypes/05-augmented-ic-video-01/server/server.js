@@ -83,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.67";
+const VERSION = "0.1.68";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -1261,6 +1261,7 @@ function libraryAssetDetails(asset, usage = null, { activities = [], audioPlans 
     deletion: { canDeleteFile: localCandidates.length === 1 && !hasRemoteSource, ...(localCandidates.length === 1 ? localCandidates[0] : {}) },
     localCopies,
     versionsAndAccess: projectedAccesses,
+    workshopAnonymized: (VIDEO_LIBRARY.treatments || []).some(t => t.sourceAssetId === asset.id && completedExport(t)),
     technicalSummary: {
       fileName,
       mimeType: technicalPlayable?.technicalMetadata?.mimeType || technicalSource?.mimeType || null,
@@ -3475,7 +3476,9 @@ async function removeDerivationWorkspace(job) {
 async function persistDerivedPlayable(job, prepJob) {
   const stat = await fs.stat(job.outputPath);
   if (!stat.isFile() || stat.size === 0 || stat.size > HLS_PREPARATION_MAX_BYTES) throw new Error("Le fichier dérivé est vide ou dépasse la taille maximale autorisée.");
-  const hash = crypto.createHash("sha256").update(await fs.readFile(job.outputPath)).digest("hex");
+  const digest = crypto.createHash("sha256");
+  for await (const chunk of fsSync.createReadStream(job.outputPath)) digest.update(chunk);
+  const hash = digest.digest("hex");
   const derivationId = job.id;
   const assetId = prepJob.assetId;
   const suffix = job.mode === "audio" ? "audio-anonymized" : "anonymized";
@@ -3492,7 +3495,7 @@ async function persistDerivedPlayable(job, prepJob) {
   }
   const sourceId = `source-${derivationId}`;
   const playableId = `video-${derivationId}`;
-  const audioCodec = ffprobeAudioCodec(findFfmpeg(), job.outputPath);
+  const audioCodec = job.mode === "workshop" ? job.metadata.audioCodec : ffprobeAudioCodec(findFfmpeg(), job.outputPath);
   try {
     await proto05WriteBoundary().completeInlineMediaTreatment({
       treatmentId: job.treatmentId || derivationId,
@@ -3509,6 +3512,7 @@ async function persistDerivedPlayable(job, prepJob) {
       ffmpegVersion: job.metadata.ffmpeg || null,
       diagnostics: {
         mode: job.mode || "fixed",
+        ...(job.mode === "workshop" ? {workshopVersionId:job.metadata.workshopVersionId} : {}),
         method: job.method,
         filter: job.metadata.filter,
         ffmpegArgs: job.metadata.ffmpegArgs,
@@ -3516,7 +3520,15 @@ async function persistDerivedPlayable(job, prepJob) {
       }
     });
   }
-  catch (error) { try { await fs.unlink(targetPath); } catch {}; throw error; }
+  catch (error) {
+    // Une perte de connexion après COMMIT doit préserver le MP4 déjà référencé.
+    if (job.mode === "workshop") {
+      const {videoLibrary} = await proto05ReadBoundary().readSnapshot();
+      if (videoLibrary.treatments.some(t => t.id === derivationId && completedExport(t) && t.outputPlayableId === playableId)) return;
+    }
+    try { await fs.unlink(targetPath); } catch {}
+    throw error;
+  }
   return { duplicate: false, derivationId, assetId, playableId, sha256: hash, storageKey, mediaUrl: `/api/proto05/library/media/workspace/${encodeURIComponent(storageKey)}` };
 }
 
@@ -3733,6 +3745,7 @@ function cleanupExpiredAudioDerivations() {
 setInterval(cleanupExpiredAudioDerivations, 60 * 1000).unref();
 
 async function shutdownAnonymizationJobs() {
+  await workshopExports.stop();
   for (const job of ACTIVE_AUDIO_DERIVATIONS.values()) await cancelAudioDerivation(job);
   for (const job of ACTIVE_HLS_DERIVATIONS.values()) await cancelHlsDerivation(job);
   for (const job of ACTIVE_HLS_PREPARATIONS.values()) await cancelHlsPreparation(job);
@@ -4086,6 +4099,69 @@ async function persistMariaDbSnapshot(patch, {
 }
 
 const {validateWorkshopProject} = require("../shared/workshop-project");
+const {createWorkshopExports, completedExport} = require("./workshop-exports");
+
+function workshopInput(project, {mediaPlayableId, preparationId}) {
+  const {assetId, playableId} = project;
+  const media = VIDEO_LIBRARY.playables.find(p => p.assetId === assetId && p.id === mediaPlayableId && !p.removedAt);
+  if (!media || (media.id !== playableId && !(explicitRole(media) === "working-copy" && media.provenance?.sourcePlayableId === playableId)))
+    throw Error("La copie de lecture ne correspond plus à la version source. Rouvrez la vidéo.");
+  if (preparationId) {
+    const prep = ACTIVE_HLS_PREPARATIONS.get(preparationId);
+    if (!prep || prep.status !== "completed" || prep.assetId !== assetId || prep.playableId !== media.id || !prep.outputPath)
+      throw Error("La préparation de lecture a expiré. Rechargez l’atelier pour la retrouver.");
+    return prep.outputPath;
+  }
+  if (media.kind !== "local-file") throw Error("Cette source doit d’abord être préparée dans l’atelier.");
+  const source = VIDEO_LIBRARY.sources.find(s => s.id === media.sourceId && s.assetId === assetId);
+  const local = observeLocalPlayableFile(media, source);
+  if (local.state !== "present") throw Error("La copie locale de lecture est introuvable.");
+  return local.file;
+}
+
+const workshopExports = createWorkshopExports({
+  write:proto05WriteBoundary, readLibrary:async () => (await proto05ReadBoundary().readSnapshot()).videoLibrary,
+  resolveInput:workshopInput, root:HLS_DERIVATION_ROOT, maxBytes:HLS_PREPARATION_MAX_BYTES,
+  timeoutMs:HLS_DERIVATION_TIMEOUT_MS, engineVersion:"proto05-" + VERSION, progress:parseFfmpegProgress,
+  tools() {
+    const ffmpeg = findFfmpeg();
+    return {ffmpeg, ffprobe:libraryDownloadProgram(ffmpeg,{probe:true}).executable};
+  },
+  async publish(job, version, outputPath, info, ffmpeg) {
+    const derived = {id:job.id, treatmentId:job.id, outputPath, mode:"workshop", method:"image-et-son",
+      metadata:{ffmpeg:ffmpegVersion(ffmpeg), audioCodec:info.audio?.codec_name || null, workshopVersionId:version.id}};
+    await persistDerivedPlayable(derived, {assetId:version.project.assetId, metadata:{durationMs:Math.round(info.duration*1000)}});
+  },
+  mediaUrl(library, treatment) {
+    const playable = library.playables.find(p => p.id === treatment.outputPlayableId && p.assetId === treatment.sourceAssetId);
+    const source = library.sources.find(s => s.id === playable?.sourceId);
+    const local = observeLocalPlayableFile(playable, source);
+    return local.state === "present" ? workshopMediaUrl(local) : null;
+  }
+});
+
+async function handleWorkshopExport(request, response, selector) {
+  if (!["GET","POST"].includes(request.method))
+    return sendJson(response,405,{error:"Méthode non autorisée."},{allow:"GET, POST"});
+  let options;
+  if (request.method === "POST") {
+    try {
+      options = JSON.parse(await readRequestBody(request,8192));
+      if (typeof options?.mediaPlayableId !== "string") throw Error();
+    } catch {return sendJson(response,400,{error:"Copie de lecture invalide."});}
+  }
+  try {
+    const [version] = await proto05ReadBoundary().readWorkshopVersions(selector);
+    if (!version) return sendJson(response,404,{error:"Version de montage introuvable pour cette source."});
+    validateWorkshopProject(version.project,selector.assetId,selector.playableId);
+    const job = options ? await workshopExports.start(activeVideoLibrary(), version, options)
+      : workshopExports.status(activeVideoLibrary(),version);
+    return sendJson(response,200,{job},{"cache-control":"no-store"});
+  } catch {
+    return sendJson(response,503,{error:"Le serveur ne peut pas confirmer cet export. Le montage est conservé."});
+  }
+}
+
 const WORKSHOP_VERSION_BYTES = 2 * 1024 * 1024;
 
 async function handleWorkshopVersions(request, response, match) {
@@ -4101,6 +4177,7 @@ async function handleWorkshopVersions(request, response, match) {
     return sendJson(response, 400, {error: "Identifiant de version invalide."});
   if (!VIDEO_LIBRARY.playables.some(item => item.id === playableId && item.assetId === assetId && !item.removedAt))
     return sendJson(response, 404, {error: "Cette version source ne figure plus sur cette vidéo."});
+  if (match[4]) return handleWorkshopExport(request, response, {assetId, playableId, id});
   if (request.method === "GET") {
     try {
       const versions = await proto05ReadBoundary().readWorkshopVersions({assetId, playableId, id});
@@ -4136,7 +4213,7 @@ async function handleWorkshopVersions(request, response, match) {
 }
 
 async function handleApiInReadContext(request, response, url) {
-  const versionsRoute = /^\/api\/proto05\/library\/assets\/([^/]+)\/playables\/([^/]+)\/workshop-versions(?:\/([^/]+))?$/.exec(url.pathname);
+  const versionsRoute = /^\/api\/proto05\/library\/assets\/([^/]+)\/playables\/([^/]+)\/workshop-versions(?:\/([^/]+)(\/export)?)?$/.exec(url.pathname);
   if (versionsRoute) return handleWorkshopVersions(request, response, versionsRoute);
   if (url.pathname === "/api/health") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });

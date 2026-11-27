@@ -767,3 +767,12 @@ header a {
 .saved-version { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; padding: .4rem 0; border-bottom: 1px solid #ced9d1; }
 .saved-version strong { overflow-wrap: anywhere; }
 .saved-version time { font-size: .85rem; }
+
+#exportPanel {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  flex-wrap: wrap;
+  margin: .4rem 0;
+}
+#exportMessage { overflow-wrap: anywhere; }

@@ -1,6 +1,6 @@
 'use strict';
 
-function mountWorkshopVersions({assetId, playableId, snapshot, pause, restore}) {
+function mountWorkshopVersions({assetId, playableId, snapshot, pause, restore, media}) {
   const $ = id => document.getElementById(id);
   const api = '/api/proto05/library/assets/' + encodeURIComponent(assetId) + '/playables/' +
     encodeURIComponent(playableId) + '/workshop-versions';
@@ -94,17 +94,22 @@ function mountWorkshopVersions({assetId, playableId, snapshot, pause, restore}) 
       if (visible && dialog.open && !$('versionList').hidden) message('Liste indisponible. Votre montage est conservé.', () => refreshList(true));
     }
   }
-  function openForm(next = null) {
+  let exportAfterSave = false;
+  const exporter = mountWorkshopExport({assetId, playableId, request, snapshot, pause, media,
+    askSave:() => openForm(null,true)});
+  function openForm(next = null, exporting = false) {
+    exportAfterSave = exporting;
     target = next;
-    show('versionForm', next ? 'Garder le montage actuel' : 'Enregistrer une version');
+    show('versionForm', exporting ? 'Enregistrer la variante et exporter' : next ? 'Garder le montage actuel' : 'Enregistrer une version');
     $('versionName').value = pending?.name || ('Montage du ' + date.format(new Date()));
     $('versionName').readOnly = Boolean(pending);
-    $('confirmVersion').textContent = pending ? 'Réessayer cet enregistrement' : 'Enregistrer';
+    $('confirmVersion').textContent = pending ? 'Réessayer cet enregistrement' : exporting ? 'Enregistrer et exporter' : 'Enregistrer';
     if (pending) message('Un envoi reste à confirmer. La nouvelle tentative utilise la copie déjà envoyée.');
     $('versionName').focus(); $('versionName').select();
   }
   function apply(version) {
     restore(version.project);
+    exporter.opened(version,version.project);
     reference = JSON.stringify(snapshot());
     dialog.close();
     $('fileStatus').textContent = 'Version ouverte · ' + version.name;
@@ -129,7 +134,7 @@ function mountWorkshopVersions({assetId, playableId, snapshot, pause, restore}) 
     const name = $('versionName').value.trim();
     if (!name) { message('Saisissez un nom.'); return; }
     if (!pending) {
-      const record = {id:newId(), name, project:JSON.parse(JSON.stringify(snapshot()))};
+      const record = {id:newId(), name, exporting:exportAfterSave, project:JSON.parse(JSON.stringify(snapshot()))};
       remember(record);
     }
     const record = pending;
@@ -146,6 +151,13 @@ function mountWorkshopVersions({assetId, playableId, snapshot, pause, restore}) 
       versions = [version, ...versions.filter(entry => entry.id !== version.id)];
       render();
       const next = target;
+      const sameMontage = JSON.stringify(record.project.parts) === JSON.stringify(snapshot().parts);
+      exporter.opened(version,record.project,exportAfterSave && sameMontage);
+      if (exportAfterSave && !sameMontage) {
+        openForm(null,true);
+        message('Envoi précédent confirmé. Nommez la variante actuellement à l’écran pour l’exporter.');
+        return;
+      }
       if (next && reference === JSON.stringify(snapshot())) apply(next);
       else {
         dialog.close();
@@ -155,7 +167,7 @@ function mountWorkshopVersions({assetId, playableId, snapshot, pause, restore}) 
     } catch (e) {
       if ([400, 404, 409, 413].includes(e.status)) remember(null);
       $('versionName').readOnly = Boolean(pending);
-      $('confirmVersion').textContent = pending ? 'Réessayer cet enregistrement' : 'Enregistrer';
+      $('confirmVersion').textContent = pending ? 'Réessayer cet enregistrement' : exportAfterSave ? 'Enregistrer et exporter' : 'Enregistrer';
       message(e.message || 'Confirmation indisponible. Votre montage est conservé.');
     } finally { lock(false); }
   };
@@ -167,4 +179,5 @@ function mountWorkshopVersions({assetId, playableId, snapshot, pause, restore}) 
   dialog.addEventListener('cancel', event => { if (busy) event.preventDefault(); });
   dialog.addEventListener('keydown', event => event.stopPropagation());
   refreshList(false);
+  if (pending?.exporting) openForm(null,true);
 }

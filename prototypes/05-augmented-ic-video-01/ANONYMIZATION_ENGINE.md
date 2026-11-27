@@ -1,5 +1,15 @@
 # Moteur d’anonymisation Proto05
 
+## MP4 du nouvel atelier
+
+Le rendu relit la version de montage enregistrée dans MariaDB. Chaque passage agit
+du début inclus à la fin exclue. Les rectangles actifs forment un masque commun sur
+une copie floutée de l’image source. Sur la piste sonore, le dernier passage actif
+dans l’ordre du projet décide entre silence et sinusoïde à 650 Hz. La sortie
+contient une vidéo H.264 et, lorsque le montage comporte du son, une piste AAC.
+Un projet sur source muette peut donc ajouter un bip. La publication suit le
+contrôle des flux, du minutage et le décodage complet du MP4.
+
 ## Sémantique des étapes
 
 Une étape commence à `startMs` et reste active jusqu’à `endMs`. Les étapes sont
@@ -72,4 +82,4 @@ Le moteur ne prend pas encore en charge le VFR comme contrat distinct, la
 reprise/cache des segments, le parallélisme, le GPU, ni la détection automatique.
 # Version de référence
 
-Le serveur autonome Proto05 et son package sont servis en version **0.1.67**.
+Le serveur autonome Proto05 et son package sont servis en version **0.1.68**.

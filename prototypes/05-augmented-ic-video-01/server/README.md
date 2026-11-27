@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.67
+# Serveur autonome du Prototype 05 — 0.1.68
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -12,8 +12,10 @@ choisie. Le navigateur conserve le projet, le curseur et les piles annuler/réta
 pour le couple vidéo/version. **Ctrl+S** enregistre aussi un fichier projet JSON.
 Les bornes des passages sont en secondes, début inclus et fin exclue. Les rectangles
 du projet sont relatifs à l’image vidéo, y compris en présence de bandes latérales.
-Le flou, la coupure et le bip sont appliqués pendant l’aperçu. L’export combiné
-fera l’objet d’un lot ultérieur.
+Le flou, la coupure et le bip sont appliqués pendant l’aperçu. **Exporter en MP4** rend la version serveur nommée. Une retouche propose de créer
+une variante avant de lancer le rendu. Le lecteur et le téléchargement sont disponibles
+après décodage de contrôle et inscription du dérivé dans la vidéothèque. Le registre
+des traitements du schéma 008 conserve la filiation et la tentative d’export.
 
 ## Autorité de données
 

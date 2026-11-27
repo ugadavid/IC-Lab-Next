@@ -26,11 +26,18 @@
         <div class="row" id="projectTools" hidden>
           <button type="button" id="saveVersion">Enregistrer une version</button>
           <button type="button" id="listVersions">Versions (…)</button>
+          <button type="button" id="exportMp4">Exporter en MP4</button>
           <button id="save" title="Ctrl+S">Enregistrer le projet</button>
           <button id="pickopenProject" type="button">Ouvrir un projet</button>
           <input hidden id="openProject" type="file" accept=".json">
         </div>
       </div>
+      <section id="exportPanel" aria-label="Export MP4" hidden>
+        <span id="exportMessage" role="status"></span>
+        <a id="readExport" target="_blank" rel="noopener" hidden>Lire le MP4</a>
+        <a id="downloadExport" download hidden>Télécharger le MP4</a>
+        <button type="button" id="retryExport" hidden>Réessayer l’export</button>
+      </section>
       <p id="version" class="small">
       </p>
       <section id="panel">
@@ -209,6 +216,7 @@
     </div>
   </dialog>
   <script src="/shared/workshop-project.js"></script>
+  <script src="/shared/workshop-export.js"></script>
   <script src="/shared/workshop-versions.js"></script>
   <script src="/shared/workshop-timeline.js"></script>
 <script>
@@ -222,7 +230,7 @@ const detail = byId("detail");
 detail.href = "/teacher/videos/" + encodeURIComponent(assetId);
 let playableId = new URL(location.href).searchParams.get("playableId");
 let forcePreparation = false;
-let timeline;
+let timeline, mediaLocator;
 let mediaName;
 let mediaSize;
 function showWorkspace(visible) {
@@ -258,7 +266,8 @@ function selectVersion(id) {
   history.replaceState(null, "", link);
 }
 
-function playMedia(url, directLocal) {
+function playMedia(url, directLocal, locator) {
+  mediaLocator = locator;
   status("Chargement du lecteur…");
   player.onloadeddata = () => {
     if (!Number.isFinite(player.duration) || player.duration <= 0) {
@@ -267,7 +276,7 @@ function playMedia(url, directLocal) {
     }
     byId("panel").hidden = true;
     showWorkspace(true);
-    if (!timeline) timeline = mountWorkshopTimeline({ video: player, assetId, playableId, name: mediaName, size: mediaSize });
+    if (!timeline) timeline = mountWorkshopTimeline({ video: player, assetId, playableId, name: mediaName, size: mediaSize, media: () => mediaLocator });
     else timeline.resume();
   };
   player.onerror = () => {
@@ -282,7 +291,7 @@ function playMedia(url, directLocal) {
 async function follow(job, download, mediaId, visited) {
   if (job.assetId !== assetId || job.playableId !== mediaId) throw new Error("La tâche ne correspond plus à cette version.");
   if (job.status === "completed") {
-    if (!download) return playMedia(api + "/hls-preparations/" + encodeURIComponent(job.id) + "/media", false);
+    if (!download) return playMedia(api + "/hls-preparations/" + encodeURIComponent(job.id) + "/media", false, {mediaPlayableId:mediaId, preparationId:job.id});
     if (!job.result?.playableId || job.result.assetId !== assetId) throw new Error("La copie téléchargée est introuvable.");
     return prepare(job.result.playableId, visited);
   }
@@ -352,7 +361,7 @@ async function prepare(mediaId, visited) {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ assetId, playableId: mediaId, prepareLocal: forcePreparation })
   });
-  if (result.mediaUrl) return playMedia(result.mediaUrl, true);
+  if (result.mediaUrl) return playMedia(result.mediaUrl, true, {mediaPlayableId:mediaId});
   if (result.localPlayableId) {
     return prepare(result.localPlayableId, visited);
   }

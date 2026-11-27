@@ -1,5 +1,5 @@
 'use strict';
-function mountWorkshopTimeline({ video, assetId, playableId, name, size }) {
+function mountWorkshopTimeline({ video, assetId, playableId, name, size, media }) {
   const $ = id => document.getElementById(id), stage = $('picture'), canvas = $('canvas'), ctx = canvas.getContext('2d'), v = video;
   const iconPaths = {
     "save": "M4 3h13l4 4v14H3V3z M7 3v6h9V3 M7 21v-8h10v8",
@@ -1070,7 +1070,7 @@ function mountWorkshopTimeline({ video, assetId, playableId, name, size }) {
     applyLayout();
   }
   mountWorkshopVersions({
-    assetId, playableId, snapshot, pause, restore(project) {
+    assetId, playableId, snapshot, pause, media, restore(project) {
       applyProject(project);
       handle = null;
     }
