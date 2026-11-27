@@ -33,6 +33,9 @@ function createProto05WriteBoundary({
     async saveAudioAnonymizationPlan(plan) {
       return mariadbAdapter.saveAudioAnonymizationPlan(plan);
     },
+    async saveWorkshopVersion(version) {
+      return mariadbAdapter.saveWorkshopVersion(version);
+    },
     async startInlineMediaTreatment(treatment) {
       return mariadbAdapter.startInlineMediaTreatment(treatment);
     },

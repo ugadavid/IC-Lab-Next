@@ -83,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.66";
+const VERSION = "0.1.67";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -4085,7 +4085,59 @@ async function persistMariaDbSnapshot(patch, {
   return result;
 }
 
+const {validateWorkshopProject} = require("../shared/workshop-project");
+const WORKSHOP_VERSION_BYTES = 2 * 1024 * 1024;
+
+async function handleWorkshopVersions(request, response, match) {
+  let assetId, playableId, id;
+  try {
+    assetId = decodeURIComponent(match[1]);
+    playableId = decodeURIComponent(match[2]);
+    id = match[3] && decodeURIComponent(match[3]);
+  } catch {
+    return sendJson(response, 400, {error: "Adresse de version invalide."});
+  }
+  if (id && !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(id))
+    return sendJson(response, 400, {error: "Identifiant de version invalide."});
+  if (!VIDEO_LIBRARY.playables.some(item => item.id === playableId && item.assetId === assetId && !item.removedAt))
+    return sendJson(response, 404, {error: "Cette version source ne figure plus sur cette vidéo."});
+  if (request.method === "GET") {
+    try {
+      const versions = await proto05ReadBoundary().readWorkshopVersions({assetId, playableId, id});
+      if (!id) return sendJson(response, 200, {versions});
+      if (!versions.length) return sendJson(response, 404, {error: "Version de montage introuvable pour cette source."});
+      validateWorkshopProject(versions[0].project, assetId, playableId);
+      return sendJson(response, 200, {version: versions[0]});
+    } catch {
+      return sendJson(response, 503, {error: "Impossible de lire les versions du montage. Réessayez."});
+    }
+  }
+  if (request.method !== "PUT" || !id)
+    return sendJson(response, 405, {error: "Méthode non autorisée."}, {allow: id ? "GET, PUT" : "GET"});
+  if (Number(request.headers["content-length"]) > WORKSHOP_VERSION_BYTES)
+    return sendJson(response, 413, {error: "Ce projet dépasse la limite de 2 Mio. Vous pouvez le conserver avec Ctrl+S."});
+  let name, project;
+  try {
+    const body = JSON.parse(await readRequestBody(request, WORKSHOP_VERSION_BYTES));
+    name = typeof body.name === "string" ? body.name.trim() : "";
+    if (!name || [...name].length > 191) throw Error("Nom invalide.");
+    project = validateWorkshopProject(body.project, assetId, playableId);
+  } catch {
+    return sendJson(response, 400, {error: "Nom ou projet invalide pour cette version source."});
+  }
+  try {
+    const version = await proto05WriteBoundary().saveWorkshopVersion({assetId, playableId, id, name, project});
+    return sendJson(response, 200, {version});
+  } catch (error) {
+    if (error.cause?.errno === 30543)
+      return sendJson(response, 409, {error: "Cet identifiant désigne déjà un enregistrement différent."});
+    return sendJson(response, 503, {error: "L’enregistrement n’a pas pu être confirmé. Réessayez avec le même projet."});
+  }
+}
+
 async function handleApiInReadContext(request, response, url) {
+  const versionsRoute = /^\/api\/proto05\/library\/assets\/([^/]+)\/playables\/([^/]+)\/workshop-versions(?:\/([^/]+))?$/.exec(url.pathname);
+  if (versionsRoute) return handleWorkshopVersions(request, response, versionsRoute);
   if (url.pathname === "/api/health") {
     if (request.method !== "GET") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET" });
     try {

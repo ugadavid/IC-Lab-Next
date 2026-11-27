@@ -755,3 +755,15 @@ header a {
 #version {
   margin:0 0 .8rem;
 }
+#serverVersions {
+  inset: 0;
+  margin: auto;
+  width: min(34rem, 93vw);
+  max-height: 80vh;
+  overflow: auto;
+}
+#versionForm, #replaceVersion { display: grid; gap: .6rem; }
+#versionForm input { width: 100%; }
+.saved-version { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: .6rem; padding: .4rem 0; border-bottom: 1px solid #ced9d1; }
+.saved-version strong { overflow-wrap: anywhere; }
+.saved-version time { font-size: .85rem; }

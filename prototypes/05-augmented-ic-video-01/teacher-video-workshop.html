@@ -24,6 +24,8 @@
       <div class="row spread">
         <h1>Atelier d’anonymisation</h1>
         <div class="row" id="projectTools" hidden>
+          <button type="button" id="saveVersion">Enregistrer une version</button>
+          <button type="button" id="listVersions">Versions (…)</button>
           <button id="save" title="Ctrl+S">Enregistrer le projet</button>
           <button id="pickopenProject" type="button">Ouvrir un projet</button>
           <input hidden id="openProject" type="file" accept=".json">
@@ -187,6 +189,27 @@
     </div>
   </form>
 </dialog>
+  <dialog id="serverVersions" aria-labelledby="serverVersionsTitle">
+    <h2 id="serverVersionsTitle">Versions du montage</h2>
+    <form id="versionForm" hidden>
+      <label for="versionName">Nom de la version</label>
+      <input id="versionName" type="text" maxlength="191" required autocomplete="off">
+      <button type="submit" class="primary" id="confirmVersion">Enregistrer</button>
+    </form>
+    <div id="versionList" hidden></div>
+    <div id="replaceVersion" hidden>
+      <p>Voulez-vous garder le montage en cours avant d’ouvrir cette version ?</p>
+      <button type="button" id="keepVersion">Enregistrer le montage actuel…</button>
+      <button type="button" id="openWithoutSaving">Ouvrir sans enregistrer</button>
+    </div>
+    <p id="versionStatus" role="status" aria-live="polite"></p>
+    <div class="row">
+      <button type="button" id="versionRetry" hidden>Réessayer</button>
+      <button type="button" id="closeVersions">Fermer</button>
+    </div>
+  </dialog>
+  <script src="/shared/workshop-project.js"></script>
+  <script src="/shared/workshop-versions.js"></script>
   <script src="/shared/workshop-timeline.js"></script>
 <script>
 "use strict";

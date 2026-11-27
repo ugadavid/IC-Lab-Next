@@ -101,6 +101,17 @@
         }
       ],
       "schemaManifest": "007_proto05_asset_delete_audio_plan_guard.manifest.json"
+    },
+    {
+      "version": "008",
+      "description": "Versions immuables du montage image et son par source",
+      "kind": "migration",
+      "sources": [
+        {
+          "path": "008_proto05_workshop_versions.sql"
+        }
+      ],
+      "schemaManifest": "008_proto05_workshop_versions.manifest.json"
     }
   ]
 }

@@ -82,8 +82,8 @@ function runnerOptions(databaseName, root = prototypeDirectory) {
   return { databaseName, prototypeDirectory: root };
 }
 
-async function installCanonical(database, databaseName) {
-  const options = runnerOptions(databaseName);
+async function installCanonical(database, databaseName, root = prototypeDirectory) {
+  const options = runnerOptions(databaseName, root);
   const plan = await inspectMigrationState(database, options);
   assert.equal(plan.action.type, "apply");
   return runMigrationCommand(database, {
@@ -101,7 +101,10 @@ async function removeAudioMigrationFixture(database) {
     .expectedSchema.routines
     .find(routine => routine.routineName === "sp_media_asset_delete");
   assert.ok(routineBeforeAudioMigrations?.createStatement, "La définition 002 de sp_media_asset_delete doit être disponible.");
-  await database.query("DELETE FROM schema_migrations WHERE version = '006'");
+  await database.query("DROP PROCEDURE sp_workshop_version_read");
+  await database.query("DROP PROCEDURE sp_workshop_version_save");
+  await database.query("DROP TABLE media_workshop_versions");
+  await database.query("DELETE FROM schema_migrations WHERE version IN ('006','007','008')");
   await database.query("DROP PROCEDURE sp_media_asset_delete");
   await database.query(routineBeforeAudioMigrations.createStatement);
   await database.query("DROP PROCEDURE sp_media_terminal_output_delete");
@@ -121,38 +124,26 @@ async function removeAudioMigrationFixture(database) {
 
 function copyCanonicalContract(label) {
   const root = fs.mkdtempSync(path.join(temporaryRoot, `${label}-`));
-  const mappings = [
-    ["database/schema-migrations/manifest.json", "database/schema-migrations/manifest.json"],
-    ["database/schema-migrations/001_proto05_canonical_schema.manifest.json", "database/schema-migrations/001_proto05_canonical_schema.manifest.json"],
-    ["database/schema-migrations/002_proto05_canonical_routines.manifest.json", "database/schema-migrations/002_proto05_canonical_routines.manifest.json"],
-    ["database/schema-migrations/002_proto05_routine_session.sql", "database/schema-migrations/002_proto05_routine_session.sql"],
-    ["database/schema-migrations/002_proto05_canonical_routines.sql", "database/schema-migrations/002_proto05_canonical_routines.sql"],
-    ["database/schema-migrations/003_proto05_audio_anonymization.sql", "database/schema-migrations/003_proto05_audio_anonymization.sql"],
-    ["database/schema-migrations/003_proto05_audio_anonymization.manifest.json", "database/schema-migrations/003_proto05_audio_anonymization.manifest.json"],
-    ["database/schema-migrations/004_proto05_working_copy_delete.sql", "database/schema-migrations/004_proto05_working_copy_delete.sql"],
-    ["database/schema-migrations/004_proto05_working_copy_delete.manifest.json", "database/schema-migrations/004_proto05_working_copy_delete.manifest.json"],
-    ["database/schema-migrations/005_proto05_terminal_output_delete.sql", "database/schema-migrations/005_proto05_terminal_output_delete.sql"],
-    ["database/schema-migrations/005_proto05_terminal_output_delete.manifest.json", "database/schema-migrations/005_proto05_terminal_output_delete.manifest.json"],
-    ["database/schema-migrations/006_proto05_asset_delete_lineage.sql", "database/schema-migrations/006_proto05_asset_delete_lineage.sql"],
-    ["database/schema-migrations/006_proto05_asset_delete_lineage.manifest.json", "database/schema-migrations/006_proto05_asset_delete_lineage.manifest.json"],
-    ["database/drafts/003_proto05_schema_hardening.sql", "database/drafts/003_proto05_schema_hardening.sql"],
-    ["database/migrations/002_proto05_mariadb_schema_alignment.sql", "database/migrations/002_proto05_mariadb_schema_alignment.sql"],
-    ["database/migrations/004_proto05_document_metadata_schema.sql", "database/migrations/004_proto05_document_metadata_schema.sql"],
-    ["database/migrations/006_proto05_video_plus_metadata_schema.sql", "database/migrations/006_proto05_video_plus_metadata_schema.sql"]
-  ];
-  for (const [source, target] of mappings) {
-    const destination = path.join(root, target);
-    fs.mkdirSync(path.dirname(destination), { recursive: true });
-    fs.copyFileSync(path.join(prototypeDirectory, source), destination);
+  const relativeDir = "database/schema-migrations";
+  const index = JSON.parse(fs.readFileSync(path.join(prototypeDirectory, relativeDir, "manifest.json"), "utf8"));
+  const files = new Set(["manifest.json"]);
+  for (const migration of index.migrations) {
+    files.add(migration.schemaManifest);
+    for (const source of migration.sources) files.add(source.path);
+  }
+  for (const file of files) {
+    const destination = path.join(root, relativeDir, file);
+    fs.mkdirSync(path.dirname(destination), {recursive:true});
+    fs.copyFileSync(path.join(prototypeDirectory, relativeDir, file), destination);
   }
   return root;
 }
 
-function legacyRoutineContract(label) {
+function legacyRoutineContract(label, count = 2) {
   const root = copyCanonicalContract(label);
   const manifestPath = path.join(root, "database", "schema-migrations", "manifest.json");
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
-  manifest.migrations = manifest.migrations.slice(0, 2);
+  manifest.migrations = manifest.migrations.slice(0, count);
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
   return root;
 }
@@ -225,10 +216,10 @@ test("empty install, populated baseline and a second run are deterministic", asy
     assert.equal(installed.changed, true);
     assert.equal(installed.state.action.type, "none");
     assert.deepEqual(installed.state.plan.currentSummary, {
-      tables: 34, columns: 293, indexes: 95, foreignKeys: 51, checks: 74,
-      views: 0, routines: 49, triggers: 0, events: 0
+      tables: 35, columns: 300, indexes: 98, foreignKeys: 52, checks: 74,
+      views: 0, routines: 51, triggers: 0, events: 0
     });
-    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 49);
+    assert.equal(new Set(installed.state.actualSchema.routines.map(row => row.routineName)).size, 51);
     assert.ok(installed.state.actualSchema.routines.every(row => row.createStatement.startsWith("CREATE PROCEDURE")));
     const verified = await verifyDatabaseSchema({ database, ...runnerOptions(databaseName) });
     assert.equal(verified.schemaVersion, canonicalContract.latestVersion);
@@ -551,7 +542,8 @@ test("a divergent routine is never silently adopted", async () => {
 
 test("migration 006 adopts an exactly installed schema without planning DDL and rejects any other divergence", async () => {
   await withDatabase("adoptsix", async (database, databaseName) => {
-    await installCanonical(database, databaseName);
+    const root = legacyRoutineContract("six", 6);
+    await installCanonical(database, databaseName, root);
     await database.query("DELETE FROM schema_migrations WHERE version = '006'");
 
     const planningQueries = [];
@@ -564,7 +556,7 @@ test("migration 006 adopts an exactly installed schema without planning DDL and 
         };
       }
     });
-    const plan = await inspectMigrationState(planningDatabase, runnerOptions(databaseName));
+    const plan = await inspectMigrationState(planningDatabase, runnerOptions(databaseName, root));
 
     assert.equal(plan.action.type, "adopt");
     assert.deepEqual(plan.action.migrations.map(item => item.version), ["006"]);
@@ -572,7 +564,7 @@ test("migration 006 adopts an exactly installed schema without planning DDL and 
 
     await database.query("ALTER TABLE languages ADD COLUMN m167_unexpected_divergence INT NULL");
     await assert.rejects(
-      inspectMigrationState(database, runnerOptions(databaseName)),
+      inspectMigrationState(database, runnerOptions(databaseName, root)),
       error => error.code === "PROTO05_ROUTINE_ADOPTION_REFUSED"
         && error.comparison.equal === false
     );
@@ -775,5 +767,44 @@ test("audio plans and inline treatments are transactional, ordered and restart-r
     assert.equal(output.role, "derivation-local");
     assert.equal(output.storage_scope, "workspace");
     assert.match(output.storage_key, /treatment-audio-test/);
+  });
+});
+
+test("workshop versions survive independent saves, retries and reads scoped to their source", async () => {
+  await withDatabase("workshop", async (database, databaseName) => {
+    await installCanonical(database, databaseName, legacyRoutineContract("seven", 7));
+    const asset = "asset-fixture", playable = "playable-fixture";
+    await database.query("CALL sp_media_register_import(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", [
+      asset, "source-fixture", playable, "Montage de recette", "local-file", "local", "filesystem",
+      "working-copy", "video/mp4", null, "workspace", "fixture/video.mp4", null, null, "available",
+      JSON.stringify({asset:{provenance:{},rights:{},tagIds:[]},source:{origin:{},provenance:{}},playable:{provenance:{}},metadata:{}})
+    ]);
+    const options = runnerOptions(databaseName);
+    const plan = await inspectMigrationState(database, options);
+    assert.equal(plan.action.type, "apply");
+    assert.deepEqual(plan.action.migrations.map(item => item.version), ["008"]);
+    await runMigrationCommand(database, {...options, mode:"apply", expectedPlanHash:plan.planHash,
+      confirm:"APPLY PROTO05 SCHEMA MIGRATIONS"});
+    assert.equal((await verifyDatabaseSchema({database, ...options})).schemaVersion, "008");
+    const one = JSON.stringify({assetId:asset, playableId:playable, parts:["image"]});
+    const two = JSON.stringify({assetId:asset, playableId:playable, parts:["image", "audio"]});
+    const firstId = crypto.randomUUID(), secondId = crypto.randomUUID();
+    const save = (id, name, json) => database.query("CALL sp_workshop_version_save(?,?,?,?,?)", [asset, playable, id, name, json]);
+    const read = async (source, id) => (await database.query("CALL sp_workshop_version_read(?,?,?)", [asset, source, id]))[0][0];
+    assert.deepEqual(await read(playable, null), []);
+    await save(firstId, "Visages seuls", one);
+    await save(firstId, "Visages seuls", one);
+    await save(secondId, "Visages + voix", two);
+    await assert.rejects(save(firstId, "Visages seuls", two), error => error.errno === 30543);
+    await assert.rejects(save(crypto.randomUUID(), "Autre", JSON.stringify({assetId:asset,playableId:"autre"})), error => error.errno === 30542);
+    const list = await read(playable, null);
+    assert.deepEqual(list.map(item => item.id), [secondId, firstId]);
+    assert.ok(list.every(item => Number.isFinite(Date.parse(item.createdAt)) && !Object.hasOwn(item,"project_json")));
+    assert.deepEqual((await read(playable, firstId)).map(item => item.project_json), [one]);
+    assert.deepEqual((await read(playable, secondId)).map(item => item.project_json), [two]);
+    assert.deepEqual(await read("autre", firstId), []);
+    const thirdId = crypto.randomUUID();
+    await save(thirdId, "Visages seuls", one);
+    assert.deepEqual((await read(playable, null)).map(item => item.id), [thirdId, secondId, firstId]);
   });
 });

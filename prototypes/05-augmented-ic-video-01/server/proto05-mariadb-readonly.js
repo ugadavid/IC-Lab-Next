@@ -820,6 +820,16 @@ function createMariaDbReadonlyAdapter({
         throw new Error("Lecture MariaDB readonly impossible.", { cause: error });
       }
     },
+    async readWorkshopVersions({assetId, playableId, id = null}) {
+      return runConsistentReadSnapshot({
+        acquireConnection: connection,
+        project: async database => {
+          const [sets] = await database.query("CALL sp_workshop_version_read(?, ?, ?)", [assetId, playableId, id]);
+          return sets[0].map(({project_json, ...version}) => project_json === undefined
+            ? version : {...version, project: JSON.parse(project_json)});
+        }
+      });
+    },
     async readAudioAnonymizationPlan(selector = {}) {
       try {
         return await runConsistentReadSnapshot({

@@ -1,4 +1,4 @@
-# Serveur autonome du Prototype 05 — 0.1.66
+# Serveur autonome du Prototype 05 — 0.1.67
 
 Le serveur Node natif écoute sur `127.0.0.1:8791` et possède les données,
 l’API et le service statique du prototype. Il sert `index-0.0.9.html` à la racine.
@@ -51,7 +51,7 @@ baseline `001`, conservée intacte, décrit le schéma initial. La migration
 additive `002` porte le premier canon transactionnel des procédures stockées ;
 `003` ajoute les plans d’anonymisation audio multi-zones et les procédures de
 traitement dérivé, sans réécrire les deux migrations antérieures. Une installation
-neuve applique donc `001`, `002`, puis `003`. Sur une base déjà équipée, `002` n’est
+neuve applique les migrations du manifeste dans leur ordre. Sur une base déjà équipée, `002` n’est
 adoptée sans DDL que si l’inventaire, les signatures et les corps correspondent
 exactement ; une définition divergente exige une mise à niveau explicite avec
 sauvegarde vérifiée, et un inventaire incomplet est refusé.
@@ -61,6 +61,17 @@ de procédures. Ils ne contiennent pas les données métier et ne constituent pa
 une persistance métier parallèle à MariaDB.
 
 ## Anonymisation
+
+Depuis **Anonymiser** dans la vidéothèque, le nouvel atelier conserve son brouillon
+dans le navigateur et permet l’import/export JSON. **Enregistrer une version**
+conserve un instantané nommé et daté dans MariaDB. **Versions (n)** retrouve les
+copies de la source sélectionnée. Les passages, le curseur et l’historique font
+partie de chaque instantané. La lecture utilise toujours le média de l’atelier.
+
+Cette fonction nécessite la migration `008` de la base `ic_augmented_video`.
+Depuis `007`, elle crée une table vide et deux procédures. Le compte applicatif
+continue de lire et d’écrire par procédures. Le [rapport 242](../../../reports/242_versions_montage_serveur_report.md)
+décrit le contrôle du plan, la sauvegarde et la vérification avant redémarrage.
 
 La fiche Vidéo++ propose deux ateliers distincts : **Anonymiser l’image** et
 **Anonymiser le son**. L’atelier audio enregistre un plan multi-zones avant tout

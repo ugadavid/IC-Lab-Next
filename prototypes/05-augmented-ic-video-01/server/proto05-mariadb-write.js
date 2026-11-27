@@ -1082,6 +1082,12 @@ function createMariaDbWriteAdapter({
       }
     },
 
+    async saveWorkshopVersion({assetId, playableId, id, name, project}) {
+      return targetedProcedureTransaction("Enregistrement de la version de montage", async database => {
+        const [rows] = await callProcedure(database, "sp_workshop_version_save", [assetId, playableId, id, name, project]);
+        return rows[0];
+      });
+    },
     async saveAudioAnonymizationPlan(plan) {
       return targetedProcedureTransaction(
         "Enregistrement transactionnel du plan d’anonymisation audio",

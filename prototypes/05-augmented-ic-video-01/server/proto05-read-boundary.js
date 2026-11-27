@@ -18,6 +18,9 @@ function createProto05ReadBoundary({ mariadbAdapter }) {
     async readAudioAnonymizationPlan(selector) {
       return mariadbAdapter.readAudioAnonymizationPlan(selector);
     },
+    async readWorkshopVersions(selector) {
+      return mariadbAdapter.readWorkshopVersions(selector);
+    },
     async close() {
       await mariadbAdapter.close?.();
     }
