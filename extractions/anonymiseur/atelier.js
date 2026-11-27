@@ -44,7 +44,7 @@ function start() {
     console.error(error.code === "EADDRINUSE" ? "Le port 8797 est déjà occupé. Si l’atelier est ouvert, retrouvez-le à " + origin : error.message);
     process.exitCode = 1;
   });
-  server.listen(port,"127.0.0.1",() => console.log("Atelier autonome 0.1.0 — ouvrez " + origin + "\nCtrl+C pour fermer l’atelier."));
+  server.listen(port,"127.0.0.1",() => console.log("Atelier autonome 0.1.1 — ouvrez " + origin + "\nCtrl+C pour fermer l’atelier."));
   function stop() {
     server.close();
     void workshop.close().catch(error => console.error(error.message));

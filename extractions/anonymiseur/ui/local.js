@@ -12,6 +12,7 @@ function notify(text) {
 }
 
 choose.onclick = async () => {
+  const hadFocus = document.activeElement === choose;
   choose.disabled = true;
   try {
     timeline?.suspend();
@@ -23,6 +24,7 @@ choose.onclick = async () => {
     notify(error.message || 'Impossible de choisir la vidéo.');
   } finally {
     choose.disabled = false;
+    if (hadFocus && document.activeElement === document.body) choose.focus({preventScroll:true});
   }
 };
 

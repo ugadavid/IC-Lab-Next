@@ -1,4 +1,4 @@
-# Atelier d’anonymisation autonome · 0.1.0
+# Atelier d’anonymisation autonome · 0.1.1
 
 Depuis la racine du clone sur CODEX_VM, lancez cette commande dans PowerShell.
 
