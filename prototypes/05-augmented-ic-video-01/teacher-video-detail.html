@@ -104,7 +104,7 @@
 <body>
   <header class="topbar">
     <a id="backLink" class="back" href="/teacher/videos">← Retour à la vidéothèque</a>
-    <span class="version">Proto05 · 0.1.58</span>
+    <span class="version">Proto05 · 0.1.59</span>
   </header>
   <main>
     <div id="status" class="status" role="status" aria-live="polite"></div>
@@ -227,6 +227,9 @@
       const previewButton = entry.url
         ? `<button type="button" class="secondary" data-action="preview" data-playable="${esc(entry.id)}">Prévisualiser</button>`
         : "";
+      const openWorkshop = playable(entry.id) && ["hls", "direct-url", "local-file"].includes(entry.kind)
+        ? `<a class="button" href="/teacher/videos/${encodeURIComponent(asset.id)}/anonymiser?playableId=${encodeURIComponent(entry.id)}">Anonymiser</a>`
+        : "";
       const workshop = ["original-remote", "working-copy", "derivation-local"].includes(role) && ["hls", "local-file"].includes(entry.kind)
         ? `<button type="button" data-action="workshop-image" data-playable="${esc(entry.id)}">Anonymiser l’image</button><button type="button" class="secondary" data-action="workshop-audio" data-playable="${esc(entry.id)}">Anonymiser le son</button>`
         : "";
@@ -248,7 +251,7 @@
         <h3>${esc(entry.label || entry.name || "Accès vidéo")}</h3>
         <p class="meta">${accessMeta(entry)}</p>
         ${recipe}
-        <div class="actions">${previewButton}${workshop}${download}${associate}${remove}</div>
+        <div class="actions">${previewButton}${openWorkshop}${workshop}${download}${associate}${remove}</div>
         <p class="action-status" data-access-status="${esc(entry.id)}" role="status" aria-live="polite"></p>
         ${previewMarkup(entry.id)}
       </article>`;

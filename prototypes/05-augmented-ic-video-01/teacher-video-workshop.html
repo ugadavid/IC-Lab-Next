@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Atelier d’anonymisation · Proto05</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.45 system-ui, sans-serif; color: #18342f; background: #f3f6f4; }
+    * { box-sizing: border-box; }
+    body { max-width: 66rem; margin: auto; padding: clamp(1rem, 4vw, 3rem); }
+    nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+    a { color: #11695e; text-underline-offset: .18em; }
+    h1 { margin: 1.5rem 0 .25rem; font-size: clamp(1.55rem, 4vw, 2.4rem); line-height: 1.2; overflow-wrap: anywhere; }
+    #version { margin: 0 0 1rem; color: #465e58; overflow-wrap: anywhere; }
+    .stage { margin-top: 1rem; position: relative; aspect-ratio: 16/9; border-radius: .8rem; overflow: hidden; background: #142723; color: #fff; display: grid; place-items: center; }
+    video { width: 100%; height: 100%; position: absolute; inset: 0; }
+    #panel { position: relative; z-index: 1; border-radius: .65rem; background: #142723; max-width: 36rem; padding: 1.3rem; text-align: center; }
+    #message { margin: .5rem 0; overflow-wrap: anywhere; }
+    button, select { font: inherit; border-radius: .4rem; padding: .45rem .75rem; }
+    button { color: #14342d; background: #ecf6ed; border: 1px solid #9abeb0; cursor: pointer; }
+    select { width: min(100%, 25rem); }
+    label { display: block; margin: .45rem; }
+    #retry { margin: .5rem; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <nav aria-label="Retour"><a href="/teacher/videos">← Vidéothèque</a><a id="detail">Fiche vidéo</a></nav>
+  <main>
+    <h1>Atelier d’anonymisation</h1>
+    <p id="version"></p>
+    <div class="stage">
+      <video id="player" controls playsinline preload="auto" aria-label="Vidéo à anonymiser" hidden></video>
+      <section id="panel">
+        <div id="choice" hidden><label for="versions">Quelle version ouvrir dans l’atelier ?</label><select id="versions"></select></div>
+        <p id="message" role="status" aria-live="polite">Ouverture de la vidéo…</p>
+        <button id="retry" type="button" hidden>Réessayer</button>
+      </section>
+    </div>
+  </main>
+<script>
+"use strict";
+const byId = id => document.getElementById(id);
+const assetId = decodeURIComponent(location.pathname.split("/")[3]);
+const api = "/api/proto05/library";
+const player = byId("player");
+const versions = byId("versions");
+const detail = byId("detail");
+detail.href = "/teacher/videos/" + encodeURIComponent(assetId);
+let playableId = new URL(location.href).searchParams.get("playableId");
+let forcePreparation = false;
+let timer;
+let finished = false;
+
+async function json(path, options) {
+  const response = await fetch(api + path, { cache: "no-store", ...options });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "Le serveur ne peut pas ouvrir cette vidéo.");
+  return result;
+}
+
+function status(message) {
+  byId("panel").hidden = false;
+  byId("message").textContent = message;
+}
+
+function failed(error) {
+  clearTimeout(timer);
+  player.hidden = true;
+  status(error.message || "La connexion avec Proto05 a été interrompue.");
+  byId("retry").hidden = false;
+}
+
+function selectVersion(id) {
+  playableId = id;
+  const link = new URL(location.href);
+  link.searchParams.set("playableId", id);
+  history.replaceState(null, "", link);
+}
+
+function playMedia(url, directLocal) {
+  status("Chargement du lecteur…");
+  player.controls = false;
+  player.hidden = false;
+  player.onloadeddata = () => {
+    byId("panel").hidden = true;
+    player.controls = true;
+  };
+  player.onerror = () => {
+    player.onloadeddata = null;
+    player.hidden = true;
+    if (directLocal) forcePreparation = true;
+    failed(new Error(directLocal ? "Le navigateur ne peut pas lire cette copie. Réessayez pour la préparer avec FFmpeg." :
+      "Le fichier préparé ne peut pas être lu dans ce navigateur. Vérifiez son format et la connexion."));
+  };
+  player.src = url;
+}
+
+async function follow(job, download) {
+  if (job.assetId !== assetId || job.playableId !== playableId) throw new Error("La tâche ne correspond plus à cette version.");
+  if (job.status === "completed") {
+    if (!download) return playMedia(api + "/hls-preparations/" + encodeURIComponent(job.id) + "/media", false);
+    if (!job.result?.playableId || job.result.assetId !== assetId) throw new Error("La copie téléchargée est introuvable.");
+    selectVersion(job.result.playableId);
+    return open();
+  }
+  if (["failed", "cancelled"].includes(job.status)) throw new Error(job.error || "La préparation a été interrompue.");
+  let message = "Préparation de la copie de travail…";
+  if (job.status === "downloading" || job.phase === "downloading") {
+    message = "Téléchargement de la vidéo en cours…";
+    if (download && job.durationMs > 0) message += " " + job.progress + " %";
+  } else if (job.status === "finalizing" || job.phase === "checking") message = "Vérification du média…";
+  else if (job.status === "cancelling") message = "Annulation en cours…";
+  else if (job.status === "cleaning") message = "Nettoyage de la copie temporaire…";
+  status(message);
+  const path = (download ? "/downloads/" : "/hls-preparations/") + encodeURIComponent(job.id);
+  if (!finished) timer = setTimeout(async () => {
+    try { await follow((await json(path)).job, download); } catch (error) { failed(error); }
+  }, 550);
+}
+
+function versionName(item) {
+  const roles = { "working-copy": "Copie de travail", "derivation-local": "Dérivé local", "original-remote": "Original distant", "published-remote": "Version publiée" };
+  const name = item.technicalMetadata?.fileName || item.title || item.name;
+  return [roles[item.role] || (item.kind === "local-file" ? "Fichier local" : "Source distante"), name || item.id].join(" · ");
+}
+
+async function open() {
+  clearTimeout(timer);
+  byId("retry").hidden = true;
+  byId("choice").hidden = true;
+  status("Ouverture de la vidéo…");
+  const { asset } = await json("/assets/" + encodeURIComponent(assetId));
+  document.querySelector("h1").textContent = asset.title || asset.id;
+  document.title = (asset.title || asset.id) + " · Atelier d’anonymisation";
+  const choices = asset.playables.filter(item => ["local-file", "hls", "direct-url"].includes(item.kind) && !item.removedAt);
+  const originalsWithCopies = new Set(choices.filter(item => item.role === "working-copy" &&
+    item.localFileState === "present").map(item => item.provenance?.sourcePlayableId).filter(Boolean));
+  const distinct = choices.filter(item => item.kind === "local-file" || !originalsWithCopies.has(item.id));
+  if (!playableId && distinct.length === 1) selectVersion(distinct[0].id);
+  if (!playableId && distinct.length > 1) {
+    versions.replaceChildren(new Option("Choisir une version…", ""));
+    const names = distinct.map(versionName);
+    for (const [index, item] of distinct.entries()) {
+      const name = names[index];
+      versions.add(new Option(names.indexOf(name) === names.lastIndexOf(name) ? name : name + " · " + item.id, item.id));
+    }
+    byId("choice").hidden = false;
+    status("");
+    return;
+  }
+  const item = choices.find(entry => entry.id === playableId);
+  if (!item) throw new Error(playableId ? "Cette version est introuvable. Revenez à la fiche vidéo." : "Cette vidéo nécessite une copie locale ou une source téléchargeable.");
+  byId("version").textContent = "Atelier d’anonymisation · " + versionName(item);
+  status("Ouverture de cette version…");
+  const result = await json("/workshop-preparations", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ assetId, playableId, prepareLocal: forcePreparation })
+  });
+  if (result.mediaUrl) return playMedia(result.mediaUrl, true);
+  if (result.localPlayableId) {
+    selectVersion(result.localPlayableId);
+    return open();
+  }
+  await follow(result.job || result.download, Boolean(result.download));
+}
+versions.onchange = () => { if (versions.value) { selectVersion(versions.value); open().catch(failed); } };
+byId("retry").onclick = () => open().catch(failed);
+window.addEventListener("pagehide", () => { finished = true; clearTimeout(timer); });
+window.addEventListener("pageshow", event => { if (event.persisted) { finished = false; open().catch(failed); } });
+open().catch(failed);
+</script>
+</body></html>

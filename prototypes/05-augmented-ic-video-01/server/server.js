@@ -83,7 +83,7 @@ const {
 } = require("./pedagogical-identity");
 
 const PORT = Number(process.env.PORT || 8791);
-const VERSION = "0.1.63";
+const VERSION = "0.1.64";
 const SERVICE = "proto05-augmented-video";
 const ROOT_DIR = path.resolve(__dirname, "..");
 const STORAGE_AUTHORITY = "mariadb";
@@ -3124,7 +3124,7 @@ function publicFfmpegRuntime(job) {
 }
 
 function publicHlsPreparationJob(job) {
-  return { id: job.id, assetId: job.assetId, playableId: job.playableId, sourceId: job.sourceId, status: job.status, progress: job.progress, createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, metadata: job.metadata || null, masks: job.masks || null, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, log: job.log.slice(-20) };
+  return { id: job.id, assetId: job.assetId, playableId: job.playableId, sourceId: job.sourceId, ...(job.phase ? { phase: job.phase } : {}), status: job.status, progress: job.progress, createdAt: job.createdAt, updatedAt: job.updatedAt, expiresAt: job.expiresAt || null, error: job.error || null, metadata: job.metadata || null, masks: job.masks || null, temporalMasks: job.temporalMasks || null, temporalSteps: job.temporalSteps || null, log: job.log.slice(-20) };
 }
 
 function derivationStatusCode(status) {
@@ -3353,12 +3353,15 @@ function ffmpegTemporalLocalFilter(masks, blurProfile = anonymizationBlurProfile
   return graph.join(";");
 }
 
-function ffprobeVideoInfo(ffmpeg, filePath) {
+function ffprobeVideoInfo(ffmpeg, filePath, explainFailure = false) {
   const executable = path.basename(ffmpeg).toLowerCase().startsWith("ffmpeg")
     ? path.join(path.dirname(ffmpeg), path.basename(ffmpeg).replace(/^ffmpeg/i, "ffprobe"))
     : "ffprobe";
   const result = spawnSync(executable, ["-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height,r_frame_rate,start_time,nb_frames:format=duration", "-of", "json", filePath], { encoding: "utf8", windowsHide: true, timeout: 10000 });
-  if (result.error || result.status !== 0) throw new Error("Impossible de lire les paramètres vidéo préparés.");
+  if (result.error || result.status !== 0) {
+    if (explainFailure && result.error?.code === "ENOENT") throw new Error("FFprobe est introuvable. Vérifiez sa présence à côté de FFmpeg.");
+    throw new Error(explainFailure ? "FFprobe ne peut pas lire les paramètres du fichier préparé." : "Impossible de lire les paramètres vidéo préparés.");
+  }
   const payload = JSON.parse(String(result.stdout || "{}"));
   const stream = payload.streams?.[0];
   const match = String(stream?.r_frame_rate || "").match(/^(\d+)\/(\d+)$/);
@@ -3804,6 +3807,71 @@ async function hlsPreparationSource(assetId, playableId, sourceId) {
   return { asset, playable, source, manifest: validatedManifest.toString(), isLocal: false, sourceLabel: source.title || asset.title };
 }
 
+function startHlsPreparation(resolved) {
+  const now = new Date().toISOString();
+  const job = {
+    id: `hls-prep-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`,
+    assetId: resolved.asset.id, playableId: resolved.playable.id, sourceId: resolved.source.id,
+    isLocal: resolved.isLocal, reportPhase: resolved.reportPhase === true, status: "queued", progress: 0, createdAt: now, updatedAt: now,
+    expiresAt: null, metadata: { sourceUrl: resolved.isLocal ? null : resolved.manifest, sourceTitle: resolved.sourceLabel },
+    masks: defaultAnonymizationMasks(), temporalMasks: null, error: null, log: [], cancelRequested: false
+  };
+  ACTIVE_HLS_PREPARATIONS.set(job.id, job);
+  void runHlsPreparation(job, resolved.manifest);
+  return job;
+}
+
+function reusablePreparation(assetId, playableId, sourceId) {
+  for (const job of ACTIVE_HLS_PREPARATIONS.values()) {
+    if (job.assetId !== assetId || job.playableId !== playableId || job.sourceId !== sourceId) continue;
+    if (["queued", "running", "cancelling"].includes(job.status)) return job;
+    if (job.status === "completed" && Date.parse(job.expiresAt) > Date.now() && job.outputPath && fsSync.existsSync(job.outputPath)) return job;
+  }
+  return null;
+}
+
+function workshopMediaUrl(local) {
+  const scope = local.storageScope === "workspace" ? "workspace/" : "";
+  return `/api/proto05/library/media/${scope}${encodeURIComponent(local.storageKey)}`;
+}
+
+async function openVideoWorkshop({ assetId, playableId, prepareLocal = false }) {
+  const asset = VIDEO_LIBRARY.assets.find(item => item.id === assetId);
+  const playable = VIDEO_LIBRARY.playables.find(item => item.id === playableId && item.assetId === assetId);
+  const source = VIDEO_LIBRARY.sources.find(item => item.id === playable?.sourceId && item.assetId === assetId);
+  if (!asset || !playable || !source) throw new Error("Cette version ne figure plus dans la vidéothèque.");
+
+  const existing = reusablePreparation(assetId, playableId, source.id);
+  if (existing) return { job: publicHlsPreparationJob(existing) };
+
+  let resolved;
+  if (playable.kind === "local-file") {
+    const local = observeLocalPlayableFile(playable, source);
+    if (local.state !== "present") throw new Error("La copie locale est introuvable. Vérifiez le fichier de cette version.");
+    if (!prepareLocal) return { mediaUrl: workshopMediaUrl(local) };
+    resolved = { asset, playable, source, isLocal: true, reportPhase: true, sourceLabel: asset.title, manifest: local.file };
+  } else {
+    const candidate = remoteDownloadCandidate(assetId, playableId);
+    if (!candidate) throw new Error("Cette version demande une copie locale de travail.");
+    const download = [...ACTIVE_LIBRARY_DOWNLOADS.values()].find(item =>
+      item.assetId === assetId && item.playableId === playableId &&
+      ["preparing", "downloading", "finalizing", "cleaning", "cancelling"].includes(item.status));
+    if (download) return { download: publicLibraryDownloadJob(download) };
+
+    const copies = VIDEO_LIBRARY.playables.filter(item => item.assetId === assetId && item.kind === "local-file" &&
+      explicitRole(item) === "working-copy" && item.provenance?.sourcePlayableId === playableId &&
+      observeLocalPlayableFile(item, VIDEO_LIBRARY.sources.find(src => src.id === item.sourceId)).state === "present");
+    if (copies.length === 1) return { localPlayableId: copies[0].id };
+
+    const inspection = await inspectRemoteDownload(candidate);
+    resolved = { asset, playable, source, isLocal: false, sourceLabel: asset.title, reportPhase: true,
+      manifest: new URL(inspection.inputPath, `http://127.0.0.1:${PORT}`).href };
+  }
+  // Une autre requête a pu créer le job pendant la résolution de la source.
+  const job = reusablePreparation(assetId, playableId, source.id) || startHlsPreparation(resolved);
+  return { job: publicHlsPreparationJob(job) };
+}
+
 async function removePreparationWorkspace(job) {
   if (job.workspace) { try { await fs.rm(job.workspace, { recursive: true, force: true }); } catch {} }
   job.workspace = null; job.outputPath = null;
@@ -3823,6 +3891,7 @@ async function runHlsPreparation(job, manifest) {
     child = spawn(ffmpeg, args, { windowsHide: true });
     job.process = child;
     job.pid = child.pid || null;
+    if (job.reportPhase && !job.isLocal) child.once("spawn", () => { job.phase = "downloading"; });
     child.stderr.setEncoding("utf8");
     child.stderr.on("data", chunk => { for (const line of String(chunk).split(/\r?\n/).filter(Boolean)) { job.log.push(line.slice(-500)); const time = /time=(\d+):(\d+):(\d+(?:\.\d+)?)/.exec(line); if (time) job.metadata = { ...(job.metadata || {}), detectedTime: `${time[1]}:${time[2]}:${time[3]}` }; } job.updatedAt = new Date().toISOString(); });
     child.on("error", error => { job.spawnError = error; });
@@ -3834,11 +3903,14 @@ async function runHlsPreparation(job, manifest) {
     const stat = await fs.stat(job.outputPath);
     if (!stat.isFile() || stat.size === 0) throw new Error("FFmpeg n’a produit aucun fichier exploitable.");
     if (stat.size > HLS_PREPARATION_MAX_BYTES || job.sizeLimit) throw new Error("La préparation HLS dépasse la taille maximale autorisée.");
-    const info = ffprobeVideoInfo(ffmpeg, job.outputPath);
+    if (job.reportPhase) job.phase = "checking";
+    const info = ffprobeVideoInfo(ffmpeg, job.outputPath, job.reportPhase);
     job.status = "completed"; job.progress = 100; job.expiresAt = new Date(Date.now() + HLS_PREPARATION_TTL_MS).toISOString(); job.metadata = { ...(job.metadata || {}), fileName: "work.mp4", sizeBytes: stat.size, workspaceId: path.basename(job.workspace), mimeType: "video/mp4" };
     job.metadata = { ...job.metadata, durationMs: info.durationMs, width: info.width, height: info.height, fps: info.fps, nbFrames: info.nbFrames };
   } catch (error) {
-    job.error = job.cancelRequested ? "Préparation annulée." : error.message;
+    job.error = job.cancelRequested ? "Préparation annulée." :
+      job.reportPhase && error.code === "ENOENT" && job.spawnError ? "FFmpeg est introuvable. Vérifiez le chemin de ffmpeg.exe dans Proto05." : error.message;
+    if (job.reportPhase) job.expiresAt = new Date(Date.now() + HLS_PREPARATION_TTL_MS).toISOString();
     await removePreparationWorkspace(job);
     job.status = job.cancelRequested ? "cancelled" : "failed"; job.progress = 0; job.updatedAt = new Date().toISOString();
     await removePreparationWorkspace(job);
@@ -4517,14 +4589,21 @@ async function handleApiInReadContext(request, response, url) {
     }
     return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "GET, DELETE" });
   }
+  if (url.pathname === "/api/proto05/library/workshop-preparations") {
+    if (request.method !== "POST") return sendJson(response, 405, { error: "Méthode non autorisée." }, { allow: "POST" });
+    try {
+      const result = await openVideoWorkshop(JSON.parse(await readRequestBody(request)));
+      return sendJson(response, result.job || result.download ? 202 : 200, result);
+    } catch (error) {
+      return sendJson(response, 400, { error: error.message || "Impossible de préparer cette version." });
+    }
+  }
   if (url.pathname === "/api/proto05/library/hls-preparations") {
     if (request.method !== "POST") return sendJson(response, 405, { error: "MÃ©thode non autorisÃ©e." }, { allow: "POST" });
     try {
       const payload = JSON.parse(await readRequestBody(request));
       const resolved = await hlsPreparationSource(payload.assetId, payload.playableId, payload.sourceId);
-      const job = { id: `hls-prep-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`, assetId: resolved.asset.id, playableId: resolved.playable.id, sourceId: resolved.source.id, isLocal: resolved.isLocal, status: "queued", progress: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), expiresAt: null, metadata: { sourceUrl: resolved.isLocal ? null : resolved.manifest, sourceTitle: resolved.sourceLabel }, masks: defaultAnonymizationMasks(), temporalMasks: null, error: null, log: [], cancelRequested: false };
-      ACTIVE_HLS_PREPARATIONS.set(job.id, job);
-      void runHlsPreparation(job, resolved.manifest);
+      const job = startHlsPreparation(resolved);
       return sendJson(response, 202, { job: publicHlsPreparationJob(job) });
     } catch (error) { return sendJson(response, 400, { error: error.message || "Préparation HLS impossible." }); }
   }
@@ -5065,6 +5144,11 @@ async function serveStatic(request, response, url) {
   }
   if (url.pathname === "/teacher/videos" || url.pathname === "/teacher/videos/") {
     const target = path.join(ROOT_DIR, "teacher-videos.html"); const file = await fs.readFile(target);
+    response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
+    return request.method === "HEAD" ? response.end() : response.end(file);
+  }
+  if (/^\/teacher\/videos\/[^/]+\/anonymiser$/.test(url.pathname)) {
+    const file = await fs.readFile(path.join(ROOT_DIR, "teacher-video-workshop.html"));
     response.writeHead(200, { "content-type": "text/html; charset=utf-8", "content-length": file.length });
     return request.method === "HEAD" ? response.end() : response.end(file);
   }
