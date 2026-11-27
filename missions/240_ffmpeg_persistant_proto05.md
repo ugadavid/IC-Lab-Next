@@ -1,0 +1,9 @@
+# Mission 240 — Retrouver FFmpeg après chaque relance de Proto05
+
+Sur CODEX_VM, David a préparé une vidéo hier. Après redémarrage par START_IC_LAB_NEXT.bat, l’essai réel de la mission 239 s’arrête à « FFmpeg est introuvable ». Les deux exécutables étaient présents dans C:\Tools\FFmpeg\bin et ffprobe.exe -version avait réussi. Le serveur possède un réglage mémoire RUNTIME_FFMPEG_PATH et lit aussi PROTO05_FFMPEG_PATH et FFMPEG_PATH.
+
+Sur atelier-anonymisation, diagnostiquer le lancement réel et le chemin choisi pour la préparation. Corriger durablement la découverte ou la mémorisation locale du couple FFmpeg/FFprobe. Réutiliser la configuration existante, respecter les chemins personnalisés et le PATH du serveur, garder le dépôt portable. Vérifier que le nouvel atelier et le parcours historique emploient le réglage effectif. Si un outil manque réellement, identifier lequel et donner une action précise.
+
+Tester avec le lanceur habituel, un court média et une préparation fraîche. Redémarrer Proto05 puis refaire une préparation fraîche sans ressaisir le chemin. Vérifier l’ancien et le nouveau parcours et le cas d’un outil absent. Préserver les données et préparations de David. Documenter la cause établie, la correction, les tests réalisés et toute limite VM dans reports/240_ffmpeg_persistant_proto05_report.md. Reprendre ensuite la recette 239 là où elle s’est arrêtée si le média de test est disponible.
+
+Commit et push du correctif et du rapport sur origin/atelier-anonymisation. Vérifier le SHA distant et la lecture des livrables. Renvoyer le lien du rapport et le SHA, ou signaler le blocage et le SHA local.
